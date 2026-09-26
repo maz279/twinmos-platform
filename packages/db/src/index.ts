@@ -5,6 +5,7 @@ import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { PGlite } from '@electric-sql/pglite';
 import pg from 'pg';
 import * as schema from './schema.ts';
+export * from './schema.ts'; // tables re-exported for apps (single import surface)
 
 export type DB = ReturnType<typeof createDb>;
 

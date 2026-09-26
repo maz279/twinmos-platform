@@ -8,3 +8,5 @@ data/*.pgdata*
 *.log
 coverage/
 .turbo/
+.mimosa/
+data/
