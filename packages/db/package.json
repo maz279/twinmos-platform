@@ -1,0 +1,21 @@
+{
+  "name": "@twinmos/db",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "generate": "drizzle-kit generate",
+    "migrate": "node --experimental-strip-types --no-warnings run-migrate.ts",
+    "seed": "node --experimental-strip-types --no-warnings src/seed.ts"
+  },
+  "dependencies": {
+    "@twinmos/shared": "*",
+    "@electric-sql/pglite": "^0.5.8",
+    "drizzle-orm": "^0.45.3",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.11",
+    "@types/pg": "^8.15.0"
+  }
+}

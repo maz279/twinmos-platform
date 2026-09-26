@@ -1,0 +1,20 @@
+{
+  "name": "twinmos-platform",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "dev": "npm run dev --workspace @twinmos/api & npm run dev --workspace @twinmos/admin & npm run dev --workspace @twinmos/web & wait",
+    "dev:api": "npm run dev --workspace @twinmos/api",
+    "dev:admin": "npm run dev --workspace @twinmos/admin",
+    "dev:web": "npm run dev --workspace @twinmos/web",
+    "db:generate": "npm run generate --workspace @twinmos/db",
+    "db:migrate": "npm run migrate --workspace @twinmos/db",
+    "db:seed": "npm run seed --workspace @twinmos/db",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "tsc -b apps/api apps/admin packages/db packages/shared"
+  }
+}
