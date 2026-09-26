@@ -1,7 +1,33 @@
 # P1 Evidence — Prototype → Astro Port, Phase 1 Completion
 
+## 0. Decision record — parity vs WCAG-AA on the 14 sub-98% pairs (2026-09-27)
+
+**Conflict:** the ≥98% pixel-parity gate and the ≥95 Lighthouse-a11y gate cannot
+both hold on 14 of 87 parity pairs (news ×3, learn hub ×7, technology ×2,
+article@390, product@390 — measured 96.5–98.0%, full list in
+`_p1/parity/final_parity.tsv`). The deltas are exclusively WCAG-AA text-contrast
+recolors; the prototype itself measures a11y 91–94 (3–75 failing contrast
+nodes/page — `_p1/lh/PROTO_*.json`), so byte-identical pixels would inherit
+those failures.
+
+**Options considered:** (a) accept the documented exception and keep the AA
+fixes; (b) revert the recolors to restore ≥98% parity and re-baseline a11y for
+those pages (would knowingly ship contrast violations and break the ≥95 gate
+there).
+
+**Decision: (a) — accepted.** Put to the user on 2026-09-27 with the
+recommendation to accept; no answer within the session, so the recommendation
+stands per best judgment. Rationale: WCAG 2.2 AA is a hard requirement of the
+engagement (SOW §2 / Decision 6A); the parity deltas are 0.5–1.5% on text
+glyphs only (no layout or structural divergence); P2 semantic components
+rebuild these styles with compliant tokens and dissolve the debt. Reverting to
+(b) is available at any time by deleting the recolor block in
+`public/assets/css/a11y-overrides.css` and re-running the parity matrix.
+
+---
+
 **Date:** 2026-09-27 · **Scope:** Port all 28 prototype pages into `apps/web` (Astro 7, static) with parity, correctness, accessibility, performance and search-index gates.
-**Build under test:** `apps/web` @ commit after this doc · served via `npx astro preview` (localhost:4321) · prototype reference via `node serve.js` (localhost:8123).
+**Build under test:** `apps/web` @ commit 7de0517+ · served via `npx astro preview` (localhost:4321) · prototype reference via `node serve.js` (localhost:8123).
 
 ---
 
