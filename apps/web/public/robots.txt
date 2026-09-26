@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /404.html
+Disallow: /__audit/
+
+Sitemap: https://www.twinmos.com/sitemap.xml

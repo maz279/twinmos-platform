@@ -42,6 +42,8 @@ Shared: `packages/db` (Drizzle schema + migrations, **Postgres dialect** — PGl
 
 ## 3. Phase Plan (adapted from Roadmap v2.2 to this architecture)
 
+**Engagement order (user directive, 2026-09-26): build → develop → implement → comprehensive testing → only then hosting & deployment.** No environment provisioning or deploy execution happens during the build phases; each phase ends *deployable-capable* (a working product), and a dedicated comprehensive-testing stage (P7) precedes any deployment work.
+
 Each phase ends with a gate: CI green + parity audit + stakeholder sign-off.
 
 | Phase | Scope | Exit criteria |

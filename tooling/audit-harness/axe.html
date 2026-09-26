@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>axe harness</title>
+<script src="axe.min.js"></script>
+<style>body{margin:0}</style>
+</head>
+<body>
+<iframe id="tgt" title="audit target" style="width:1280px;height:900px;border:0"></iframe>
+<pre id="out">PENDING</pre>
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var target = params.get('u') || '/index.html';
+  var frame = document.getElementById('tgt');
+  var out = document.getElementById('out');
+  frame.addEventListener('load', function () {
+    setTimeout(function () {
+      try {
+        var doc = frame.contentDocument;
+        if (!doc || !doc.body) { out.textContent = 'FRAME_ERROR empty document'; return; }
+        axe.run(doc, { reporter: 'v2' })
+          .then(function (r) {
+            var summary = r.violations.map(function (v) {
+              return { id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.length };
+            });
+            out.textContent = 'AXE_RESULT ' + target + ' ' + JSON.stringify(summary);
+          })
+          .catch(function (e) { out.textContent = 'AXE_ERROR ' + String(e); });
+      } catch (e) { out.textContent = 'FRAME_ERROR ' + String(e); }
+    }, 3000);
+  });
+  frame.src = target;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+---
+// P1 layout — owns the document shell (head + body wrapper + runtime scripts).
+// Page bodies are ported verbatim from the audited prototype (see tooling/port_pages.py)
+// so visual parity holds by construction. Chrome componentization lands with islands (P2+).
+interface Props {
+  title: string;
+  desc: string;
+  bodyClass?: string;
+  noindex?: boolean;
+}
+const { title, desc, bodyClass = '', noindex = false } = Astro.props;
+/* Homepage canonical is the site root (not /index.html) to avoid signal
+ * fragmentation; other pages keep their .html path (build.format = 'file'). */
+const path = Astro.url.pathname === '/index.html' ? '/' : Astro.url.pathname;
+const canonical = new URL(path, Astro.site);
+
+const ORG_LD = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'TwinMOS Technologies',
+  url: 'https://www.twinmos.com/',
+  logo: 'https://www.twinmos.com/assets/img/logo.webp',
+  foundingDate: '1998',
+  address: { '@type': 'PostalAddress', addressLocality: 'Taipei', addressCountry: 'TW' },
+  sameAs: [
+    'https://www.facebook.com/twinmos.tech',
+    'https://www.instagram.com/twinmos.tech',
+    'https://www.linkedin.com/company/twinmos-technologies',
+    'https://x.com/twinmos',
+    'https://www.youtube.com/c/TwinMOStech',
+    'https://www.pinterest.com/twinmos',
+  ],
+});
+const SITE_LD = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'TwinMOS',
+  url: 'https://www.twinmos.com/',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: 'https://www.twinmos.com/search.html?q={q}',
+    'query-input': 'required name=q',
+  },
+});
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#0A2540" />
+    <meta name="description" content={desc} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <title>{title}</title>
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="en" href={canonical} />
+    <link rel="alternate" hreflang="x-default" href={canonical} />
+    <link rel="icon" type="image/png" href="assets/img/favicon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <link rel="stylesheet" href="assets/css/a11y-overrides.css" />
+    <script type="application/ld+json" set:html={ORG_LD} />
+    <script type="application/ld+json" set:html={SITE_LD} />
+    <script>if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js').catch(function(){});}</script>
+  </head>
+  <body class={bodyClass}>
+    <slot />
+    <!-- PDP deep links: discover the hero image at parse-end (the app layer
+         renders it ~3s later). Map loaded async; preload is best-effort. -->
+    <script is:inline>
+      (function () {
+        try {
+          if (!/product\.html$/.test(location.pathname)) return;
+          var id = new URLSearchParams(location.search).get('id');
+          if (!id) return;
+          var s = document.createElement('script');
+          s.src = 'assets/js/pdp-hero.js';
+          s.onload = function () {
+            var src = window.PDP_HERO && window.PDP_HERO[id];
+            if (!src) return;
+            var l = document.createElement('link');
+            l.rel = 'preload';
+            l.as = 'image';
+            l.href = src;
+            document.head.appendChild(l);
+          };
+          document.body.appendChild(s);
+        } catch (e) { /* best-effort */ }
+      })();
+    </script>
+    <!-- App layer boots post-first-paint: the server-rendered hero (LCP) paints
+         while the heavy data.js/app.js parse+hydrate right after (measured LCP:
+         1.4s with this boot vs 4.5s with a load-event boot vs 7.1s on the
+         prototype's body-end scripts). Order-preserving (async=false). -->
+    <script is:inline>
+      (function () {
+        /* URL-param hygiene before the app layer parses them: app.js renders
+         * ?id/?cat/?q values into the DOM, so strip markup-significant bytes
+         * at the entry point. app.js itself stays byte-identical to the
+         * audited prototype; this wrapper is the port's sanitize boundary. */
+        try {
+          var s = location.search;
+          if (s && /[<>"'`]/.test(s)) {
+            var params = new URLSearchParams(s);
+            var clean = new URLSearchParams();
+            params.forEach(function (v, k) {
+              clean.set(k, v.replace(/[<>"'`]/g, ''));
+            });
+            var qs = clean.toString();
+            history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+          }
+        } catch (e) { /* never block the page */ }
+
+        var files = ['assets/js/data.js', 'assets/js/app.js', 'assets/js/img-dims.js', 'assets/js/a11y.js'];
+        function boot() {
+          files.forEach(function (src) {
+            var s = document.createElement('script');
+            s.src = src;
+            s.async = false;
+            document.body.appendChild(s);
+          });
+        }
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(boot, { timeout: 300 });
+        } else {
+          setTimeout(boot, 300);
+        }
+      })();
+    </script>
+  </body>
+</html>

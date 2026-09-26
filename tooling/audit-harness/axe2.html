@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>axe runner</title>
+<style>body{margin:0}</style>
+</head>
+<body>
+<iframe id="tgt" title="audit target" style="width:1280px;height:900px;border:0"></iframe>
+<pre id="out">PENDING</pre>
+<script>
+(function () {
+  var target = new URLSearchParams(location.search).get('u') || '/index.html';
+  var frame = document.getElementById('tgt');
+  var out = document.getElementById('out');
+  frame.addEventListener('load', function () {
+    setTimeout(function () {
+      try {
+        var w = frame.contentWindow, d = frame.contentDocument;
+        if (!d || !d.body) { out.textContent = 'FRAME_ERROR empty'; return; }
+        var s = d.createElement('script');
+        s.src = '/__audit/axe.min.js';
+        s.onload = function () {
+          w.axe.run(d, { reporter: 'v2' }).then(function (r) {
+            var summary = r.violations.map(function (v) {
+              return { id: v.id, impact: v.impact, nodes: v.nodes.length };
+            });
+            out.textContent = 'AXE2_RESULT ' + target + ' ' + JSON.stringify(summary);
+          }).catch(function (e) { out.textContent = 'AXE2_ERROR ' + String(e); });
+        };
+        s.onerror = function () { out.textContent = 'AXE2_LOADFAIL'; };
+        d.body.appendChild(s);
+      } catch (e) { out.textContent = 'FRAME_ERROR ' + String(e); }
+    }, 2500);
+  });
+  frame.src = target;
+})();
+</script>
+</body>
+</html>

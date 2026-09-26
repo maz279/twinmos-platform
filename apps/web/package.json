@@ -2,6 +2,23 @@
   "name": "@twinmos/web",
   "version": "0.1.0",
   "type": "module",
-  "scripts": { "dev": "astro dev", "build": "astro build" },
-  "dependencies": { "astro": "^7.3.5" }
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && pagefind --site dist",
+    "build:only": "astro build",
+    "preview": "astro preview",
+    "port": "python ../../tooling/port_pages.py",
+    "sitemap": "python ../../tooling/gen_sitemap.py",
+    "predev": "node ../../tooling/sync-prototype-assets.mjs",
+    "prebuild": "node ../../tooling/sync-prototype-assets.mjs",
+    "sync:proto": "node ../../tooling/sync-prototype-assets.mjs"
+  },
+  "dependencies": {
+    "astro": "^7.3.5"
+  },
+  "devDependencies": {
+    "axe-core": "^4.13.0",
+    "lighthouse": "^12.0.0",
+    "pagefind": "^1.5.2"
+  }
 }
