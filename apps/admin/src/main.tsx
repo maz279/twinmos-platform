@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8787/api/v1';
+const API = import.meta.env.VITE_API_URL ?? '/api/v1'; // dev: vite proxies /api → 127.0.0.1:8787
 
 function Login({ onDone }: { onDone: () => void }) {
   const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [err, setErr] = useState('');

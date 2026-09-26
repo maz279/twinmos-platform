@@ -1,5 +1,7 @@
 // DB client factory — PGlite (dev/test) or Postgres (staging/prod).
 // PRODUCTION GUARD: refuses PGlite when NODE_ENV=production (PGlite is single-tenant dev tooling).
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { drizzle } from 'drizzle-orm/pglite';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { PGlite } from '@electric-sql/pglite';
@@ -19,5 +21,7 @@ export function createDb(databaseUrl?: string) {
     return drizzlePg(pool, { schema });
   }
   const dataDir = process.env.PGLITE_DATA ?? './data/dev.pgdata';
+  // PGlite requires the parent directory to exist before first boot
+  mkdirSync(dirname(dataDir), { recursive: true });
   return drizzle(new PGlite(dataDir), { schema });
 }

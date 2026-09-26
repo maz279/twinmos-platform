@@ -6,15 +6,19 @@
   "workspaces": ["apps/*", "packages/*"],
   "engines": { "node": ">=24" },
   "scripts": {
-    "dev": "npm run dev --workspace @twinmos/api & npm run dev --workspace @twinmos/admin & npm run dev --workspace @twinmos/web & wait",
+    "dev": "concurrently -n api,admin,web -c blue,magenta,cyan \"npm:dev:api\" \"npm:dev:admin\" \"npm:dev:web\"",
     "dev:api": "npm run dev --workspace @twinmos/api",
     "dev:admin": "npm run dev --workspace @twinmos/admin",
     "dev:web": "npm run dev --workspace @twinmos/web",
     "db:generate": "npm run generate --workspace @twinmos/db",
-    "db:migrate": "npm run migrate --workspace @twinmos/db",
-    "db:seed": "npm run seed --workspace @twinmos/db",
+    "db:migrate": "npm run db:migrate --workspace @twinmos/api",
+    "db:seed": "npm run db:seed --workspace @twinmos/api",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "tsc -b apps/api apps/admin packages/db packages/shared"
+    "typecheck": "tsc -p apps/api/tsconfig.json && tsc -p packages/db/tsconfig.json && tsc -p packages/shared/tsconfig.json"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3"
   }
 }

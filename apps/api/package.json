@@ -2,7 +2,13 @@
   "name": "@twinmos/api",
   "version": "0.1.0",
   "type": "module",
-  "scripts": { "dev": "node --watch --experimental-strip-types --no-warnings src/index.ts", "start": "node --experimental-strip-types --no-warnings src/index.ts" },
+  "scripts": {
+    "dev": "node --watch --experimental-strip-types --no-warnings src/index.ts",
+    "start": "node --experimental-strip-types --no-warnings src/index.ts",
+    "db:migrate": "node --experimental-strip-types --no-warnings scripts/migrate.ts",
+    "db:seed": "node --experimental-strip-types --no-warnings scripts/seed.ts",
+    "db:reset": "node --experimental-strip-types --no-warnings scripts/reset.ts"
+  },
   "dependencies": {
     "@twinmos/db": "*", "@twinmos/shared": "*",
     "hono": "^4.13.9", "@hono/node-server": "^1.14.0",

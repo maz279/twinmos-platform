@@ -21,7 +21,11 @@ export function formsRoute(db: DB) {
     }
     const { type, email, name, payload } = parsed.data;
 
-    if (!process.env.API_ALLOW_NO_TURNSTILE && parsed.data.turnstileToken) {
+    // Turnstile is REQUIRED unless the dev bypass is explicitly set.
+    if (!process.env.API_ALLOW_NO_TURNSTILE) {
+      if (!parsed.data.turnstileToken) {
+        return c.json(problem(400, 'Captcha token required'), 400, { 'Content-Type': 'application/problem+json' });
+      }
       const ok = await verifyTurnstile(parsed.data.turnstileToken, c.req.header('cf-connecting-ip'));
       if (!ok) return c.json(problem(403, 'Captcha Failed'), 403, { 'Content-Type': 'application/problem+json' });
     }
