@@ -187,6 +187,12 @@
       if (type === 'rma' && out && out.rmaNumber) {
         msg = 'RMA request received. Your RMA number is ' + out.rmaNumber + ' — a confirmation email with shipping instructions is on its way.';
       }
+      // P6 (ADR-009): surface the ticket reference after submit (post-action
+      // only — zero pixels change at rest; the same reference is in the
+      // auto-reply email).
+      if (type !== 'rma' && out && out.reference) {
+        msg = msg + ' Your reference: ' + out.reference + '.';
+      }
       if (type === 'newsletter' && form.id === 'nlForm') {
         form.innerHTML = '';
         var chip = document.createElement('span');

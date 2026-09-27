@@ -3,7 +3,10 @@
 // (number + creation event + customer confirmation), Idempotency-Key honored.
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
-import { formSubmissionSchema, rmaIntakeSchema, problem } from '@twinmos/shared';
+import {
+  formSubmissionSchema, rmaIntakeSchema, problem,
+  submissionRefPrefix, submissionAutoPriority, submissionSlaHours,
+} from '@twinmos/shared';
 import { formSubmission, jobApplication, rmaEvent, rmaRequest } from '@twinmos/db';
 import { sendFormRouting, sendCustomerConfirmation } from '../mailer.ts';
 import { IdempotencyStore } from '../idem.ts';
@@ -59,7 +62,11 @@ export function formsRoute(db: DB) {
     }
 
     const fullPayload = { ...payload, ...(name ? { name } : {}) };
-    const refCode = 'FRM-' + new Date().getFullYear() + '-' + crypto.randomUUID().slice(0, 8);
+    // P6 (ADR-009): type-aware ticket prefix + intake priority + SLA due date.
+    const prefix = submissionRefPrefix(type);
+    const refCode = prefix + '-' + new Date().getFullYear() + '-' + crypto.randomUUID().slice(0, 8);
+    const priority = submissionAutoPriority(type);
+    const dueAt = new Date(Date.now() + submissionSlaHours(type) * 3600_000);
 
     // RMA intake: validate the case fields, create the RMA case + creation event,
     // then store the submission referencing it.
@@ -93,6 +100,7 @@ export function formsRoute(db: DB) {
 
     const rows = await db.insert(formSubmission).values({
       type, email, payload: rmaNumber ? { ...fullPayload, rmaNumber } : fullPayload, refCode,
+      priority, dueAt,
       ip: c.req.header('cf-connecting-ip') ?? null, ua: c.req.header('user-agent') ?? null,
     }).returning({ id: formSubmission.id });
 
@@ -108,6 +116,17 @@ export function formsRoute(db: DB) {
 
     // Team routing email — never blocks the response on failure.
     await sendFormRouting(type, refCode, email, fullPayload);
+
+    // P6 (ADR-009, BR-4.1): ticketed auto-reply for every form family — RMA
+    // already carries its own dedicated confirmation with the RMA number.
+    if (!rmaNumber) {
+      await sendCustomerConfirmation(
+        email,
+        `TwinMOS request ${refCode} — we received your ${type.replace(/-/g, ' ')}`,
+        `Thank you for contacting TwinMOS.\n\nYour reference: ${refCode}\nKeep it for any follow-up with our team.\n\nOur ${type === 'quote' ? 'regional sales office replies within one business day' : 'team replies within ' + Math.round(submissionSlaHours(type) / 24) + ' business day(s)'}.\n\nTwinMOS Technologies — Dubai DAFZA · Taipei · Cologne · San Jose · Dongguan`,
+        { kind: 'submission-auto-reply', refCode, type },
+      );
+    }
 
     const body = rmaNumber
       ? { id: rows[0].id, reference: refCode, rmaNumber }

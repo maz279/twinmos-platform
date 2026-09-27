@@ -6,7 +6,7 @@ import { pgTable, pgEnum, text, varchar, integer, boolean, timestamp, jsonb, ser
 export const roleEnum = pgEnum('role', ['super_admin', 'admin', 'editor', 'author', 'viewer']);
 export const contentStatusEnum = pgEnum('content_status', ['draft', 'in_review', 'scheduled', 'published', 'archived']);
 export const rmaStatusEnum = pgEnum('rma_status', ['submitted', 'under_review', 'approved', 'in_repair', 'shipped', 'delivered', 'closed']);
-export const submissionStatusEnum = pgEnum('submission_status', ['new', 'assigned', 'resolved', 'spam']);
+export const submissionStatusEnum = pgEnum('submission_status', ['new', 'assigned', 'in_progress', 'resolved', 'closed', 'spam']);
 
 const ts = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 
@@ -151,7 +151,18 @@ export const formSubmission = pgTable('form_submission', {
   email: text('email').notNull(), status: submissionStatusEnum('status').notNull().default('new'),
   assigneeId: text('assignee_id').references(() => user.id, { onDelete: 'set null' }),
   refCode: varchar('ref_code', { length: 24 }).notNull().unique(), ip: text('ip'), ua: text('ua'), createdAt: ts(),
+  // P6 (ADR-009): lead-handling — intake priority + first-response SLA deadline
+  priority: varchar('priority', { length: 12 }).notNull().default('normal'),
+  dueAt: timestamp('due_at', { withTimezone: true }),
 }, (t) => [index('submission_type_status_idx').on(t.type, t.status)]);
+
+/** P6: internal collaboration notes on a lead/submission (audited). */
+export const formNote = pgTable('form_note', {
+  id: serial('id').primaryKey(),
+  submissionId: integer('submission_id').notNull().references(() => formSubmission.id, { onDelete: 'cascade' }),
+  authorId: text('author_id').references(() => user.id, { onDelete: 'set null' }),
+  body: text('body').notNull(), createdAt: ts(),
+}, (t) => [index('form_note_submission_idx').on(t.submissionId)]);
 export const rmaRequest = pgTable('rma_request', {
   id: serial('id').primaryKey(), number: varchar('number', { length: 24 }).notNull().unique(),
   productSku: varchar('product_sku', { length: 40 }), serial: varchar('serial', { length: 60 }), issue: text('issue').notNull().default(''),

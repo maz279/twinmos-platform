@@ -87,6 +87,29 @@ if (anyOrg.length === 0) {
   console.log('[seed] demo partner org + member + price asset + 2 serials created');
 }
 
+// 6) P6 demo leads (ADR-009) — one fresh QT lead + one OVERDUE lead so the
+// lead board, SLA badges and dashboard overdue counter demo out of the box.
+{
+  const { formSubmission } = schema;
+  const existing = await db.select({ id: formSubmission.id }).from(formSubmission).where(eq(formSubmission.refCode, 'QT-2026-DEMO0001')).limit(1);
+  if (existing.length === 0) {
+    const year = new Date().getFullYear();
+    await db.insert(formSubmission).values([
+      {
+        type: 'quote', email: 'procurement@nordicpc.example', status: 'new', priority: 'high',
+        refCode: `QT-${year}-DEMO0001`, dueAt: new Date(Date.now() + 20 * 3600_000),
+        payload: { company: 'Nordic PC Assemblies (demo)', name: 'Karin Larsen', country: 'Norway', product: 'VOLTX DDR5 32GB kit', quantity: '250', message: 'Quote for 250 DDR5 kits for Q1 build cycle.' },
+      },
+      {
+        type: 'support-ticket', email: 'field@mesa-systems.example', status: 'assigned', priority: 'urgent',
+        refCode: `TS-${year}-DEMO0002`, dueAt: new Date(Date.now() - 6 * 3600_000), // overdue
+        payload: { name: 'Mesa Field Systems (demo)', country: 'United Arab Emirates', message: 'Firmware update failing on batch of drives — escalated by distributor.' },
+      },
+    ]).onConflictDoNothing();
+    console.log('[seed] P6 demo leads created (1 QT new/high + 1 overdue urgent)');
+  }
+}
+
 // 5) RTL demo strings — tooling/seed-ar.json (Arabic hero/landing) so a fresh
 // dev DB renders the /ar.html demo WITHOUT a manual admin import. Found in the
 // P5 audit iteration: the demo lived only in whatever DB the P4 loop used and

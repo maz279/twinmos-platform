@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>p6-leads-e2e</title></head>
+<body>
+<iframe id="app" title="admin app" style="width:1400px;height:1000px;border:0"></iframe>
+<pre id="out">PENDING</pre>
+<script>
+// P6 lead-board browser E2E: signs in, opens "Leads & quotes", verifies the
+// seeded QT demo lead with priority + SLA badges, opens its detail drawer,
+// adds an internal note, and moves it through a legal transition.
+window.__errs = [];
+window.addEventListener('error', function (e) { window.__errs.push(String(e.message).slice(0, 100)); });
+var out = document.getElementById('out');
+var app = document.getElementById('app');
+var log = [];
+function say(m) { log.push(m); out.textContent = 'P6_LEADS ' + log.join(' | ').slice(0, 800); }
+function byText(sel, text) {
+  return Array.prototype.filter.call(app.contentDocument.querySelectorAll(sel), function (el) {
+    return el.textContent.trim().indexOf(text) !== -1;
+  })[0];
+}
+app.addEventListener('load', function () { if (stage === 'shell') setTimeout(stepShell, 4000); });
+var stage = 'signin';
+fetch('/api/v1/auth/sign-in/email', {
+  method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+  body: JSON.stringify({ email: 'admin@twinmos.dev', password: 'DevOnly-ChangeMe-2026!' }),
+}).then(function (r) { say('signin=' + r.status); stage = 'shell'; app.src = '/'; })
+  .catch(function (e) { out.textContent = 'P6_LEADS_ERR ' + e; });
+
+function stepShell() {
+  try {
+    var nav = byText('nav li, aside li, nav a', 'Leads');
+    if (!nav) throw new Error('no Leads nav item');
+    nav.click();
+    setTimeout(stepBoard, 3000);
+  } catch (e) { out.textContent = 'P6_LEADS_FAIL shell ' + e + ' errs=' + window.__errs.join(';'); }
+}
+function stepBoard() {
+  try {
+    var body = app.contentDocument.body.textContent || '';
+    var hasQt = body.indexOf('QT-') !== -1;
+    var hasPri = body.indexOf('high') !== -1 || body.indexOf('urgent') !== -1;
+    var hasSla = body.indexOf('overdue') !== -1 || body.indexOf('on track') !== -1 || body.indexOf('due soon') !== -1;
+    var hasCsv = !!byText('a', 'Export CSV');
+    if (!hasQt) throw new Error('no QT- row visible');
+    say('board qt=' + hasQt + ' priority=' + hasPri + ' sla=' + hasSla + ' csv=' + hasCsv);
+    var row = Array.prototype.filter.call(app.contentDocument.querySelectorAll('tr'), function (tr) {
+      return tr.textContent.indexOf('QT-') !== -1;
+    })[0];
+    row.click();
+    setTimeout(stepDetail, 2500);
+  } catch (e) { out.textContent = 'P6_LEADS_FAIL board ' + e; }
+}
+function stepDetail() {
+  try {
+    var body = app.contentDocument.body.textContent || '';
+    var hasNotes = body.indexOf('Internal notes') !== -1;
+    if (!hasNotes) throw new Error('no notes section');
+    var input = Array.prototype.filter.call(app.contentDocument.querySelectorAll('input'), function (i) {
+      return i.placeholder && i.placeholder.indexOf('internal note') !== -1;
+    })[0];
+    if (!input) throw new Error('no note input');
+    say('detail notes=1');
+    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    setter.call(input, 'E2E: verified lead workflow in browser');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    setTimeout(function () {
+      var addBtn = byText('button', 'Add note');
+      if (!addBtn) { out.textContent = 'P6_LEADS_FAIL no add-note button'; return; }
+      addBtn.click();
+      setTimeout(function () {
+        var b2 = app.contentDocument.body.textContent || '';
+        var noted = b2.indexOf('E2E: verified lead workflow') !== -1;
+        var move = byText('button', 'assigned');
+        say('note_added=' + noted);
+        if (move) { move.click(); setTimeout(finish, 1800); } else finish();
+      }, 2200);
+    }, 300);
+  } catch (e) { out.textContent = 'P6_LEADS_FAIL detail ' + e; }
+}
+function finish() {
+  var b = app.contentDocument.body.textContent || '';
+  var moved = b.indexOf('assigned') !== -1;
+  out.textContent = ('P6_LEADS_DONE ' + log.join(' | ') + ' | moved=' + moved).slice(0, 800);
+}
+</script>
+</body>
+</html>

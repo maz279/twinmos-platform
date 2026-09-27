@@ -7,7 +7,52 @@ export type Role = (typeof ROLES)[number];
 
 export const CONTENT_STATUS = ['draft', 'in_review', 'scheduled', 'published', 'archived'] as const;
 export const RMA_STATUS = ['submitted', 'under_review', 'approved', 'in_repair', 'shipped', 'delivered', 'closed'] as const;
-export const SUBMISSION_STATUS = ['new', 'assigned', 'resolved', 'spam'] as const;
+// P6 (ADR-009): full lead-handling workflow — new → assigned → in_progress →
+// resolved → closed, with spam as the side-track. Values are APPENDED to the
+// P2 enum via migration 0005 (existing rows keep their states).
+export const SUBMISSION_STATUS = ['new', 'assigned', 'in_progress', 'resolved', 'closed', 'spam'] as const;
+export const SUBMISSION_PRIORITY = ['low', 'normal', 'high', 'urgent'] as const;
+export const SUBMISSION_PRIORITY_SCHEMA = z.enum(SUBMISSION_PRIORITY);
+
+/** Legal lead/submission state transitions (server-enforced like RMA). */
+export const SUBMISSION_TRANSITIONS: Record<(typeof SUBMISSION_STATUS)[number], (typeof SUBMISSION_STATUS)[number][]> = {
+  new: ['assigned', 'spam'],
+  assigned: ['in_progress', 'resolved', 'spam'],
+  in_progress: ['resolved', 'assigned', 'spam'],
+  resolved: ['closed', 'in_progress'], // closed = terminal; reopen path back to in_progress
+  closed: [],
+  spam: ['new'], // un-marking spam returns the lead to the queue
+};
+
+/** First-response SLA per form family, in calendar hours (BR-4.2/4.3/4.4 —
+ * "business hours" simplified to calendar hours, documented in docs/p6-evidence.md;
+ * a business-hours calendar is a later operational refinement). */
+export const SUBMISSION_SLA_HOURS: Record<string, number> = {
+  quote: 24, contact: 24, partner_inquiry: 24, callback_request: 24,
+  distributor_application: 48, report_counterfeit: 48, support_ticket: 48,
+  job_application: 72, general_application: 72, event_rsvp: 72,
+  press_request: 24, feedback: 72, build_submission: 24, newsletter: 24, rma: 24,
+};
+export const submissionSlaHours = (type: string): number =>
+  SUBMISSION_SLA_HOURS[type.replace(/-/g, '_')] ?? 24;
+
+/** Type-aware ticket prefixes (ADR-009); unknown types keep the P2 FRM- fallback. */
+export const SUBMISSION_REF_PREFIX: Record<string, string> = {
+  quote: 'QT', contact: 'CT', distributor_application: 'DS', partner_inquiry: 'PI',
+  support_ticket: 'TS', report_counterfeit: 'BP', job_application: 'JB',
+  general_application: 'JA', callback_request: 'CB', feedback: 'FB',
+  press_request: 'PR', event_rsvp: 'EV', build_submission: 'BD', newsletter: 'NL', rma: 'RMA',
+};
+export const submissionRefPrefix = (type: string): string =>
+  SUBMISSION_REF_PREFIX[type.replace(/-/g, '_')] ?? 'FRM';
+
+/** Intake auto-priority (ADR-009): high-value channel forms route as high. */
+export const submissionAutoPriority = (type: string): (typeof SUBMISSION_PRIORITY)[number] =>
+  ['quote', 'distributor_application', 'partner_inquiry'].includes(type.replace(/-/g, '_')) ? 'high' : 'normal';
+
+export const formNoteCreateSchema = z.object({
+  body: z.string().trim().min(1).max(2000),
+});
 
 /** Legal RMA state transitions (RMA board enforces server-side too). */
 export const RMA_TRANSITIONS: Record<(typeof RMA_STATUS)[number], (typeof RMA_STATUS)[number][]> = {
@@ -78,6 +123,7 @@ export type RmaIntake = z.infer<typeof rmaIntakeSchema>;
 export const submissionUpdateSchema = z.object({
   status: z.enum(SUBMISSION_STATUS).optional(),
   assigneeId: z.string().max(128).nullable().optional(),
+  priority: SUBMISSION_PRIORITY_SCHEMA.optional(), // P6 (ADR-009)
 });
 export const rmaTransitionSchema = z.object({
   to: z.enum(RMA_STATUS),

@@ -84,7 +84,9 @@ describe('POST /api/v1/forms/:type — all 15 registry types', () => {
     });
     expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body.reference).toMatch(/^FRM-\d{4}-[0-9a-f]{8}$/);
+    // P6 (ADR-009): type-aware ticket prefixes (FRM- remains the fallback)
+    const PREFIX = { contact: 'CT', quote: 'QT', rma: 'RMA', 'distributor-application': 'DS', 'partner-inquiry': 'PI', 'press-request': 'PR', 'job-application': 'JB', 'general-application': 'JA', 'support-ticket': 'TS', 'callback-request': 'CB', feedback: 'FB', 'report-counterfeit': 'BP', newsletter: 'NL', 'event-rsvp': 'EV', 'build-submission': 'BD' } as Record<string, string>;
+    expect(body.reference).toMatch(new RegExp('^' + (PREFIX[type] ?? 'FRM') + '-\\d{4}-[0-9a-f]{8}$'));
     const rows = await db.select().from(formSubmission);
     const row = rows.find((r: any) => r.refCode === body.reference);
     expect(row?.type).toBe(type);

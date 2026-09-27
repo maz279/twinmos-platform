@@ -8,3 +8,4 @@
 - **ADR-006 — Pagefind over MeiliSearch at launch.** Static index, zero ops; revisit if query analytics demand more.
 - **ADR-007 — Prototype CSS is the web design system (no Tailwind on web).** Tailwind 4 used in the admin app only (new UI, no prototype to protect).
 - **ADR-008 — Email via Resend with a dev log driver.** No external dependency for local dev; provider swapped by env var.
+- **ADR-009 — P6 commerce: harden quote/lead flow; defer Medusa/Stripe.** Prototype has no cart (contract), channel model is B2B (C-02), one-platform topology; ticketed SLA lead workflow + notes + CSV now; commerce reopens on named business triggers → Stripe-Checkout-first. Details: `ADR-009-commerce-quote-vs-medusa.md`.

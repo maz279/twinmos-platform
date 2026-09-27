@@ -80,7 +80,7 @@ const MODULES = [
   { key: 'partners', label: 'Partners', comp: (p: { me: Me }) => <Partners canManage={isAdminRole(p.me.user?.role)} />, minRole: 'viewer' },
   { key: 'translations', label: 'Translations', comp: (p: { me: Me }) => <Translations isSuperAdmin={p.me.user?.role === 'super_admin'} />, minRole: 'viewer' },
   { key: 'settings', label: 'Settings', comp: (p: { me: Me }) => <Settings canManage={isAdminRole(p.me.user?.role)} isSuperAdmin={p.me.user?.role === 'super_admin'} />, minRole: 'admin' },
-  { key: 'submissions', label: 'Submissions', comp: (p: { canWrite: boolean; me: Me }) => <Submissions canWrite={p.canWrite} myId={p.me.user?.id} />, minRole: 'viewer' },
+  { key: 'submissions', label: 'Leads & quotes', comp: (p: { canWrite: boolean; me: Me }) => <Submissions canWrite={p.canWrite} myId={p.me.user?.id} />, minRole: 'viewer' },
   { key: 'rma', label: 'RMA board', comp: (p: { canWrite: boolean }) => <RmaBoard canWrite={p.canWrite} />, minRole: 'viewer' },
   { key: 'jobs', label: 'Applications', comp: (p: { canWrite: boolean }) => <Jobs canWrite={p.canWrite} />, minRole: 'viewer' },
   { key: 'products', label: 'Products', comp: () => <Products />, minRole: 'viewer' },
