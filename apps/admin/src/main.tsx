@@ -3,7 +3,7 @@
 // Products (P0 reference) · Audit log. Writes are hidden for viewer role.
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { API, apiGet } from './api';
+import { API, apiGet, fmtDate } from './api';
 import Dashboard from './modules/dashboard';
 import Submissions from './modules/submissions';
 import RmaBoard from './modules/rma';
@@ -47,7 +47,7 @@ function Login({ onDone }: { onDone: () => void }) {
   );
 }
 
-type AuditRow = { id: number; action: string; entity: string; entityId: string; actorId: string | null; requestId: string | null; ip: string | null; createdAt: string };
+type AuditRow = { id: number; action: string; entity: string; entityId: string; actorId: string | null; requestId: string | null; ip: string | null; at: string };
 function AuditLog() {
   const { data, error, loading } = useAsync<{ items: AuditRow[] }>(() => apiGet('/admin/audit'), []);
   return (
@@ -59,7 +59,7 @@ function AuditLog() {
         <Table head={['When', 'Action', 'Entity', 'Actor', 'Request']}>
           {data.items.map((row) => (
             <tr key={row.id}>
-              <td style={td}>{new Date(row.createdAt).toLocaleString()}</td>
+              <td style={td}>{fmtDate(row.at)}</td>
               <td style={td}><b>{row.action}</b></td>
               <td style={td}>{row.entity} #{row.entityId}</td>
               <td style={td}>{row.actorId ?? '—'}</td>
