@@ -16,8 +16,9 @@
     out.textContent = 'L-LOADED';
     setTimeout(function () {      try {
         var d = frame.contentDocument;
-        if (new URLSearchParams(location.search).get('mode') === 'track') {
-          var num = new URLSearchParams(location.search).get('num') || '';
+        var q = new URLSearchParams(location.search);
+        if (q.get('mode') === 'track') {
+          var num = q.get('num') || '';
           d.getElementById('rmaId').value = num;
           d.getElementById('rmaTrackBtn').click();
           var t = 0;
@@ -29,7 +30,22 @@
           })();
           return;
         }
-        var form = d.querySelector('form[data-tm-form]');
+        if (q.get('mode') === 'nl') {
+          d.getElementById('nlEmail').value = 'newsletter-e2e@example.com';
+          d.getElementById('nlForm').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+          var n = 0;
+          (function pollNl() {
+            var chip = d.querySelector('#nlForm .chip.ok, #nlForm .tm-api-error');
+            if (chip) { out.textContent = 'E2E_NL ' + chip.textContent.trim().slice(0, 120); return; }
+            if (++n > 40) { out.textContent = 'E2E_NL_TIMEOUT'; return; }
+            setTimeout(pollNl, 500);
+          })();
+          return;
+        }
+        // pick the first real submission form (skip demo sign-ins, mirroring forms.js)
+        var form = Array.prototype.find.call(d.querySelectorAll('form[data-tm-form]'), function (f) {
+          return (f.getAttribute('data-success') || '').indexOf('Demo sign-in') === -1;
+        }) || d.querySelector('form[data-tm-form]');
         if (!form) { out.textContent = 'E2E_FAIL no form'; return; }
         // fill: map label-normalized key -> value (mirrors forms.js collection)
         Object.keys(fill).forEach(function (key) {
@@ -75,7 +91,14 @@
     setTimeout(function () { if (out.textContent === 'L-LOADED') out.textContent = 'L-LOADED-WAITING'; }, 4000).unref?.();
   });
   frame.addEventListener('error', function () { out.textContent = 'E2E_IFRAME_ERROR'; });
-  setTimeout(function () { if (out.textContent === 'PENDING') out.textContent = 'E2E_NO_LOAD readyState=' + frame.contentDocument?.readyState; }, 25000);
+  setTimeout(function () {
+    if (out.textContent === 'PENDING') {
+      try {
+        var d = frame.contentDocument;
+        out.textContent = 'E2E_NO_LOAD readyState=' + d.readyState + ' forms=' + d.querySelectorAll('form[data-tm-form]').length;
+      } catch (e) { out.textContent = 'E2E_NO_LOAD err ' + e; }
+    }
+  }, 15000);
   frame.src = page;
 })();
 </script>

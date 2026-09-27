@@ -15,18 +15,18 @@
   var API = window.TWINMOS_API || '/api/v1';
   if (API.charAt(API.length - 1) === '/') API = API.slice(0, -1);
 
-  var PAGE_TYPE = { '/contact.html': 'contact', '/quote.html': 'quote', '/careers.html': 'job-application' };
+  var PAGE_TYPE = { '/contact.html': 'contact', '/quote.html': 'quote', '/careers.html': 'job-application', '/partners.html': 'partner-inquiry' };
   /** RMA intake field names (shared rmaIntakeSchema) mapped from form labels. */
   var KEY_ALIASES = {
     'full name': 'name', 'email': 'email', 'e-mail': 'email', 'email address': 'email',
-    'business email': 'email', 'contact name': 'name',
+    'business email': 'email', 'contact name': 'name', 'partner email': 'email',
     'phone': 'phone', 'phone (with country code)': 'phone',
     'country': 'country', 'country / region': 'country', 'country region': 'country',
     'product': 'product', 'serial / part number': 'serial', 'serial': 'serial',
     'issue description': 'issue', 'message': 'message', 'topic': 'topic',
     'company': 'company', 'company / organization': 'company',
     'product interest': 'productInterest', 'estimated quantity': 'quantity',
-    'requirement details': 'details',
+    'requirement details': 'details', 'channel type': 'channelType',
     'position applied for': 'position', 'preferred department': 'department',
     'preferred location': 'location', 'employment type': 'employmentType',
     'years of experience': 'experienceYears', 'notice period': 'noticePeriod',
@@ -34,6 +34,12 @@
     'how did you hear about us?': 'source', 'cover letter — why , why this role?': 'coverLetter',
     'privacy consent': '_consent',
   };
+
+  /** Careers picks the registry type from the Position select (General Application → own type). */
+  function careersType(payload) {
+    return String(payload.position || '').toLowerCase().indexOf('general application') !== -1
+      ? 'general-application' : 'job-application';
+  }
 
   function normLabel(text) {
     return String(text || '').replace(/\*/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -159,14 +165,14 @@
     if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
 
     var body = {
-      type: type,
+      type: type === 'job-application' ? careersType(data.payload) : type,
       email: data.email,
       payload: data.payload,
       consent: true, // UI carries an explicit checkbox where the prototype provides one; documented for forms whose prototype UI lacks it
       ...(turnstileToken(form) ? { turnstileToken: turnstileToken(form) } : {}),
     };
 
-    fetch(API + '/forms/' + type, {
+    fetch(API + '/forms/' + body.type, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),

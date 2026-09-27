@@ -65,18 +65,21 @@ function AuditLog() {
 }
 
 const MODULES = [
-  { key: 'dashboard', label: 'Dashboard', comp: () => <Dashboard /> },
-  { key: 'submissions', label: 'Submissions', comp: (p: { canWrite: boolean; me: Me }) => <Submissions canWrite={p.canWrite} myId={p.me.user?.id} /> },
-  { key: 'rma', label: 'RMA board', comp: (p: { canWrite: boolean }) => <RmaBoard canWrite={p.canWrite} /> },
-  { key: 'jobs', label: 'Applications', comp: (p: { canWrite: boolean }) => <Jobs canWrite={p.canWrite} /> },
-  { key: 'products', label: 'Products', comp: () => <Products /> },
-  { key: 'audit', label: 'Audit log', comp: () => <AuditLog /> },
+  { key: 'dashboard', label: 'Dashboard', comp: () => <Dashboard />, minRole: 'viewer' },
+  { key: 'submissions', label: 'Submissions', comp: (p: { canWrite: boolean; me: Me }) => <Submissions canWrite={p.canWrite} myId={p.me.user?.id} />, minRole: 'viewer' },
+  { key: 'rma', label: 'RMA board', comp: (p: { canWrite: boolean }) => <RmaBoard canWrite={p.canWrite} />, minRole: 'viewer' },
+  { key: 'jobs', label: 'Applications', comp: (p: { canWrite: boolean }) => <Jobs canWrite={p.canWrite} />, minRole: 'viewer' },
+  { key: 'products', label: 'Products', comp: () => <Products />, minRole: 'viewer' },
+  { key: 'audit', label: 'Audit log', comp: () => <AuditLog />, minRole: 'admin' },
 ] as const;
+
+const ROLE_RANK: Record<string, number> = { viewer: 1, author: 2, editor: 3, admin: 4, super_admin: 5 };
 
 function Shell({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const [view, setView] = useState<string>('dashboard');
   const writable = canWrite(me.user?.role);
-  const mod = MODULES.find((m) => m.key === view) ?? MODULES[0];
+  const visible = MODULES.filter((m) => (ROLE_RANK[me.user?.role ?? 'viewer'] ?? 0) >= (ROLE_RANK[m.minRole] ?? 5));
+  const mod = visible.find((m) => m.key === view) ?? visible[0];
   async function signOut() {
     await fetch(API + '/auth/sign-out', { method: 'POST', credentials: 'include' }).catch(() => {});
     onSignOut();
@@ -86,7 +89,7 @@ function Shell({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
       <nav style={{ background: '#0A2540', color: '#fff', padding: 20 }}>
         <b>TwinMOS CMS</b>
         <ul style={{ listStyle: 'none', padding: 0, marginTop: 20 }}>
-          {MODULES.map((m) => (
+          {visible.map((m) => (
             <li key={m.key} onClick={() => setView(m.key)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: view === m.key ? 'rgba(255,255,255,.12)' : undefined }}>
               {m.label}
             </li>

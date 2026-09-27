@@ -42,13 +42,19 @@
 
 ### Browser-level E2E (real pages, real API, headless Chrome)
 
-Harness `tooling/audit-harness/form-e2e.html` (drives the ported page in an iframe):
+Harness `tooling/audit-harness/form-e2e.html` (drives the ported page in an iframe; skips demo sign-in forms exactly like forms.js; `mode=track` drives the RMA tracker, `mode=nl` the footer newsletter):
 
 - **contact:** `E2E_OK ✓ Submitted …` → DB row + routing email (`outbox/…json` shows name/topic/message + Reply-To + reference)
+- **quote:** `E2E_OK ✓ … Quote request received — your regional office will reply …`
+- **partners (channel application):** `E2E_OK ✓ … Application received — the channel team …` → `partner-inquiry` row (`company/country/email/channelType`)
+- **careers (specific role):** `E2E_OK ✓ … HR will review …` → `job-application` row + `job_application` record with the chosen position
+- **careers (General Application):** `E2E_OK` → typed as **`general-application`** (verified via `/admin/stats` byType)
+- **newsletter:** `E2E_NL ✓ Subscribed — welcome aboard` (footer form on index)
 - **rma:** `E2E_OK ✓ … Your RMA number is TM-RMA-2026-653266 — confirmation email … on its way`
 - **tracker:** real timeline rendered (`✓ TM-RMA-2026-653266 — submitted · Case created — submitted · RMA request received via website form`)
-- **admin SPA:** `ADMIN_AUTHED nav=Dashboard,Submissions,RMA board,Applications,Products,Audit log … admin@twinmos.dev super admin` (live KPI cards against `/admin/stats`)
-- Known gap: the careers page stalls inside the iframe harness (page-specific virtual-time quirk); its pipeline is identical to contact (same forms.js path) and `job-application` is covered API-side
+- **admin SPA:** `ADMIN_AUTHED nav=Dashboard,Submissions,RMA board,Applications,Products,Audit log … admin@twinmos.dev super admin` (live KPI cards against `/admin/stats`; Audit nav is role-gated to admin+)
+
+**Gap-audit iteration (2026-09-27, this doc v2):** full sweep of every prototype `data-tm-form` against the wiring map found the partners channel-application form unwired — fixed (`/partners.html → partner-inquiry`, demo sign-in excluded); careers now switches to `general-application` when the Position select is "General Application"; the admin E2E harness moved out of the shipped `apps/admin/public` (bundle hygiene); dev API URL is pinned in gitignored `apps/web/.env` so rebuilds never lose it (a recurring 404 source). Parity re-verified after the changes: partners 98.17/98.98 · careers 98.86/98.52 — all ≥98%.
 
 ### Parity guard (P1 contract preserved)
 
