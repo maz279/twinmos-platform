@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "astro": "^7.3.5",
-    "@twinmos/shared": "*"
+    "@twinmos/shared": "0.1.0"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",
