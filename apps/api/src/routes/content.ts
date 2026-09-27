@@ -27,11 +27,19 @@ const PREVIEW_TTL_MS = Number(process.env.PREVIEW_TTL_MS ?? 30 * 60 * 1000);
 const PREVIEWS = new Map<string, { entity: string; id: number; expiresAt: number }>();
 function newPreviewToken(entity: string, id: number): string {
   const token = crypto.randomUUID() + crypto.randomUUID().slice(0, 8);
-  PREVIEWS.set(token, { entity, id, expiresAt: Date.now() + PREVIEW_TTL_MS });
+  PREVIEWS.set(token, { entity, id, expiresAt: Date.now() + previewTtlMs() });
   if (PREVIEWS.size > 1000) { // cheap bound
     for (const [k, v] of PREVIEWS) if (v.expiresAt < Date.now()) PREVIEWS.delete(k);
   }
   return token;
+}
+/** TTL is read per-mint so tests can shorten it via env without re-import. */
+function previewTtlMs(): number {
+  return Number(process.env.PREVIEW_TTL_MS ?? PREVIEW_TTL_MS);
+}
+/** Test hook: expire every currently-minted preview token immediately. */
+export function __expirePreviewTokensForTest(): void {
+  for (const [k, v] of PREVIEWS) v.expiresAt = Date.now() - 1;
 }
 
 const TABLES = { article, news: newsPost, page, faq } as const;

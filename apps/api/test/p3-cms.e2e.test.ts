@@ -299,6 +299,19 @@ describe('settings / redirects / locales', () => {
     expect((await secret.json()).secret).toBe(true);
   });
 
+  it('settings/redirects are super_admin-only (docs/04): editor and admin roles blocked', async () => {
+    // editorCookie is role 'editor'; create an admin-role user for the negative case
+    const adminRoleCookie = await makeSession('pure-admin@twinmos.dev', mkPass('PureAdmin'), 'admin');
+    expect((await app.request('/api/v1/admin/redirects', { method: 'POST', headers: { 'content-type': 'application/json', cookie: adminRoleCookie }, body: JSON.stringify({ from: '/admin-no', to: '/t' }) })).status).toBe(403);
+    expect((await app.request('/api/v1/admin/settings', { method: 'PUT', headers: { 'content-type': 'application/json', cookie: adminRoleCookie }, body: JSON.stringify({ key: 'x', value: 1 }) })).status).toBe(403);
+    expect((await app.request('/api/v1/admin/settings', { method: 'PUT', headers: { 'content-type': 'application/json', cookie: editorCookie }, body: JSON.stringify({ key: 'x', value: 1 }) })).status).toBe(403);
+  });
+
+  it('audit log: editor gets read access (docs/04); viewer blocked', async () => {
+    expect((await app.request('/api/v1/admin/audit', { headers: { 'content-type': 'application/json', cookie: editorCookie } })).status).toBe(200);
+    expect((await app.request('/api/v1/admin/audit', { headers: { 'content-type': 'application/json', cookie: viewerCookie } })).status).toBe(403);
+  });
+
   it('viewer cannot touch settings; locale activation is super_admin', async () => {
     expect((await app.request('/api/v1/admin/redirects', { headers: { 'content-type': 'application/json', cookie: viewerCookie } })).status).toBe(200); // read ok
     expect((await app.request('/api/v1/admin/redirects', { ...{ method: 'POST', body: JSON.stringify({ from: '/v', to: '/t' }) }, headers: { 'content-type': 'application/json', cookie: viewerCookie, ...({ method: 'POST', body: JSON.stringify({ from: '/v', to: '/t' }) }.headers ?? {}) } })).status).toBe(403);
@@ -380,4 +393,48 @@ describe('P3 gap fixes: pages blocks, news eventDate, media serving', () => {
     // missing id → 404, not a 500
     expect((await app.request('/api/v1/admin/media/999999/file', { headers: { cookie: adminCookie } })).status).toBe(404);
   });
+
+// ---- audit layer 5: dims, future-dated scheduling, preview TTL ----
+describe('audit layer 5 fixes', () => {
+  it('media upload populates width/height from native sniffing (PNG)', async () => {
+    const fd = new FormData();
+    fd.append('file', new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d, 0x49, 0x48, 0x44, 0x52, 0, 0, 0, 0x10, 0, 0, 0, 0x20, 8, 6, 0, 0, 0])], 'dims.png'));
+    fd.append('alt', 'dims test');
+    const up = await app.request('/api/v1/admin/media', { method: 'POST', headers: { cookie: adminCookie }, body: fd });
+    expect(up.status).toBe(201);
+    const asset = await up.json();
+    expect(asset.width).toBe(16);
+    expect(asset.height).toBe(32);
+  });
+
+  it('future-dated scheduled content is NOT promoted', async () => {
+    const created = await app.request('/api/v1/admin/content/news', {
+      method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ title: 'Future Dated ' + Date.now(), body: 'f'.repeat(20) }),
+    });
+    const { id } = await created.json();
+    await app.request(`/api/v1/admin/content/news/${id}/transition`, { method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie }, body: JSON.stringify({ to: 'in_review' }) });
+    const future = new Date(Date.now() + 86_400_000).toISOString();
+    await app.request(`/api/v1/admin/content/news/${id}/transition`, { method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie }, body: JSON.stringify({ to: 'scheduled', publishAt: future }) });
+    await promoteScheduled(db, 'negative-test');
+    const row = (await db.select().from(newsPost).where(eq(newsPost.id, id)))[0];
+    expect(row.status).toBe('scheduled'); // still scheduled — publishAt is in the future
+  });
+
+  it('preview tokens expire (expiry honoured, junk 404)', async () => {
+    const { __expirePreviewTokensForTest } = await import('../src/routes/content.ts');
+    const created = await app.request('/api/v1/admin/content/article', {
+      method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ title: 'TTL Probe', body: 't'.repeat(20) }),
+    });
+    const { id } = await created.json();
+    const prev = await app.request(`/api/v1/admin/content/article/${id}/preview`, { method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie }, body: '{}' });
+    const { previewUrl } = await prev.json();
+    expect((await app.request(previewUrl)).status).toBe(200); // live before expiry
+    __expirePreviewTokensForTest(); // force every minted token past its TTL
+    expect((await app.request(previewUrl)).status).toBe(404); // expired
+    expect((await app.request('/api/v1/preview/expired-or-junk-token')).status).toBe(404);
+  });
 });
+});
+

@@ -93,8 +93,9 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
   r.get('/audit', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
-    const ok = await deps.requireRole('admin')(c.req.raw);
-    if (!ok) return c.json(problem(403, 'Requires admin role or above'), 403, { 'Content-Type': P });
+    // docs/04 RBAC: audit log — admin full, editor read
+    const ok = await deps.requireRole('editor')(c.req.raw);
+    if (!ok) return c.json(problem(403, 'Requires editor role or above (read)'), 403, { 'Content-Type': P });
     const rows = await db.select().from(auditLog).orderBy(desc(auditLog.id)).limit(100);
     return c.json({ items: rows });
   });

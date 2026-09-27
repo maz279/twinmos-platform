@@ -36,6 +36,44 @@ function sniffMime(bytes: Uint8Array): string | null {
   return null;
 }
 
+/** Native dimension parsing (no deps) for PNG / GIF / JPEG / WebP — populates
+ *  the width/height columns so the library can flag oversized assets later. */
+function sniffDimensions(bytes: Uint8Array, mime: string): { width: number; height: number } | null {
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  try {
+    if (mime === 'image/png' && bytes.length > 24) {
+      return { width: dv.getUint32(16), height: dv.getUint32(20) };
+    }
+    if (mime === 'image/gif' && bytes.length > 10) {
+      return { width: dv.getUint16(6, true), height: dv.getUint16(8, true) };
+    }
+    if (mime === 'image/jpeg') {
+      // walk JPEG segments to the first SOF marker
+      let off = 2;
+      while (off + 9 < bytes.length) {
+        if (bytes[off] !== 0xff) { off++; continue; }
+        const marker = bytes[off + 1];
+        const len = dv.getUint16(off + 2);
+        const isSof = (marker >= 0xc0 && marker <= 0xc3) || (marker >= 0xc5 && marker <= 0xc7) ||
+          (marker >= 0xc9 && marker <= 0xcb) || (marker >= 0xcd && marker <= 0xcf);
+        if (isSof) return { height: dv.getUint16(off + 5), width: dv.getUint16(off + 7) };
+        off += 2 + len;
+      }
+      return null;
+    }
+    if (mime === 'image/webp' && bytes.length > 30) {
+      const format = String.fromCharCode(bytes[12], bytes[13], bytes[14]);
+      if (format === 'VP8 ') return { width: dv.getUint16(26, true) & 0x3fff, height: dv.getUint16(28, true) & 0x3fff };
+      if (format === 'VP8L') {
+        const bits = dv.getUint32(21, true);
+        return { width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 };
+      }
+      if (format === 'VP8X') return { width: 1 + (bytes[24] | (bytes[25] << 8) | (bytes[26] << 16)), height: 1 + (bytes[27] | (bytes[28] << 8) | (bytes[29] << 16)) };
+    }
+  } catch { /* truncated header — dimensions stay null */ }
+  return null;
+}
+
 export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
   const r = new Hono();
   const MEDIA_DIR = process.env.MEDIA_DIR ?? './data/media';
@@ -100,9 +138,12 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     writeFileSync(join(MEDIA_DIR, stored), bytes);
 
     const folder = String(form?.get('folder') ?? 'uploads').replace(/[^a-z0-9-]/gi, '').slice(0, 40) || 'uploads';
+    const dims = sniffDimensions(bytes, sniffed);
     const rows = await db.insert(mediaAsset).values({
       key: stored, kind,
       alt: alt.slice(0, 500),
+      width: dims?.width ?? null,
+      height: dims?.height ?? null,
       meta: { origName: file.name.slice(0, 180), mime: sniffed, bytes: file.size, folder },
       uploadedBy: s.user.id,
     }).returning();

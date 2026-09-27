@@ -52,4 +52,32 @@
     Array.prototype.push.apply(window.TM.articles, addArticles);
     Array.prototype.push.apply(window.TM.articles, addNews);
   }
+
+  // Newsroom (news.html) renders a STATIC card grid from the prototype — the
+  // merge layer appends CMS cards so published news/events appear live there
+  // too. Cards mirror the prototype markup: <a.card.article-card data-ncat>.
+  var isNewsroom = /\/news\.html$/.test(location.pathname);
+  if (isNewsroom && addNews.length) {
+    var grid = document.querySelector('#main .grid.g3') || document.querySelector('#main .grid.g2');
+    if (grid) {
+      addNews.forEach(function (n) {
+        var a = document.createElement('a');
+        a.className = 'card card-pad article-card';
+        a.setAttribute('data-ncat', n.cat);
+        a.href = 'article.html?id=' + encodeURIComponent(n.id);
+        var chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.style.alignSelf = 'flex-start';
+        chip.textContent = n.cat;
+        var b = document.createElement('b');
+        b.style.cssText = 'display:block;color:var(--ink);margin:8px 0 6px;font-size:15.5px';
+        b.textContent = n.title;
+        var note = document.createElement('span');
+        note.className = 'form-note';
+        note.textContent = (n.desc || n.title).slice(0, 110) + '…';
+        a.appendChild(chip); a.appendChild(b); a.appendChild(note);
+        grid.appendChild(a);
+      });
+    }
+  }
 })();

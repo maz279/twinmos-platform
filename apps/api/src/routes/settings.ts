@@ -40,7 +40,7 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: any) => Guard; se
   });
 
   r.put('/settings', async (c) => {
-    const guard = await roleGuard(c, 'admin'); // settings/integrations = super_admin per docs/04; admin manages menus/redirects keys
+    const guard = await roleGuard(c, 'super_admin'); // docs/04 RBAC: Settings/integrations = super_admin only
     if (guard instanceof Response) return guard;
     const parsed = settingUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
@@ -61,7 +61,7 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: any) => Guard; se
   });
 
   r.post('/redirects', async (c) => {
-    const guard = await roleGuard(c, 'admin');
+    const guard = await roleGuard(c, 'super_admin');
     if (guard instanceof Response) return guard;
     const parsed = redirectCreateSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
@@ -78,7 +78,7 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: any) => Guard; se
   });
 
   r.patch('/redirects/:id', async (c) => {
-    const guard = await roleGuard(c, 'admin');
+    const guard = await roleGuard(c, 'super_admin');
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
     const parsed = redirectUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
@@ -90,7 +90,7 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: any) => Guard; se
   });
 
   r.delete('/redirects/:id', async (c) => {
-    const guard = await roleGuard(c, 'admin');
+    const guard = await roleGuard(c, 'super_admin');
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
     const rows = await db.delete(redirect).where(eq(redirect.id, id)).returning();

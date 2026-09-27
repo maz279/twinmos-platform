@@ -64,3 +64,13 @@ Full-scope sweep against docs/04 §Modules found three real gaps — all fixed a
 3. **Uploaded media could not be viewed or linked** — files landed in `MEDIA_DIR` with no serving endpoint. Now `GET /admin/media/:id/file`: session-authenticated, resolve-based path-traversal guard (file must live inside MEDIA_DIR), mime from the stored sniffed type, SVG always served as attachment (never inline), 404 for missing rows/files. Live-verified: authed 200 `image/png` with byte-exact round-trip, anonymous 401. Media library rows gained a "View file ↗" link.
 
 Post-fix gates: 4-project typecheck clean · **50/50 tests** · admin `ADMIN_AUTHED` smoke · sealed scan 0 findings.
+
+## 5. Deep-audit iteration (2026-09-27, doc v3)
+
+Full pass against the docs/04 RBAC matrix and module spec found four more issues — all fixed, suite now **55/55**:
+
+1. **RBAC drift:** settings upsert and the redirects CRUD allowed `admin`, but docs/04 §RBAC grants Settings/integrations to **super_admin only** — guards tightened (admin/editor get 403, tested). Audit-log read required `admin`, but the matrix gives **editor read access** — relaxed to editor+ (viewer still 403, tested).
+2. **Media width/height were never populated** (spec: dimension awareness). Added native no-dependency dimension sniffing (PNG IHDR, GIF logical screen, JPEG SOF-marker walk, WebP VP8/VP8L/VP8X) wired into the insert — tested with a 16×32 PNG.
+3. **Future-dated scheduled content was untested:** now asserted — `promoteScheduled` leaves `publishAt`-in-the-future items in `scheduled`.
+4. **Preview-token expiry was untested:** TTL is now read per-mint (`PREVIEW_TTL_MS` env honoured at runtime) with an `__expirePreviewTokensForTest` hook; test mints a token, verifies 200, force-expires, verifies 404 (plus junk-token 404).
+5. **Events didn't surface on the newsroom page** — the merge layer only fed `TM.articles` (search + article reader), while news.html renders a static card grid. `cms-merge.js` now also appends prototype-markup cards (`<a.card.article-card data-ncat>` into the news grid) for CMS news/events. Live-verified end-to-end: event published through the real API → export → rebuild → **card present on news.html** and findable via search. Parity spot-checks unchanged (learn 96.87 / index 99.40 @390) because day-one export remains empty until an editor publishes.
