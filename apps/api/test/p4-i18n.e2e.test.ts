@@ -200,4 +200,12 @@ describe('built-site hreflang and RTL (static output assertions)', () => {
     expect(html).not.toContain('hreflang="de"'); // grid only on landings
     expect(html).toContain('<html lang="en" dir="ltr">'); // dir now explicit
   });
+
+  maybeIt('sitemap lists all 8 locale landings', () => {
+    const xml = readFileSync(join(WEB, 'dist', 'sitemap.xml'), 'utf8');
+    for (const code of ['ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de']) {
+      expect(xml, `sitemap missing ${code}`).toContain(`/${code}.html`);
+    }
+    expect(xml).not.toContain('hreflang'); // sitemap is loc-only; hreflang lives in heads
+  });
 });

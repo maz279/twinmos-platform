@@ -20,6 +20,10 @@ def main() -> int:
         # homepage is the site root, matching the canonical in Layout.astro
         loc = SITE if page == 'index.html' else SITE + page
         urls.append(f'  <url><loc>{loc}</loc><changefreq>{spec[1]}</changefreq><priority>{spec[0]}</priority></url>')
+    # P4 locale landings (/{code}.html from the [locale] dynamic route) —
+    # discoverable alternates of the homepage; lower priority than the EN root.
+    for code in ('ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'):
+        urls.append(f'  <url><loc>{SITE}{code}.html</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>')
     xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(urls) + '\n</urlset>\n'
     out = REPO / 'apps' / 'web' / 'public' / 'sitemap.xml'
     out.write_text(xml, encoding='utf-8', newline='\n')

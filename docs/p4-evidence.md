@@ -62,3 +62,13 @@ Three surfaces audited beyond the earlier passes — two real gaps found and clo
 3. **Landing breadth + RTL audit re-run live:** all 8 landings serve 200; `ar.html` renders with `lang="ar" dir="rtl"`, `rtl.css` linked, `i18n.js` in the boot chain, and `data-i18n` keys on the hero. (The landings intentionally omit the full site header — they carry their own "Continue in English" link — so `langSel` absence there is by design; the sync code guards on it.)
 
 Post-fix gates: **65/65** tests · 4-project typecheck clean · sealed scan 0 findings.
+
+## 7. Audit iteration 2 (2026-09-27, doc v4)
+
+Follow-up pass over the deep-audit surfaces, plus what they touch:
+
+1. **Locale landings were missing from sitemap.xml** — the generator only walked `src/pages/*.astro`, and landings come from the `[locale]` dynamic route. `gen_sitemap.py` now appends all 8 (priority 0.6, weekly); sitemap is 27 → **35 URLs**, verified in `dist`. A new built-site test asserts all 8 codes appear (suite 65 → **66**).
+2. **Multi-locale selector flows verified live** (beyond the ar-only proof): `hi → /hi.html dir=ltr`, **`zh-CN → /zh-cn.html`** (BCP-47 option value correctly normalized to the lower-case landing file), `en → /index.html` — all through the real selector on the EN homepage.
+3. **rtl.css scoping re-audited:** linked on the ar landing only — **zero** LTR pages reference it — and the landings' root-relative asset paths (`assets/css/...`) resolve correctly since landings sit at the dist root alongside the EN pages.
+
+Post-fix gates: **66/66** tests · 4-project typecheck clean · sealed scan 0 findings.
