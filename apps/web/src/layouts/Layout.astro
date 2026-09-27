@@ -23,7 +23,10 @@ const canonical = new URL(path, Astro.site);
  * whole site's /page.html URL scheme). */
 const LOCALES = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'];
 const RTL = ['ar'];
-const dir = RTL.includes(locale) ? 'rtl' : 'ltr';
+// dir is emitted ONLY for RTL — the prototype ships LTR pages with no dir
+// attribute, and an explicit dir="ltr" measurably shifts Chrome's text
+// layout (parity @390 dropped ~4pp on every text line until this matched).
+const dir = RTL.includes(locale) ? 'rtl' : undefined;
 const localeUrl = (code: string) =>
   code === 'en'
     ? new URL(hreflangGrid ? '/' : (path === '/' ? '/' : path), Astro.site) // landings mirror the homepage

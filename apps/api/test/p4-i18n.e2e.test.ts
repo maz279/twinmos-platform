@@ -173,12 +173,15 @@ describe('built-site hreflang and RTL (static output assertions)', () => {
   }
 
   maybeIt('landing pages exist for all 8 non-EN locales with correct lang/dir', () => {
-    const dirs: Record<string, string> = { ar: 'rtl' };
+    const rtl = new Set(['ar']);
     for (const code of ['ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de']) {
       const f = join(WEB, 'dist', `${code}.html`);
       expect(existsSync(f), `${f} missing`).toBe(true);
       const html = readFileSync(f, 'utf8');
-      const want = `lang="${code}" dir="${dirs[code] ?? 'ltr'}"`;
+      // P5 audit: dir is emitted ONLY for RTL — the prototype ships LTR pages
+      // with no dir attribute (an explicit dir="ltr" shifted Chrome's text
+      // rasterization; parity). LTR landings: bare lang; ar keeps dir="rtl".
+      const want = rtl.has(code) ? `<html lang="${code}" dir="rtl">` : `<html lang="${code}">`;
       expect(html).toContain(want);
       expect(html).toContain('rtl.css'); // rtl stylesheet linked on ar
     }
@@ -198,7 +201,7 @@ describe('built-site hreflang and RTL (static output assertions)', () => {
     expect(html).toContain('hreflang="en"');
     expect(html).toContain('hreflang="x-default"');
     expect(html).not.toContain('hreflang="de"'); // grid only on landings
-    expect(html).toContain('<html lang="en" dir="ltr">'); // dir now explicit
+    expect(html).toContain('<html lang="en">'); // no dir on LTR — prototype contract (P5 audit)
   });
 
   maybeIt('sitemap lists all 8 locale landings', () => {

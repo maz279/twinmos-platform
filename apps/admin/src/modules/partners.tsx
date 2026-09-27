@@ -104,6 +104,11 @@ function OrgDetail({ id, onChanged }: { id: number; onChanged: () => void }) {
     try { await apiSend('POST', `/admin/partner-orgs/${id}/members`, { email: memberEmail, role: 'staff' }); setMemberEmail(''); reload(); onChanged(); }
     catch (e) { setErr(e); } finally { setBusy(false); }
   }
+  async function removeMember(memberId: number) {
+    setBusy(true); setErr(null);
+    try { await apiSend('DELETE', `/admin/partner-orgs/${id}/members/${memberId}`); reload(); onChanged(); }
+    catch (e) { setErr(e); } finally { setBusy(false); }
+  }
   async function upload() {
     const file = fileRef.current?.files?.[0];
     if (!file || !title.trim()) { setErr(new Error('File and title required.')); return; }
@@ -127,7 +132,11 @@ function OrgDetail({ id, onChanged }: { id: number; onChanged: () => void }) {
       {error ? <Err error={error} /> : loading ? <p>Loading…</p> : (
         <>
           {(data?.items ?? []).map((m) => (
-            <div key={m.id} style={{ fontSize: 13.5, padding: '4px 0' }}>{m.email} · {m.role}</div>
+            <div key={m.id} style={{ fontSize: 13.5, padding: '4px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ flex: 1 }}>{m.email} · {m.role}</span>
+              <button style={{ ...btnGhost, padding: '2px 8px', fontSize: 12 }} disabled={busy}
+                onClick={() => removeMember(m.id)}>Remove</button>
+            </div>
           ))}
           {data && data.items.length === 0 && <p style={{ color: '#5E7691', fontSize: 13 }}>No members — add the partner's site account email.</p>}
         </>

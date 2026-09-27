@@ -64,12 +64,14 @@ button.tab,
   padding: 0;
 }
 
-/* app.js inserts the breadcrumb after paint (37px tall), shifting everything
- * below it (largest CLS source on product/article). Reserving the line in the
- * wrapping div neutralises it; rendered pixels are unchanged. */
-nav.breadcrumb {
-  min-height: 37px;
-}
+/* Breadcrumb height reserve REMOVED (P5 audit iteration): the Astro port
+ * ships every breadcrumb as STATIC markup, so the "app.js inserts it after
+ * paint" CLS this 37px min-height guarded against does not exist here — the
+ * rule only added ~5px vs the prototype on every breadcrumb page, pushing
+ * all content below it out of pixel parity (partners/support measured
+ * 97.9@390 since P1 for exactly this reason, masked until now by corrupted
+ * reference pairs and a broken scorer). If a page ever renders its
+ * breadcrumb dynamically again, scope a reserve to that page, not globally. */
 
 /* PDP loading shell: reserve the full first screens of the rendered PDP so
  * the client render (which replaces .empty-state) barely shifts the layout.

@@ -148,7 +148,7 @@ describe('partner portal', () => {
 
     // org-scoped asset visible to si (the member's org type)
     const fd2 = new FormData();
-    fd2.append('file', new File([new Uint8Array([9, 9, 9])], 'integration-guide.md', { type: 'text/markdown' }));
+    fd2.append('file', new File([new Uint8Array([9, 9, 9])], 'integration-guide.zip', { type: 'application/zip' }));
     fd2.append('title', 'SI Integration Guide');
     fd2.append('category', 'resource');
     fd2.append('visibleToTypes', 'si');
@@ -168,6 +168,7 @@ describe('partner portal', () => {
     expect(dl.status).toBe(200);
     expect(new Uint8Array(await dl.arrayBuffer()).length).toBe(3);
     expect(dl.headers.get('content-disposition')).toContain('attachment');
+    expect(dl.headers.get('x-content-type-options')).toBe('nosniff');
 
     // a distributor member must NOT see/download the si asset (type gate)
     oemUserCookie = await makeSession('p5-oem@twinmos.dev', mkPass('Oem'));
@@ -259,5 +260,100 @@ describe('anti-counterfeit SN-check', () => {
     expect(rep.byResult.unverified).toBeGreaterThanOrEqual(1);
     expect(rep.topSerials[0].serial).toBe('P5-SER-0001');
     expect(rep.recent.length).toBeGreaterThan(0);
+  });
+});
+
+// ---- P5 audit iteration: upload hardening, member removal, report validation,
+// multi-org determinism (regressions for the fixes found in the 2nd pass). ----
+describe('P5 audit hardening', () => {
+  it('upload rejects disallowed extensions (422) and enforces the size cap (413)', async () => {
+    const bad = new FormData();
+    bad.append('file', new File([new Uint8Array([1])], 'payload.exe', { type: 'application/octet-stream' }));
+    bad.append('title', 'Bad ext'); bad.append('category', 'resource'); bad.append('visibleToTypes', 'si');
+    const r1 = await app.request('/api/v1/admin/partner-orgs/0/assets', { method: 'POST', headers: { cookie: adminCookie }, body: bad });
+    expect(r1.status).toBe(422);
+    expect(String((await r1.json()).detail)).toContain('.pdf');
+
+    process.env.PARTNER_MAX_BYTES = '8'; // env read per-request → test-controllable
+    try {
+      const big = new FormData();
+      big.append('file', new File([new Uint8Array(9)], 'too-big.pdf', { type: 'application/pdf' }));
+      big.append('title', 'Too big'); big.append('category', 'price_file'); big.append('visibleToTypes', 'si');
+      const r2 = await app.request('/api/v1/admin/partner-orgs/0/assets', { method: 'POST', headers: { cookie: adminCookie }, body: big });
+      expect(r2.status).toBe(413);
+    } finally { delete process.env.PARTNER_MAX_BYTES; }
+  });
+
+  it('stored MIME comes from the extension map, not the client; delete removes the file too', async () => {
+    const fd = new FormData();
+    fd.append('file', new File([new Uint8Array([1])], 'renamed.pdf', { type: 'text/html' })); // lying client type
+    fd.append('title', 'Mime map check'); fd.append('category', 'resource'); fd.append('visibleToTypes', 'si');
+    const res = await app.request('/api/v1/admin/partner-orgs/0/assets', { method: 'POST', headers: { cookie: adminCookie }, body: fd });
+    expect(res.status).toBe(201);
+    const asset = await res.json();
+    expect(asset.mime).toBe('application/pdf');
+    expect((await app.request(`/api/v1/admin/partner-assets/${asset.id}`, { method: 'DELETE', headers: { cookie: adminCookie } })).status).toBe(200);
+    expect(existsSync(join(process.env.PARTNER_FILES_DIR!, asset.fileKey))).toBe(false);
+  });
+
+  it('member removal: last owner 409, staff remove kills access, ghost 404, re-add 201', async () => {
+    const org = await (await app.request('/api/v1/admin/partner-orgs', {
+      method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ name: 'Audit Removal Co', type: 'oem' }),
+    })).json();
+    await app.request(`/api/v1/admin/partner-orgs/${org.id}`, {
+      method: 'PATCH', headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ status: 'active' }),
+    });
+    const ownerCookie = await makeSession('p5-rmowner@twinmos.dev', mkPass('RmOwner'));
+    const staffCookie = await makeSession('p5-rmstaff@twinmos.dev', mkPass('RmStaff'));
+    await app.request(`/api/v1/admin/partner-orgs/${org.id}/members`, {
+      method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ email: 'p5-rmowner@twinmos.dev', role: 'owner' }),
+    });
+    await app.request(`/api/v1/admin/partner-orgs/${org.id}/members`, {
+      method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ email: 'p5-rmstaff@twinmos.dev' }),
+    });
+    const members = await (await app.request(`/api/v1/admin/partner-orgs/${org.id}/members`, { headers: { cookie: adminCookie } })).json();
+    const owner = members.items.find((m: any) => m.role === 'owner');
+    const staff = members.items.find((m: any) => m.role === 'staff');
+    expect((await app.request(`/api/v1/admin/partner-orgs/${org.id}/members/${owner.id}`, { method: 'DELETE', headers: { cookie: adminCookie } })).status).toBe(409);
+    expect((await app.request('/api/v1/partner/me', { headers: { cookie: staffCookie } })).status).toBe(200);
+    expect((await app.request(`/api/v1/admin/partner-orgs/${org.id}/members/${staff.id}`, { method: 'DELETE', headers: { cookie: adminCookie } })).status).toBe(200);
+    expect((await app.request('/api/v1/partner/me', { headers: { cookie: staffCookie } })).status).toBe(403);
+    expect((await app.request(`/api/v1/admin/partner-orgs/${org.id}/members/999999`, { method: 'DELETE', headers: { cookie: adminCookie } })).status).toBe(404);
+    expect((await app.request(`/api/v1/admin/partner-orgs/${org.id}/members`, {
+      method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ email: 'p5-rmstaff@twinmos.dev' }),
+    })).status).toBe(201);
+  });
+
+  it('report: invalid from/to → 422 instead of a 500', async () => {
+    expect((await app.request('/api/v1/admin/sn-checks?from=not-a-date', { headers: { cookie: editorCookie } })).status).toBe(422);
+    expect((await app.request('/api/v1/admin/sn-checks?to=yesterday', { headers: { cookie: editorCookie } })).status).toBe(422);
+  });
+
+  it('multi-org membership resolves deterministically to the first-joined org', async () => {
+    const uCookie = await makeSession('p5-multi@twinmos.dev', mkPass('Multi'));
+    const mk = async (name: string) => {
+      const o = await (await app.request('/api/v1/admin/partner-orgs', {
+        method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
+        body: JSON.stringify({ name, type: 'distributor' }),
+      })).json();
+      await app.request(`/api/v1/admin/partner-orgs/${o.id}`, {
+        method: 'PATCH', headers: { 'content-type': 'application/json', cookie: adminCookie },
+        body: JSON.stringify({ status: 'active' }),
+      });
+      await app.request(`/api/v1/admin/partner-orgs/${o.id}/members`, {
+        method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
+        body: JSON.stringify({ email: 'p5-multi@twinmos.dev' }),
+      });
+      return o;
+    };
+    await mk('Multi First Ltd');
+    await mk('Multi Second Ltd');
+    const me = await (await app.request('/api/v1/partner/me', { headers: { cookie: uCookie } })).json();
+    expect(me.org.name).toBe('Multi First Ltd');
   });
 });

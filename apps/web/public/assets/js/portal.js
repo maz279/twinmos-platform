@@ -110,7 +110,15 @@
               '<thead><tr><th style="text-align:left;padding:6px 8px">Category</th><th style="text-align:left;padding:6px 8px">Title</th><th style="text-align:left;padding:6px 8px">Size</th><th></th></tr></thead>' +
               '<tbody>' + rows + '</tbody></table>'
             : '<p class="form-note">No documents shared with your organization yet.</p>') +
+          '<button type="button" id="tmPortalSignOut" class="btn" style="margin-top:14px">Sign out</button>' +
           '</div>';
+        var so = document.getElementById('tmPortalSignOut');
+        if (so) so.addEventListener('click', function () {
+          so.disabled = true; so.textContent = 'Signing out…';
+          fetch(API + '/auth/sign-out', { method: 'POST', credentials: 'include' })
+            .catch(function () { /* clear the dashboard regardless */ })
+            .then(function () { host.innerHTML = ''; if (host.parentNode) host.parentNode.removeChild(host); });
+        });
         host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       })
       .catch(function () { /* assets fetch failed — me card alone */ });

@@ -12,7 +12,7 @@ import {
   PARTNER_ASSET_CATEGORY_SCHEMA, problem,
 } from '@twinmos/shared';
 import { partnerOrg, partnerMember, partnerAsset, auditLog } from '@twinmos/db';
-import { mkdirSync, writeFileSync, readFileSync, statSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, statSync, unlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, resolve, sep } from 'node:path';
 import type { DB } from '@twinmos/db';
@@ -21,6 +21,25 @@ import type { AuthSession } from '../auth.ts';
 type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
 
+// Partner files are documents (price lists, MDF docs, resources) — the allowlist
+// is document-oriented, unlike the image-centric media library. The mapped MIME
+// is stored instead of the client-declared type so a renamed file cannot smuggle
+// an executable content type into the download response.
+const DEFAULT_ASSET_MAX_BYTES = 25 * 1024 * 1024;
+const ASSET_EXTS: Record<string, string> = {
+  '.pdf': 'application/pdf',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.xls': 'application/vnd.ms-excel',
+  '.csv': 'text/csv',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.doc': 'application/msword',
+  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  '.zip': 'application/zip',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+};
+
 /** Resolves the caller's ACTIVE membership (org row + role) or null. */
 async function activeMembership(db: DB, userId: string) {
   const rows = await db
@@ -28,6 +47,7 @@ async function activeMembership(db: DB, userId: string) {
     .from(partnerMember)
     .innerJoin(partnerOrg, eq(partnerMember.orgId, partnerOrg.id))
     .where(and(eq(partnerMember.userId, userId), eq(partnerOrg.status, 'active')))
+    .orderBy(partnerMember.id) // deterministic when a user belongs to several orgs
     .limit(1);
   return rows[0] ?? null;
 }
@@ -112,6 +132,7 @@ export function partnerRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
       'Content-Type': asset.mime,
       'Content-Disposition': 'attachment; filename="' + asset.fileKey + '"',
       'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
     });
   });
   return r;
@@ -211,6 +232,26 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard
     return c.json({ items: rows });
   });
 
+  r.delete('/partner-orgs/:id/members/:memberId', async (c) => {
+    const guard = await adminGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const memberId = Number(c.req.param('memberId'));
+    const rows = await db.select().from(partnerMember)
+      .where(and(eq(partnerMember.id, memberId), eq(partnerMember.orgId, id))).limit(1);
+    if (!rows[0]) return c.json(problem(404, 'Membership not found'), 404, { 'Content-Type': P });
+    if (rows[0].role === 'owner') {
+      const owners = await db.select({ id: partnerMember.id }).from(partnerMember)
+        .where(and(eq(partnerMember.orgId, id), eq(partnerMember.role, 'owner')));
+      if (owners.length <= 1) {
+        return c.json(problem(409, 'Cannot remove the only owner', 'Promote another member to owner first, or suspend the organization.'), 409, { 'Content-Type': P });
+      }
+    }
+    await db.delete(partnerMember).where(eq(partnerMember.id, memberId));
+    await auditRow(c, guard.user.id, 'partnerMember.remove', String(id), { memberId, userId: rows[0].userId });
+    return c.json({ deleted: true });
+  });
+
   // ---------- admin: assets ----------
   r.get('/partner-assets', async (c) => {
     const guard = await adminGuard(c);
@@ -238,6 +279,15 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard
     if (!(file instanceof File)) return c.json(problem(422, 'Validation Failed', 'multipart field "file" required.'), 422, { 'Content-Type': P });
     if (!title) return c.json(problem(422, 'Validation Failed', 'title required.'), 422, { 'Content-Type': P });
     if (!category.success) return c.json(problem(422, 'Validation Failed', 'category must be price_file | mdf | resource'), 422, { 'Content-Type': P });
+    const maxBytes = Number(process.env.PARTNER_MAX_BYTES ?? DEFAULT_ASSET_MAX_BYTES);
+    if (file.size > maxBytes) {
+      return c.json(problem(413, 'File too large', `Limit is ${Math.round(maxBytes / 1024 / 1024)} MB.`), 413, { 'Content-Type': P });
+    }
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    const safeMime = ASSET_EXTS[ext];
+    if (!safeMime) {
+      return c.json(problem(422, 'Validation Failed', `File type not allowed. Allowed extensions: ${Object.keys(ASSET_EXTS).join(', ')}.`), 422, { 'Content-Type': P });
+    }
     const { PARTNER_TYPES } = await import('@twinmos/shared');
     const types = rawTypes.filter((t): t is (typeof PARTNER_TYPES)[number] => (PARTNER_TYPES as readonly string[]).includes(t));
     if (!types.length) return c.json(problem(422, 'Validation Failed', 'visibleToTypes must include at least one of distributor/oem/si'), 422, { 'Content-Type': P });
@@ -251,7 +301,7 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard
     const rows = await db.insert(partnerAsset).values({
       orgId: idParam > 0 ? idParam : null,
       category: category.data, title: title.slice(0, 200), fileKey: stored,
-      mime: file.type || 'application/octet-stream', bytes: file.size,
+      mime: safeMime, bytes: file.size,
       visibleToTypes: types, uploadedBy: guard.user.id,
     }).returning();
     await auditRow(c, guard.user.id, 'partnerAsset.create', String(rows[0].id), { title: title.slice(0, 80), category: category.data, types });
@@ -264,6 +314,7 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard
     const id = Number(c.req.param('id'));
     const rows = await db.delete(partnerAsset).where(eq(partnerAsset.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Asset not found'), 404, { 'Content-Type': P });
+    try { unlinkSync(join(FILES_DIR, rows[0].fileKey)); } catch { /* file already gone — row removal is the source of truth */ }
     await auditRow(c, guard.user.id, 'partnerAsset.delete', String(id), {});
     return c.json({ deleted: true });
   });

@@ -37,7 +37,16 @@ function stagePartners() {
           var hasPrice = portal.textContent.indexOf('Price List') !== -1;
           var hasDl = portal.querySelector('a[href*="/download"]') !== null;
           say('PORTAL_OK price=' + hasPrice + ' download=' + hasDl);
-          stageSupport();
+          var soBtn = portal.querySelector('#tmPortalSignOut');
+          if (!soBtn) { say('| SIGNOUT_FAIL no button'); stageSupport(); return; }
+          soBtn.click();
+          var m = 0;
+          (function pollOut() {
+            var gone = !f.contentDocument.getElementById('partnerPortal');
+            if (gone) { say('| SIGNOUT_OK dashboard cleared'); stageSupport(); return; }
+            if (++m > 15) { say('| SIGNOUT_TIMEOUT'); stageSupport(); return; }
+            setTimeout(pollOut, 600);
+          })();
           return;
         }
         if (++n > 30) { say('PORTAL_TIMEOUT'); finish(); return; }

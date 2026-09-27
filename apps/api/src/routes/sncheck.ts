@@ -56,8 +56,16 @@ export function snReportRoute(db: DB, deps: { requireRole: (r: any) => Guard; se
     if (!(await deps.requireRole('editor')(c.req.raw))) {
       return c.json(problem(403, 'Requires editor role or above'), 403, { 'Content-Type': P });
     }
-    const from = c.req.query('from') ? new Date(c.req.query('from')!) : new Date(Date.now() - 30 * 86400_000);
-    const to = c.req.query('to') ? new Date(c.req.query('to')!) : new Date();
+    const parseDate = (raw: string | undefined, fallback: () => Date): Date | null => {
+      if (!raw) return fallback();
+      const d = new Date(raw);
+      return Number.isNaN(d.getTime()) ? null : d; // Invalid Date would crash the PG bind
+    };
+    const from = parseDate(c.req.query('from'), () => new Date(Date.now() - 30 * 86400_000));
+    const to = parseDate(c.req.query('to'), () => new Date());
+    if (!from || !to) {
+      return c.json(problem(422, 'Validation Failed', 'from/to must be ISO-8601 dates (e.g. 2026-09-01).'), 422, { 'Content-Type': P });
+    }
 
     const [byResult, topSerials, recent] = await Promise.all([
       db.select({ result: snCheck.result, n: count() }).from(snCheck)
