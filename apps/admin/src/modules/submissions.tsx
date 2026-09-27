@@ -35,8 +35,8 @@ export default function Submissions({ canWrite, myId }: { canWrite: boolean; myI
         </select>
         <button style={btnGhost} onClick={() => { setType(''); setStatus(''); setCursor(null); setSelected(null); }}>Reset</button>
       </div>
-      {error && <Err error={error} />}
-      {loading ? <p>Loading…</p> : data && (
+      {error ? <Err error={error} /> : null}
+      {loading ? <p>Loading…</p> : data ? (
         <>
           <Table head={['Ref', 'Type', 'From', 'Status', 'Received']}>
             {data.items.map((s) => (
@@ -55,7 +55,7 @@ export default function Submissions({ canWrite, myId }: { canWrite: boolean; myI
             <button style={btnGhost} disabled={data.nextCursor == null} onClick={() => setCursor(data.nextCursor)}>Older »</button>
           </div>
         </>
-      )}
+      ) : null}
       {selected && <Detail sub={selected} canWrite={canWrite} myId={myId} onSaved={(s) => { setSelected(s); reload(); }} />}
     </div>
   );
@@ -77,7 +77,7 @@ function Detail({ sub, canWrite, myId, onSaved }: { sub: Submission; canWrite: b
         <b>{sub.refCode} — {sub.type}</b>
         <Badge value={sub.status} />
       </div>
-      {error && <Err error={error} />}
+      {error ? <Err error={error} /> : null}
       <Table head={['Field', 'Value']}>
         {Object.entries({ email: sub.email, received: fmtDate(sub.createdAt), ip: sub.ip ?? '—', assignee: sub.assigneeId ?? '—', ...sub.payload }).map(([k, v]) => (
           <tr key={k}><td style={{ ...td, width: 160, color: '#5E7691' }}>{k}</td><td style={td}>{String(v)}</td></tr>

@@ -103,7 +103,7 @@ describe('POST /api/v1/forms/:type — all 15 registry types', () => {
   });
 
   it('rejects unknown type with 422', async () => {
-    const res = await await app.request('/api/v1/forms/' + 'nonexistent', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(90) }, body: JSON.stringify({ type: 'nonexistent', email: 'customer@example.com', consent: true, payload: {} }) });
+    const res = await app.request('/api/v1/forms/' + 'nonexistent', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(90) }, body: JSON.stringify({ type: 'nonexistent', email: 'customer@example.com', consent: true, payload: {} }) });
     expect(res.status).toBe(422);
     expect(res.headers.get('content-type')).toContain('application/problem+json');
   });
@@ -125,7 +125,7 @@ describe('POST /api/v1/forms/:type — all 15 registry types', () => {
   });
 
   it('RMA with a short issue is rejected with detail', async () => {
-    const res = await await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(93) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'A', product: 'P', issue: 'short' } }) });
+    const res = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(93) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'A', product: 'P', issue: 'short' } }) });
     expect(res.status).toBe(422);
     const body = await res.json();
     expect(body.detail).toContain('product and issue details');
@@ -133,10 +133,10 @@ describe('POST /api/v1/forms/:type — all 15 registry types', () => {
 
   it('rate limit: 6th submission from one IP in a minute → 429 + Retry-After', async () => {
     for (let i = 1; i <= 5; i++) {
-      const ok = await await app.request('/api/v1/forms/' + 'feedback', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(99) }, body: JSON.stringify({ type: 'feedback', email: 'customer@example.com', consent: true, payload: { message: 'site speed is great' } }) });
+      const ok = await app.request('/api/v1/forms/' + 'feedback', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(99) }, body: JSON.stringify({ type: 'feedback', email: 'customer@example.com', consent: true, payload: { message: 'site speed is great' } }) });
       expect(ok.status).toBe(201);
     }
-    const sixth = await await app.request('/api/v1/forms/' + 'feedback', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(99) }, body: JSON.stringify({ type: 'feedback', email: 'customer@example.com', consent: true, payload: { message: 'one too many' } }) });
+    const sixth = await app.request('/api/v1/forms/' + 'feedback', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(99) }, body: JSON.stringify({ type: 'feedback', email: 'customer@example.com', consent: true, payload: { message: 'one too many' } }) });
     expect(sixth.status).toBe(429);
     expect(sixth.headers.get('retry-after')).toBeTruthy();
   });
@@ -157,12 +157,27 @@ describe('POST /api/v1/forms/:type — all 15 registry types', () => {
     const rows = await db.select().from(formSubmission);
     expect(rows.filter((r: any) => r.refCode === b1.reference)).toHaveLength(1);
   });
+
+  it('IdempotencyStore: entries expire after the TTL (unit, tiny TTL)', async () => {
+    const { IdempotencyStore } = await import('../src/idem.ts');
+    const store = new IdempotencyStore(30, 100); // 30ms TTL
+    store.set('k', { status: 201, body: { reference: 'FRM-X' } });
+    const hit = store.get('k');
+    expect(hit).toEqual({ status: 201, body: { reference: 'FRM-X' } });
+    await new Promise((r) => setTimeout(r, 60));
+    expect(store.get('k')).toBeUndefined(); // expired — a later replay inserts again
+    // bounded: FIFO eviction past the cap
+    const tiny = new IdempotencyStore(60_000, 3);
+    for (const k of ['a', 'b', 'c', 'd']) tiny.set(k, k);
+    expect(tiny.get('a')).toBeUndefined(); // evicted (oldest)
+    expect(tiny.get('d')).toBe('d');
+  });
 });
 
 // ---- RMA: public tracker --------------------------------------------------
 describe('GET /api/v1/rma/:number — public tracker', () => {
   it('masks customer info and returns the timeline', async () => {
-    const created = await await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(70) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'Masked Customer', product: 'CoreX Pro', issue: 'Drive drops after warm boot consistently.' } }) });
+    const created = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(70) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'Masked Customer', product: 'CoreX Pro', issue: 'Drive drops after warm boot consistently.' } }) });
     const { rmaNumber } = await created.json();
     const res = await app.request(`/api/v1/rma/${rmaNumber}`);
     expect(res.status).toBe(200);
@@ -173,7 +188,7 @@ describe('GET /api/v1/rma/:number — public tracker', () => {
   });
 
   it('accepts the TM- optional prefix and rejects junk', async () => {
-    const created = await await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(71) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'X Y', product: 'CoreX', issue: 'Read errors on Gen5 slot after firmware update.' } }) });
+    const created = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(71) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'X Y', product: 'CoreX', issue: 'Read errors on Gen5 slot after firmware update.' } }) });
     const { rmaNumber } = await created.json();
     const short = rmaNumber.replace('TM-', '');
     expect((await app.request(`/api/v1/rma/${short}`)).status).toBe(200);
@@ -185,7 +200,7 @@ describe('GET /api/v1/rma/:number — public tracker', () => {
 // ---- admin: RMA board + state machine -------------------------------------
 describe('RMA lifecycle (admin)', () => {
   it('walks the legal path end-to-end, rejects illegal jumps, audits every step', async () => {
-    const created = await await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(60) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'Lifecycle Test', product: 'VOLTX RGB', issue: 'RGB lighting dead on one module pair.' } }) });
+    const created = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(60) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'Lifecycle Test', product: 'VOLTX RGB', issue: 'RGB lighting dead on one module pair.' } }) });
     const { rmaNumber } = await created.json();
     const list = await app.request('/api/v1/admin/rma?q=' + rmaNumber, { headers: { 'content-type': 'application/json', cookie } });
     const { items } = await list.json();
@@ -251,7 +266,7 @@ describe('admin modules', () => {
   });
 
   it('job applications: listed from the form flow, status writable + audited', async () => {
-    const created = await await app.request('/api/v1/forms/' + 'job-application', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(50) }, body: JSON.stringify({ type: 'job-application', email: 'customer@example.com', consent: true, payload: { name: 'Ada Dev', position: 'Firmware Engineer — SSD', coverLetter: 'I build firmware.' } }) });
+    const created = await app.request('/api/v1/forms/' + 'job-application', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(50) }, body: JSON.stringify({ type: 'job-application', email: 'customer@example.com', consent: true, payload: { name: 'Ada Dev', position: 'Firmware Engineer — SSD', coverLetter: 'I build firmware.' } }) });
     const { reference } = await created.json();
     const { items } = await (await app.request('/api/v1/admin' + '/job-applications', { headers: { 'content-type': 'application/json', cookie } })).json();
     const app1 = items.find((a: any) => a.refCode === reference);

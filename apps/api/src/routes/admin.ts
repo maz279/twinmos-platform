@@ -11,14 +11,15 @@ import {
 } from '@twinmos/shared';
 import { auditLog, formSubmission, jobApplication, jobPosting, product, rmaEvent, rmaRequest } from '@twinmos/db';
 import { sendRmaStatusMail } from '../mailer.ts';
+import { IdempotencyStore } from '../idem.ts';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 import type { Role } from '@twinmos/shared';
 
 type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
-/** Idempotency store for RMA transitions (in-memory; Redis in prod per docs/02). */
-const RMA_IDEM = new Map<string, { status: number; body: unknown }>();
+/** Idempotency store for RMA transitions (TTL + bounded; Redis in prod per docs/02). */
+const RMA_IDEM = new IdempotencyStore();
 
 const submissionStatusQ = z.enum(SUBMISSION_STATUS);
 const rmaStatusQ = z.enum(RMA_STATUS);
@@ -205,7 +206,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
 
     const idemKey = c.req.header('Idempotency-Key');
     if (idemKey) {
-      const cached = RMA_IDEM.get(idemKey);
+      const cached = RMA_IDEM.get(idemKey) as { status: number; body: unknown } | undefined;
       if (cached) return c.json(cached.body, cached.status as 200);
     }
 

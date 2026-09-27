@@ -20,7 +20,7 @@
     "db:seed": "npm run db:seed --workspace @twinmos/api",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "tsc -p apps/api/tsconfig.json && tsc -p packages/db/tsconfig.json && tsc -p packages/shared/tsconfig.json"
+    "typecheck": "tsc -p apps/api/tsconfig.json && tsc -p apps/admin/tsconfig.json && tsc -p packages/db/tsconfig.json && tsc -p packages/shared/tsconfig.json"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

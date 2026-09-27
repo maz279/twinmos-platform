@@ -45,8 +45,8 @@ function AuditLog() {
     <div>
       <h1>Audit log</h1>
       <p style={{ color: '#5E7691' }}>Last 100 mutations across all modules (admin role required).</p>
-      {error && <Err error={error} />}
-      {loading ? <p>Loading…</p> : data && (
+      {error ? <Err error={error} /> : null}
+      {loading ? <p>Loading…</p> : data ? (
         <Table head={['When', 'Action', 'Entity', 'Actor', 'Request']}>
           {data.items.map((row) => (
             <tr key={row.id}>
@@ -58,7 +58,7 @@ function AuditLog() {
             </tr>
           ))}
         </Table>
-      )}
+      ) : null}
       {data && data.items.length === 0 && <Empty text="No audit rows yet." />}
     </div>
   );

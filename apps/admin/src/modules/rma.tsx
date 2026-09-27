@@ -32,8 +32,8 @@ export default function RmaBoard({ canWrite }: { canWrite: boolean }) {
         </select>
         <input style={input} placeholder="Search RMA number" value={q} onChange={(e) => setQ(e.target.value.trim())} />
       </div>
-      {error && <Err error={error} />}
-      {loading ? <p>Loading…</p> : data && (
+      {error ? <Err error={error} /> : null}
+      {loading ? <p>Loading…</p> : data ? (
         <Table head={['RMA #', 'Customer', 'Product', 'Status', 'Updated']}>
           {data.items.map((rma) => (
             <tr key={rma.id} onClick={() => setOpenId(openId === rma.id ? null : rma.id)} style={{ cursor: 'pointer', background: openId === rma.id ? '#F0F9FF' : undefined }}>
@@ -45,7 +45,7 @@ export default function RmaBoard({ canWrite }: { canWrite: boolean }) {
             </tr>
           ))}
         </Table>
-      )}
+      ) : null}
       {data && data.items.length === 0 && <Empty text="No RMA requests match." />}
       {openId != null && <RmaDetailPanel id={openId} canWrite={canWrite} onChanged={reload} />}
     </div>
@@ -76,7 +76,7 @@ function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boo
         <b>{data.number}</b>
         <Badge value={data.status} />
       </div>
-      {error && <Err error={error} />}
+      {error ? <Err error={error} /> : null}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 6, margin: '10px 0', fontSize: 13.5 }}>
         <span><b>Customer:</b> {String(data.customer?.name ?? '—')} · {String(data.customer?.email ?? '—')}</span>
         <span><b>Product:</b> {String(data.customer?.product ?? data.productSku ?? '—')}</span>

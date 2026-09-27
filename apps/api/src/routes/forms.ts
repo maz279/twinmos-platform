@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { formSubmissionSchema, rmaIntakeSchema, problem } from '@twinmos/shared';
 import { formSubmission, jobApplication, rmaEvent, rmaRequest } from '@twinmos/db';
 import { sendFormRouting, sendCustomerConfirmation } from '../mailer.ts';
+import { IdempotencyStore } from '../idem.ts';
 import type { DB } from '@twinmos/db';
 
 const SAFE_CHARS = /[^A-Za-z0-9 @_.,:+\-()/#]/g;
@@ -13,8 +14,8 @@ function clean(value: unknown, max = 200): string {
   return String(value ?? '').replace(SAFE_CHARS, '').slice(0, max);
 }
 
-/** Idempotency for POST /forms: same key replays the stored response instead of double-inserting. */
-const IDEMPOTENT = new Map<string, { status: number; body: unknown }>();
+/** Idempotency for POST /forms (TTL + bounded; Redis in prod per docs/02). */
+const IDEMPOTENT = new IdempotencyStore();
 
 /** Unpredictable 6-digit suffix from the CSPRNG (RMA numbers are guessable-proof public references). */
 function randomDigits(count: number): string {
@@ -35,10 +36,10 @@ export function formsRoute(db: DB) {
   const r = new Hono();
 
   r.post('/forms/:type', async (c) => {
-    // Idempotency-Key replay (30-minute window, in-memory; Redis in prod per docs/02)
+    // Idempotency-Key replay (TTL-bounded window; Redis in prod per docs/02)
     const idemKey = c.req.header('Idempotency-Key');
     if (idemKey) {
-      const cached = IDEMPOTENT.get(idemKey);
+      const cached = IDEMPOTENT.get(idemKey) as { status: number; body: unknown } | undefined;
       if (cached) return c.json(cached.body, cached.status as 201);
     }
 
@@ -111,8 +112,7 @@ export function formsRoute(db: DB) {
     const body = rmaNumber
       ? { id: rows[0].id, reference: refCode, rmaNumber }
       : { id: rows[0].id, reference: refCode };
-    if (idemKey) IDEMPOTENT.set(idemKey, { status: 201, body });
-    return c.json(body, 201);
+    if (idemKey) IDEMPOTENT.set(idemKey, { status: 201, body });    return c.json(body, 201);
   });
 
   r.get('/rma/:number', async (c) => {

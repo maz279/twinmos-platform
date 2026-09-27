@@ -34,9 +34,17 @@ export function buildApp(db: DB) {
 
   // ---- public form rate limit: 5 requests / minute / IP (in-memory; Redis in prod) ----
   const FORM_BUCKETS = new Map<string, { count: number; resetAt: number }>();
+  let bucketSweepAt = 0;
   app.use('/api/v1/forms/*', async (c, next) => {
     const ip = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'local';
     const now = Date.now();
+    // periodic sweep: IPs that never return must not accumulate forever
+    if (now > bucketSweepAt) {
+      bucketSweepAt = now + 60_000;
+      for (const [k, v] of FORM_BUCKETS) {
+        if (v.resetAt < now) FORM_BUCKETS.delete(k);
+      }
+    }
     const bucket = FORM_BUCKETS.get(ip);
     if (!bucket || bucket.resetAt < now) {
       FORM_BUCKETS.set(ip, { count: 1, resetAt: now + 60_000 });

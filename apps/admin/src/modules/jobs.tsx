@@ -32,9 +32,9 @@ export default function Jobs({ canWrite }: { canWrite: boolean }) {
           {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
-      {error && <Err error={error} />}
-      {actionError && <Err error={actionError} />}
-      {loading ? <p>Loading…</p> : data && (
+      {error ? <Err error={error} /> : null}
+      {actionError ? <Err error={actionError} /> : null}
+      {loading ? <p>Loading…</p> : data ? (
         <Table head={['Ref', 'Candidate', 'Role', 'Received', 'Status', '']}>
           {data.items.map((app) => (
             <tr key={app.id}>
@@ -59,7 +59,7 @@ export default function Jobs({ canWrite }: { canWrite: boolean }) {
             </tr>
           ))}
         </Table>
-      )}
+      ) : null}
       {data && data.items.length === 0 && <Empty text="No applications yet." />}
       {data && data.items.length > 0 && (
         <p style={{ color: '#5E7691', fontSize: 12.5, marginTop: 8 }}>
