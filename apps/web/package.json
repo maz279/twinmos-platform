@@ -10,8 +10,10 @@
     "port": "python ../../tooling/port_pages.py",
     "sitemap": "python ../../tooling/gen_sitemap.py",
     "predev": "node ../../tooling/sync-prototype-assets.mjs",
-    "prebuild": "node ../../tooling/sync-prototype-assets.mjs",
-    "sync:proto": "node ../../tooling/sync-prototype-assets.mjs"
+    "prebuild": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/export-content.mjs || node ../../tooling/export-fallback.mjs",
+    "sync:proto": "node ../../tooling/sync-prototype-assets.mjs",
+    "import:corpus": "node --experimental-strip-types --no-warnings ../../tooling/import-corpus.ts",
+    "export:content": "node --experimental-strip-types --no-warnings ../../tooling/export-content.mjs"
   },
   "dependencies": {
     "astro": "^7.3.5"

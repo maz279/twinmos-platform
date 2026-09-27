@@ -27,7 +27,7 @@ async function handle<T>(res: Response): Promise<T> {
 export async function apiGet<T>(path: string): Promise<T> {
   return handle<T>(await fetch(API + path, { credentials: 'include' }));
 }
-export async function apiSend<T>(method: 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown, headers?: Record<string, string>): Promise<T> {
+export async function apiSend<T>(method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown, headers?: Record<string, string>): Promise<T> {
   return handle<T>(await fetch(API + path, {
     method,
     credentials: 'include',

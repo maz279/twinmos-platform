@@ -87,3 +87,84 @@ export const rmaTransitionSchema = z.object({
 export const jobApplicationUpdateSchema = z.object({
   status: z.enum(SUBMISSION_STATUS),
 });
+
+// ---- P3: CMS content ----
+export const CONTENT_ENTITIES = ['article', 'news', 'page', 'faq'] as const;
+export const CONTENT_ENTITY_SCHEMA = z.enum(CONTENT_ENTITIES);
+
+/** Legal publishing-workflow transitions (docs/04 §Publishing workflow). */
+export const CONTENT_TRANSITIONS: Record<(typeof CONTENT_STATUS)[number], (typeof CONTENT_STATUS)[number][]> = {
+  draft: ['in_review', 'published', 'archived'],
+  in_review: ['scheduled', 'published', 'draft', 'archived'],
+  scheduled: ['published', 'draft', 'archived'],
+  published: ['archived'],
+  archived: ['draft'],
+};
+
+const slugField = z.string().trim().regex(/^[a-z0-9][a-z0-9-]{1,118}$/, 'lowercase letters, digits and dashes');
+const bodyField = z.string().max(200_000);
+const localeField = z.string().trim().regex(/^[a-z]{2}(-[A-Za-z]{2,4})?$/, 'e.g. en, zh-cn').default('en');
+
+export const articleCreateSchema = z.object({
+  slug: slugField.optional(), // derived from title when omitted
+  title: z.string().trim().min(2).max(200),
+  deck: z.string().trim().max(400).optional(),
+  body: bodyField.default(''),
+  category: z.string().trim().max(40).default('Article'),
+  tags: z.array(z.string().max(40)).max(12).default([]),
+  locale: localeField,
+  seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
+});
+export const articleUpdateSchema = articleCreateSchema.partial();
+
+export const newsCreateSchema = z.object({
+  slug: slugField.optional(),
+  title: z.string().trim().min(2).max(200),
+  body: bodyField.default(''),
+  tag: z.string().trim().max(40).optional(),
+  eventDate: z.string().datetime().optional(), // ISO — set for event-type posts
+  locale: localeField,
+});
+export const newsUpdateSchema = newsCreateSchema.partial();
+
+export const pageCreateSchema = z.object({
+  slug: slugField.optional(),
+  title: z.string().trim().min(2).max(200),
+  blocks: z.array(z.record(z.string(), z.unknown())).default([]),
+  locale: localeField,
+  seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
+});
+export const pageUpdateSchema = pageCreateSchema.partial();
+
+export const faqCreateSchema = z.object({
+  groupKey: z.string().trim().regex(/^[a-z0-9-]{2,40}$/),
+  question: z.string().trim().min(4).max(500),
+  answer: z.string().trim().min(1).max(20_000),
+  sort: z.number().int().min(0).max(9999).default(0),
+  locale: localeField,
+});
+export const faqUpdateSchema = faqCreateSchema.partial();
+
+export const contentTransitionSchema = z.object({
+  to: z.enum(CONTENT_STATUS),
+  publishAt: z.string().datetime().optional(), // required when to=scheduled
+});
+export const contentRevertSchema = z.object({ revisionId: z.number().int().positive() });
+
+export const redirectCreateSchema = z.object({
+  from: z.string().trim().min(1).max(500).regex(/^\//, 'must start with /'),
+  to: z.string().trim().min(1).max(500),
+  code: z.union([z.literal(301), z.literal(302), z.literal(308)]).default(301),
+});
+export const redirectUpdateSchema = redirectCreateSchema.partial();
+
+export const settingUpdateSchema = z.object({
+  key: z.string().trim().min(1).max(80),
+  value: z.unknown(),
+});
+
+/** URL-safe slug from a free-text title (used when slug is omitted). */
+export function slugify(input: string): string {
+  return input.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 100) || 'untitled';
+}

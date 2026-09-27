@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>admin-dump</title></head>
+<body>
+<iframe id="app" title="admin app" style="width:1400px;height:1000px;border:0"></iframe>
+<pre id="out">PENDING</pre>
+<script>
+var out = document.getElementById('out');
+var app = document.getElementById('app');
+var stage = 'signin';
+var log = [];
+function say(m) { log.push(m); out.textContent = 'DUMP ' + log.join(' | ').slice(0, 1200); }
+app.addEventListener('load', function () { if (stage === 'shell') setTimeout(dump, 5000); });
+fetch('/api/v1/auth/sign-in/email', {
+  method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+  body: JSON.stringify({ email: 'admin@twinmos.dev', password: 'DevOnly-ChangeMe-2026!' }),
+}).then(function (r) { say('signin=' + r.status); stage = 'shell'; app.src = '/'; })
+  .catch(function (e) { out.textContent = 'DUMP_ERR ' + e; });
+function dump() {
+  try {
+    var d = app.contentDocument;
+    // click Content, then + New article, fill, create, then dump ALL buttons
+    var navs = Array.prototype.slice.call(d.querySelectorAll('nav li'));
+    (navs.filter(function (li) { return li.textContent.indexOf('Content') !== -1; })[0] || navs[0]).click();
+    setTimeout(function () {
+      var btns = Array.prototype.map.call(app.contentDocument.querySelectorAll('button'), function (b) { return b.textContent.trim(); });
+      say('buttons-after-content=' + btns.join(',').slice(0, 400));
+      var newBtn = Array.prototype.filter.call(app.contentDocument.querySelectorAll('button'), function (b) { return b.textContent.indexOf('New article') !== -1; })[0];
+      if (newBtn) newBtn.click();
+      setTimeout(function () {
+        var d2 = app.contentDocument;
+        var inputs = Array.prototype.map.call(d2.querySelectorAll('input, textarea'), function (i) { return (i.placeholder || i.tagName) + '[' + (i.value || '') + ']'; });
+        var btns2 = Array.prototype.map.call(d2.querySelectorAll('button'), function (b) { return b.textContent.trim(); });
+        say('editor-inputs=' + inputs.join(';').slice(0, 300) + ' editor-buttons=' + btns2.join(',').slice(0, 300));
+        out.textContent = 'DUMP_DONE ' + log.join(' | ').slice(0, 1500);
+      }, 1500);
+    }, 2000);
+  } catch (e) { out.textContent = 'DUMP_FAIL ' + e; }
+}
+</script>
+</body>
+</html>

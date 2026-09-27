@@ -10,8 +10,13 @@ type Entry = { value: unknown; expiresAt: number };
 export class IdempotencyStore {
   private map = new Map<string, Entry>();
   private lastSweep = 0;
+  private ttlMs: number;
+  private maxEntries: number;
 
-  constructor(private ttlMs = DEFAULT_TTL_MS, private maxEntries = DEFAULT_MAX) {}
+  constructor(ttlMs = DEFAULT_TTL_MS, maxEntries = DEFAULT_MAX) {
+    this.ttlMs = ttlMs;
+    this.maxEntries = maxEntries;
+  }
 
   get(key: string): unknown {
     this.maybeSweep();

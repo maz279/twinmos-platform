@@ -87,6 +87,16 @@ export const faq = pgTable('faq', {
   status: contentStatusEnum('status').notNull().default('published'), createdAt: ts(),
 });
 
+// P3: immutable snapshot taken on every publish — enables one-click rollback.
+export const contentRevision = pgTable('content_revision', {
+  id: serial('id').primaryKey(),
+  entity: varchar('entity', { length: 20 }).notNull(), // article | news | page | faq
+  entityId: integer('entity_id').notNull(),
+  snapshot: jsonb('snapshot').notNull(),
+  actorId: text('actor_id').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: ts(),
+}, (t) => [index('content_revision_entity_idx').on(t.entity, t.entityId)]);
+
 // ---- catalog ----
 export const brand = pgTable('brand', { id: serial('id').primaryKey(), slug: varchar('slug', { length: 60 }).notNull().unique(), name: text('name').notNull() });
 export const category = pgTable('category', {

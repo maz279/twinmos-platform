@@ -9,11 +9,18 @@ import Submissions from './modules/submissions';
 import RmaBoard from './modules/rma';
 import Jobs from './modules/jobs';
 import Products from './modules/products';
+import Content from './modules/content';
+import Media from './modules/media';
+import Settings from './modules/settings';
 import { Badge, Empty, Err, Table, btn, input, td, useAsync } from './ui';
 
 type Me = { user?: { id: string; email: string; role: string } };
 const WRITE_ROLES = ['super_admin', 'admin', 'editor', 'author'];
 const canWrite = (role?: string) => !!role && WRITE_ROLES.includes(role);
+const PUBLISH_ROLES = ['super_admin', 'admin', 'editor'];
+const canPublish = (role?: string) => !!role && PUBLISH_ROLES.includes(role);
+const ADMIN_ROLES = ['super_admin', 'admin'];
+const isAdminRole = (role?: string) => !!role && ADMIN_ROLES.includes(role);
 
 function Login({ onDone }: { onDone: () => void }) {
   const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [err, setErr] = useState('');
@@ -66,6 +73,9 @@ function AuditLog() {
 
 const MODULES = [
   { key: 'dashboard', label: 'Dashboard', comp: () => <Dashboard />, minRole: 'viewer' },
+  { key: 'content', label: 'Content', comp: (p: { canWrite: boolean; me: Me }) => <Content canPublish={canPublish(p.me.user?.role)} />, minRole: 'viewer' },
+  { key: 'media', label: 'Media', comp: (p: { me: Me }) => <Media isAdmin={isAdminRole(p.me.user?.role)} />, minRole: 'viewer' },
+  { key: 'settings', label: 'Settings', comp: (p: { me: Me }) => <Settings canManage={isAdminRole(p.me.user?.role)} isSuperAdmin={p.me.user?.role === 'super_admin'} />, minRole: 'admin' },
   { key: 'submissions', label: 'Submissions', comp: (p: { canWrite: boolean; me: Me }) => <Submissions canWrite={p.canWrite} myId={p.me.user?.id} />, minRole: 'viewer' },
   { key: 'rma', label: 'RMA board', comp: (p: { canWrite: boolean }) => <RmaBoard canWrite={p.canWrite} />, minRole: 'viewer' },
   { key: 'jobs', label: 'Applications', comp: (p: { canWrite: boolean }) => <Jobs canWrite={p.canWrite} />, minRole: 'viewer' },

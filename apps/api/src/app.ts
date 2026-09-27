@@ -8,6 +8,9 @@ import { problem } from '@twinmos/shared';
 import { initAuth } from './auth.ts';
 import { formsRoute } from './routes/forms.ts';
 import { adminRoute } from './routes/admin.ts';
+import { contentRoute, previewRoute, promoteScheduled } from './routes/content.ts';
+import { mediaRoute } from './routes/media.ts';
+import { settingsRoute } from './routes/settings.ts';
 import type { DB } from '@twinmos/db';
 
 export function buildApp(db: DB) {
@@ -65,10 +68,26 @@ export function buildApp(db: DB) {
   });
   app.notFound((c) => c.json(problem(404, 'Not Found'), 404, { 'Content-Type': 'application/problem+json' }));
 
-  app.get('/api/v1/health', (c) => c.json({ status: 'ok', service: 'twinmos-api', version: '0.2.0', db: 'connected' }));
+  app.get('/api/v1/health', (c) => c.json({ status: 'ok', service: 'twinmos-api', version: '0.3.0', db: 'connected' }));
   app.all('/api/v1/auth/*', (c) => auth.handler(c.req.raw));
   app.route('/api/v1', formsRoute(db));
+  app.route('/api/v1', previewRoute(db)); // public, token-gated draft previews
   app.route('/api/v1/admin', adminRoute(db, { requireRole, sessionFromRequest }));
+  app.route('/api/v1/admin', contentRoute(db, { requireRole, sessionFromRequest }));
+  app.route('/api/v1/admin', mediaRoute(db, { requireRole, sessionFromRequest }));
+  app.route('/api/v1/admin', settingsRoute(db, { requireRole, sessionFromRequest }));
+
+  // Manual trigger for external cron (production); the in-process scheduler
+  // lives in index.ts so tests never inherit an interval.
+  app.post('/api/v1/admin/cron/publish-due', async (c) => {
+    const s = await sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': 'application/problem+json' });
+    if (!(await requireRole('admin')(c.req.raw))) {
+      return c.json(problem(403, 'Requires admin role or above'), 403, { 'Content-Type': 'application/problem+json' });
+    }
+    const promoted = await promoteScheduled(db, 'cron');
+    return c.json({ promoted });
+  });
 
   return app;
 }
