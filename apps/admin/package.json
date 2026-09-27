@@ -7,7 +7,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@twinmos/shared": "^0.1.0",
+    "@twinmos/shared": "0.1.0",
     "marked": "^18.0.14",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
