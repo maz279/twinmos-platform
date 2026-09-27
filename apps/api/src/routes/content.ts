@@ -80,7 +80,11 @@ export function contentRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
    *  every entity starts as a draft regardless of table defaults). */
   function toColumns(entity: EntityType, data: Record<string, unknown>, actorId: string) {
     if (entity === 'article') return { ...data, authorId: actorId, status: 'draft' };
-    if (entity === 'news') return { ...data, status: 'draft' };
+    if (entity === 'news') {
+      // timestamp column needs a Date, not the ISO string the contract carries
+      const { eventDate, ...rest } = data as Record<string, unknown>;
+      return { ...rest, status: 'draft', eventDate: eventDate ? new Date(String(eventDate)) : null };
+    }
     if (entity === 'page') return { ...data, status: 'draft' };
     const { locale, ...rest } = data as Record<string, unknown>;
     return { ...rest, locale: locale ?? 'en', status: 'draft' };

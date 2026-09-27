@@ -94,6 +94,11 @@ function Editor({ entity, row: initialRow, canPublish, onClose, onSaved, onCreat
   const [slug, setSlug] = useState(row?.slug ?? '');
   const [deck, setDeck] = useState(row?.deck ?? '');
   const [body, setBody] = useState(row?.body ?? '');
+  const [tag, setTag] = useState((row as any)?.tag ?? '');
+  const [eventDate, setEventDate] = useState('');
+  const [blocks, setBlocks] = useState(
+    row && Array.isArray((row as any).blocks) ? JSON.stringify((row as any).blocks, null, 2) : '[]'
+  );
   const [question, setQuestion] = useState(row?.question ?? '');
   const [answer, setAnswer] = useState(row && 'answer' in row ? String((row as any).answer ?? '') : '');
   const [groupKey, setGroupKey] = useState(row?.groupKey ?? 'support');
@@ -115,8 +120,17 @@ function Editor({ entity, row: initialRow, canPublish, onClose, onSaved, onCreat
 
   function payload() {
     if (entity === 'faq') return { question, answer, groupKey };
-    if (entity === 'news') return { ...(slug ? { slug } : {}), title, body: body || '(draft)' };
-    if (entity === 'page') return { ...(slug ? { slug } : {}), title };
+    if (entity === 'news') {
+      const out: Record<string, unknown> = { ...(slug ? { slug } : {}), title, body: body || '(draft)' };
+      if (tag.trim()) out.tag = tag.trim();
+      if (eventDate) out.eventDate = new Date(eventDate).toISOString();
+      return out;
+    }
+    if (entity === 'page') {
+      let parsed: unknown;
+      try { parsed = JSON.parse(blocks || '[]'); } catch { throw new Error('Blocks must be valid JSON'); }
+      return { ...(slug ? { slug } : {}), title, blocks: parsed };
+    }
     return { ...(slug ? { slug } : {}), title, deck: deck || undefined, body: body || '(draft)' };
   }
 
@@ -220,7 +234,22 @@ function Editor({ entity, row: initialRow, canPublish, onClose, onSaved, onCreat
                 <input style={{ ...input, flex: 1 }} placeholder={isNew ? 'slug (auto from title)' : 'slug'} value={slug} onChange={(e) => setSlug(e.target.value)} disabled={!isNew} />
               </div>
               {entity === 'article' && <input style={input} placeholder="Deck / summary" value={deck} onChange={(e) => setDeck(e.target.value)} />}
-              <textarea style={{ ...input, minHeight: 260, fontFamily: 'ui-monospace, monospace', fontSize: 13 }} placeholder="Body (markdown)" value={body} onChange={(e) => setBody(e.target.value)} />
+              {entity === 'news' && (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <input style={{ ...input, flex: '1 1 160px' }} placeholder="Tag (e.g. Press release / Event)" value={tag} onChange={(e) => setTag(e.target.value)} />
+                  <input style={{ ...input, flex: '1 1 200px' }} type="datetime-local" title="Event date (leave empty for a plain news post)" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
+                </div>
+              )}
+              {entity === 'page' ? (
+                <textarea
+                  style={{ ...input, minHeight: 220, fontFamily: 'ui-monospace, monospace', fontSize: 13 }}
+                  placeholder={'Blocks JSON, e.g.\n[\n  { "type": "hero", "title": "..." },\n  { "type": "richText", "markdown": "..." }\n]'}
+                  value={blocks}
+                  onChange={(e) => setBlocks(e.target.value)}
+                />
+              ) : (
+                <textarea style={{ ...input, minHeight: 260, fontFamily: 'ui-monospace, monospace', fontSize: 13 }} placeholder="Body (markdown)" value={body} onChange={(e) => setBody(e.target.value)} />
+              )}
             </>
           )}
           <div>
@@ -233,7 +262,14 @@ function Editor({ entity, row: initialRow, canPublish, onClose, onSaved, onCreat
       {tab === 'preview' && (
         <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: 14, marginTop: 12, background: '#F8FAFC' }}>
           <h2 style={{ marginTop: 0 }}>{entity === 'faq' ? question || '(question)' : title || '(title)'}</h2>
-          <MarkdownPreview text={entity === 'faq' ? answer : body} />
+          {entity === 'page' ? (
+            (() => {
+              try { return <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(JSON.parse(blocks || '[]'), null, 2)}</pre>; }
+              catch { return <p style={{ color: '#DC2626' }}>Blocks JSON is invalid — fix it in the Edit tab.</p>; }
+            })()
+          ) : (
+            <MarkdownPreview text={entity === 'faq' ? answer : body} />
+          )}
         </div>
       )}
 

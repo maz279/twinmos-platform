@@ -76,6 +76,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                 <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>
                   <b>{m.meta?.origName ?? m.key}</b>
                   <div style={{ color: '#5E7691', fontSize: 12 }}>{m.key}</div>
+                  <a href={(import.meta.env.VITE_API_URL ?? '/api/v1') + '/admin/media/' + m.id + '/file'} target="_blank" rel="noopener" style={{ fontSize: 12 }}>View file ↗</a>
                 </td>
                 <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}><Badge value={m.kind} /></td>
                 <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>

@@ -7,9 +7,9 @@ import { Hono } from 'hono';
 import { desc, eq, like } from 'drizzle-orm';
 import { problem } from '@twinmos/shared';
 import { mediaAsset, auditLog } from '@twinmos/db';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 
@@ -108,6 +108,34 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     }).returning();
     await auditRow(c, s.user.id, 'media.create', String(rows[0].id), { key: stored, kind, bytes: file.size });
     return c.json(rows[0], 201);
+  });
+
+  r.get('/media/:id/file', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const id = Number(c.req.param('id'));
+    const rows = await db.select().from(mediaAsset).where(eq(mediaAsset.id, id)).limit(1);
+    const asset = rows[0];
+    if (!asset) return c.json(problem(404, 'Media not found'), 404, { 'Content-Type': P });
+    // path-traversal guard: resolve and require the file to live inside MEDIA_DIR
+    const root = resolve(MEDIA_DIR);
+    const target = resolve(join(MEDIA_DIR, asset.key));
+    if (!target.startsWith(root + sep)) {
+      return c.json(problem(400, 'Invalid media key'), 400, { 'Content-Type': P });
+    }
+    let bytes: Uint8Array;
+    try {
+      const st = statSync(target);
+      if (!st.isFile()) throw new Error('not a file');
+      bytes = new Uint8Array(readFileSync(target));
+    } catch {
+      return c.json(problem(404, 'Media file missing on disk'), 404, { 'Content-Type': P });
+    }
+    const mime = String((asset.meta as any)?.mime ?? 'application/octet-stream');
+    if (mime === 'image/svg+xml') {
+      c.header('Content-Disposition', 'attachment; filename="' + asset.key + '"'); // SVG never renders inline here
+    }
+    return c.body(bytes as any, 200, { 'Content-Type': mime, 'Cache-Control': 'private, max-age=60' });
   });
 
   r.patch('/media/:id', async (c) => {

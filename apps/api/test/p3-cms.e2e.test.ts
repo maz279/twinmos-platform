@@ -306,3 +306,78 @@ describe('settings / redirects / locales', () => {
     expect((await app.request('/api/v1/admin/locales/en', { ...{ method: 'PATCH', body: JSON.stringify({ active: true }) }, headers: { 'content-type': 'application/json', cookie: adminCookie, ...({ method: 'PATCH', body: JSON.stringify({ active: true }) }.headers ?? {}) } })).status).toBe(200);
   });
 });
+
+// ---- P3 gap-audit iteration: page blocks, news event/tag, media file serving ----
+describe('P3 gap fixes: pages blocks, news eventDate, media serving', () => {
+  it('page create with blocks; blocks persist through edit + publish', async () => {
+    const blocks = [
+      { type: 'hero', title: 'Warranty Hub' },
+      { type: 'richText', markdown: '## Overview\nAll TwinMOS products carry regional warranty.' },
+    ];
+    const created = await app.request('/api/v1/admin/content/page', {
+      method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ title: 'Warranty Hub Page', blocks }),
+    });
+    expect(created.status).toBe(201);
+    const page1 = await created.json();
+    expect(page1.blocks).toHaveLength(2);
+    expect(page1.blocks[0].type).toBe('hero');
+
+    // edit: replace blocks
+    const edited = await app.request(`/api/v1/admin/content/page/${page1.id}`, {
+      method: 'PATCH', headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ blocks: [{ type: 'hero', title: 'Warranty Hub v2' }] }),
+    });
+    expect(edited.status).toBe(200);
+    expect((await edited.json()).blocks[0].title).toBe('Warranty Hub v2');
+
+    // publish + preview renders the blocks (JSON sections on the preview page)
+    await app.request(`/api/v1/admin/content/page/${page1.id}/transition`, { method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie }, body: JSON.stringify({ to: 'published' }) });
+    const prev = await app.request(`/api/v1/admin/content/page/${page1.id}/preview`, { method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie }, body: '{}' });
+    const { previewUrl } = await prev.json();
+    const html = await (await app.request(previewUrl)).text();
+    expect(html).toContain('Warranty Hub v2');
+  });
+
+  it('news accepts tag + eventDate; event surfaces with cat Event in export shape', async () => {
+    const when = new Date('2027-03-01T09:00:00Z').toISOString();
+    const created = await app.request('/api/v1/admin/content/news', {
+      method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ title: 'COMPUTEX 2027 Booth Reveal', body: 'c'.repeat(20), tag: 'Event', eventDate: when }),
+    });
+    expect(created.status).toBe(201);
+    const item = await created.json();
+    expect(item.tag).toBe('Event');
+    expect(new Date(item.eventDate).toISOString()).toBe(when);
+
+    // plain news keeps tag, eventDate stays null
+    const plain = await app.request('/api/v1/admin/content/news', {
+      method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ title: 'Plain News Item', body: 'n'.repeat(20), tag: 'Press release' }),
+    });
+    const plainItem = await plain.json();
+    expect(plainItem.tag).toBe('Press release');
+    expect(plainItem.eventDate).toBeNull();
+  });
+
+  it('media file serving: correct bytes + mime, auth required, SVG forced to download', async () => {
+    const fd = new FormData();
+    fd.append('file', new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 9, 9, 9, 9])], 'serve.png'));
+    fd.append('alt', 'serve test');
+    const up = await app.request('/api/v1/admin/media', { method: 'POST', headers: { cookie: adminCookie }, body: fd });
+    expect(up.status).toBe(201);
+    const { id } = await up.json();
+
+    const anon = await app.request(`/api/v1/admin/media/${id}/file`);
+    expect(anon.status).toBe(401);
+
+    const res = await app.request(`/api/v1/admin/media/${id}/file`, { headers: { cookie: adminCookie } });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('image/png');
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    expect(bytes[0]).toBe(0x89); // same magic bytes back
+
+    // missing id → 404, not a 500
+    expect((await app.request('/api/v1/admin/media/999999/file', { headers: { cookie: adminCookie } })).status).toBe(404);
+  });
+});

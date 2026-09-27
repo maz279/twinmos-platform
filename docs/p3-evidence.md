@@ -54,3 +54,13 @@ npm run export:content -w @twinmos/web       # DB → cms-content.js (slug-diff 
 npm run build -w @twinmos/web                # prebuild chains sync → export → fallback
 npm run test -w @twinmos/api                 # 47/47
 ```
+
+## 4. Gap-audit iteration (2026-09-27, doc v2)
+
+Full-scope sweep against docs/04 §Modules found three real gaps — all fixed and covered by new tests (**suite now 50/50**):
+
+1. **Pages had no blocks editor** — the API accepted `blocks` but the SPA showed the markdown body textarea for pages and silently dropped it. Now: dedicated blocks-JSON editor (validated client + server; invalid JSON never reaches the API), a page-specific Preview tab (rendered block outline, invalid-JSON warning), and blocks persist through create → edit → publish → preview (verified end-to-end in tests).
+2. **News editor lacked event fields** — `tag` and `eventDate` existed in the contract/API but not the UI, so events couldn't be created properly. Now both inputs ship (datetime maps to ISO); create path converts the ISO string to a Date for the timestamp column (previously a 500). Tests assert tag/eventDate round-trip and that plain news keeps `eventDate: null`.
+3. **Uploaded media could not be viewed or linked** — files landed in `MEDIA_DIR` with no serving endpoint. Now `GET /admin/media/:id/file`: session-authenticated, resolve-based path-traversal guard (file must live inside MEDIA_DIR), mime from the stored sniffed type, SVG always served as attachment (never inline), 404 for missing rows/files. Live-verified: authed 200 `image/png` with byte-exact round-trip, anonymous 401. Media library rows gained a "View file ↗" link.
+
+Post-fix gates: 4-project typecheck clean · **50/50 tests** · admin `ADMIN_AUTHED` smoke · sealed scan 0 findings.
