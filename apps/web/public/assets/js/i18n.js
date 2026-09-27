@@ -9,14 +9,33 @@
   var API = window.TWINMOS_API || '/api/v1';
   if (API.charAt(API.length - 1) === '/') API = API.slice(0, -1);
 
+  // ---- header language selector (every page, incl. EN) ------------------
+  // The prototype ships a 9-option <select id="langSel"> with NO handler;
+  // this layer wires it to the P4 locale landings. Values use BCP-47 casing
+  // (zh-CN) while landing files are lower-case — normalize on navigation.
+  var langSel = document.getElementById('langSel');
+  if (langSel && !langSel.dataset.tmWired) {
+    langSel.dataset.tmWired = '1';
+    langSel.addEventListener('change', function () {
+      var code = String(langSel.value || 'en').toLowerCase();
+      var target = code === 'en' ? '/' : '/' + code + '.html';
+      // preserve the current page for locales that share it later; landings
+      // are homepage-shaped today, so deep pages land on the locale home.
+      location.href = target;
+    });
+  }
+
+  // ---- locale-page translation work (locale pages only) -----------------
   // landings live at /{locale}.html under build.format:'file' (legacy /{locale}/ kept)
   var m = location.pathname.match(/^\/([a-z]{2}(?:-[a-z]{2})?)(?:\/|\.html?$)/);
   var pathLocale = m && m[1];
-  if (!pathLocale) return; // EN (default, unprefixed) — nothing to do
+  if (!pathLocale) return; // EN (default, unprefixed) — nothing more to do
 
   var RTL = ['ar'];
   document.documentElement.lang = pathLocale;
   document.documentElement.dir = RTL.indexOf(pathLocale) !== -1 ? 'rtl' : 'ltr';
+  // keep the selector in sync with the page being viewed
+  if (langSel) langSel.value = pathLocale;
 
   function t(key) {
     // flat map first (literal 'hero.title' key), then dotted walk for

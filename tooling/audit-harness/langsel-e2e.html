@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>langsel-e2e</title></head>
+<body>
+<iframe id="t" title="site" style="width:800px;height:900px;border:0"></iframe>
+<pre id="out">PENDING</pre>
+<script>
+// P4 langSel E2E: loads the EN homepage in an iframe, verifies the header
+// language select is wired by the port-only layer, fires a change to Arabic,
+// and confirms navigation to the RTL landing.
+var out = document.getElementById('out');
+var f = document.getElementById('t');
+var stage = 'load';
+f.addEventListener('load', function () {
+  if (stage === 'nav') {
+    setTimeout(function () {
+      var d = f.contentDocument;
+      out.textContent = 'NAV_URL=' + d.location.pathname +
+        ' dir=' + d.documentElement.dir +
+        ' lang=' + d.documentElement.lang +
+        ' selVal=' + ((d.getElementById('langSel') || {}).value || '?');
+    }, 2500);
+    return;
+  }
+  setTimeout(function () {
+    var d = f.contentDocument;
+    var sel = d.getElementById('langSel');
+    if (!sel) { out.textContent = 'LANGSEL_FAIL no select'; return; }
+    if (sel.dataset.tmWired !== '1') { out.textContent = 'LANGSEL_FAIL not wired (layer missing?)'; return; }
+    stage = 'nav';
+    sel.value = 'ar';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }, 9000); // past the deferred boot so i18n.js has run
+});
+f.src = 'http://localhost:4321/index.html';
+</script>
+</body>
+</html>

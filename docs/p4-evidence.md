@@ -52,3 +52,13 @@ npm run build -w @twinmos/web           # 36 pages, ~4s
 ```
 
 Deferred to later phases (per the phased plan): per-locale product catalog URLs (P4 shipped the routing, translation workflow, and landing surfaces; the corpus itself remains EN), Plausible-style locale analytics, RTL parity audit of the full 28-page set once translated content exists beyond the landing shells.
+
+## 6. Deep-audit iteration (2026-09-27, doc v3)
+
+Three surfaces audited beyond the earlier passes — two real gaps found and closed:
+
+1. **The header language selector was dead UI.** Every page ships the prototype's 9-option `<select id="langSel">`, but the prototype wires no handler — nothing linked it to the P4 landings. The port-only `i18n.js` now wires it on **every page** (value change navigates to `/{locale}.html`; EN returns to `/`; BCP-47 casing like `zh-CN` normalized to the lower-case landing file), and syncs the selector to the current page on landings. Browser-proven: `NAV_URL=/ar.html dir=rtl lang=ar` after a simulated change on the EN homepage (`tooling/audit-harness/langsel-e2e.html`).
+2. **The admin Translations module had never been browser-tested** (typecheck + build only). New harness drives the real SPA: sign in → Translations nav item → JSON import through the actual textarea/button → string appears in the grid — **`I18N_ADMIN_OK … imported=true keyInGrid=true`** (`tooling/audit-harness/i18n-admin-e2e.html`).
+3. **Landing breadth + RTL audit re-run live:** all 8 landings serve 200; `ar.html` renders with `lang="ar" dir="rtl"`, `rtl.css` linked, `i18n.js` in the boot chain, and `data-i18n` keys on the hero. (The landings intentionally omit the full site header — they carry their own "Continue in English" link — so `langSel` absence there is by design; the sync code guards on it.)
+
+Post-fix gates: **65/65** tests · 4-project typecheck clean · sealed scan 0 findings.
