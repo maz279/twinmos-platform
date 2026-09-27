@@ -12,6 +12,8 @@ import { contentRoute, previewRoute, promoteScheduled } from './routes/content.t
 import { mediaRoute } from './routes/media.ts';
 import { settingsRoute } from './routes/settings.ts';
 import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
+import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
+import { snCheckRoute, snReportRoute } from './routes/sncheck.ts';
 import type { DB } from '@twinmos/db';
 
 export function buildApp(db: DB) {
@@ -62,6 +64,30 @@ export function buildApp(db: DB) {
     return next();
   });
 
+  // ---- P5 SN-check rate limit: 10/min/IP (sweeping shared with forms buckets) ----
+  app.use('/api/v1/sn-check', async (c, next) => {
+    const ip = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'local';
+    const now = Date.now();
+    if (now > bucketSweepAt) {
+      bucketSweepAt = now + 60_000;
+      for (const [k, v] of FORM_BUCKETS) {
+        if (v.resetAt < now) FORM_BUCKETS.delete(k);
+      }
+    }
+    const key = 'sn:' + ip;
+    const bucket = FORM_BUCKETS.get(key);
+    if (!bucket || bucket.resetAt < now) {
+      FORM_BUCKETS.set(key, { count: 1, resetAt: now + 60_000 });
+      return next();
+    }
+    bucket.count += 1;
+    if (bucket.count > 10) {
+      c.header('Retry-After', String(Math.ceil((bucket.resetAt - now) / 1000)));
+      return c.json(problem(429, 'Too Many Requests', 'Limit is 10 serial checks per minute.'), 429, { 'Content-Type': 'application/problem+json' });
+    }
+    return next();
+  });
+
   // ---- error envelope: RFC 9457 problem+json on every API error ----
   app.onError((err, c) => {
     console.error('[api]', err);
@@ -79,6 +105,10 @@ export function buildApp(db: DB) {
   app.route('/api/v1/admin', settingsRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', translationsRoute(db, { requireRole, sessionFromRequest })); // P4
   app.route('/api/v1', i18nPublicRoute(db)); // public i18n bundles (P4)
+  app.route('/api/v1', partnerRoute(db, { requireRole, sessionFromRequest })); // P5 portal (member)
+  app.route('/api/v1/admin', partnerAdminRoute(db, { requireRole, sessionFromRequest })); // P5 portal (admin)
+  app.route('/api/v1', snCheckRoute(db)); // P5 public anti-counterfeit check
+  app.route('/api/v1/admin', snReportRoute(db, { requireRole, sessionFromRequest })); // P5 reporting
 
   // Manual trigger for external cron (production); the in-process scheduler
   // lives in index.ts so tests never inherit an interval.

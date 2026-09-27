@@ -199,3 +199,36 @@ export const translationDeleteSchema = z.object({
   ns: nsField,
   key: keyField,
 });
+
+// ---- P5: partner portal + anti-counterfeit ----
+export const PARTNER_TYPES = ['distributor', 'oem', 'si'] as const;
+export const PARTNER_TYPE_SCHEMA = z.enum(PARTNER_TYPES);
+export const PARTNER_STATUSES = ['pending', 'active', 'suspended'] as const;
+export const PARTNER_STATUS_SCHEMA = z.enum(PARTNER_STATUSES);
+export const PARTNER_ASSET_CATEGORIES = ['price_file', 'mdf', 'resource'] as const;
+export const PARTNER_ASSET_CATEGORY_SCHEMA = z.enum(PARTNER_ASSET_CATEGORIES);
+
+export const partnerOrgCreateSchema = z.object({
+  name: z.string().trim().min(2).max(160),
+  type: PARTNER_TYPE_SCHEMA,
+  country: z.string().trim().max(60).optional(),
+  contactEmail: z.string().email().max(254).optional(),
+  note: z.string().trim().max(2000).optional(),
+});
+export const partnerOrgUpdateSchema = z.object({
+  status: PARTNER_STATUS_SCHEMA.optional(),
+  name: z.string().trim().min(2).max(160).optional(),
+  country: z.string().trim().max(60).optional(),
+  contactEmail: z.string().email().max(254).optional(),
+  note: z.string().trim().max(2000).optional(),
+});
+export const partnerMemberAddSchema = z.object({
+  email: z.string().email().max(254), // must already have a site account
+  role: z.enum(['owner', 'staff']).default('staff'),
+});
+export const partnerAssetVisibilitySchema = z.array(PARTNER_TYPE_SCHEMA).min(1).max(3)
+  .default(['distributor', 'oem', 'si']);
+
+export const snCheckSchema = z.object({
+  serial: z.string().trim().min(4).max(60).regex(/^[A-Za-z0-9._-]+$/, 'letters, digits, dot, dash, underscore'),
+});

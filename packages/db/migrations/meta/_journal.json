@@ -29,6 +29,13 @@
       "when": 1790524900000,
       "tag": "0003_translations",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790611200000,
+      "tag": "0004_partner_portal",
+      "breakpoints": true
     }
   ]
 }

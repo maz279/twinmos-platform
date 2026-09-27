@@ -168,6 +168,49 @@ export const serialRegistry = pgTable('serial_registry', {
   manufacturedAt: timestamp('manufactured_at', { withTimezone: true }), verifiedCount: integer('verified_count').notNull().default(0),
 });
 
+// ---- P5: partner portal + anti-counterfeit ----
+/** Channel org types (docs/04 §Channel; master plan P5). */
+export const PARTNER_ORG_TYPES = ['distributor', 'oem', 'si'] as const;
+export const PARTNER_ORG_STATUSES = ['pending', 'active', 'suspended'] as const;
+
+export const partnerOrg = pgTable('partner_org', {
+  id: serial('id').primaryKey(), name: text('name').notNull(),
+  type: varchar('type', { length: 20 }).notNull(), // distributor | oem | si
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | active | suspended
+  country: varchar('country', { length: 60 }), contactEmail: text('contact_email'), note: text('note'),
+  createdAt: ts(),
+}, (t) => [index('partner_org_type_status_idx').on(t.type, t.status)]);
+
+export const partnerMember = pgTable('partner_member', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').notNull().references(() => partnerOrg.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  role: varchar('role', { length: 20 }).notNull().default('staff'), // owner | staff
+  createdAt: ts(),
+}, (t) => [uniqueIndex('partner_member_org_user_uq').on(t.orgId, t.userId)]);
+
+/** Gated content: price files, MDF docs, portal resources. */
+export const partnerAsset = pgTable('partner_asset', {
+  id: serial('id').primaryKey(),
+  orgId: integer('org_id').references(() => partnerOrg.id, { onDelete: 'cascade' }), // null = all orgs of the visible types
+  category: varchar('category', { length: 30 }).notNull(), // price_file | mdf | resource
+  title: text('title').notNull(), fileKey: text('file_key').notNull(),
+  mime: varchar('mime', { length: 120 }).notNull().default('application/octet-stream'),
+  bytes: integer('bytes').notNull().default(0),
+  visibleToTypes: text('visible_to_types').array().notNull().default(['distributor', 'oem', 'si']),
+  uploadedBy: text('uploaded_by').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: ts(),
+}, (t) => [index('partner_asset_category_idx').on(t.category, t.orgId)]);
+
+/** Anti-counterfeit verification log (public SN-check writes here). */
+export const snCheck = pgTable('sn_check', {
+  id: serial('id').primaryKey(),
+  serial: varchar('serial', { length: 60 }).notNull(), sku: varchar('sku', { length: 40 }),
+  result: varchar('result', { length: 20 }).notNull(), // valid | unverified
+  ip: text('ip'), ua: text('ua'),
+  checkedAt: timestamp('checked_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index('sn_check_serial_idx').on(t.serial, t.checkedAt), index('sn_check_checked_at_idx').on(t.checkedAt)]);
+
 // ---- careers ----
 export const jobPosting = pgTable('job_posting', {
   id: serial('id').primaryKey(), title: text('title').notNull(), dept: varchar('dept', { length: 40 }).notNull(),

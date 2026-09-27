@@ -58,5 +58,33 @@ if (anyProduct.length === 0) {
   ]);
   console.log('[seed] reference brand/category/products created');
 }
+
+// 4) P5 demo partner org + member + gated asset + registry serials (dev only).
+const { partnerOrg, partnerMember, partnerAsset, serialRegistry } = await import('@twinmos/db');
+const anyOrg = await db.select({ id: partnerOrg.id }).from(partnerOrg).limit(1);
+if (anyOrg.length === 0) {
+  const [org] = await db.insert(partnerOrg).values({
+    name: 'Gulf Channel Trading (demo)', type: 'distributor', status: 'active',
+    country: 'United Arab Emirates', contactEmail: 'channel@example.com',
+    note: 'Seeded demo distributor for portal verification.',
+  }).returning();
+  // attach the seeded admin as the org owner so the demo login works out of the box
+  const adminRow = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
+  if (adminRow[0]) {
+    await db.insert(partnerMember).values({ orgId: org.id, userId: adminRow[0].id, role: 'owner' }).onConflictDoNothing();
+  }
+  // a global price-file asset visible to distributors (file itself lands on first admin upload in dev flows)
+  await db.insert(partnerAsset).values({
+    orgId: null, category: 'price_file', title: 'Q4 2026 Distributor Price List (demo)',
+    fileKey: 'demo-price-list.pdf', mime: 'application/pdf', bytes: 0,
+    visibleToTypes: ['distributor'],
+  });
+  // registry serials for the anti-counterfeit demo
+  await db.insert(serialRegistry).values([
+    { serial: 'TM-DEMO-0001', sku: 'VLT-DDR5-32G', manufacturedAt: new Date('2026-06-01') },
+    { serial: 'TM-DEMO-0002', sku: 'NVCXP2TBG52280', manufacturedAt: new Date('2026-07-15') },
+  ]).onConflictDoNothing();
+  console.log('[seed] demo partner org + member + price asset + 2 serials created');
+}
 console.log('[seed] done');
 process.exit(0);

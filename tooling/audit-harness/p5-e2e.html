@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>p5-e2e</title></head>
+<body>
+<iframe id="t" title="site" style="width:900px;height:900px;border:0"></iframe>
+<pre id="out">PENDING</pre>
+<script>
+// P5 browser E2E — both public surfaces in one harness:
+//  1. partners.html: real partner sign-in through the (formerly demo) form →
+//     the inline portal dashboard renders the org + gated assets
+//  2. support.html: collapsed "Verify a product serial number" chip → click →
+//     SN-check verifies a seeded serial → genuine verdict
+var out = document.getElementById('out');
+var f = document.getElementById('t');
+var log = [];
+function say(m) { log.push(m); out.textContent = 'P5 ' + log.join(' | ').slice(0, 800); }
+function setVal(el, v) {
+  Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(el, v);
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function stagePartners() {
+  f.onload = function () {
+    setTimeout(function () {
+      var d = f.contentDocument;
+      var form = Array.prototype.filter.call(d.querySelectorAll('form[data-tm-form]'), function (x) {
+        return (x.getAttribute('data-success') || '').indexOf('Demo sign-in') !== -1;
+      })[0];
+      if (!form) { say('FAIL no demo-signin form'); finish(); return; }
+      setVal(form.querySelector('input[type=email]'), 'admin@twinmos.dev');
+      setVal(form.querySelector('input[type=password]'), 'DevOnly-ChangeMe-2026!');
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      var n = 0;
+      (function pollPortal() {
+        var portal = f.contentDocument.getElementById('partnerPortal');
+        if (portal && portal.textContent.indexOf('partner portal') !== -1) {
+          var hasPrice = portal.textContent.indexOf('Price List') !== -1;
+          var hasDl = portal.querySelector('a[href*="/download"]') !== null;
+          say('PORTAL_OK price=' + hasPrice + ' download=' + hasDl);
+          stageSupport();
+          return;
+        }
+        if (++n > 30) { say('PORTAL_TIMEOUT'); finish(); return; }
+        setTimeout(pollPortal, 700);
+      })();
+    }, 9000);
+  };
+  f.src = 'http://localhost:4321/partners.html';
+}
+
+function stageSupport() {
+  f.onload = function () {
+    setTimeout(function () {
+      var d = f.contentDocument;
+      var main = d.getElementById('main');
+      var chips = Array.prototype.filter.call(main.querySelectorAll('.card'), function (c) {
+        return c.textContent.indexOf('Verify a product serial number') !== -1;
+      });
+      if (!chips.length) { say('| SN_FAIL no collapsed chip'); finish(); return; }
+      chips[chips.length - 1].click(); // collapsed → expand
+      setTimeout(function () {
+        var d2 = f.contentDocument;
+        var inp = d2.getElementById('snInput');
+        var btn = d2.getElementById('snBtn');
+        if (!inp || !btn) { say('| SN_FAIL not expanded'); finish(); return; }
+        setVal(inp, 'TM-DEMO-0001');
+        btn.click();
+        var n = 0;
+        (function pollSn() {
+          var o = f.contentDocument.getElementById('snOut');
+          var txt = o ? o.textContent : '';
+          if (txt.indexOf('genuine') !== -1) { say('| SN_OK genuine'); finish(); return; }
+          if (txt.indexOf('not verified') !== -1) { say('| SN_UNEXPECTED not-verified'); finish(); return; }
+          if (++n > 25) { say('| SN_TIMEOUT out="' + txt.slice(0, 60) + '"'); finish(); return; }
+          setTimeout(pollSn, 600);
+        })();
+      }, 800);
+    }, 8000);
+  };
+  f.src = 'http://localhost:4321/support.html';
+}
+
+function finish() { out.textContent = ('P5_DONE ' + log.join(' | ')).slice(0, 800); }
+stagePartners();
+</script>
+</body>
+</html>
