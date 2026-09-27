@@ -22,6 +22,13 @@
       "when": 1790524800000,
       "tag": "0002_content_revisions",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790524900000,
+      "tag": "0003_translations",
+      "breakpoints": true
     }
   ]
 }

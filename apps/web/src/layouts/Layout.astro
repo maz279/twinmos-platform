@@ -7,12 +7,27 @@ interface Props {
   desc: string;
   bodyClass?: string;
   noindex?: boolean;
+  /** P4: locale of THIS page (affects lang/dir + which hreflang is canonical). */
+  locale?: string;
+  /** P4: when true, emit the full 9-locale hreflang grid (locale landings only). */
+  hreflangGrid?: boolean;
 }
-const { title, desc, bodyClass = '', noindex = false } = Astro.props;
+const { title, desc, bodyClass = '', noindex = false, locale = 'en', hreflangGrid = false } = Astro.props;
 /* Homepage canonical is the site root (not /index.html) to avoid signal
  * fragmentation; other pages keep their .html path (build.format = 'file'). */
 const path = Astro.url.pathname === '/index.html' ? '/' : Astro.url.pathname;
 const canonical = new URL(path, Astro.site);
+
+/* P4: hreflang — 9-locale grid for locale landings; plain en/x-default on EN.
+ * build.format:'file' emits landings as /{code}.html (consistent with the
+ * whole site's /page.html URL scheme). */
+const LOCALES = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'];
+const RTL = ['ar'];
+const dir = RTL.includes(locale) ? 'rtl' : 'ltr';
+const localeUrl = (code: string) =>
+  code === 'en'
+    ? new URL(hreflangGrid ? '/' : (path === '/' ? '/' : path), Astro.site) // landings mirror the homepage
+    : new URL(`/${code}.html`, Astro.site);
 
 const ORG_LD = JSON.stringify({
   '@context': 'https://schema.org',
@@ -44,7 +59,7 @@ const SITE_LD = JSON.stringify({
 });
 ---
 <!doctype html>
-<html lang="en">
+<html lang={locale} dir={dir}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -53,12 +68,17 @@ const SITE_LD = JSON.stringify({
     {noindex && <meta name="robots" content="noindex" />}
     <title>{title}</title>
     <link rel="canonical" href={canonical} />
-    <link rel="alternate" hreflang="en" href={canonical} />
-    <link rel="alternate" hreflang="x-default" href={canonical} />
+    {hreflangGrid ? (
+      LOCALES.map((code) => <link rel="alternate" hreflang={code} href={localeUrl(code)} />)
+    ) : (
+      <link rel="alternate" hreflang={locale} href={canonical} />
+    )}
+    <link rel="alternate" hreflang="x-default" href={localeUrl('en')} />
     <link rel="icon" type="image/png" href="assets/img/favicon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="assets/css/main.css" />
     <link rel="stylesheet" href="assets/css/a11y-overrides.css" />
+    {locale !== 'en' && <link rel="stylesheet" href="assets/css/rtl.css" />}
     <script type="application/ld+json" set:html={ORG_LD} />
     <script type="application/ld+json" set:html={SITE_LD} />
     <script>if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js').catch(function(){});}</script>
@@ -114,7 +134,7 @@ const SITE_LD = JSON.stringify({
           }
         } catch (e) { /* never block the page */ }
 
-        var files = ['assets/js/data.js', 'assets/js/cms-content.js', 'assets/js/cms-merge.js', 'assets/js/app.js', 'assets/js/img-dims.js', 'assets/js/a11y.js', 'assets/js/forms.js'];
+        var files = ['assets/js/data.js', 'assets/js/cms-content.js', 'assets/js/cms-merge.js', 'assets/js/app.js', 'assets/js/img-dims.js', 'assets/js/a11y.js', 'assets/js/forms.js', 'assets/js/i18n.js'];
         function boot() {
           files.forEach(function (src) {
             var s = document.createElement('script');

@@ -1,0 +1,37 @@
+/* P4 RTL support — port-only. Mirrors directional primitives for [dir=rtl];
+ * logical-gap fixes only, never colors/typography (those stay per prototype).
+ * Scoped to [dir=rtl] so LTR locales are pixel-untouched. */
+[dir='rtl'] .wrap,
+[dir='rtl'] .section-head,
+[dir='rtl'] .breadcrumb,
+[dir='rtl'] .breadcrumb ul,
+[dir='rtl'] .footer-grid,
+[dir='rtl'] .pdp,
+[dir='rtl'] .pdp-info,
+[dir='rtl'] .shop-layout,
+[dir='rtl'] .filters,
+[dir='rtl'] .mega,
+[dir='rtl'] .mega-grid,
+[dir='rtl'] .grid,
+[dir='rtl'] .bento,
+[dir='rtl'] .b-cell,
+[dir='rtl'] .card,
+[dir='rtl'] .card-pad {
+  direction: rtl;
+  text-align: right;
+}
+
+/* arrows/margins that assume LTR flip */
+[dir='rtl'] .link-arrow::after { content: '←'; }
+[dir='rtl'] .breadcrumb a + a::before,
+[dir='rtl'] .breadcrumb li + li::before { content: '◂'; margin: 0 6px 0 2px; }
+[dir='rtl'] .cat-cta,
+[dir='rtl'] .link-arrow { flex-direction: row-reverse; }
+[dir='rtl'] .fg label { text-align: right; }
+[dir='rtl'] input.input,
+[dir='rtl'] select.input,
+[dir='rtl'] textarea.input { text-align: right; }
+[dir='rtl'] .eyebrow { flex-direction: row-reverse; }
+[dir='rtl'] .sl-track { direction: ltr; } /* slide order stays visual-left-to-right */
+[dir='rtl'] .ua-pill-row { flex-direction: row-reverse; }
+[dir='rtl'] .form-success { text-align: right; }

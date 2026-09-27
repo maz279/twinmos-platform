@@ -11,6 +11,7 @@ import { adminRoute } from './routes/admin.ts';
 import { contentRoute, previewRoute, promoteScheduled } from './routes/content.ts';
 import { mediaRoute } from './routes/media.ts';
 import { settingsRoute } from './routes/settings.ts';
+import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
 import type { DB } from '@twinmos/db';
 
 export function buildApp(db: DB) {
@@ -76,6 +77,8 @@ export function buildApp(db: DB) {
   app.route('/api/v1/admin', contentRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', mediaRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', settingsRoute(db, { requireRole, sessionFromRequest }));
+  app.route('/api/v1/admin', translationsRoute(db, { requireRole, sessionFromRequest })); // P4
+  app.route('/api/v1', i18nPublicRoute(db)); // public i18n bundles (P4)
 
   // Manual trigger for external cron (production); the in-process scheduler
   // lives in index.ts so tests never inherit an interval.

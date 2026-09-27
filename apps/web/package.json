@@ -16,7 +16,8 @@
     "export:content": "node --experimental-strip-types --no-warnings ../../tooling/export-content.mjs"
   },
   "dependencies": {
-    "astro": "^7.3.5"
+    "astro": "^7.3.5",
+    "@twinmos/shared": "*"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",

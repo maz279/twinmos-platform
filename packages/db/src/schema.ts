@@ -97,6 +97,18 @@ export const contentRevision = pgTable('content_revision', {
   createdAt: ts(),
 }, (t) => [index('content_revision_entity_idx').on(t.entity, t.entityId)]);
 
+// P4: translation strings — (locale, ns, key) unique; ns defaults to 'common'.
+export const translation = pgTable('translation', {
+  id: serial('id').primaryKey(),
+  locale: varchar('locale', { length: 10 }).notNull(),
+  ns: varchar('ns', { length: 60 }).notNull().default('common'),
+  key: varchar('key', { length: 120 }).notNull(),
+  value: text('value').notNull(),
+  updatedBy: text('updated_by').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: ts(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex('translation_locale_ns_key_uq').on(t.locale, t.ns, t.key)]);
+
 // ---- catalog ----
 export const brand = pgTable('brand', { id: serial('id').primaryKey(), slug: varchar('slug', { length: 60 }).notNull().unique(), name: text('name').notNull() });
 export const category = pgTable('category', {

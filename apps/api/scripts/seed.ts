@@ -33,8 +33,16 @@ if (existing.length === 0) {
 const en = await db.select().from(locale).limit(1);
 if (en.length === 0) {
   await db.insert(locale).values([
+    // 9-locale reconciled plan (BN removed per post-remediation fact base)
     { code: 'en', name: 'English', dir: 'ltr', active: true },
     { code: 'ar', name: 'العربية', dir: 'rtl', active: false },
+    { code: 'hi', name: 'हिन्दी', dir: 'ltr', active: false },
+    { code: 'ru', name: 'Русский', dir: 'ltr', active: false },
+    { code: 'zh-cn', name: '简体中文', dir: 'ltr', active: false },
+    { code: 'fr', name: 'Français', dir: 'ltr', active: false },
+    { code: 'es', name: 'Español', dir: 'ltr', active: false },
+    { code: 'pt', name: 'Português', dir: 'ltr', active: false },
+    { code: 'de', name: 'Deutsch', dir: 'ltr', active: false },
   ]);
   console.log('[seed] locale rows created');
 }

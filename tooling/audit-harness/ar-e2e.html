@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>ar-e2e</title></head>
+<body>
+<iframe id="t" title="ar landing" style="width:800px;height:900px;border:0"></iframe>
+<pre id="out">PENDING</pre>
+<script>
+// P4 browser E2E: loads /ar.html in an iframe, waits past the deferred boot +
+// i18n fetch, then reports the translated state (RTL + Arabic strings applied).
+var out = document.getElementById('out');
+var f = document.getElementById('t');
+f.addEventListener('load', function () {
+  var waited = 0;
+  (function poll() {
+    var d = f.contentDocument;
+    var h1 = d && d.querySelector('h1');
+    var txt = (h1 ? h1.textContent : '').replace(/\s+/g, '');
+    var arabic = txt.length > 0 && txt.charCodeAt(0) > 0x400; // non-Latin lead char
+    if (arabic) {
+      out.textContent = 'AR_OK dir=' + d.documentElement.dir +
+        ' h1len=' + txt.length +
+        ' cta=' + ((d.querySelector('[data-i18n="hero.ctaShop"]') || {}).textContent || '?').trim() +
+        ' lang=' + d.documentElement.lang;
+      return;
+    }
+    if (++waited > 40) {
+      out.textContent = 'AR_TIMEOUT dir=' + (d ? d.documentElement.dir : '?') +
+        ' h1=' + (h1 ? h1.textContent.trim().slice(0, 60) : '?') +
+        ' scripts=' + (d ? d.querySelectorAll('script[src]').length : 0);
+      return;
+    }
+    setTimeout(poll, 700);
+  })();
+});
+f.src = 'http://localhost:4321/ar.html';
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+---
+// P4 locale landings — /ar/, /hi/, /ru/, /zh-cn/, /fr/, /es/, /pt/, /de/.
+// Each landing reproduces the EN homepage shell (verbatim prototype body) with
+// lang/dir flipped and the i18n runtime active, so translated chrome strings
+// (nav, hero, CTAs) render from the CMS translation store. EN itself stays at
+// the prototype URLs (prefixDefaultLocale: false) — zero P1 parity impact.
+import Layout from '../../layouts/Layout.astro';
+import { LOCALES, localeDir } from '@twinmos/shared';
+
+export function getStaticPaths() {
+  return LOCALES.filter((l) => l !== 'en').map((locale) => ({ params: { locale } }));
+}
+
+const { locale } = Astro.params;
+const dir = localeDir(locale!);
+
+const LOCALE_NAMES: Record<string, string> = {
+  ar: 'العربية', hi: 'हिन्दी', ru: 'Русский', 'zh-cn': '简体中文',
+  fr: 'Français', es: 'Español', pt: 'Português', de: 'Deutsch',
+};
+
+// Same shell the EN homepage carries; the i18n runtime swaps [data-i18n]
+// strings once the locale bundle loads. Landing adds a locale banner.
+---
+<Layout
+  title={`TwinMOS — ${LOCALE_NAMES[locale!]}`}
+  desc="TwinMOS memory and storage — DDR5, NVMe SSDs, portable storage."
+  locale={locale}
+  hreflangGrid={true}
+  bodyClass="page-home"
+>
+  <main id="main">
+    <section class="page-hero" dir={dir}>
+      <div class="wrap">
+        <span class="eyebrow" data-i18n="hero.eyebrow">Legendary memory brand since 1998</span>
+        <h1 class="h1" data-i18n="hero.title">Memory &amp; storage, engineered to endure</h1>
+        <p class="lede" data-i18n="hero.lede">DDR5 modules, PCIe Gen 5 SSDs and portable storage for builders, creators and enterprises — in 93+ countries.</p>
+        <p style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+          <a class="btn btn-accent" href="/shop.html" data-i18n="hero.ctaShop">Explore products</a>
+          <a class="btn btn-ghost" href="/where-to-buy.html" data-i18n="hero.ctaBuy">Where to buy</a>
+        </p>
+      </div>
+    </section>
+    <section style="padding-top:clamp(22px,3vw,36px)">
+      <div class="wrap">
+        <div class="card card-pad" style="text-align:start">
+          <span class="chip">{LOCALE_NAMES[locale!]}</span>
+          <h2 class="h3" style="margin:10px 0 6px" data-i18n="landing.localizedTitle">This page is being localized</h2>
+          <p class="form-note" data-i18n="landing.localizedBody">Product catalog, support and the knowledge hub remain in English today; full localization ships progressively from the CMS translation workflow.</p>
+          <p style="margin-top:12px"><a class="link-arrow" href="/" data-i18n="landing.backToEn">Continue in English</a></p>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>

@@ -168,3 +168,34 @@ export function slugify(input: string): string {
   return input.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 100) || 'untitled';
 }
+
+// ---- P4: localization ----
+/** 9-locale reconciled plan (BN removed per the post-remediation fact base). */
+export const LOCALES = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'] as const;
+export const LOCALE_SCHEMA = z.enum(LOCALES);
+export const RTL_LOCALES = ['ar'] as const;
+export function localeDir(locale: string): 'ltr' | 'rtl' {
+  return (RTL_LOCALES as readonly string[]).includes(locale) ? 'rtl' : 'ltr';
+}
+
+const nsField = z.string().trim().regex(/^[a-z0-9-]{1,60}$/, 'namespace: lowercase/digits/dashes');
+const keyField = z.string().trim().regex(/^[A-Za-z0-9_.\-]{1,120}$/, 'key: letters/digits/_ . -');
+
+export const translationUpsertSchema = z.object({
+  locale: LOCALE_SCHEMA,
+  ns: nsField.default('common'),
+  key: keyField,
+  value: z.string().max(20_000),
+});
+export const translationImportSchema = z.object({
+  locale: LOCALE_SCHEMA,
+  ns: nsField.default('common'),
+  strings: z.record(z.string().min(1).max(120), z.string().max(20_000)).refine(
+    (o) => Object.keys(o).length <= 5000, 'max 5000 strings per import'
+  ),
+});
+export const translationDeleteSchema = z.object({
+  locale: LOCALE_SCHEMA,
+  ns: nsField,
+  key: keyField,
+});
