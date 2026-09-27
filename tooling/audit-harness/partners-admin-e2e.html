@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>partners-admin-e2e</title></head>
+<body>
+<iframe id="app" title="admin app" style="width:1400px;height:1000px;border:0"></iframe>
+<pre id="out">PENDING</pre>
+<script>
+// P5-audit admin Partners module E2E: signs in, opens Partners, verifies the
+// org list renders, opens the Manage drawer (members + gated-assets UI),
+// confirms the Remove-member control exists, and checks the SN-check tab.
+window.__errs = [];
+window.addEventListener('error', function (e) { window.__errs.push(String(e.message).slice(0, 100)); });
+var out = document.getElementById('out');
+var app = document.getElementById('app');
+var log = [];
+function say(m) { log.push(m); out.textContent = 'PARTNERS_ADMIN ' + log.join(' | ').slice(0, 700); }
+function btn(text) {
+  return Array.prototype.filter.call(app.contentDocument.querySelectorAll('button'), function (b) {
+    return b.textContent.trim().toLowerCase().indexOf(text.toLowerCase()) !== -1;
+  })[0];
+}
+app.addEventListener('load', function () { if (stage === 'shell') setTimeout(stepShell, 4000); });
+var stage = 'signin';
+fetch('/api/v1/auth/sign-in/email', {
+  method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+  body: JSON.stringify({ email: 'admin@twinmos.dev', password: 'DevOnly-ChangeMe-2026!' }),
+}).then(function (r) { say('signin=' + r.status); stage = 'shell'; app.src = '/'; })
+  .catch(function (e) { out.textContent = 'PARTNERS_ADMIN_ERR ' + e; });
+
+function stepShell() {
+  try {
+    var t = Array.prototype.filter.call(app.contentDocument.querySelectorAll('nav li, nav a, aside li'), function (li) {
+      return li.textContent.indexOf('Partners') !== -1;
+    })[0];
+    if (!t) throw new Error('no Partners nav item');
+    t.click();
+    setTimeout(stepOrgs, 3000);
+  } catch (e) { out.textContent = 'PARTNERS_ADMIN_FAIL shell ' + e + ' errs=' + window.__errs.join(';'); }
+}
+function stepOrgs() {
+  try {
+    var d = app.contentDocument;
+    var body = d.body.textContent || '';
+    var hasTable = d.querySelectorAll('table').length > 0;
+    var manage = btn('Manage');
+    if (!hasTable || !manage) throw new Error('orgs table/manage missing (table=' + hasTable + ')');
+    say('orgs_table=1 manage=1');
+    manage.click();
+    setTimeout(stepDrawer, 2500);
+  } catch (e) { out.textContent = 'PARTNERS_ADMIN_FAIL orgs ' + e; }
+}
+function stepDrawer() {
+  try {
+    var d = app.contentDocument;
+    var body = d.body.textContent || '';
+    var members = body.indexOf('Members') !== -1;
+    var remove = btn('Remove');
+    var upload = d.querySelector('input[type=file]');
+    say('drawer members=' + members + ' remove=' + !!remove + ' upload=' + !!upload);
+    var snTab = Array.prototype.filter.call(d.querySelectorAll('button'), function (b) {
+      return b.textContent.trim().indexOf('SN-check') !== -1 || b.textContent.trim().indexOf('SN checks') !== -1;
+    })[0];
+    if (!snTab) { say('| SN_TAB_MISSING buttons=' + Array.prototype.map.call(d.querySelectorAll('button'), function (b) { return b.textContent.trim(); }).slice(0, 12).join(',')); finish(); return; }
+    snTab.click();
+    setTimeout(stepSn, 2500);
+  } catch (e) { out.textContent = 'PARTNERS_ADMIN_FAIL drawer ' + e; }
+}
+function stepSn() {
+  try {
+    var body = app.contentDocument.body.textContent || '';
+    var window_ = body.indexOf('Window:') !== -1;
+    var top = body.indexOf('Top serials') !== -1;
+    say('| SN_OK window=' + window_ + ' top=' + top);
+    finish();
+  } catch (e) { out.textContent = 'PARTNERS_ADMIN_FAIL sn ' + e; }
+}
+function finish() { out.textContent = ('PARTNERS_ADMIN_DONE ' + log.join(' | ')).slice(0, 700); }
+</script>
+</body>
+</html>

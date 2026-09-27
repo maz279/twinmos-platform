@@ -86,5 +86,31 @@ if (anyOrg.length === 0) {
   ]).onConflictDoNothing();
   console.log('[seed] demo partner org + member + price asset + 2 serials created');
 }
+
+// 5) RTL demo strings — tooling/seed-ar.json (Arabic hero/landing) so a fresh
+// dev DB renders the /ar.html demo WITHOUT a manual admin import. Found in the
+// P5 audit iteration: the demo lived only in whatever DB the P4 loop used and
+// silently vanished on re-seed (i18n bundle returned strings:{}).
+{
+  const { translation } = schema;
+  const existing = await db.select({ k: translation.key }).from(translation).where(eq(translation.locale, 'ar')).limit(1);
+  if (existing.length === 0) {
+    try {
+      const { readFileSync } = await import('node:fs');
+      const { join, dirname } = await import('node:path');
+      const { fileURLToPath } = await import('node:url');
+      const arPath = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'tooling', 'seed-ar.json');
+      const ar = JSON.parse(readFileSync(arPath, 'utf8')) as { locale: string; ns?: string; strings: Record<string, string> };
+      const ns = ar.ns ?? 'common';
+      const rows = Object.entries(ar.strings).map(([key, value]) => ({ locale: 'ar', ns, key, value }));
+      if (rows.length) {
+        await db.insert(translation).values(rows).onConflictDoNothing();
+        console.log(`[seed] ar demo translations imported (${rows.length} strings)`);
+      }
+    } catch {
+      console.log('[seed] seed-ar.json not found or unreadable — skipping ar demo strings');
+    }
+  }
+}
 console.log('[seed] done');
 process.exit(0);
