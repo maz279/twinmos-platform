@@ -16,8 +16,9 @@ if (client && !process.env.DATABASE_URL) {
   console.log('[migrate] PGlite schema applied from packages/db/migrations');
 } else {
   // Postgres path — same migration files via the node-postgres migrator
+  // (db is typed as the PGlite-flavoured handle; same driver API, cast at the boundary)
   const { migrate } = await import('drizzle-orm/node-postgres/migrator');
-  await migrate(db, { migrationsFolder: '../../packages/db/migrations' });
+  await migrate(db as unknown as Parameters<typeof migrate>[0], { migrationsFolder: '../../packages/db/migrations' });
   console.log('[migrate] Postgres schema applied');
 }
 process.exit(0);

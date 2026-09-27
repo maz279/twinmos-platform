@@ -58,3 +58,32 @@ export const productUpdateSchema = productCreateSchema.partial();
 export function problem(status: number, title: string, detail?: string, errors?: unknown) {
   return { type: 'about:blank', status, title, ...(detail ? { detail } : {}), ...(errors ? { errors } : {}) };
 }
+
+// ---- P2: RMA intake (payload of POST /forms/rma; also creates the RMA case) ----
+export const rmaIntakeSchema = z.object({
+  name: contactField,
+  email: z.string().email().max(254),
+  phone: z.string().trim().max(40).optional(),
+  country: z.string().trim().max(80).optional(),
+  product: z.string().trim().min(1).max(200),
+  sku: z.string().trim().max(40).optional(),
+  serial: z.string().trim().max(60).optional(),
+  purchaseDate: z.string().trim().max(30).optional(),
+  warrantyTier: z.string().trim().max(20).optional(),
+  issue: z.string().trim().min(10).max(4000),
+});
+export type RmaIntake = z.infer<typeof rmaIntakeSchema>;
+
+// ---- P2: admin mutations ----
+export const submissionUpdateSchema = z.object({
+  status: z.enum(SUBMISSION_STATUS).optional(),
+  assigneeId: z.string().max(128).nullable().optional(),
+});
+export const rmaTransitionSchema = z.object({
+  to: z.enum(RMA_STATUS),
+  note: z.string().trim().max(2000).optional(),
+  notifyCustomer: z.boolean().default(false),
+});
+export const jobApplicationUpdateSchema = z.object({
+  status: z.enum(SUBMISSION_STATUS),
+});

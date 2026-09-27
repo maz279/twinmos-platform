@@ -65,6 +65,9 @@ const SITE_LD = JSON.stringify({
   </head>
   <body class={bodyClass}>
     <slot />
+    <script is:inline define:vars={{ apiUrl: import.meta.env.PUBLIC_API_URL ?? '' }}>
+      window.TWINMOS_API = apiUrl; // '' → same-origin /api/v1 (prod reverse proxy); set PUBLIC_API_URL for cross-origin dev
+    </script>
     <!-- PDP deep links: discover the hero image at parse-end (the app layer
          renders it ~3s later). Map loaded async; preload is best-effort. -->
     <script is:inline>
@@ -111,7 +114,7 @@ const SITE_LD = JSON.stringify({
           }
         } catch (e) { /* never block the page */ }
 
-        var files = ['assets/js/data.js', 'assets/js/app.js', 'assets/js/img-dims.js', 'assets/js/a11y.js'];
+        var files = ['assets/js/data.js', 'assets/js/app.js', 'assets/js/img-dims.js', 'assets/js/a11y.js', 'assets/js/forms.js'];
         function boot() {
           files.forEach(function (src) {
             var s = document.createElement('script');

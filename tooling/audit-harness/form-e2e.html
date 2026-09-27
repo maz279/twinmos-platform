@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>form-e2e</title></head>
+<body>
+<iframe id="t" title="target" style="width:1280px;height:900px;border:0"></iframe>
+<pre id="out">PENDING</pre>
+<script>
+(function () {
+  // Browser E2E harness: drives a same-origin ported page in an iframe —
+  // fills the real form, submits, and reports what the visitor would see.
+  var page = new URLSearchParams(location.search).get('u');
+  var fill = JSON.parse(new URLSearchParams(location.search).get('fill') || '{}');
+  var out = document.getElementById('out');
+  var frame = document.getElementById('t');
+  frame.addEventListener('load', function () {
+    out.textContent = 'L-LOADED';
+    setTimeout(function () {      try {
+        var d = frame.contentDocument;
+        if (new URLSearchParams(location.search).get('mode') === 'track') {
+          var num = new URLSearchParams(location.search).get('num') || '';
+          d.getElementById('rmaId').value = num;
+          d.getElementById('rmaTrackBtn').click();
+          var t = 0;
+          (function pollTrack() {
+            var el = d.getElementById('rmaOut');
+            if (el && el.textContent.trim()) { out.textContent = 'E2E_TRACK ' + el.textContent.replace(/\s+/g, ' ').trim().slice(0, 260); return; }
+            if (++t > 40) { out.textContent = 'E2E_TRACK_TIMEOUT'; return; }
+            setTimeout(pollTrack, 500);
+          })();
+          return;
+        }
+        var form = d.querySelector('form[data-tm-form]');
+        if (!form) { out.textContent = 'E2E_FAIL no form'; return; }
+        // fill: map label-normalized key -> value (mirrors forms.js collection)
+        Object.keys(fill).forEach(function (key) {
+          var hit = Array.prototype.find.call(form.querySelectorAll('.fg'), function (fg) {
+            var label = fg.querySelector('label');
+            if (!label) return false;
+            var n = label.textContent.replace(/\*/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+            return n === key || n.indexOf(key) !== -1;
+          });
+          if (hit) {
+            var ctl = hit.querySelector('input, select, textarea');
+            if (ctl) {
+              if (ctl.tagName === 'SELECT') {
+                var has = Array.prototype.some.call(ctl.options, function (o) { return o.value === fill[key] || o.text === fill[key]; });
+                if (has) ctl.value = fill[key];
+                else { var first = Array.prototype.find.call(ctl.options, function (o) { return o.value; }); if (first) ctl.value = first.value; }
+              } else { ctl.value = fill[key]; ctl.checked = true; }
+            }
+          }
+        });
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        var waited = 0;
+        (function poll() {
+          var ok = d.querySelector('.form-success');
+          var err = d.querySelector('.tm-api-error');
+          if (ok) { out.textContent = 'E2E_OK ' + ok.textContent.replace(/\s+/g, ' ').trim().slice(0, 220); return; }
+          if (err) { out.textContent = 'E2E_ERROR ' + err.textContent.trim().slice(0, 200); return; }
+          if (++waited > 40) {
+            var w = frame.contentWindow;
+            out.textContent = 'E2E_TIMEOUT debug: formsScript=' + d.querySelectorAll('script[src*="forms.js"]').length +
+              ' apiVar=' + String(w.TWINMOS_API) +
+              ' form=' + (d.querySelector('form[data-tm-form]') ? 'yes' : 'no') +
+              ' formVisible=' + (function () { var f = d.querySelector('form[data-tm-form]'); return f ? getComputedStyle(f).display : '-'; })() +
+              ' btnText=' + (function () { var b = d.querySelector('form[data-tm-form] button'); return b ? b.textContent : '-'; })() +
+              ' invalid=' + Array.prototype.map.call(d.querySelectorAll('.fg.invalid'), function (fg) { var l = fg.querySelector('label'); return l ? l.textContent.trim() : '?'; }).join('|') +
+              ' reqLabels=' + Array.prototype.map.call(d.querySelectorAll('.fg[data-req]'), function (fg) { var l = fg.querySelector('label'); return l ? l.textContent.trim() : '?'; }).join('|');
+            return;
+          }
+          setTimeout(poll, 500);
+        })();
+      } catch (e) { out.textContent = 'E2E_FAIL ' + e; }
+    }, 6000);
+    setTimeout(function () { if (out.textContent === 'L-LOADED') out.textContent = 'L-LOADED-WAITING'; }, 4000).unref?.();
+  });
+  frame.addEventListener('error', function () { out.textContent = 'E2E_IFRAME_ERROR'; });
+  setTimeout(function () { if (out.textContent === 'PENDING') out.textContent = 'E2E_NO_LOAD readyState=' + frame.contentDocument?.readyState; }, 25000);
+  frame.src = page;
+})();
+</script>
+</body>
+</html>

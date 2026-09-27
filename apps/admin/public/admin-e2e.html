@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>admin-e2e</title></head>
+<body>
+<iframe id="app" title="admin app" style="width:1400px;height:900px;border:0"></iframe>
+<pre id="out">PENDING</pre>
+<script>
+// Admin E2E harness: signs in from this (same-origin) window, loads the SPA in
+// an iframe so the session cookie applies, then reports the authed shell.
+window.__errs = [];
+window.addEventListener('error', function (e) { window.__errs.push(String(e.message).slice(0, 140)); });
+var out = document.getElementById('out');
+var app = document.getElementById('app');
+var stage = 'signin';
+app.addEventListener('load', function () {
+  if (stage !== 'shell') return;
+  setTimeout(function () {
+    try {
+      var d = app.contentDocument;
+      var navs = Array.prototype.map.call(d.querySelectorAll('nav li'), function (li) { return li.textContent; }).join(',');
+      out.textContent = 'ADMIN_' + (navs ? 'AUTHED' : 'NO_NAV') +
+        ' nav=' + navs +
+        ' kpi=' + (d.body.innerText.match(/(Dashboard|Open RMAs|New submissions)/g) || []).join('/') +
+        ' errs=' + window.__errs.join(';').slice(0, 180) +
+        ' body=' + d.body.innerText.replace(/\s+/g, ' ').slice(0, 160);
+    } catch (e) { out.textContent = 'ADMIN_IFRAME_ERR ' + e; }
+  }, 6000);
+});
+fetch('/api/v1/auth/sign-in/email', {
+  method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
+  body: JSON.stringify({ email: 'admin@twinmos.dev', password: 'DevOnly-ChangeMe-2026!' }),
+}).then(function (r) {
+  out.textContent = 'signin=' + r.status;
+  if (r.ok) { stage = 'shell'; app.src = '/'; }
+}).catch(function (e) { out.textContent = 'ADMIN_FETCH_ERR ' + e; });
+</script>
+</body>
+</html>
