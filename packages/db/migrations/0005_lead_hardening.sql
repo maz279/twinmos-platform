@@ -18,7 +18,25 @@ CREATE INDEX IF NOT EXISTS submission_due_idx ON form_submission (due_at)
 CREATE INDEX IF NOT EXISTS submission_priority_idx ON form_submission (priority);
 --> statement-breakpoint
 
--- 3) Internal collaboration notes (audited trail per lead).
+-- 4) Backfill: rows created before this migration have no due_at — give OPEN
+--    legacy leads an SLA clock from their creation time (per-family hours,
+--    mirroring SUBMISSION_SLA_HOURS in packages/shared). Idempotent: only
+--    touches NULLs, and closed/spam/resolved rows intentionally stay NULL
+--    (slaState is only computed for open states).
+UPDATE form_submission SET due_at = created_at + (CASE type
+  WHEN 'distributor-application' THEN interval '48 hours'
+  WHEN 'report-counterfeit' THEN interval '48 hours'
+  WHEN 'support-ticket' THEN interval '48 hours'
+  WHEN 'job-application' THEN interval '72 hours'
+  WHEN 'general-application' THEN interval '72 hours'
+  WHEN 'event-rsvp' THEN interval '72 hours'
+  WHEN 'feedback' THEN interval '72 hours'
+  ELSE interval '24 hours'
+END)
+WHERE due_at IS NULL AND status IN ('new', 'assigned', 'in_progress');
+--> statement-breakpoint
+
+-- 5) Internal collaboration notes (audited trail per lead).
 CREATE TABLE IF NOT EXISTS form_note (
   id serial PRIMARY KEY,
   submission_id integer NOT NULL REFERENCES form_submission(id) ON DELETE CASCADE,

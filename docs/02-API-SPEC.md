@@ -22,7 +22,8 @@ CRUD pattern for each entity E ∈ {products, categories, brands, articles, news
 | PATCH | /admin/E/:id | partial update (optimistic locking via `updatedAt` if-match) |
 | POST | /admin/E/:id/publish | workflow transition (role-gated) |
 | DELETE | /admin/E/:id | soft delete (`deletedAt`) |
-Specialist: /admin/submissions (inbox, assign, status), /admin/rma (board + state transitions + notes), /admin/users (roles), /admin/audit (read-only query), /admin/stats (dashboard KPIs).
+Specialist: /admin/submissions (**P6 lead board**: filter by type/status/priority/sla, detail incl. notes + assignee email; PATCH enforces the lead state machine `new→assigned→in_progress→resolved→closed` + `spam` side-track — assigning a NEW lead auto-advances it; POST :id/notes = internal note), /admin/submissions.csv (filtered CSV export, editor+, formula-injection-neutralised), /admin/rma (board + state transitions + notes), /admin/audit (read-only query), /admin/stats (dashboard KPIs incl. submissions.open + submissions.overdue).
+Intake (P6): every form family returns a type-aware ticket reference (`QT-…`/`DS-…`/`TS-…`, `FRM-` fallback) and triggers a ticketed auto-reply to the submitter; quote/distributor/partner leads arrive with priority=high and an SLA dueAt.
 
 ## Conventions
 - Cursor pagination: `?cursor=<opaque>&limit=≤100`.

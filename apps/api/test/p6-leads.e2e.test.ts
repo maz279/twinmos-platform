@@ -216,4 +216,41 @@ describe('P6 lead intake (ADR-009)', () => {
     expect(dash.submissions.overdue).toBeGreaterThanOrEqual(1); // the CT lead made overdue above
     expect(typeof dash.submissions.byStatus.closed).toBe('number');
   });
+
+  it('audit-2: assignee email is joined into list/detail/CSV (not a raw uuid)', async () => {
+    // the QT lead was assigned to p6-editor earlier in this suite (now closed)
+    const list = await (await app.request('/api/v1/admin/submissions?type=quote', { headers: { cookie: viewerCookie } })).json();
+    const qt = list.items.find((i: any) => i.refCode === qtRef);
+    expect(qt.assigneeEmail).toBe('p6-editor@twinmos.dev');
+    const detail = await (await app.request(`/api/v1/admin/submissions/${qt.id}`, { headers: { cookie: viewerCookie } })).json();
+    expect(detail.assigneeEmail).toBe('p6-editor@twinmos.dev');
+    const csv = await (await app.request('/api/v1/admin/submissions.csv?type=quote', { headers: { cookie: editorCookie } })).text();
+    const row = csv.split('\r\n').find((l) => l.includes(qtRef));
+    expect(row).toContain('p6-editor@twinmos.dev');
+    expect(row).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/); // no raw uuid
+  });
+
+  it('audit-2: CSV formula-injection is neutralised (= + - @ leads get an apostrophe prefix)', async () => {
+    const res = await app.request('/api/v1/forms/feedback', {
+      method: 'POST', headers: { ...json, ...ip(4) },
+      body: JSON.stringify({
+        type: 'feedback', email: 'csv-injection@example.com',
+        payload: {
+          company: '=HYPERLINK("http://evil.example","click")',
+          message: '+cmd|/C calc!A0',
+          country: '-2+3',
+          name: '@SUM(A1:A9)',
+        },
+        consent: true,
+      }),
+    });
+    expect(res.status).toBe(201);
+    const csv = await (await app.request('/api/v1/admin/submissions.csv?type=feedback', { headers: { cookie: editorCookie } })).text();
+    const row = csv.split('\r\n').find((l) => l.includes('csv-injection@example.com'));
+    expect(row).toBeTruthy();
+    // every dangerous cell must be apostrophe-prefixed inside its quotes
+    expect(row).toContain('"\'=HYPERLINK');
+    expect(row).toContain('"\'-2+3"');
+    expect(row).not.toMatch(/"[=+@-][A-Z(]/); // no unprefixed formula-leading cell remains
+  });
 });

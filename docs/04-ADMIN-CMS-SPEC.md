@@ -8,7 +8,7 @@ React 19 SPA · TanStack Router (file routes, code-split per module) · TanStack
 | **Dashboard** | KPI cards (submissions today/7d, open RMAs by state, published content, low-stock/featured SKUs), activity feed (audit tail), quick actions | `/` |
 | **Content** | Articles, News, Events, Pages, FAQ | Markdown editor + frontmatter form; blocks builder for Pages; status chips; scheduled publishing |
 | **Catalog** | Products (list/filter/import), Product editor (specs jsonb schema-driven form, gallery, datasheets, badges, variants), Brands, Categories (tree) | SKU lock after publish requires Admin |
-| **Support** | Submissions inbox (type/status/assignee, detail drawer, resolve/spam), RMA board (7-state kanban with legal transitions + notes), KB (articles flagged cat=KB) | All transitions audited |
+| **Support** | Leads & quotes board (P6: type/status/priority/SLA filters, enforced 5-state workflow + spam, internal notes, CSV export, assignee emails), RMA board (7-state kanban with legal transitions + notes), KB (articles flagged cat=KB) | All transitions audited |
 | **Channel** | Distributors (region/country/status), Marketplace listings (verify + quarterly re-verify queue) | Feeds where-to-buy locator |
 | **Careers** | Job postings editor + applications inbox | Applications carry privacy metadata |
 | **Media** | Library (upload, alt-text compliance column, usage refs), folders | Sharp-derived variants; B2/S3 driver |

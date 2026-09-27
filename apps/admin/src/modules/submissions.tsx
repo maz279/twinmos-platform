@@ -8,7 +8,7 @@ import { SUBMISSION_STATUS, SUBMISSION_TRANSITIONS, SUBMISSION_PRIORITY } from '
 
 type Submission = {
   id: number; type: string; email: string; payload: Record<string, unknown>;
-  status: (typeof SUBMISSION_STATUS)[number]; assigneeId: string | null;
+  status: (typeof SUBMISSION_STATUS)[number]; assigneeId: string | null; assigneeEmail?: string | null;
   refCode: string; ip: string | null; ua: string | null; createdAt: string;
   priority: (typeof SUBMISSION_PRIORITY)[number]; dueAt: string | null;
   slaState?: 'overdue' | 'due_soon' | 'on_track' | null;
@@ -123,7 +123,7 @@ function Detail({ id, canWrite, myId, onSaved }: { id: number; canWrite: boolean
       </div>
       {err ? <Err error={err} /> : null}
       <Table head={['Field', 'Value']}>
-        {Object.entries({ email: sub.email, received: fmtDate(sub.createdAt), ip: sub.ip ?? '—', assignee: sub.assigneeId ?? '—', ...sub.payload }).map(([k, v]) => (
+        {Object.entries({ email: sub.email, received: fmtDate(sub.createdAt), ip: sub.ip ?? '—', assignee: sub.assigneeEmail ?? sub.assigneeId ?? '—', ...sub.payload }).map(([k, v]) => (
           <tr key={k}><td style={{ ...td, width: 160, color: '#5E7691' }}>{k}</td><td style={td}>{String(v)}</td></tr>
         ))}
       </Table>

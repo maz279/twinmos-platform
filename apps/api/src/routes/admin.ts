@@ -174,12 +174,15 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
         : undefined,
       cursor ? lt(formSubmission.id, cursor) : undefined,
     ].filter((f) => f !== undefined);
-    const rows = await db.select().from(formSubmission)
+    const rows = await db.select({
+      sub: formSubmission, assigneeEmail: user.email,
+    }).from(formSubmission)
+      .leftJoin(user, eq(formSubmission.assigneeId, user.id))
       .where(filters.length ? and(...filters) : undefined)
       .orderBy(desc(formSubmission.id)).limit(limit + 1);
     const hasMore = rows.length > limit;
     const items = (hasMore ? rows.slice(0, limit) : rows)
-      .map((row) => ({ ...row, slaState: slaState(row) }));
+      .map(({ sub, assigneeEmail }) => ({ ...sub, assigneeEmail: assigneeEmail ?? null, slaState: slaState(sub) }));
     return c.json({ items, nextCursor: hasMore ? items[items.length - 1].id : null });
   });
 
@@ -195,26 +198,36 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       status.success ? eq(formSubmission.status, status.data) : undefined,
       priority.success ? eq(formSubmission.priority, priority.data) : undefined,
     ].filter((f) => f !== undefined);
-    const rows = await db.select().from(formSubmission)
+    const rows = await db.select({
+      sub: formSubmission, assigneeEmail: user.email,
+    }).from(formSubmission)
+      .leftJoin(user, eq(formSubmission.assigneeId, user.id))
       .where(filters.length ? and(...filters) : undefined)
       .orderBy(desc(formSubmission.id)).limit(5000);
-    const cell = (v: unknown) => '"' + String(v ?? '').replace(/"/g, '""').slice(0, 500) + '"';
+    // CSV-cell hardening: quote-wrap + escape embedded quotes, and neutralise
+    // spreadsheet formula injection (= + - @ TAB CR leading chars) by prefixing
+    // an apostrophe — user payloads are untrusted input that ops will open in Excel.
+    const cell = (v: unknown) => {
+      let s = String(v ?? '').replace(/"/g, '""').slice(0, 500);
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return '"' + s + '"';
+    };
     // structured lead fields live in the jsonb payload (company/country/product/quantity)
-    const p = (row: typeof rows[number], keys: string[]) => {
+    const p = (sub: typeof rows[number]['sub'], keys: string[]) => {
       for (const k of keys) {
-        const v = (row.payload as Record<string, unknown>)[k];
+        const v = (sub.payload as Record<string, unknown>)[k];
         if (v !== undefined && v !== null && String(v).trim() !== '') return String(v);
       }
       return '';
     };
     const lines = ['ref,type,status,priority,email,company,country,product,quantity,due_at,created_at,assignee'];
-    for (const row of rows) {
+    for (const { sub: row, assigneeEmail } of rows) {
       lines.push([
         row.refCode, row.type, row.status, row.priority, row.email,
         p(row, ['company', 'organization']), p(row, ['country']),
         p(row, ['product', 'product_interest', 'interest']), p(row, ['quantity', 'estimated_quantity', 'volume']),
         row.dueAt ? new Date(row.dueAt).toISOString() : '', new Date(row.createdAt).toISOString(),
-        row.assigneeId ?? '',
+        assigneeEmail ?? row.assigneeId ?? '',
       ].map(cell).join(','));
     }
     await auditRow(c, guard.user.id, 'submissions.export', 'form_submission', 'csv', { rows: rows.length });
@@ -229,13 +242,16 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const a = await authed(c);
     if (a instanceof Response) return a;
     const id = Number(c.req.param('id'));
-    const rows = await db.select().from(formSubmission).where(eq(formSubmission.id, id)).limit(1);
+    const rows = await db.select({ sub: formSubmission, assigneeEmail: user.email })
+      .from(formSubmission).leftJoin(user, eq(formSubmission.assigneeId, user.id))
+      .where(eq(formSubmission.id, id)).limit(1);
     if (!rows[0]) return c.json(problem(404, 'Submission not found'), 404, { 'Content-Type': P });
+    const { sub, assigneeEmail } = rows[0];
     // P6: collaboration notes with author emails (newest first)
     const notes = await db.select({ id: formNote.id, body: formNote.body, createdAt: formNote.createdAt, author: user.email })
       .from(formNote).leftJoin(user, eq(formNote.authorId, user.id))
       .where(eq(formNote.submissionId, id)).orderBy(desc(formNote.id)).limit(100);
-    return c.json({ ...rows[0], slaState: slaState(rows[0]), notes });
+    return c.json({ ...sub, assigneeEmail: assigneeEmail ?? null, slaState: slaState(sub), notes });
   });
 
   r.patch('/submissions/:id', async (c) => {

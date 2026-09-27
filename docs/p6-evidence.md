@@ -39,7 +39,17 @@
   `P6_QUOTE_DONE ✓ Submitted … Your reference: QT-2026-8fc1cb1a.`
 - Parity @390 after the forms.js change: **quote 99.57 PASS** (gate 98; post-action-only UI).
 
-## 4. Running it
+## 5. Audit iteration 2 (2026-09-28) — findings and fixes
+
+Re-audited every P6 deliverable against the live system. Fixes shipped:
+
+1. **CSV formula-injection neutralised** — user payloads (company/name/etc.) land in a CSV ops opens in Excel; cells beginning `= + - @ TAB CR` are now apostrophe-prefixed inside their quotes (`'=HYPERLINK(...)`). Regression-tested with a live injection probe (p6 test + verified through the running API).
+2. **Assignee shown as a raw UUID** in the lead detail and the CSV — the API now joins `user.email` and returns `assigneeEmail` on list/detail/CSV; the admin drawer shows the email. Regression-tested (row must contain the email and no UUID).
+3. **Legacy `due_at` backfill** — rows created before migration 0005 got NULL dueAt (invisible to SLA). The migration now backfills OPEN legacy rows with `created_at + per-family hours` (idempotent; closed/spam rows intentionally stay NULL).
+4. **Spec docs were stale** — 02-API-SPEC (lead-board endpoints, enforced transitions, notes, CSV, ticketed intake), 03-DATABASE-SCHEMA (status enum, priority, dueAt, form_note), 04-ADMIN-CMS-SPEC (Leads & quotes board) all updated.
+5. **`tooling/devdb-rebuild.mjs`** — one command to rebuild the disposable dev PGlite (migrate + seed + corpus) after a hard-kill corruption; hit twice this engagement (PGlite datadirs are fragile across `taskkill //F`; always stop the API first).
+
+Verified-clean on re-audit (no action): mailer fire-and-forget semantics (auto-reply can never 500 a submission); spam excluded from SLA; transitions on PATCH-only status changes; `p6_leads` suite now **11 tests** (suite total **93/93**); assignee join + CSV hardening verified through the live API and the admin UI in a real browser.
 
 ```bash
 npm run db:migrate -w @twinmos/api   # applies 0005_lead_hardening
@@ -49,3 +59,5 @@ node apps/api/scripts/dev-p5.ts      # API (env bundle)
 ```
 
 Note: a hard-killed dev API can leave a stale `data/dev.pgdata/postmaster.pid` — delete it before restarting, or PGlite aborts on boot (hit during this phase; recovery = `rm postmaster.pid` → `db:migrate` → `db:seed` → `import-corpus.ts` with `PGLITE_DATA=./apps/api/data/dev.pgdata`).
+
+## 6. Running it
