@@ -112,3 +112,47 @@ reads allowed for viewer per docs/04 RBAC). No findings in the new UI code.
 restarted with the documented dev env (ALLOWED_ORIGIN ×3 origins, TRUST_PROXY=1,
 turnstile bypass). taskkill-without-SIGTERM gotcha from p2-evidence did NOT corrupt
 the dev PGlite (health + data intact).
+
+## Evidence — iteration 2 (user-feedback gap sweep, commit dbb4c26, 2026-09-29)
+
+**Search works IN a search window** — new Search workspace (Overview group): type
+in place → grouped results inline with per-type filter chips; verified live:
+`DDR5` → 8 results (single Content chip after the server-side merge fix — the API
+had been emitting FOUR groups all labeled "Content", duplicating chips and
+no-oping the filter), `VLT` via the ⌘K palette's "Open full search ↗" hands the
+query to a labeled Search tab.
+
+**Product management is now a real CMS surface** (was a 31-line list):
+migration 0007 (description, price_usd numeric(10,2), currency); editor with
+brand/category (new `GET /admin/taxonomy`), description, price + currency,
+key/value specifications editor, badges, datasheet rows (URL-validated), hero
+image + 12-slot gallery chosen through a thumbnail media-picker modal, Publish
+shortcut. Browser-verified end-to-end: opened VLT-DDR5-16G, set $89.99 + "New,
+Gaming" badges + Latency CL30 spec + hero image (curl-uploaded probe asset),
+saved → list shows price, badges, thumbnail.
+
+**Security fix found during the pass**: `GET /admin/products` and
+`/admin/products/:id` had NO session guard (any anonymous caller could read the
+catalog); both now authed() — regression-tested (401 anonymous).
+
+**Media library**: thumbnail grid view (images load from the file endpoint —
+naturalWidth verified), alt state per card, inline alt edit, copy-URL, delete;
+table view retained behind a toggle.
+
+**Shell fix**: the module renderer is keyed per tab — two tabs of the same
+module previously shared component state (a Search tab on "VLT" kept the earlier
+"DDR5" query); verified isolated after the fix, and all 6 tabs survive reload.
+
+**Gates** — typecheck clean, admin build green, suite **128/128** (7 new:
+p8b-products auth-regression/taxonomy/rich-CRUD/negative-cases). Sealed scan
+`scan-2026-09-28T22-27-39.492Z-113ac818a536`: **42 findings, down from 47** —
+the product auth guards removed five missing-role-check heuristics.
+
+**Dev-env notes** — the stale dev API process (pre-P8 code, missing CORS env)
+was replaced; force-killing it corrupted the PGlite datadir (documented trap) →
+`tooling/devdb-rebuild.mjs` rebuilt it (devdb-rebuild now pins `PGLITE_DATA` and
+removes the stray cwd-relative repo-root datadir — the corpus importer had been
+writing to a second, orphaned database). Consequence for the operator: the dev
+DB was rebuilt, so the browser session and the previously enrolled dev MFA
+secret were wiped — sign in with `admin@twinmos.dev` and re-enable MFA from the
+top bar if wanted (the old QR is dead).
