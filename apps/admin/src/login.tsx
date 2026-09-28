@@ -1,19 +1,36 @@
-// P7+ MFA-capable professional login — split-screen: brand rail (navy, product
-// line, security assurances) + credential card. Three steps in one component:
+// P7+ MFA-capable professional login — split-screen: brand rail (navy, TwinMOS
+// logo, product line, security assurances) + credential card. Steps:
 //   credentials → (if MFA enrolled) TOTP/backup-code challenge → signed in.
-// QR rendering is LOCAL (canvas, no third-party QR service) via a tiny
-// self-contained QR encoder — the TOTP URI is a secret.
-import React, { useEffect, useRef, useState } from 'react';
+// The TwinMOS wordmark is the REAL logo asset (transparent navy WebP). On the
+// dark rail it sits in a frosted white glass chip so the true brand colours
+// stay high-contrast at any zoom or pane width — no monochrome filter that can
+// wash out against the gradient. On white cards the navy wordmark is as-is.
+import React, { useState } from 'react';
 import { API, apiGet } from './api';
 
 const NAVY = '#0A2540'; const CYAN = '#00A3E0'; const GOLD = '#D9A441';
+const LOGO = '/assets/img/logo.webp';
+// Rail top: the ORIGINAL navy TwinMOS wordmark on a frosted-glass chip — true
+// brand colours stay visible against the dark rail regardless of width/zoom
+// (a filtered monochrome wordmark can read as washed out or invisible).
+const glassChip: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 12,
+  background: 'rgba(255,255,255,.92)', borderRadius: 10, padding: '9px 14px',
+  boxShadow: '0 6px 18px rgba(2,12,28,.35)', backdropFilter: 'blur(6px)',
+};
+const navyLogo: React.CSSProperties = { height: 22, width: 'auto', display: 'block' };
+
 const cardIn: React.CSSProperties = {
   width: '100%', padding: '12px 14px', border: '1px solid #CBD5E1', borderRadius: 8,
-  fontSize: 14.5, marginBottom: 12, background: '#fff', boxSizing: 'border-box',
+  fontSize: 14.5, marginBottom: 14, background: '#fff', boxSizing: 'border-box',
+  transition: 'border-color .15s, box-shadow .15s',
 };
+const cardInFocus = 'outline:none;border-color:#00A3E0;box-shadow:0 0 0 3px rgba(0,163,224,.15)';
 const btnMain: React.CSSProperties = {
-  width: '100%', padding: '12px 16px', border: 0, borderRadius: 8, background: CYAN,
-  color: NAVY, fontWeight: 800, fontSize: 15, cursor: 'pointer', letterSpacing: 0.2,
+  width: '100%', padding: '12px 16px', border: 0, borderRadius: 8,
+  background: `linear-gradient(135deg, ${CYAN} 0%, #0E7FB8 100%)`,
+  color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer', letterSpacing: 0.3,
+  transition: 'transform .12s, box-shadow .15s, opacity .15s',
 };
 
 export type Me = { user?: { id: string; email: string; role: string; twoFactorEnabled?: boolean } };
@@ -72,76 +89,101 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
     onDone(me); // the shell offers MFA enrollment when twoFactorEnabled is false
   }
 
+  const focusUplift = `
+    .tm-in:focus { ${cardInFocus} }
+    .tm-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,163,224,.35); }
+    .tm-btn:active { transform: translateY(0); }
+    .tm-link:hover { color: #0E7FB8; }
+    @media (max-width: 880px) { .tm-rail { display: none !important; } }
+  `;
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0B1B31', fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif' }}>
+      <style>{focusUplift}</style>
+
       {/* ---- brand rail ---- */}
-      <aside style={{
+      <aside className="tm-rail" style={{
         flex: '1 1 52%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-        padding: '48px 56px', color: '#E8F2FA',
+        padding: '46px 58px', color: '#E8F2FA', position: 'relative', overflow: 'hidden',
         background: `linear-gradient(160deg, ${NAVY} 0%, #0D3A66 58%, #0E4E85 100%)`,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 9, background: `linear-gradient(135deg, ${CYAN}, ${GOLD})`, display: 'grid', placeItems: 'center', fontWeight: 900, color: NAVY, fontSize: 17 }}>T</div>
-          <div>
-            <div style={{ fontWeight: 800, letterSpacing: 0.4 }}>TwinMOS Technologies</div>
-            <div style={{ fontSize: 12, color: '#8FB4D9', letterSpacing: 1.4 }}>CMS CONTROL PANEL</div>
-          </div>
+        {/* subtle radial glow accent */}
+        <div style={{ position: 'absolute', right: '-120px', top: '20%', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,163,224,.16) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', left: '-90px', bottom: '-60px', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(217,164,65,.10) 0%, transparent 60%)', pointerEvents: 'none' }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
+          <span style={glassChip}>
+            <img src={LOGO} alt="TwinMOS" style={navyLogo} />
+          </span>
+          <span style={{ width: 1, height: 26, background: 'rgba(232,242,250,.25)' }} />
+          <span style={{ fontSize: 11.5, letterSpacing: 2.2, color: '#9FC1E4', fontWeight: 600 }}>CMS CONTROL PANEL</span>
         </div>
 
-        <div>
-          <h1 style={{ fontSize: 30, lineHeight: 1.25, margin: '0 0 14px', fontWeight: 800, maxWidth: 460 }}>
+        <div style={{ position: 'relative' }}>
+          <div style={{ width: 44, height: 3, borderRadius: 2, background: `linear-gradient(90deg, ${CYAN}, ${GOLD})`, marginBottom: 20 }} />
+          <h1 style={{ fontSize: 32, lineHeight: 1.22, margin: '0 0 16px', fontWeight: 800, maxWidth: 480, letterSpacing: 0.2 }}>
             Memory &amp; storage,<br />managed at scale.
           </h1>
-          <p style={{ color: '#A9C6E0', maxWidth: 430, lineHeight: 1.6, fontSize: 14.5, margin: 0 }}>
+          <p style={{ color: '#A9C6E0', maxWidth: 440, lineHeight: 1.65, fontSize: 14.5, margin: 0 }}>
             The operations console for the twinmos.com platform — content, catalog, leads,
             RMA, partners and translations in one audited workspace.
           </p>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 22 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 24 }}>
             {['Content studio', 'Lead workflows', 'RMA board', 'Partner portal'].map(t => (
-              <span key={t} style={{ fontSize: 12, padding: '5px 11px', borderRadius: 999, border: '1px solid rgba(143,180,217,.35)', color: '#C9DDF0' }}>{t}</span>
+              <span key={t} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 999, border: '1px solid rgba(143,180,217,.35)', color: '#C9DDF0', background: 'rgba(255,255,255,.04)' }}>{t}</span>
             ))}
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 24, fontSize: 12.5, color: '#8FB4D9' }}>
-          <span>🔒 TOTP multi-factor ready</span>
+        <div style={{ display: 'flex', gap: 26, fontSize: 12.5, color: '#8FB4D9', position: 'relative' }}>
+          <span>🔒 TOTP multi-factor</span>
           <span>🛡 Role-based access</span>
           <span>📜 Full audit trail</span>
         </div>
       </aside>
 
       {/* ---- credential card ---- */}
-      <main style={{ flex: '1 1 48%', display: 'grid', placeItems: 'center', padding: 32 }}>
+      <main style={{ flex: '1 1 48%', display: 'grid', placeItems: 'center', padding: 32, background: '#0B1B31' }}>
         <div style={{ width: '100%', maxWidth: 400 }}>
           {step === 'credentials' && (
-            <form onSubmit={submitCredentials} style={{ background: '#fff', padding: '36px 34px', borderRadius: 16, boxShadow: '0 24px 70px rgba(2,12,28,.45)' }}>
-              <h2 style={{ margin: '0 0 4px', fontSize: 21, color: NAVY }}>Staff sign-in</h2>
-              <p style={{ margin: '0 0 22px', color: '#5E7691', fontSize: 13.5 }}>Authorised TwinMOS personnel only. Activity is logged.</p>
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 5 }}>User ID (email)</label>
-              <input autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="name@twinmos.com" type="email" required autoComplete="username" style={cardIn} />
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 5 }}>Password</label>
-              <input value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••" type="password" required autoComplete="current-password" style={cardIn} />
-              <button disabled={busy} style={{ ...btnMain, opacity: busy ? 0.6 : 1 }}>{busy ? 'Verifying…' : 'Sign in'}</button>
-              {err && <p role="alert" style={{ color: '#B3261E', fontSize: 13.5, margin: '12px 0 0' }}>{err}</p>}
-              <p style={{ color: '#8CA3BA', fontSize: 12, margin: '18px 0 0', textAlign: 'center' }}>
+            <form onSubmit={submitCredentials} style={{
+              background: '#fff', padding: '38px 36px', borderRadius: 18,
+              boxShadow: '0 28px 80px rgba(2,12,28,.55)',
+            }}>
+              <img src={LOGO} alt="TwinMOS" style={{ ...navyLogo, height: 30, display: 'block', margin: '0 auto 18px' }} />
+              <h2 style={{ margin: '0 0 4px', fontSize: 21, color: NAVY, textAlign: 'center' }}>Staff sign-in</h2>
+              <p style={{ margin: '0 0 24px', color: '#5E7691', fontSize: 13.5, textAlign: 'center' }}>
+                Authorised TwinMOS personnel only. Activity is logged.
+              </p>
+              <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>User ID (email)</label>
+              <input className="tm-in" autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="name@twinmos.com" type="email" required autoComplete="username" style={cardIn} />
+              <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Password</label>
+              <input className="tm-in" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••" type="password" required autoComplete="current-password" style={cardIn} />
+              <button className="tm-btn" disabled={busy} style={{ ...btnMain, opacity: busy ? 0.65 : 1 }}>{busy ? 'Verifying…' : 'Sign in'}</button>
+              {err && <p role="alert" style={{ color: '#B3261E', fontSize: 13.5, margin: '14px 0 0', textAlign: 'center' }}>{err}</p>}
+              <p style={{ color: '#8CA3BA', fontSize: 12, margin: '20px 0 0', textAlign: 'center' }}>
                 Protected by TOTP multi-factor · TwinMOS ISO-aligned controls
               </p>
             </form>
           )}
 
           {step === 'challenge' && (
-            <form onSubmit={submitCode} style={{ background: '#fff', padding: '36px 34px', borderRadius: 16, boxShadow: '0 24px 70px rgba(2,12,28,.45)', textAlign: 'center' }}>
-              <div style={{ width: 52, height: 52, margin: '0 auto 14px', borderRadius: 12, background: `linear-gradient(135deg, ${CYAN}, #0E4E85)`, display: 'grid', placeItems: 'center', fontSize: 24 }}>🔐</div>
+            <form onSubmit={submitCode} style={{
+              background: '#fff', padding: '38px 36px', borderRadius: 18,
+              boxShadow: '0 28px 80px rgba(2,12,28,.55)', textAlign: 'center',
+            }}>
+              <img src={LOGO} alt="TwinMOS" style={{ ...navyLogo, height: 26, display: 'block', margin: '0 auto 16px' }} />
+              <div style={{ width: 54, height: 54, margin: '0 auto 16px', borderRadius: 14, background: `linear-gradient(135deg, ${CYAN}, #0E4E85)`, display: 'grid', placeItems: 'center', fontSize: 26 }}>🔐</div>
               <h2 style={{ margin: '0 0 6px', fontSize: 20, color: NAVY }}>Two-factor verification</h2>
-              <p style={{ color: '#5E7691', fontSize: 13.5, margin: '0 0 20px' }}>
+              <p style={{ color: '#5E7691', fontSize: 13.5, margin: '0 0 22px' }}>
                 Enter the 6-digit code from your authenticator app.<br />
                 <span style={{ fontSize: 12.5 }}>You may also enter a recovery code (format XXXX-XXXX).</span>
               </p>
-              <input autoFocus value={code} onChange={e => setCode(e.target.value)} placeholder="123 456" inputMode="numeric" autoComplete="one-time-code" required
+              <input className="tm-in" autoFocus value={code} onChange={e => setCode(e.target.value)} placeholder="123 456" inputMode="numeric" autoComplete="one-time-code" required
                 style={{ ...cardIn, textAlign: 'center', fontSize: 22, letterSpacing: 6, fontWeight: 700 }} />
-              <button disabled={busy} style={{ ...btnMain, opacity: busy ? 0.6 : 1 }}>{busy ? 'Checking…' : 'Verify'}</button>
-              {err && <p role="alert" style={{ color: '#B3261E', fontSize: 13.5, margin: '12px 0 0' }}>{err}</p>}
-              <button type="button" onClick={() => { setStep('credentials'); setCode(''); setErr(''); }} style={{ background: 'none', border: 0, color: '#5E7691', fontSize: 13, marginTop: 16, cursor: 'pointer', textDecoration: 'underline' }}>
+              <button className="tm-btn" disabled={busy} style={{ ...btnMain, opacity: busy ? 0.65 : 1 }}>{busy ? 'Checking…' : 'Verify'}</button>
+              {err && <p role="alert" style={{ color: '#B3261E', fontSize: 13.5, margin: '14px 0 0' }}>{err}</p>}
+              <button type="button" onClick={() => { setStep('credentials'); setCode(''); setErr(''); }} className="tm-link" style={{ background: 'none', border: 0, color: '#5E7691', fontSize: 13, marginTop: 18, cursor: 'pointer', textDecoration: 'underline' }}>
                 Use a different account
               </button>
             </form>

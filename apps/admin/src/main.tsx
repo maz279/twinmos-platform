@@ -92,7 +92,12 @@ function Shell({ me, onSignOut, onMfaChange }: { me: Me; onSignOut: () => void; 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', minHeight: '100vh' }}>
       <nav style={{ background: '#0A2540', color: '#fff', padding: 20 }}>
-        <b>TwinMOS CMS</b>
+        {/* navy wordmark on a frosted white chip — the brand colours stay
+            readable on the dark sidebar where a white-filtered wordmark washed out */}
+        <span style={{ display: 'inline-flex', background: 'rgba(255,255,255,.92)', borderRadius: 8, padding: '8px 12px', boxShadow: '0 4px 12px rgba(2,12,28,.35)' }}>
+          <img src="/assets/img/logo.webp" alt="TwinMOS" style={{ height: 20, width: 'auto', display: 'block' }} />
+        </span>
+        <div style={{ fontSize: 10.5, letterSpacing: 2, color: '#8FB4D9', fontWeight: 600, marginTop: 8, marginBottom: 14 }}>CMS CONTROL PANEL</div>
         <ul style={{ listStyle: 'none', padding: 0, marginTop: 20 }}>
           {visible.map((m) => (
             <li key={m.key} onClick={() => setView(m.key)} style={{ padding: '8px 10px', borderRadius: 6, cursor: 'pointer', background: view === m.key ? 'rgba(255,255,255,.12)' : undefined }}>

@@ -9,6 +9,7 @@ import QRCode from 'qrcode';
 import { API } from './api';
 
 const NAVY = '#0A2540'; const CYAN = '#00A3E0';
+const LOGO = '/assets/img/logo.webp';
 const cardIn: React.CSSProperties = {
   width: '100%', padding: '11px 13px', border: '1px solid #CBD5E1', borderRadius: 8,
   fontSize: 14, marginBottom: 12, background: '#fff', boxSizing: 'border-box',
@@ -69,6 +70,7 @@ export default function MfaSetup({ onEnrolled, onSkip }: { onEnrolled: () => voi
 
   return (
     <div style={{ maxWidth: 580, margin: '24px auto', background: '#fff', borderRadius: 14, padding: '26px 28px', border: '1px solid #E2E8F0', boxShadow: '0 10px 34px rgba(10,37,64,.10)' }}>
+      <img src={LOGO} alt="TwinMOS" style={{ height: 26, width: 'auto', display: 'block', margin: '0 auto 10px' }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
         <span style={{ fontSize: 22 }}>🛡️</span>
         <h2 style={{ margin: 0, fontSize: 19, color: NAVY }}>Secure your account — enable MFA</h2>
