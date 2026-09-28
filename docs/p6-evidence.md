@@ -18,7 +18,7 @@
 
 **Deferred (documented, deliberate):** RFQ document upload (the prototype quote form has no file field — adding one would violate the parity contract); business-hours SLA calendar (calendar hours used; F7.1 wording simplified and noted here); ERP inventory/price sync and everything in catalog C21 (commerce phase).
 
-## 2. Test evidence — `apps/api/test/p6-leads.e2e.test.ts` (9 tests; suite total **91/91**)
+## 2. Test evidence — `apps/api/test/p6-leads.e2e.test.ts` (11 tests after audit-2; suite total **93/93**)
 
 - Quote intake: `QT-` ref, priority `high`, `dueAt` within 24h ±0.2, auto-reply in outbox containing the ref (subject + body)
 - Contact intake: `CT-` ref, priority `normal`
@@ -39,7 +39,7 @@
   `P6_QUOTE_DONE ✓ Submitted … Your reference: QT-2026-8fc1cb1a.`
 - Parity @390 after the forms.js change: **quote 99.57 PASS** (gate 98; post-action-only UI).
 
-## 5. Audit iteration 2 (2026-09-28) — findings and fixes
+## 4. Audit iteration 2 (2026-09-28) — findings and fixes
 
 Re-audited every P6 deliverable against the live system. Fixes shipped:
 
@@ -51,13 +51,11 @@ Re-audited every P6 deliverable against the live system. Fixes shipped:
 
 Verified-clean on re-audit (no action): mailer fire-and-forget semantics (auto-reply can never 500 a submission); spam excluded from SLA; transitions on PATCH-only status changes; `p6_leads` suite now **11 tests** (suite total **93/93**); assignee join + CSV hardening verified through the live API and the admin UI in a real browser.
 
-```bash
-npm run db:migrate -w @twinmos/api   # applies 0005_lead_hardening
-npm run db:seed -w @twinmos/api      # demo QT lead + overdue TS lead
-node apps/api/scripts/dev-p5.ts      # API (env bundle)
-# site: quote.html → submit → reference shown; admin (5174) → "Leads & quotes"
-```
+## 5. Audit iteration 3 (2026-09-28) — documentation + tooling closure
 
-Note: a hard-killed dev API can leave a stale `data/dev.pgdata/postmaster.pid` — delete it before restarting, or PGlite aborts on boot (hit during this phase; recovery = `rm postmaster.pid` → `db:migrate` → `db:seed` → `import-corpus.ts` with `PGLITE_DATA=./apps/api/data/dev.pgdata`).
+1. **Spec docs were missing entire phases** (not just P6): 02-API-SPEC had no P3 media, P4 translations/i18n, or P5 partner/sn-check endpoints — all added (plus the public-endpoint table rows for /sn-check and /i18n/:locale, and the correct 5/min/IP forms rate limit). 03-DATABASE-SCHEMA lacked the P4 `translation` and all P5 portal tables and the sn_check log — added, with the real table count (33, verified against `pgTable(` in schema.ts; the old "22" was stale since P3).
+2. **CSV export link carried the `cursor` pagination param** in the admin board — exporting while paging would download only the older page. The link now strips `cursor` (filters only).
+3. **`tooling/devdb-rebuild.mjs` had never been executed** — ran end-to-end (API stopped → rebuild → restart): migrations + seed + corpus reproduced cleanly, sign-in and the lead board verified afterwards.
+4. This doc: §2 test count corrected (11 P6 tests, suite 93/93) and the duplicated Running-it block from the audit-2 edit removed.
 
 ## 6. Running it

@@ -35,6 +35,13 @@ export default function Submissions({ canWrite, myId }: { canWrite: boolean; myI
   if (cursor) qs.set('cursor', String(cursor));
   const { data, error, loading, reload } = useAsync<{ items: Submission[]; nextCursor: number | null }>(
     () => apiGet('/admin/submissions?' + qs.toString()), [type, status, priority, sla, cursor]);
+  // CSV exports respect the FILTERS but never the pagination cursor (paging
+  // then exporting would download only the current older page).
+  const csvQs = new URLSearchParams();
+  if (type) csvQs.set('type', type);
+  if (status) csvQs.set('status', status);
+  if (priority) csvQs.set('priority', priority);
+  if (sla) csvQs.set('sla', sla);
 
   return (
     <div>
@@ -57,7 +64,7 @@ export default function Submissions({ canWrite, myId }: { canWrite: boolean; myI
         <button style={btnGhost} onClick={() => { setType(''); setStatus(''); setPriority(''); setSla(''); setCursor(null); setSelected(null); }}>Reset</button>
         <a
           style={{ ...btnGhost, textDecoration: 'none', display: 'inline-block' }}
-          href={(import.meta.env.VITE_API_URL ?? '/api/v1') + '/admin/submissions.csv?' + qs.toString()}
+          href={(import.meta.env.VITE_API_URL ?? '/api/v1') + '/admin/submissions.csv?' + csvQs.toString()}
           target="_blank" rel="noopener">Export CSV</a>
       </div>
       {error ? <Err error={error} /> : null}
