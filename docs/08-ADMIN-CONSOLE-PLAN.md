@@ -71,3 +71,44 @@ Users & Roles module absent (spec §Modules — needs API support too).
 - Users & Roles module (needs new Better Auth admin endpoints — separate security review).
 - Menus management + feature flags UI (site nav is build-time; redirects exist already).
 - Optimistic locking / dirty-state guard framework (per-record tab contexts land first).
+
+## Evidence — implemented & verified (commit ef82c14, 2026-09-28)
+
+**P1 shell** — sidebar renders 9 groups / 11 modules with SVG icons and live badges
+(Leads 5 · RMA 1 · Careers 1 on the dev corpus); groups collapse and persist; rail
+mode 236→84px and back. Multi-tab verified in the in-app browser: module click opens
+a tab, Shift+click opens a *separate* tab, × and middle-click close (closing the last
+tab falls back to Dashboard), and the full tab set **survives a page reload**
+(sessionStorage restore, role-validated). Mega menu opens from the top bar with
+grouped description cards; breadcrumbs show `Group / Module / Context` (e.g.
+`Support & Leads / Leads & quotes / QT-2026-ab3571fb`).
+
+**P2 search** — `GET /admin/search` (ilike, parameter-bound, soft-delete-aware,
+≤5/group) + ⌘K palette. Browser-verified: query `VOLTX` → two PRODUCTS hits
+(`VLT-DDR5-16G · published`, `VLT-DDR5-32G · draft`); Enter deep-links into a focused
+tab whose ctx auto-opens the record (lead detail with workflow + notes confirmed for
+`QT-2026-ab3571fb`). Module-jump results, ↑↓/Enter/Shift+Enter/Esc and recents wired.
+(IAB harness note: its synthetic `press()`/role-click events don't always reach React
+handlers — verified with native dispatches and page-script clicks; real trusted
+events are unaffected.)
+
+**P3 dashboard** — `/admin/stats` extended (backward compatible; 14-day series,
+SLA risk queue, content/media health, activity tail, jobsNew). UI shows KPI cards
+with sparklines (area-filled so zero-series stay visible) + 7-day deltas, leads
+bars, RMA funnel w/ cross-nav, SLA risk table that opens the lead, media
+alt-compliance, activity feed, quick actions. All sections confirmed rendered live.
+
+**P4** — submissions consumes tab ctx (heading `Leads & quotes — <ref>`, detail
+auto-opened); media gains compliance chip + missing-alt filter.
+
+**Gates** — typecheck clean (4 projects), admin build green (479 kB), suite
+**121/121** (9 new: p8-console.e2e.test.ts). Sealed scan
+`scan-2026-09-28T21-52-40.583Z-bce0f6d32534`: 47 findings vs 46 baseline — the +1 is
+the same authenticated-read heuristic on the new `/admin/search` (authed()-gated,
+401 anonymous tested; identical pattern to `/admin/stats`/`/admin/submissions`
+reads allowed for viewer per docs/04 RBAC). No findings in the new UI code.
+
+**Dev-env note** — the stale API process served pre-P8 code and lacked the CORS env;
+restarted with the documented dev env (ALLOWED_ORIGIN ×3 origins, TRUST_PROXY=1,
+turnstile bypass). taskkill-without-SIGTERM gotcha from p2-evidence did NOT corrupt
+the dev PGlite (health + data intact).
