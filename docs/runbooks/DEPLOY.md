@@ -39,8 +39,11 @@ curl -s http://127.0.0.1:8787/api/v1/health   # expect {status:"ok"}
 ## 3. Web + admin bundles
 
 ```bash
-cd apps/web  && npm ci && npm run build    # dist/ (vendored app.js/data.js sync runs in prebuild)
-cd ../admin  && npm ci && npm run build
+# Web build env is BAKED into the HTML: same-origin API + the Turnstile site key.
+# (A build machine without apps/web/.env defaults PUBLIC_API_URL to '' = same-origin —
+#  always set the key explicitly when Turnstile is live.)
+cd apps/web && PUBLIC_API_URL=/api/v1 PUBLIC_TURNSTILE_SITE_KEY="$TURNSTILE_SITE_KEY_PUBLIC"   npm ci && npm run build        # dist/ (vendored app.js/data.js sync runs in prebuild)
+cd ../admin && npm ci && npm run build
 sudo rsync -a --delete apps/web/dist/  /var/www/twinmos/web/
 sudo rsync -a --delete apps/admin/dist/ /var/www/twinmos/admin/
 ```

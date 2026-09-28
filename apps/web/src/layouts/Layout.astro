@@ -88,8 +88,9 @@ const SITE_LD = JSON.stringify({
   </head>
   <body class={bodyClass}>
     <slot />
-    <script is:inline define:vars={{ apiUrl: import.meta.env.PUBLIC_API_URL ?? '' }}>
+    <script is:inline define:vars={{ apiUrl: import.meta.env.PUBLIC_API_URL ?? '', turnstileSiteKey: import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '' }}>
       window.TWINMOS_API = apiUrl; // '' → same-origin /api/v1 (prod reverse proxy); set PUBLIC_API_URL for cross-origin dev
+      window.TURNSTILE_SITE_KEY = turnstileSiteKey; // '' → widget stays hidden (dev); set PUBLIC_TURNSTILE_SITE_KEY for production
     </script>
     <!-- PDP deep links: discover the hero image at parse-end (the app layer
          renders it ~3s later). Map loaded async; preload is best-effort. -->

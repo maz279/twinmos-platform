@@ -3,7 +3,7 @@
 // cookie flags, preflight shape, no server banner, and the clientIp
 // trust-proxy policy (rate-limit spoofing protection).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -153,5 +153,19 @@ describe('P7: clientIp trust policy (rate-limit spoofing guard)', () => {
       expect(ip).toBe('10.0.0.5'); // socket address, not the attacker-chosen header
       expect(clientIp(fakeCtx({}))).toBe('unknown');
     } finally { process.env.NODE_ENV = prev; }
+  });
+});
+
+describe('P7: production anti-spam wiring (dist-gated)', () => {
+  const WEB = join(dirname(dirname(process.cwd())), 'apps', 'web', 'dist');
+  const hasDist = existsSync(join(WEB, 'index.html'));
+  const maybeIt = hasDist ? it : it.skip;
+  if (!hasDist) console.warn('[p7-security] apps/web/dist not built — Turnstile wiring assertion SKIPPED (run test:ci).');
+
+  maybeIt('built pages define window.TURNSTILE_SITE_KEY (Turnstile renders in production)', () => {
+    const html = readFileSync(join(WEB, 'index.html'), 'utf8');
+    expect(html).toContain('window.TURNSTILE_SITE_KEY');
+    // the injected value comes from PUBLIC_TURNSTILE_SITE_KEY (empty in dev builds — widget hidden)
+    expect(html).toMatch(/TURNSTILE_SITE_KEY = (turnstileSiteKey|"")/);
   });
 });

@@ -57,3 +57,15 @@ All code-level P7 gates are green locally: suite **104/104** (11 new security te
 3. **DR drill executed locally** — `tooling/dr-drill.mjs` (dev-stack equivalent of `restore.sh --drill`): rebuilds a throwaway database from the declarative backup (migrations 5.1s + seed 2.3s + corpus 2.4s), runs the verification counts (1 user / 2 products / **395 articles** / 2 demo leads / 1 partner org — all as expected), boots the full API and probes health/i18n/authz/sn-check. **PASS in 11.0s** (RTO budget 4h). Result recorded in the DR.md drill log; two script bugs found and fixed on the way (Windows `pathToFileURL` imports; PGlite single-process handle needed re-opening after subprocess writes).
 4. **Parity spot (index + quote @390)** — quote **99.57 PASS**. index measured 84.95 stably; the controls disprove any regression: **build-today vs build-this-morning = 100.00** (byte-identical rendering) while **prototype-today vs prototype-this-morning = 85.50** (the page's un-guarded Ken-Burns hero animation is phase-nondeterministic ACROSS capture sessions — within-session A-vs-A = 99.93). The 84.95 is therefore prototype self-nondeterminism under the documented parity protocol, not a build change.
 5. Full gates re-run: suite **104/104**, typecheck clean, admin + web builds green.
+
+
+## 8. Final gap-sweep iteration (2026-09-28)
+
+Deep review of the deploy artifacts' *technical correctness* found four real gaps — all production-only bugs invisible to local gates — now fixed:
+
+1. **`window.TURNSTILE_SITE_KEY` was never defined** — forms.js reads it, .env.example documented it, but NO code path set it, so the production Turnstile widget would silently never render (every form relying on it for anti-spam). `Layout.astro` now injects it via `define:vars` from `PUBLIC_TURNSTILE_SITE_KEY` ('' in dev → widget hidden, exactly as before). Dist-gated test asserts the built HTML defines it (suite now **105/105**).
+2. **nginx `add_header` inheritance bug** — any location declaring its own `add_header Cache-Control` (assets/pagefind/admin) silently dropped ALL server-level security headers. Cache lifetimes now use the `expires` directive (which does not break inheritance); the header set lives only at server level, with the rule documented in the file.
+3. **CSP would have blocked Turnstile in production** — `script-src`/`frame-src` now allow `https://challenges.cloudflare.com` (widget script + verification iframe).
+4. **DEPLOY.md web-build env** — production builds must bake `PUBLIC_API_URL=/api/v1` + `PUBLIC_TURNSTILE_SITE_KEY` (Astro only exposes `PUBLIC_*` vars; the old instruction could have baked a dev URL). Both env templates updated with the `PUBLIC_*` naming.
+
+Parity after the Layout change (adds one hidden inline var — zero pixels): quote **99.57**, partners **99.69** @390 PASS.
