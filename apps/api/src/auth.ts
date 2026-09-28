@@ -3,6 +3,7 @@
 // instance on the same data dir would break cross-module write visibility).
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { twoFactor } from 'better-auth/plugins';
 import * as schema from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { Role } from '@twinmos/shared';
@@ -23,6 +24,12 @@ export function initAuth(db: DB) {
       additionalFields: { role: { type: 'string', defaultValue: 'viewer', input: false } },
     },
     session: { expiresIn: 60 * 60 * 8, updateAge: 60 * 30 }, // 8h, refresh every 30min
+    plugins: [
+      // P7+ MFA for the admin panel: TOTP + backup codes (migration 0006).
+      // skipVerificationOnEnable stays false — enrollment requires a live code,
+      // so twoFactorEnabled only flips after the authenticator is proven working.
+      twoFactor({ issuer: process.env.TOTP_ISSUER ?? 'TwinMOS Admin' }),
+    ],
   });
 
   async function sessionFromRequest(req: Request): Promise<AuthSession> {

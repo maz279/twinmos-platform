@@ -1,9 +1,12 @@
 // TwinMOS Admin — P2 shell: login + role-aware module navigation.
 // Modules: Dashboard KPIs · Submissions inbox · RMA board · Job applications ·
 // Products (P0 reference) · Audit log. Writes are hidden for viewer role.
+// P7+: professional split-screen login with TOTP MFA (login.tsx + mfa.tsx).
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { API, apiGet, fmtDate } from './api';
+import Login from './login';
+import MfaSetup from './mfa';
 import Dashboard from './modules/dashboard';
 import Submissions from './modules/submissions';
 import RmaBoard from './modules/rma';
@@ -16,36 +19,13 @@ import Translations from './modules/translations';
 import Partners from './modules/partners';
 import { Badge, Empty, Err, Table, btn, input, td, useAsync } from './ui';
 
-type Me = { user?: { id: string; email: string; role: string } };
+type Me = { user?: { id: string; email: string; role: string; twoFactorEnabled?: boolean } };
 const WRITE_ROLES = ['super_admin', 'admin', 'editor', 'author'];
 const canWrite = (role?: string) => !!role && WRITE_ROLES.includes(role);
 const PUBLISH_ROLES = ['super_admin', 'admin', 'editor'];
 const canPublish = (role?: string) => !!role && PUBLISH_ROLES.includes(role);
 const ADMIN_ROLES = ['super_admin', 'admin'];
 const isAdminRole = (role?: string) => !!role && ADMIN_ROLES.includes(role);
-
-function Login({ onDone }: { onDone: () => void }) {
-  const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [err, setErr] = useState('');
-  async function submit(e: React.FormEvent) {
-    e.preventDefault(); setErr('');
-    const res = await fetch(API + '/auth/sign-in/email', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
-    if (res.ok) onDone(); else setErr('Sign-in failed — check credentials.');
-  }
-  return (
-    <div style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', background: '#0A2540' }}>
-      <form onSubmit={submit} style={{ background: '#fff', padding: 32, borderRadius: 12, width: 340 }}>
-        <h1 style={{ fontSize: 20 }}>TwinMOS Admin</h1>
-        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" type="email" required style={{ ...input, width: '100%', marginBottom: 10 }} />
-        <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" type="password" required style={{ ...input, width: '100%', marginBottom: 10 }} />
-        <button style={{ ...btn, width: '100%' }}>Sign in</button>
-        {err && <p role="alert" style={{ color: '#B00020' }}>{err}</p>}
-      </form>
-    </div>
-  );
-}
 
 type AuditRow = { id: number; action: string; entity: string; entityId: string; actorId: string | null; requestId: string | null; ip: string | null; at: string };
 function AuditLog() {
@@ -89,14 +69,25 @@ const MODULES = [
 
 const ROLE_RANK: Record<string, number> = { viewer: 1, author: 2, editor: 3, admin: 4, super_admin: 5 };
 
-function Shell({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
+function Shell({ me, onSignOut, onMfaChange }: { me: Me; onSignOut: () => void; onMfaChange: () => void }) {
   const [view, setView] = useState<string>('dashboard');
+  const [showMfa, setShowMfa] = useState(false);
   const writable = canWrite(me.user?.role);
   const visible = MODULES.filter((m) => (ROLE_RANK[me.user?.role ?? 'viewer'] ?? 0) >= (ROLE_RANK[m.minRole] ?? 5));
   const mod = visible.find((m) => m.key === view) ?? visible[0];
   async function signOut() {
     await fetch(API + '/auth/sign-out', { method: 'POST', credentials: 'include' }).catch(() => {});
     onSignOut();
+  }
+  if (showMfa) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#F5F8FB' }}>
+        <MfaSetup
+          onEnrolled={() => { setShowMfa(false); onMfaChange(); }}
+          onSkip={() => setShowMfa(false)}
+        />
+      </div>
+    );
   }
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', minHeight: '100vh' }}>
@@ -113,6 +104,11 @@ function Shell({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
           {me.user?.email}
           <div style={{ marginTop: 4 }}><Badge value={me.user?.role ?? 'unknown'} /></div>
           {!writable && <div style={{ marginTop: 6, opacity: 0.7 }}>read-only role</div>}
+          <div style={{ marginTop: 6 }}>
+            {me.user?.twoFactorEnabled
+              ? <span style={{ fontSize: 12, color: '#7EE2A8' }}>🔐 MFA on</span>
+              : <button onClick={() => setShowMfa(true)} style={{ ...btn, background: 'rgba(217,164,65,.25)', color: '#F4D9A0', marginTop: 4, fontSize: 12, padding: '5px 10px' }}>Enable MFA</button>}
+          </div>
           <button onClick={signOut} style={{ ...btn, background: 'rgba(255,255,255,.15)', color: '#fff', marginTop: 10 }}>Sign out</button>
         </div>
       </nav>
@@ -125,15 +121,27 @@ function Shell({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
 
 function App() {
   const [me, setMe] = useState<Me | null>(null);
-  const [state, setState] = useState<'loading' | 'anon' | 'authed'>('loading');
+  const [state, setState] = useState<'loading' | 'anon' | 'authed' | 'mfa-setup'>('loading');
   useEffect(() => {
     apiGet<Me>('/auth/get-session')
-      .then((d) => { setMe(d); setState(d?.user ? 'authed' : 'anon'); })
+      .then((d) => {
+        setMe(d);
+        // signed-in staff without MFA get a one-time enrollment offer (skippable)
+        setState(d?.user ? (d.user.role !== 'viewer' && !d.user.twoFactorEnabled ? 'mfa-setup' : 'authed') : 'anon');
+      })
       .catch(() => setState('anon'));
   }, []);
+  const refreshMe = () => apiGet<Me>('/auth/get-session').then((d) => { setMe(d); setState(d?.user ? 'authed' : 'anon'); }).catch(() => {});
   if (state === 'loading') return null;
-  if (state === 'anon') return <Login onDone={() => setState('authed')} />;
-  return <Shell me={me ?? {}} onSignOut={() => setState('anon')} />;
+  if (state === 'anon') return <Login onDone={refreshMe} />;
+  if (state === 'mfa-setup') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#F5F8FB' }}>
+        <MfaSetup onEnrolled={refreshMe} onSkip={() => setState('authed')} />
+      </div>
+    );
+  }
+  return <Shell me={me ?? {}} onSignOut={() => setState('anon')} onMfaChange={refreshMe} />;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);

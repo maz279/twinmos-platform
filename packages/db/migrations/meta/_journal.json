@@ -43,6 +43,13 @@
       "when": 1790518908193,
       "tag": "0005_lead_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790607713809,
+      "tag": "0006_mfa_two_factor",
+      "breakpoints": true
     }
   ]
 }

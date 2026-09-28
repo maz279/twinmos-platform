@@ -18,8 +18,20 @@ export const user = pgTable('user', {
   emailVerified: boolean('email_verified').notNull().default(false),
   role: roleEnum('role').notNull().default('viewer'),
   image: text('image'),
+  twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false), // P7+ MFA flag (Better Auth twoFactor plugin)
   createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** P7+: per-user TOTP state (Better Auth twoFactor plugin table, migration 0006). */
+export const twoFactor = pgTable('two_factor', {
+  id: text('id').primaryKey(),
+  secret: text('secret').notNull(),
+  backupCodes: text('backup_codes').notNull(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  verified: boolean('verified').notNull().default(true),
+  failedVerificationCount: integer('failed_verification_count').notNull().default(0),
+  lockedUntil: timestamp('locked_until', { withTimezone: true }),
+}, (t) => [uniqueIndex('two_factor_user_id_unique').on(t.userId)]);
 export const session = pgTable('session', {
   id: text('id').primaryKey(), userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   token: text('token').notNull().unique(), expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
