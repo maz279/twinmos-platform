@@ -50,6 +50,13 @@
       "when": 1790607713809,
       "tag": "0006_mfa_two_factor",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790632000000,
+      "tag": "0007_product_details",
+      "breakpoints": true
     }
   ]
 }

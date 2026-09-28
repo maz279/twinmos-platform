@@ -7,6 +7,7 @@ import React from 'react';
 import type { IconName } from './icons';
 import type { Me } from './login';
 import Dashboard from './modules/dashboard';
+import SearchPage from './modules/search';
 import Content from './modules/content';
 import Products from './modules/products';
 import Submissions from './modules/submissions';
@@ -54,6 +55,7 @@ const h = React.createElement;
 
 export const MODULES: ModuleDef[] = [
   { id: 'dashboard', label: 'Dashboard', group: 'Overview', icon: 'grid', minRole: 'viewer', desc: 'Live KPIs, trends and activity across the platform.', comp: Dashboard },
+  { id: 'search', label: 'Search', group: 'Overview', icon: 'search', minRole: 'viewer', desc: 'Search everything — leads, products, content, RMA, media.', comp: SearchPage },
   { id: 'content', label: 'Content', group: 'Content Studio', icon: 'doc', minRole: 'viewer', desc: 'Articles, news, pages and FAQ — workflow, revisions, preview.', comp: (p) => h(Content, { canPublish: canPublishRole(p.me.user?.role) }) },
   { id: 'products', label: 'Products', group: 'Catalog', icon: 'layers', minRole: 'viewer', desc: 'Product catalog: SKUs, specs, variants and badges.', comp: Products },
   { id: 'submissions', label: 'Leads & quotes', group: 'Support & Leads', icon: 'inbox', minRole: 'viewer', badge: 'newLeads', desc: 'Lead inbox — SLA-tracked workflow, notes, CSV export.', comp: (p) => h(Submissions, { canWrite: p.canWrite, myId: p.me.user?.id, ctx: p.ctx }) },

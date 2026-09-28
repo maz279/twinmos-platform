@@ -1,7 +1,7 @@
-// Media library — upload (alt text required), list with compliance column,
-// alt editing, admin delete.
+// Media library — upload (alt text required), grid/table views with thumbnails,
+// alt editing + compliance filter, copy URL, admin delete.
 import React, { useRef, useState } from 'react';
-import { apiGet, apiSend, fmtDate } from '../api';
+import { API, apiGet, apiSend, fmtDate } from '../api';
 import { Badge, btn, btnGhost, Empty, Err, input, useAsync } from '../ui';
 
 type Asset = {
@@ -18,10 +18,16 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
   const [editing, setEditing] = useState<number | null>(null);
   const [editAlt, setEditAlt] = useState('');
   const [missingOnly, setMissingOnly] = useState(false);
+  const [view, setView] = useState<'grid' | 'table'>('grid');
+  const [copied, setCopied] = useState<number | null>(null);
   const { data, error: loadError, loading, reload } = useAsync<{ items: Asset[] }>(() => apiGet('/admin/media'), []);
   const items = (data?.items ?? []).filter((m) => (missingOnly ? !m.alt : true));
   const missing = (data?.items ?? []).filter((m) => !m.alt).length;
   const total = data?.items?.length ?? 0;
+  const fileUrl = (id: number) => API + '/admin/media/' + id + '/file';
+  async function copyUrl(id: number) {
+    try { await navigator.clipboard.writeText(fileUrl(id)); setCopied(id); setTimeout(() => setCopied(null), 1500); } catch { /* clipboard unavailable */ }
+  }
 
   async function upload() {
     const file = fileRef.current?.files?.[0];
@@ -71,6 +77,10 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
           onClick={() => setMissingOnly((v) => !v)}>
           {missingOnly ? `Showing ${missing} missing alt only` : `Show missing alt (${missing})`}
         </button>
+        <span style={{ flex: 1 }} />
+        <button style={{ ...btnGhost, fontWeight: view === 'grid' ? 800 : 400 }} onClick={() => setView(view === 'grid' ? 'table' : 'grid')}>
+          {view === 'grid' ? '▦ Grid' : '☰ Table'}
+        </button>
       </div>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap' }}>
         <input ref={fileRef} type="file" style={input} accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.avif,.pdf,.webm,.mp4" />
@@ -79,6 +89,41 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
       </div>
       {error ? <Err error={error} /> : null}
       {loadError ? <Err error={loadError} /> : loading ? <p>Loading…</p> : data ? (
+        view === 'grid' ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(168px,1fr))', gap: 12 }}>
+            {items.map((m) => (
+              <div key={m.id} style={{ border: '1px solid #E3EBF3', borderRadius: 10, background: '#fff', overflow: 'hidden' }}>
+                <a href={fileUrl(m.id)} target="_blank" rel="noopener" style={{ display: 'block', aspectRatio: '4/3', background: '#E7EEF5' }}>
+                  {m.kind === 'image'
+                    ? <img src={fileUrl(m.id)} alt={m.alt ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    : <span style={{ display: 'grid', placeItems: 'center', height: '100%', color: '#8CA3BA', fontSize: 12 }}>{m.kind}</span>}
+                </a>
+                <div style={{ padding: '8px 10px' }}>
+                  <b style={{ display: 'block', fontSize: 12, color: '#0A2540', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.meta?.origName ?? m.key}>{m.meta?.origName ?? m.key}</b>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '4px 0 6px' }}>
+                    <Badge value={m.kind} />
+                    {m.alt
+                      ? <span style={{ fontSize: 11, color: '#15803D' }}>alt ✓</span>
+                      : <span style={{ fontSize: 11, color: '#B3261E' }}>⚠ no alt</span>}
+                    {isAdmin && <button style={{ ...btnGhost, marginLeft: 'auto', padding: '2px 7px', fontSize: 11 }} disabled={busy} onClick={() => remove(m.id)}>Delete</button>}
+                  </div>
+                  {editing === m.id ? (
+                    <span style={{ display: 'flex', gap: 6 }}>
+                      <input style={{ ...input, flex: 1, minWidth: 0 }} value={editAlt} onChange={(e) => setEditAlt(e.target.value)} />
+                      <button style={{ ...btnGhost, padding: '3px 8px' }} disabled={busy} onClick={() => saveAlt(m.id)}>Save</button>
+                    </span>
+                  ) : (
+                    <span style={{ display: 'flex', gap: 6 }}>
+                      <span style={{ flex: 1, fontSize: 11, color: '#5E7691', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.alt ?? ''}>{m.alt ?? '—'}</span>
+                      <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} onClick={() => { setEditing(m.id); setEditAlt(m.alt ?? ''); }}>Alt</button>
+                      <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} onClick={() => copyUrl(m.id)}>{copied === m.id ? '✓' : 'URL'}</button>
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
           <thead><tr>{['File', 'Kind', 'Alt text', 'Size', 'Uploaded', ''].map((h) => (
             <th key={h} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E2E8F0' }}>{h}</th>
@@ -89,7 +134,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                 <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>
                   <b>{m.meta?.origName ?? m.key}</b>
                   <div style={{ color: '#5E7691', fontSize: 12 }}>{m.key}</div>
-                  <a href={(import.meta.env.VITE_API_URL ?? '/api/v1') + '/admin/media/' + m.id + '/file'} target="_blank" rel="noopener" style={{ fontSize: 12 }}>View file ↗</a>
+                  <a href={fileUrl(m.id)} target="_blank" rel="noopener" style={{ fontSize: 12 }}>View file ↗</a>
                 </td>
                 <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}><Badge value={m.kind} /></td>
                 <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>
@@ -108,12 +153,14 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                 <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>{m.meta?.bytes ? Math.round(m.meta.bytes / 1024) + ' KB' : '—'}</td>
                 <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>{fmtDate(m.createdAt)}</td>
                 <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>
+                  <button style={{ ...btnGhost, marginRight: 6 }} onClick={() => copyUrl(m.id)}>{copied === m.id ? 'Copied ✓' : 'Copy URL'}</button>
                   {isAdmin && <button style={btnGhost} disabled={busy} onClick={() => remove(m.id)}>Delete</button>}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        )
       ) : null}
       {data && total === 0 && <Empty text="No media uploaded yet." />}
       {data && total > 0 && items.length === 0 && <Empty text="Every asset has alt text. 🎉" />}

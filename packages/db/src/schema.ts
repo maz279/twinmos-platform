@@ -1,7 +1,7 @@
 // TwinMOS platform schema — Postgres dialect (Drizzle).
 // SECURITY: application code uses the Drizzle query builder only; every value is
 // parameter-bound. Never assemble SQL from strings (repo lint + review enforce).
-import { pgTable, pgEnum, text, varchar, integer, boolean, timestamp, jsonb, serial, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { pgTable, pgEnum, text, varchar, integer, boolean, timestamp, jsonb, serial, numeric, uniqueIndex, index } from 'drizzle-orm/pg-core';
 
 export const roleEnum = pgEnum('role', ['super_admin', 'admin', 'editor', 'author', 'viewer']);
 export const contentStatusEnum = pgEnum('content_status', ['draft', 'in_review', 'scheduled', 'published', 'archived']);
@@ -132,6 +132,9 @@ export const product = pgTable('product', {
   name: text('name').notNull(), brandId: integer('brand_id').references(() => brand.id, { onDelete: 'restrict' }),
   categoryId: integer('category_id').references(() => category.id, { onDelete: 'restrict' }),
   status: contentStatusEnum('status').notNull().default('draft'), specs: jsonb('specs').notNull().default({}),
+  // 0007: rich product management — marketing copy + list pricing
+  description: text('description').notNull().default(''),
+  priceUsd: numeric('price_usd', { precision: 10, scale: 2 }), currency: varchar('currency', { length: 3 }).notNull().default('USD'),
   heroMediaId: integer('hero_media_id').references(() => mediaAsset.id, { onDelete: 'set null' }),
   gallery: integer('gallery').array().default([]), datasheets: jsonb('datasheets').default([]), badges: text('badges').array().default([]),
   releasedAt: timestamp('released_at', { withTimezone: true }), createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

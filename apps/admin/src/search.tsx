@@ -117,8 +117,12 @@ export default function SearchPalette({ onClose, open }: { onClose: () => void; 
             );
           })}
         </div>
-        <div style={{ display: 'flex', gap: 14, padding: '9px 16px', borderTop: '1px solid #E3EBF3', background: '#F7FAFD', color: '#8CA3BA', fontSize: 11.5 }}>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', padding: '9px 16px', borderTop: '1px solid #E3EBF3', background: '#F7FAFD', color: '#8CA3BA', fontSize: 11.5 }}>
           <span>↑↓ navigate</span><span>↵ open</span><span>⇧↵ new tab</span><span>esc close</span>
+          <button onClick={() => { open('search', { kind: 'q', id: q.trim(), label: q.trim() ? `Search: ${q.trim()}` : 'Search' }); onClose(); }}
+            style={{ marginLeft: 'auto', border: '1px solid #D9E4EF', background: '#fff', borderRadius: 7, padding: '4px 10px', fontSize: 11.5, fontWeight: 700, color: '#0E7FB8', cursor: 'pointer' }}>
+            Open full search ↗
+          </button>
         </div>
       </div>
     </div>

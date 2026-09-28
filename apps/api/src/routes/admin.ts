@@ -3,14 +3,14 @@
 // Every mutation: session + RBAC guard, Zod validation, parameter-bound Drizzle
 // queries, audit row. Reads: any authenticated role; writes: editor+.
 import { Hono } from 'hono';
-import { and, asc, count, desc, eq, ilike, inArray, lt, lte, isNotNull, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, isNull, lt, lte, isNotNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import {
   jobApplicationUpdateSchema, productCreateSchema, productUpdateSchema, problem,
   rmaTransitionSchema, submissionUpdateSchema, formNoteCreateSchema,
   RMA_TRANSITIONS, SUBMISSION_STATUS, SUBMISSION_TRANSITIONS, SUBMISSION_PRIORITY, RMA_STATUS,
 } from '@twinmos/shared';
-import { auditLog, formNote, formSubmission, jobApplication, jobPosting, product, rmaEvent, rmaRequest, user, article, page, newsPost, faq, mediaAsset } from '@twinmos/db';
+import { auditLog, brand, category, formNote, formSubmission, jobApplication, jobPosting, product, rmaEvent, rmaRequest, user, article, page, newsPost, faq, mediaAsset } from '@twinmos/db';
 import { sendRmaStatusMail } from '../mailer.ts';
 import { IdempotencyStore } from '../idem.ts';
 import type { DB } from '@twinmos/db';
@@ -68,23 +68,50 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
 
   // ==================== products (P0 reference module) ====================
   r.get('/products', async (c) => {
-    const rows = await db.select().from(product).orderBy(desc(product.id)).limit(100);
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    // P8: console filters — q matches name or SKU (parameter-bound ilike)
+    const q = (c.req.query('q') ?? '').trim();
+    const status = c.req.query('status');
+    const filters = [isNull(product.deletedAt)];
+    if (q) filters.push(or(ilike(product.name, `%${q}%`), ilike(product.sku, `%${q}%`))!);
+    if (status && ['draft', 'in_review', 'scheduled', 'published', 'archived'].includes(status)) {
+      filters.push(eq(product.status, status as 'draft' | 'in_review' | 'scheduled' | 'published' | 'archived'));
+    }
+    const rows = await db.select().from(product).where(and(...filters)).orderBy(desc(product.id)).limit(100);
     return c.json({ items: rows, cursor: null });
   });
 
+  r.get('/taxonomy', async (c) => {
+    // brand/category options for the product editor (read, any authenticated role)
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const [brands, categories] = await Promise.all([
+      db.select().from(brand).orderBy(asc(brand.name)),
+      db.select().from(category).orderBy(asc(category.sort), asc(category.name)),
+    ]);
+    return c.json({ brands, categories });
+  });
+
   r.get('/products/:id', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
     const id = Number(c.req.param('id'));
     const rows = await db.select().from(product).where(eq(product.id, id)).limit(1);
     if (!rows[0]) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
     return c.json(rows[0]);
   });
 
+  /** 0007: numeric(10,2) columns are string-typed in Drizzle — map the Zod number. */
+  const productValues = <T extends { priceUsd?: number | null }>(d: T): Omit<T, 'priceUsd'> & { priceUsd: string | null } =>
+    ({ ...d, priceUsd: d.priceUsd == null ? null : String(d.priceUsd) });
+
   r.post('/products', async (c) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const parsed = productCreateSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
-    const rows = await db.insert(product).values(parsed.data).returning();
+    const rows = await db.insert(product).values(productValues(parsed.data)).returning();
     await auditRow(c, guard.user.id, 'product.create', 'product', String(rows[0].id), parsed.data);
     return c.json(rows[0], 201);
   });
@@ -95,7 +122,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const id = Number(c.req.param('id'));
     const parsed = productUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
-    const rows = await db.update(product).set({ ...parsed.data, updatedAt: new Date() })
+    const rows = await db.update(product).set({ ...productValues(parsed.data), updatedAt: new Date() })
       .where(eq(product.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'product.update', 'product', String(id), parsed.data);
@@ -237,17 +264,21 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     ]);
     type Hit = { id: number; title: string; sub?: string; module: string; kind: string };
     const groups: Array<{ type: string; items: Hit[] }> = [];
-    const push = (type: string, module: string, kind: string, items: Hit[]) => { if (items.length) groups.push({ type, items }); };
-    push('Content', 'content', 'article', articles.map((x) => ({ id: x.id, title: x.title, sub: `article · ${x.status}${x.locale ? ' · ' + x.locale : ''}`, module: 'content', kind: 'article' })));
-    push('Content', 'content', 'page', pages.map((x) => ({ id: x.id, title: x.title, sub: `page · ${x.status}${x.locale ? ' · ' + x.locale : ''}`, module: 'content', kind: 'page' })));
-    push('Content', 'content', 'news', news.map((x) => ({ id: x.id, title: x.title, sub: `news · ${x.status}`, module: 'content', kind: 'news' })));
-    push('Content', 'content', 'faq', faqs.map((x) => ({ id: x.id, title: x.title, sub: `faq · ${x.status}`, module: 'content', kind: 'faq' })));
-    push('Products', 'products', 'product', products.map((x) => ({ id: x.id, title: x.title, sub: `${x.sku} · ${x.status}`, module: 'products', kind: 'product' })));
-    push('Leads & quotes', 'submissions', 'lead', subs.map((x) => ({ id: x.id, title: x.title, sub: `${x.type} · ${x.email}`, module: 'submissions', kind: 'lead' })));
-    push('RMA', 'rma', 'rma', rmas.map((x) => ({ id: x.id, title: x.title, sub: `${x.sku ?? '—'} · ${x.status}`, module: 'rma', kind: 'rma' })));
-    push('Careers', 'jobs', 'application', apps.map((x) => ({ id: x.id, title: x.title, sub: x.email, module: 'jobs', kind: 'application' })));
-    push('Careers', 'jobs', 'posting', postings.map((x) => ({ id: x.id, title: x.title, sub: `posting · ${x.status}`, module: 'jobs', kind: 'posting' })));
-    push('Media', 'media', 'media', assets.map((x) => ({ id: x.id, title: x.title, sub: x.alt ?? 'no alt text', module: 'media', kind: 'media' })));
+    const push = (type: string, items: Hit[]) => { if (items.length) groups.push({ type, items }); };
+    // the four content entities share ONE "Content" group (duplicate group labels
+    // would render duplicate filter chips and break type filtering client-side)
+    const contentHits: Hit[] = [
+      ...articles.map((x) => ({ id: x.id, title: x.title, sub: `article · ${x.status}${x.locale ? ' · ' + x.locale : ''}`, module: 'content', kind: 'article' })),
+      ...pages.map((x) => ({ id: x.id, title: x.title, sub: `page · ${x.status}${x.locale ? ' · ' + x.locale : ''}`, module: 'content', kind: 'page' })),
+      ...news.map((x) => ({ id: x.id, title: x.title, sub: `news · ${x.status}`, module: 'content', kind: 'news' })),
+      ...faqs.map((x) => ({ id: x.id, title: x.title, sub: `faq · ${x.status}`, module: 'content', kind: 'faq' })),
+    ];
+    push('Content', contentHits.slice(0, CAP));
+    push('Products', products.map((x) => ({ id: x.id, title: x.title, sub: `${x.sku} · ${x.status}`, module: 'products', kind: 'product' })));
+    push('Leads & quotes', subs.map((x) => ({ id: x.id, title: x.title, sub: `${x.type} · ${x.email}`, module: 'submissions', kind: 'lead' })));
+    push('RMA', rmas.map((x) => ({ id: x.id, title: x.title, sub: `${x.sku ?? '—'} · ${x.status}`, module: 'rma', kind: 'rma' })));
+    push('Careers', [...apps.map((x) => ({ id: x.id, title: x.title, sub: x.email, module: 'jobs', kind: 'application' })), ...postings.map((x) => ({ id: x.id, title: x.title, sub: `posting · ${x.status}`, module: 'jobs', kind: 'posting' }))].slice(0, CAP));
+    push('Media', assets.map((x) => ({ id: x.id, title: x.title, sub: x.alt ?? 'no alt text', module: 'media', kind: 'media' })));
     return c.json({ q, groups });
   });
 

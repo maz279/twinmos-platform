@@ -95,6 +95,13 @@ export const productCreateSchema = z.object({
   categoryId: z.number().int().positive(),
   status: z.enum(CONTENT_STATUS).default('draft'),
   specs: z.record(z.string(), z.unknown()).default({}),
+  // 0007: rich product fields — marketing copy + list pricing + media
+  description: z.string().trim().max(8000).default(''),
+  priceUsd: z.number().nonnegative().max(9_999_999).nullable().default(null),
+  currency: z.string().trim().length(3).default('USD'),
+  heroMediaId: z.number().int().positive().nullable().default(null),
+  gallery: z.array(z.number().int().positive()).max(12).default([]),
+  datasheets: z.array(z.object({ label: z.string().trim().min(1).max(80), url: z.url().max(500) })).max(6).default([]),
   badges: z.array(z.string().max(40)).max(8).default([]),
 });
 export const productUpdateSchema = productCreateSchema.partial();

@@ -99,7 +99,9 @@ function Workspace({ me, onSignOut, onMfaChange }: { me: Me; onSignOut: () => vo
           <MfaSetup onEnrolled={() => { setMfaOpen(false); onMfaChange(); }} onSkip={() => setMfaOpen(false)} />
         </div>
       ) : null}>
-      {mod ? <mod.comp canWrite={canWrite(me.user?.role)} me={me} ctx={activeTab?.ctx} nav={openTab} /> : null}
+      {/* key per tab: two tabs of the same module must NOT share component state
+          (a Search tab focused on "VLT" would otherwise keep the previous query) */}
+      {mod ? <mod.comp key={activeTab?.id} canWrite={canWrite(me.user?.role)} me={me} ctx={activeTab?.ctx} nav={openTab} /> : null}
       {searchOpen && <SearchPalette onClose={() => setSearchOpen(false)} open={openTab} />}
     </Shell>
   );
