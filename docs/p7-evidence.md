@@ -48,3 +48,12 @@ ZAP is not installable on the dev workstation; the equivalent local gate is the 
 4. Cutover checklist (DEPLOY.md §6) executed on production.
 
 All code-level P7 gates are green locally: suite **104/104** (11 new security tests), typecheck clean, parity untouched (no web pixels changed), worktree clean after commit.
+
+
+## 7. Check-and-recheck audit iteration (2026-09-28)
+
+1. **Live re-verification** — all P7 deliverables re-checked against the running system: 5 security-header families live on the API, runbook scripts present and `bash -n` clean, deploy artifacts intact, axe-sweep harness committed.
+2. **`tooling/owasp-local-scan.mjs`** — an executable ZAP-baseline-equivalent (ZAP itself is not installable on the dev box): 14 check classes × 35 requests — headers on all public paths, CORS-reflection, authz on 6 admin/partner routes unauthenticated, path traversal on file-serving routes, SQLi strings (no reflection/5xx), XSS payload (not reflected), malformed JSON, verb tampering, rate-limit engagement, oversized bodies, RFC 9457 envelopes. **NO FINDINGS.** Host policy: http/https only; refuses loopback/private/resolved-private targets unless `--allow-private` is passed explicitly (refusal verified).
+3. **DR drill executed locally** — `tooling/dr-drill.mjs` (dev-stack equivalent of `restore.sh --drill`): rebuilds a throwaway database from the declarative backup (migrations 5.1s + seed 2.3s + corpus 2.4s), runs the verification counts (1 user / 2 products / **395 articles** / 2 demo leads / 1 partner org — all as expected), boots the full API and probes health/i18n/authz/sn-check. **PASS in 11.0s** (RTO budget 4h). Result recorded in the DR.md drill log; two script bugs found and fixed on the way (Windows `pathToFileURL` imports; PGlite single-process handle needed re-opening after subprocess writes).
+4. **Parity spot (index + quote @390)** — quote **99.57 PASS**. index measured 84.95 stably; the controls disprove any regression: **build-today vs build-this-morning = 100.00** (byte-identical rendering) while **prototype-today vs prototype-this-morning = 85.50** (the page's un-guarded Ken-Burns hero animation is phase-nondeterministic ACROSS capture sessions — within-session A-vs-A = 99.93). The 84.95 is therefore prototype self-nondeterminism under the documented parity protocol, not a build change.
+5. Full gates re-run: suite **104/104**, typecheck clean, admin + web builds green.

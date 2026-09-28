@@ -28,3 +28,4 @@
 | Date | Duration | Result | Gaps found → fixes |
 |---|---|---|---|
 | _pending first staging run_ | — | — | — |
+| local-dev 2026-09-28 | 11.0s | PASS (migrations+seed+corpus restore-equivalent via tooling/dr-drill.mjs, 395 articles, API served, authz+sn-check verified) | none |
