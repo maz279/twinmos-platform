@@ -69,3 +69,11 @@ Deep review of the deploy artifacts' *technical correctness* found four real gap
 4. **DEPLOY.md web-build env** — production builds must bake `PUBLIC_API_URL=/api/v1` + `PUBLIC_TURNSTILE_SITE_KEY` (Astro only exposes `PUBLIC_*` vars; the old instruction could have baked a dev URL). Both env templates updated with the `PUBLIC_*` naming.
 
 Parity after the Layout change (adds one hidden inline var — zero pixels): quote **99.57**, partners **99.69** @390 PASS.
+
+
+## 9. Audit of the gap-sweep itself (2026-09-28)
+
+1. **DEPLOY.md build instruction was itself a footgun** — `PUBLIC_API_URL=/api/v1 npm run build` under Git Bash/MSYS path-mangles the value to `C:/Program Files/Git/api/v1` (verified: that string landed in the built HTML). On the Linux build box it would work, but the instruction is unnecessary AND unsafe: with the var unset (fresh clone — `apps/web/.env` is gitignored), it defaults to `''`, which `forms.js` resolves to same-origin `/api/v1` — exactly correct. DEPLOY.md + `.env.production.example` now mandate the safe default (leave unset; guard added for a stray `.env`), with the MSYS trap documented.
+2. **nginx served its own 404**, not the site's branded `404.html` — added `error_page 404 /404.html`.
+3. **Admin hashed assets were no-cached** — `/admin/assets/` (Vite content-hashed filenames, verified) now gets `expires 365d`; the SPA shell stays `no-cache`.
+4. **CSP-coverage sweep of the built site** — every external URL in all 36 built pages is a plain navigation link (social/marketplace/standards bodies); zero external scripts/images/fonts, zero iframes; the admin bundle has zero external refs and no inline scripts. The shipped CSP is complete as-is.

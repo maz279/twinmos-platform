@@ -39,10 +39,16 @@ curl -s http://127.0.0.1:8787/api/v1/health   # expect {status:"ok"}
 ## 3. Web + admin bundles
 
 ```bash
-# Web build env is BAKED into the HTML: same-origin API + the Turnstile site key.
-# (A build machine without apps/web/.env defaults PUBLIC_API_URL to '' = same-origin —
-#  always set the key explicitly when Turnstile is live.)
-cd apps/web && PUBLIC_API_URL=/api/v1 PUBLIC_TURNSTILE_SITE_KEY="$TURNSTILE_SITE_KEY_PUBLIC"   npm ci && npm run build        # dist/ (vendored app.js/data.js sync runs in prebuild)
+# Web build env is BAKED into the HTML. On a FRESH CLONE (no apps/web/.env — it is
+# gitignored), PUBLIC_API_URL defaults to '' which forms.js resolves to same-origin
+# /api/v1 behind nginx — exactly right. ONLY the Turnstile site key needs setting:
+#   - Linux build box:  PUBLIC_TURNSTILE_SITE_KEY=0xXXXX npm run build
+#   - Git Bash/Windows: leading-slash values get MSYS-mangled — prefer building from
+#     a clean clone and put PUBLIC_TURNSTILE_SITE_KEY in apps/web/.env instead.
+# NEVER set PUBLIC_API_URL=/api/v1 by assignment on Git Bash (it becomes
+# "C:/Program Files/Git/api/v1"); the empty default is already correct.
+ls apps/web/.env 2>/dev/null && { echo "apps/web/.env present — remove it before production builds"; exit 1; }
+cd apps/web && npm ci && npm run build    # dist/ (vendored app.js/data.js sync runs in prebuild)
 cd ../admin && npm ci && npm run build
 sudo rsync -a --delete apps/web/dist/  /var/www/twinmos/web/
 sudo rsync -a --delete apps/admin/dist/ /var/www/twinmos/admin/
