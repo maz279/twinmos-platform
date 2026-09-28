@@ -3,14 +3,14 @@
 // Every mutation: session + RBAC guard, Zod validation, parameter-bound Drizzle
 // queries, audit row. Reads: any authenticated role; writes: editor+.
 import { Hono } from 'hono';
-import { and, asc, count, desc, eq, ilike, inArray, lt, lte, isNotNull, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, lt, lte, isNotNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import {
   jobApplicationUpdateSchema, productCreateSchema, productUpdateSchema, problem,
   rmaTransitionSchema, submissionUpdateSchema, formNoteCreateSchema,
   RMA_TRANSITIONS, SUBMISSION_STATUS, SUBMISSION_TRANSITIONS, SUBMISSION_PRIORITY, RMA_STATUS,
 } from '@twinmos/shared';
-import { auditLog, formNote, formSubmission, jobApplication, jobPosting, product, rmaEvent, rmaRequest, user } from '@twinmos/db';
+import { auditLog, formNote, formSubmission, jobApplication, jobPosting, product, rmaEvent, rmaRequest, user, article, page, newsPost, faq, mediaAsset } from '@twinmos/db';
 import { sendRmaStatusMail } from '../mailer.ts';
 import { IdempotencyStore } from '../idem.ts';
 import type { DB } from '@twinmos/db';
@@ -133,6 +133,42 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
         inArray(formSubmission.status, [...OPEN_LEAD_STATES]),
         lte(formSubmission.dueAt, new Date()),
       ));
+    // P8 console: trend series, SLA risk queue, content/media health and activity tail
+    const since = new Date(Date.now() - 13 * 86400_000); since.setUTCHours(0, 0, 0, 0);
+    const day = sql<string>`to_char(${formSubmission.createdAt} at time zone 'UTC', 'YYYY-MM-DD')`;
+    const rmaDay = sql<string>`to_char(${rmaRequest.createdAt} at time zone 'UTC', 'YYYY-MM-DD')`;
+    const [subsDaily, rmaDaily, slaRisk, contentCounts, mediaCounts, jobsNew, activity] = await Promise.all([
+      db.select({ d: day, n: count() }).from(formSubmission)
+        .where(and(sql`${formSubmission.createdAt} >= ${since}`, lt(sql`${formSubmission.createdAt}`, new Date(Date.now() + 86400_000))))
+        .groupBy(day),
+      db.select({ d: rmaDay, n: count() }).from(rmaRequest)
+        .where(and(sql`${rmaRequest.createdAt} >= ${since}`, lt(sql`${rmaRequest.createdAt}`, new Date(Date.now() + 86400_000))))
+        .groupBy(rmaDay),
+      db.select({ id: formSubmission.id, refCode: formSubmission.refCode, type: formSubmission.type, status: formSubmission.status, dueAt: formSubmission.dueAt, email: formSubmission.email })
+        .from(formSubmission)
+        .where(and(inArray(formSubmission.status, [...OPEN_LEAD_STATES]), isNotNull(formSubmission.dueAt)))
+        .orderBy(asc(formSubmission.dueAt)).limit(6),
+      Promise.all([
+        db.select({ n: count() }).from(article).where(and(eq(article.status, 'published'), sql`${article.deletedAt} is null`)),
+        db.select({ n: count() }).from(newsPost).where(and(eq(newsPost.status, 'published'), sql`${newsPost.deletedAt} is null`)),
+        db.select({ n: count() }).from(page).where(and(eq(page.status, 'published'), sql`${page.deletedAt} is null`)),
+        db.select({ n: count() }).from(faq).where(eq(faq.status, 'published')),
+      ]),
+      Promise.all([
+        db.select({ n: count() }).from(mediaAsset),
+        db.select({ n: count() }).from(mediaAsset).where(sql`${mediaAsset.alt} is null or ${mediaAsset.alt} = ''`),
+      ]),
+      db.select({ n: count() }).from(jobApplication).where(eq(jobApplication.status, 'new')),
+      db.select({ id: auditLog.id, action: auditLog.action, entity: auditLog.entity, entityId: auditLog.entityId, at: auditLog.at, actor: user.email })
+        .from(auditLog).leftJoin(user, eq(auditLog.actorId, user.id))
+        .orderBy(desc(auditLog.id)).limit(8),
+    ]);
+    const series: Array<{ d: string; subs: number; rmas: number }> = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400_000).toISOString().slice(0, 10);
+      series.push({ d, subs: Number(subsDaily.find((x) => x.d === d)?.n ?? 0), rmas: Number(rmaDaily.find((x) => x.d === d)?.n ?? 0) });
+    }
+    const now = Date.now();
     return c.json({
       submissions: {
         total: total(subsByStatus), byStatus: byKey(subsByStatus, 'status'), byType: byKey(subsByType, 'type'),
@@ -145,8 +181,74 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
         byStatus: byKey(rmaByStatus, 'status'),
       },
       jobApplications: total(jobs),
+      jobsNew: Number(jobsNew[0]?.n ?? 0),
       products: total(products),
+      series,
+      slaRisk: slaRisk.map((s) => ({ ...s, slaState: slaState({ status: s.status, dueAt: s.dueAt }, now) })),
+      content: {
+        articles: Number(contentCounts[0][0]?.n ?? 0), news: Number(contentCounts[1][0]?.n ?? 0),
+        pages: Number(contentCounts[2][0]?.n ?? 0), faqs: Number(contentCounts[3][0]?.n ?? 0),
+      },
+      media: { total: Number(mediaCounts[0][0]?.n ?? 0), missingAlt: Number(mediaCounts[1][0]?.n ?? 0) },
+      activity,
     });
+  });
+
+  // ==================== P8 console: unified global search (⌘K palette) ====================
+  // Grouped ilike search across every manageable entity; reads are parameter-bound
+  // and capped (≤5/group) so the palette can never dump a whole table.
+  r.get('/search', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const q = (c.req.query('q') ?? '').trim();
+    if (q.length < 2) return c.json(problem(400, 'Search query must be at least 2 characters.'), 400, { 'Content-Type': P });
+    const like = `%${q}%`;
+    const CAP = 5;
+    const live = sql`is null`; // soft-delete guard fragment
+    const [articles, pages, news, faqs, products, subs, rmas, apps, postings, assets] = await Promise.all([
+      db.select({ id: article.id, title: article.title, status: article.status, locale: article.locale })
+        .from(article).where(and(ilike(article.title, like), sql`${article.deletedAt} ${live}`))
+        .orderBy(desc(article.updatedAt)).limit(CAP),
+      db.select({ id: page.id, title: page.title, status: page.status, locale: page.locale })
+        .from(page).where(and(ilike(page.title, like), sql`${page.deletedAt} ${live}`))
+        .orderBy(desc(page.updatedAt)).limit(CAP),
+      db.select({ id: newsPost.id, title: newsPost.title, status: newsPost.status, locale: newsPost.locale })
+        .from(newsPost).where(and(ilike(newsPost.title, like), sql`${newsPost.deletedAt} ${live}`))
+        .orderBy(desc(newsPost.createdAt)).limit(CAP),
+      db.select({ id: faq.id, title: faq.question, status: faq.status, locale: faq.locale })
+        .from(faq).where(ilike(faq.question, like)).limit(CAP),
+      db.select({ id: product.id, title: product.name, status: product.status, sku: product.sku })
+        .from(product).where(and(or(ilike(product.name, like), ilike(product.sku, like)), sql`${product.deletedAt} ${live}`))
+        .limit(CAP),
+      db.select({ id: formSubmission.id, title: formSubmission.refCode, status: formSubmission.status, email: formSubmission.email, type: formSubmission.type })
+        .from(formSubmission).where(or(ilike(formSubmission.refCode, like), ilike(formSubmission.email, like)))
+        .orderBy(desc(formSubmission.id)).limit(CAP),
+      db.select({ id: rmaRequest.id, title: rmaRequest.number, status: rmaRequest.status, sku: rmaRequest.productSku })
+        .from(rmaRequest).where(or(ilike(rmaRequest.number, like), ilike(rmaRequest.productSku, like)))
+        .orderBy(desc(rmaRequest.id)).limit(CAP),
+      db.select({ id: jobApplication.id, title: jobApplication.refCode, status: jobApplication.status, email: jobApplication.email })
+        .from(jobApplication).where(or(ilike(jobApplication.refCode, like), ilike(jobApplication.email, like)))
+        .orderBy(desc(jobApplication.id)).limit(CAP),
+      db.select({ id: jobPosting.id, title: jobPosting.title, status: jobPosting.status })
+        .from(jobPosting).where(ilike(jobPosting.title, like)).limit(CAP),
+      db.select({ id: mediaAsset.id, title: mediaAsset.key, alt: mediaAsset.alt })
+        .from(mediaAsset).where(or(ilike(mediaAsset.key, like), ilike(mediaAsset.alt, like)))
+        .orderBy(desc(mediaAsset.id)).limit(CAP),
+    ]);
+    type Hit = { id: number; title: string; sub?: string; module: string; kind: string };
+    const groups: Array<{ type: string; items: Hit[] }> = [];
+    const push = (type: string, module: string, kind: string, items: Hit[]) => { if (items.length) groups.push({ type, items }); };
+    push('Content', 'content', 'article', articles.map((x) => ({ id: x.id, title: x.title, sub: `article · ${x.status}${x.locale ? ' · ' + x.locale : ''}`, module: 'content', kind: 'article' })));
+    push('Content', 'content', 'page', pages.map((x) => ({ id: x.id, title: x.title, sub: `page · ${x.status}${x.locale ? ' · ' + x.locale : ''}`, module: 'content', kind: 'page' })));
+    push('Content', 'content', 'news', news.map((x) => ({ id: x.id, title: x.title, sub: `news · ${x.status}`, module: 'content', kind: 'news' })));
+    push('Content', 'content', 'faq', faqs.map((x) => ({ id: x.id, title: x.title, sub: `faq · ${x.status}`, module: 'content', kind: 'faq' })));
+    push('Products', 'products', 'product', products.map((x) => ({ id: x.id, title: x.title, sub: `${x.sku} · ${x.status}`, module: 'products', kind: 'product' })));
+    push('Leads & quotes', 'submissions', 'lead', subs.map((x) => ({ id: x.id, title: x.title, sub: `${x.type} · ${x.email}`, module: 'submissions', kind: 'lead' })));
+    push('RMA', 'rma', 'rma', rmas.map((x) => ({ id: x.id, title: x.title, sub: `${x.sku ?? '—'} · ${x.status}`, module: 'rma', kind: 'rma' })));
+    push('Careers', 'jobs', 'application', apps.map((x) => ({ id: x.id, title: x.title, sub: x.email, module: 'jobs', kind: 'application' })));
+    push('Careers', 'jobs', 'posting', postings.map((x) => ({ id: x.id, title: x.title, sub: `posting · ${x.status}`, module: 'jobs', kind: 'posting' })));
+    push('Media', 'media', 'media', assets.map((x) => ({ id: x.id, title: x.title, sub: x.alt ?? 'no alt text', module: 'media', kind: 'media' })));
+    return c.json({ q, groups });
   });
 
   // ==================== P2: submissions inbox · P6: lead board (ADR-009) ====================

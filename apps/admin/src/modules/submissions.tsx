@@ -1,10 +1,11 @@
 // Leads & quotes board (P6, ADR-009) — the P2 submissions inbox upgraded with
 // the lead-handling workflow: 5-state machine (server-enforced), priority,
 // SLA due-dates/badges, internal notes, and filtered CSV export.
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
 import { Badge, btn, btnGhost, Empty, Err, input, Table, td, useAsync } from '../ui';
 import { SUBMISSION_STATUS, SUBMISSION_TRANSITIONS, SUBMISSION_PRIORITY } from '@twinmos/shared';
+import type { TabCtx } from '../nav';
 
 type Submission = {
   id: number; type: string; email: string; payload: Record<string, unknown>;
@@ -19,13 +20,20 @@ type Note = { id: number; body: string; createdAt: string; author: string | null
 const SLA_LABEL: Record<string, string> = { overdue: '⚠ overdue', due_soon: 'due soon', on_track: 'on track' };
 const SLA_COLOR: Record<string, string> = { overdue: '#B3261E', due_soon: '#B45309', on_track: '#15803D' };
 
-export default function Submissions({ canWrite, myId }: { canWrite: boolean; myId?: string }) {
+export default function Submissions({ canWrite, myId, ctx }: { canWrite: boolean; myId?: string; ctx?: TabCtx }) {
   const [type, setType] = useState('');
   const [status, setStatus] = useState('');
   const [priority, setPriority] = useState('');
   const [sla, setSla] = useState('');
   const [cursor, setCursor] = useState<number | null>(null);
   const [selected, setSelected] = useState<Submission | null>(null);
+
+  // deep link: a tab focused on one lead (from ⌘K search, dashboard SLA queue or
+  // audit cross-nav) opens that lead's detail immediately
+  const focusId = ctx?.kind === 'lead' && ctx.id ? Number(ctx.id) : null;
+  useEffect(() => {
+    if (focusId != null && Number.isFinite(focusId)) setSelected((s) => (s?.id === focusId ? s : { ...s, id: focusId } as Submission));
+  }, [focusId]);
 
   const qs = new URLSearchParams();
   if (type) qs.set('type', type);
@@ -45,7 +53,7 @@ export default function Submissions({ canWrite, myId }: { canWrite: boolean; myI
 
   return (
     <div>
-      <h1>Leads & quotes</h1>
+      <h1>Leads &amp; quotes{selected ? <span style={{ color: '#5E7691', fontSize: 15 }}> — {selected.refCode ?? ctx?.label ?? `#${selected.id}`}</span> : null}</h1>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap' }}>
         <input style={input} placeholder="Filter by type (e.g. quote)" value={type} onChange={(e) => { setType(e.target.value.trim()); setCursor(null); }} />
         <select style={input} value={status} onChange={(e) => { setStatus(e.target.value); setCursor(null); }}>

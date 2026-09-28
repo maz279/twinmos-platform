@@ -17,7 +17,11 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
   const [error, setError] = useState<unknown>(null);
   const [editing, setEditing] = useState<number | null>(null);
   const [editAlt, setEditAlt] = useState('');
+  const [missingOnly, setMissingOnly] = useState(false);
   const { data, error: loadError, loading, reload } = useAsync<{ items: Asset[] }>(() => apiGet('/admin/media'), []);
+  const items = (data?.items ?? []).filter((m) => (missingOnly ? !m.alt : true));
+  const missing = (data?.items ?? []).filter((m) => !m.alt).length;
+  const total = data?.items?.length ?? 0;
 
   async function upload() {
     const file = fileRef.current?.files?.[0];
@@ -59,6 +63,15 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
   return (
     <div>
       <h1>Media library</h1>
+      <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: missing ? '#FDEEE6' : '#EAF7EF', color: missing ? '#B3261E' : '#15803D' }}>
+          {total - missing}/{total} alt-text compliant
+        </span>
+        <button style={{ ...btnGhost, fontWeight: missingOnly ? 800 : 400, borderColor: missingOnly ? '#00A3E0' : undefined, color: missingOnly ? '#0E7FB8' : undefined }}
+          onClick={() => setMissingOnly((v) => !v)}>
+          {missingOnly ? `Showing ${missing} missing alt only` : `Show missing alt (${missing})`}
+        </button>
+      </div>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap' }}>
         <input ref={fileRef} type="file" style={input} accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.avif,.pdf,.webm,.mp4" />
         <input style={{ ...input, flex: '1 1 240px' }} placeholder="Alt text (required)" value={alt} onChange={(e) => setAlt(e.target.value)} />
@@ -71,7 +84,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
             <th key={h} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E2E8F0' }}>{h}</th>
           ))}</tr></thead>
           <tbody>
-            {data.items.map((m) => (
+            {items.map((m) => (
               <tr key={m.id}>
                 <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>
                   <b>{m.meta?.origName ?? m.key}</b>
@@ -102,7 +115,8 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
           </tbody>
         </table>
       ) : null}
-      {data && data.items.length === 0 && <Empty text="No media uploaded yet." />}
+      {data && total === 0 && <Empty text="No media uploaded yet." />}
+      {data && total > 0 && items.length === 0 && <Empty text="Every asset has alt text. 🎉" />}
     </div>
   );
 }
