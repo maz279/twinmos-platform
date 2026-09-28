@@ -4,6 +4,7 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
+import { sql } from 'drizzle-orm';
 import { problem } from '@twinmos/shared';
 import { initAuth } from './auth.ts';
 import { formsRoute } from './routes/forms.ts';
@@ -14,13 +15,67 @@ import { settingsRoute } from './routes/settings.ts';
 import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
 import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
 import { snCheckRoute, snReportRoute } from './routes/sncheck.ts';
+import { auditLog } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
+import type { Context } from 'hono';
+
+/**
+ * P7: client IP for rate limiting. Forwarded headers (cf-connecting-ip /
+ * x-forwarded-for) are only trustworthy when traffic can ONLY arrive via the
+ * proxy that sets them — trusting them blindly lets a client rotate the header
+ * to dodge every bucket. Rule: header trust requires TRUST_PROXY=1 (set it in
+ * dev/test/behind-Cloudflare staging+prod); in production WITHOUT the flag we
+ * fall back to the socket address, and tests keep working because they run
+ * with TRUST_PROXY=1 (see p*-*.e2e.test.ts env blocks).
+ */
+export function clientIp(c: Context): string {
+  const trustHeader = process.env.TRUST_PROXY === '1' || process.env.NODE_ENV !== 'production';
+  if (trustHeader) {
+    return c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'local';
+  }
+  const addr = (c.env as { incoming?: { socket?: { remoteAddress?: string } } })?.incoming?.socket?.remoteAddress;
+  return addr ?? 'unknown';
+}
+
+/**
+ * P7: audit-log retention (docs/02 §audit — 12 months). Boot sweep + daily
+ * interval; unref'd so the timer never holds the process open (tests, scripts).
+ */
+function startAuditRetention(db: DB): void {
+  if (process.env.AUDIT_RETENTION_DISABLED === '1') return;
+  const RETAIN_DAYS = Number(process.env.AUDIT_RETENTION_DAYS ?? 365);
+  const sweep = async () => {
+    try {
+      const res = await db.execute(sql`DELETE FROM audit_log WHERE at < now() - (${RETAIN_DAYS} || ' days')::interval`);
+      const n = (res as unknown as { rowCount?: number })?.rowCount ?? 0;
+      if (n > 0) console.log(`[audit-retention] removed ${n} rows older than ${RETAIN_DAYS}d`);
+    } catch { /* retention must never take the API down */ }
+  };
+  void sweep();
+  const t = setInterval(sweep, 24 * 3600_000);
+  t.unref?.();
+}
 
 export function buildApp(db: DB) {
   const { auth, requireRole, sessionFromRequest } = initAuth(db);
   const app = new Hono<{ Variables: { requestId: string } }>();
 
   if (process.env.NODE_ENV !== 'test') app.use(logger());
+  // ---- P7: security headers on every API response (OWASP secure-headers) ----
+  app.use('*', async (c, next) => {
+    c.header('X-Content-Type-Options', 'nosniff');
+    c.header('X-Frame-Options', 'DENY');
+    c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+    c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+    // API responses are JSON — a locked-down CSP also neutralises any future
+    // HTML echo; frame-ancestors blocks clickjacking of any error pages.
+    c.header('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+    // HSTS only when we know we're behind TLS (prod behind Cloudflare/nginx).
+    if (process.env.TRUST_PROXY === '1' || process.env.NODE_ENV === 'production') {
+      c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+    await next();
+  });
   // CORS for the admin SPA and the website in local dev (ports differ). In
   // production both are served same-origin by the API host; set ALLOWED_ORIGIN
   // to the public origins only.
@@ -37,12 +92,13 @@ export function buildApp(db: DB) {
     c.header('X-Request-Id', requestId);
     await next();
   });
+  startAuditRetention(db);
 
   // ---- public form rate limit: 5 requests / minute / IP (in-memory; Redis in prod) ----
   const FORM_BUCKETS = new Map<string, { count: number; resetAt: number }>();
   let bucketSweepAt = 0;
   app.use('/api/v1/forms/*', async (c, next) => {
-    const ip = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'local';
+    const ip = clientIp(c);
     const now = Date.now();
     // periodic sweep: IPs that never return must not accumulate forever
     if (now > bucketSweepAt) {
@@ -66,7 +122,7 @@ export function buildApp(db: DB) {
 
   // ---- P5 SN-check rate limit: 10/min/IP (sweeping shared with forms buckets) ----
   app.use('/api/v1/sn-check', async (c, next) => {
-    const ip = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'local';
+    const ip = clientIp(c);
     const now = Date.now();
     if (now > bucketSweepAt) {
       bucketSweepAt = now + 60_000;

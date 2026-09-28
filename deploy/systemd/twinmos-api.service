@@ -1,0 +1,28 @@
+# TwinMOS API — systemd unit (P7). Install to /etc/systemd/system/twinmos-api.service
+# Env comes from /etc/twinmos/api.env (see .env.production.example; secrets via that
+# file with 0600 root-only perms or the platform secret store).
+[Unit]
+Description=TwinMOS API (Hono/Node)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=twinmos
+Group=twinmos
+WorkingDirectory=/opt/twinmos/api
+EnvironmentFile=/etc/twinmos/api.env
+ExecStart=/usr/bin/node /opt/twinmos/api/src/index.ts
+# Node 24 runs TypeScript natively via --experimental-strip-types
+Restart=always
+RestartSec=3
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/twinmos /opt/twinmos/api/data
+LimitNOFILE=8192
+
+[Install]
+WantedBy=multi-user.target

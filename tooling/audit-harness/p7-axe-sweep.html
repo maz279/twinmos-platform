@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>axe-p7-sweep</title></head>
+<body>
+<iframe id="tgt" title="audit target" style="width:1280px;height:900px;border:0"></iframe>
+<pre id="out">PENDING</pre>
+<script>
+// P7 WCAG 2.2 AA sweep: runs axe on EVERY page (incl. locale landings and the
+// two interactive P5 surfaces in their post-action states) and prints a
+// per-page violation summary, aggregated at the end.
+(function () {
+  var frame = document.getElementById('tgt');
+  var out = document.getElementById('out');
+  var log = [];
+  function say(m) { log.push(m); out.textContent = log.join('\n').slice(-6000); }
+
+  var PAGES = ['index.html', 'shop.html', 'product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd',
+    'solutions.html', 'where-to-buy.html', 'support.html', 'rma.html', 'compatibility.html',
+    'compare.html', 'technology.html', 'gaming.html', 'news.html', 'article.html?id=best-portable-ssd',
+    'about.html', 'careers.html', 'partners.html', 'quote.html', 'contact.html', 'search.html?q=ddr5',
+    'sitemap.html', 'legal.html', 'learn.html', 'learn-guides.html', 'learn-explained.html',
+    'learn-benchmarks.html', 'learn-blog.html', 'learn-glossary.html', '404.html',
+    'ar.html', 'ru.html'].map(function (p) { return 'http://localhost:4321/' + p; });
+
+  var idx = -1;
+  var aggregate = {};
+
+  function runAxe(doc, win) {
+    return new Promise(function (resolve, reject) {
+      var s = doc.createElement('script');
+      s.src = '/__audit/axe.min.js';
+      s.onload = function () {
+        win.axe.run(doc, { reporter: 'v2' }).then(function (r) {
+          resolve(r.violations.map(function (v) { return v.id + ':' + (v.impact || '?') + ':' + v.nodes.length; }));
+        }).catch(reject);
+      };
+      s.onerror = function () { reject(new Error('axe load failed')); };
+      doc.head.appendChild(s);
+    });
+  }
+
+  function next() {
+    idx += 1;
+    if (idx >= PAGES.length) {
+      var summary = Object.keys(aggregate).sort().map(function (k) { return k + ' on ' + aggregate[k] + ' page(s)'; });
+      say('P7_AXE_SWEEP_DONE\n' + summary.join('\n'));
+      return;
+    }
+    var url = PAGES[idx];
+    frame.onload = function () {
+      setTimeout(function () {
+        var w = frame.contentWindow, d = frame.contentDocument;
+        if (!d || !d.body) { say(url + ' :: FRAME_ERROR'); next(); return; }
+        // post-boot interactive states for the two P5 surfaces
+        var extra = null;
+        if (url.indexOf('support.html') !== -1) {
+          try {
+            var chip = Array.prototype.filter.call(d.querySelectorAll('#main .card'), function (c) {
+              return c.textContent.indexOf('Verify a product serial number') !== -1;
+            })[0];
+            if (chip) chip.click();
+            extra = ' +sn-expanded';
+          } catch (e) { extra = ' +sn-click-failed'; }
+        }
+        if (url.indexOf('partners.html') !== -1) extra = ' (portal renders post-sign-in; static state audited)';
+        runAxe(d, w).then(function (violations) {
+          violations.forEach(function (v) {
+            var k = v.split(':')[0];
+            aggregate[k] = (aggregate[k] || 0) + 1;
+          });
+          var crit = violations.filter(function (v) { return v.indexOf(':critical') !== -1 || v.indexOf(':serious') !== -1; });
+          say(url.replace('http://localhost:4321/', '') + (extra || '') + ' :: ' + (violations.length ? violations.join(' | ') : 'CLEAN'));
+          next();
+        }).catch(function (e) { say(url + ' :: AXE_ERROR ' + e); next(); });
+      }, 9000); // full deferred boot
+    };
+    frame.src = url;
+  }
+  next();
+})();
+</script>
+</body>
+</html>

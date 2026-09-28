@@ -8,4 +8,5 @@ process.env.PARTNER_FILES_DIR ??= './data/partner-files';
 process.env.ALLOWED_ORIGIN ??= 'http://localhost:4321,http://localhost:5173,http://localhost:5174';
 process.env.BETTER_AUTH_URL ??= 'http://localhost:8787';
 process.env.BETTER_AUTH_TRUSTED_ORIGINS ??= 'http://localhost:5173,http://localhost:5174,http://localhost:4321';
+process.env.TRUST_PROXY ??= '1'; // dev: trust x-forwarded-for (production sets this ONLY behind Cloudflare/nginx — see .env.production.example)
 await import('../src/index.ts');
