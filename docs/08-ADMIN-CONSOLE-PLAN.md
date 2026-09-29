@@ -592,3 +592,34 @@ verbatim; variant sizes match spec; no direct fs calls in media routes;
 variant fallback + thumbnail wiring + folder audit entity + audit-filter
 parity from the previous audit pass hold; optimistic locking covers both
 PATCH surfaces; search covers all entities; hash deep-links work.
+
+## Evidence — Phase 4 final completion audit (commit 45418f9)
+
+Line-by-line §4 checklist against the plan, final state:
+
+**4.1 StorageDriver** — interface with put/get/delete/getUrl exactly as
+specified; LocalStorageDriver (MEDIA_DIR); S3StorageDriver (SigV4 header
++ presigned query auth) for AWS S3 / Cloudflare R2 / Backblaze B2.
+Credentials env-only (S3_*); MEDIA_STORAGE=s3 with an incomplete env set
+throws at startup. Keys traversal-normalised. ✅ (p12: round-trip,
+signature shape, presign shape, env gating incl. full env restore)
+
+**4.2 Sharp variants** — thumb 150×150 WebP / card 400×300 WebP /
+hero 1200×800 WebP **+ AVIF** / full ≤2560-inside WebP; dimensions,
+colour profile (format/space/hasAlpha) and per-variant byte sizes in
+media_asset.meta; ?variant= serving with immutable caching; derivative-
+less assets (SVG/GIF/legacy) fall back to the original; content-addressed
+dedup. Grid/picker/product thumbnails load derivatives with lazy loading. ✅
+
+**4.3 Folders + integrity** — media_folder hierarchy + folder_id (FK
+set-null); CRUD with subtree-cycle and non-empty guards; the plan's five
+canonical roots (/products, /banners, /news, /branding, /datasheets)
+now seed idempotently on first read (new this pass — the last
+unimplemented sentence of §4.3); in-use deletion guard across
+product.heroMediaId, product.gallery (= ANY), article.heroMediaId and
+news.heroMediaId with a UI dialog listing referencing items; delete
+purges derivative bytes. ✅
+
+Gates: p12 → 14 tests, suite **189/189** (14 files), typecheck clean,
+build green. Live: dev folder tree shows all five defaults with counts.
+Phase 4 is COMPLETE — no open items remain.
