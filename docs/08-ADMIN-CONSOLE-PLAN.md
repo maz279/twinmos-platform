@@ -305,3 +305,46 @@ reload.
 
 Gates: typecheck 0, build green, suite 158/158, sealed scan baseline (45, no
 new classes).
+
+## Evidence — 2026 reference restyle (design_sample boards)
+
+**Input:** the four approved boards in `Corporate website development for
+TwinMOS/admin_panel/design_sample/` (two light-CMS boards, a module-grid
+control panel, a navy/teal analytics dashboard). Analyzed all four; the shared
+design language: deep-navy sidebar (~#16222F), teal accent (#1DBF9F), white
+topbar with search + avatar, light-gray canvas (#F2F4F6), white rounded cards
+with soft shadows, icon-chip KPI tiles with sparklines, teal area charts,
+donuts, uppercase micro-labels, pill badges.
+
+**Implemented (commit 71987e7):**
+- `ui.tsx` became the single token source (NAVY/INK/TEAL/TEAL_DK/GOLD/RED/
+  GREEN/BLUE/PURPLE/MUTED/FAINT/LINE/PAGE + CARD_SHADOW) with refreshed atoms
+  (teal-gradient primary button, uppercase letter-spaced table headers, pill
+  badges, ghost/input/card styles) and a `globalCss` (form controls inherit
+  the console font, teal focus rings, thin dark/light scrollbars).
+- `shell.tsx`: brand block (logo chip + TwinMOS/CONSOLE wordmark), user card
+  (teal-gradient avatar initials + name + role), teal active nav with 3px left
+  indicator, live-badge pills, bottom version footer with teal live dot;
+  white topbar (Modules chip, search field with ⌘K kbd, breadcrumbs, MFA
+  state, avatar + email + role badge); tab strip as rounded pills; mega-menu
+  cards with teal icon chips and hover lift.
+- `dashboard.tsx`: six KPI tiles with tinted icon chips + sparklines + ▲▼
+  delta pills; 14-day dual-series area chart (teal line + gradient fill, gold
+  dashed RMA line, grid lines, date ticks, legend); lead-status donut with
+  center total + legend; rounded pill bars for type/RMA/media-compliance;
+  restyled SLA queue rows and activity feed with icon chips.
+- `login.tsx`/`mfa.tsx`: navy rail gradient with teal radial glow, teal
+  gradient CTA, teal focus rings.
+- Palette sweep across the ⌘K palette, Search, Content, Products, Media,
+  page-builder, media-picker, diff, markdown toolbar — zero old navy/cyan
+  hexes remain.
+
+**Verified visually (IAB screenshots, vision-reviewed):** Dashboard 8/10
+match (missing sparklines on 4 tiles are data-driven — only leads/RMA carry
+series), Products, Content, Media clean, ⌘K palette 9/10 (teal module chips,
+active-row tint), mega menu, login 9/10 (teal gradient CTA confirmed).
+Function re-checked live after restyle: sidebar nav, Products list, Content
+library, Media grid, ⌘K search ("VLT" → 2 product hits, chips PRODUCTS),
+sign-out → login → dev auto-login round-trip.
+
+Gates: typecheck 0, admin build green, suite 158/158 (12 files).
