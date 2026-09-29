@@ -373,3 +373,30 @@ taxonomy selects), Content review queue (count chip), inline page-block
 preview, sidebar collapse 82↔264px round-trip. Note: PreviewModal in
 content.tsx is pre-existing dead wiring (setShowModal never called) —
 the live preview is the inline tab; not a restyle regression.
+
+## Evidence — methodical pixel pass (commit 1d013cf)
+
+Objective: visually inspect EVERY console screen against the reference
+language, not just DOM-verify. Screenshot capture was restored by calling
+the harness `capture_screenshot()` directly (the IPC-wrapped tool path
+was timing out) and reviewing each PNG with vision.
+
+Screens vision-reviewed this pass (scores): Users & Roles 9/10, RMA
+board clean, Audit log 7/10 → fixed, Settings clean, Translations clean,
+Partners clean, Careers clean, product editor pass (structure sound),
+page editor + block builder pass, dashboard re-check 9/10 (full sidebar
+incl. Settings + version footer now visible, tab scrollbar gone), media
+table view captured, collapsed rail 9/10. Earlier passes had already
+covered dashboard, products list, content library, media grid, ⌘K
+palette 9/10, mega menu, login 9/10, leads list + detail.
+
+Defects found by the vision review and fixed:
+1. crowded tab strip showed a horizontal scrollbar (read as clipping) —
+   scrollbar hidden via .tm-tabs-scroll (wheel/drag still work);
+2. data tables had no hover affordance — global row hover tint added;
+3. audit IP/request cell rendered ambiguous "— / —" — now "no IP on
+   record" caption and request id shown only when present;
+4. sidebar slightly overflowed 945px viewports — group/item padding
+   tightened so the last item and version footer fit.
+
+Gates re-run: typecheck 0, admin build green, suite 158/158 (12 files).
