@@ -9,6 +9,7 @@ import { problem } from '@twinmos/shared';
 import { initAuth } from './auth.ts';
 import { formsRoute } from './routes/forms.ts';
 import { adminRoute } from './routes/admin.ts';
+import { usersRoute } from './routes/users.ts';
 import { contentRoute, previewRoute, promoteScheduled } from './routes/content.ts';
 import { mediaRoute } from './routes/media.ts';
 import { settingsRoute } from './routes/settings.ts';
@@ -153,9 +154,36 @@ export function buildApp(db: DB) {
 
   app.get('/api/v1/health', (c) => c.json({ status: 'ok', service: 'twinmos-api', version: '0.3.0', db: 'connected' }));
   app.all('/api/v1/auth/*', (c) => auth.handler(c.req.raw));
+
+  // ---- dev-only auto-login (operator convenience during console iteration) ----
+  // Opens a REAL staff session for the seed admin so the console loads straight
+  // in during development. Triple-guarded: requires API_DEV_AUTOLOGIN=1, refuses
+  // when NODE_ENV=production regardless of the flag, and needs the password from
+  // SEED_ADMIN_PASSWORD (no credential fallback in source). It replays the normal
+  // sign-in handler, so sessions/cookies/audit behave exactly like a manual login.
+  app.post('/api/v1/dev/session', async (c) => {
+    if (process.env.NODE_ENV === 'production') {
+      return c.json(problem(403, 'Forbidden', 'Dev auto-login can never run in production.'), 403, { 'Content-Type': 'application/problem+json' });
+    }
+    if (process.env.API_DEV_AUTOLOGIN !== '1') {
+      return c.json(problem(404, 'Not Found', 'Dev auto-login is disabled (set API_DEV_AUTOLOGIN=1 in dev only).'), 404, { 'Content-Type': 'application/problem+json' });
+    }
+    const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@twinmos.dev';
+    const password = process.env.SEED_ADMIN_PASSWORD;
+    if (!password) {
+      return c.json(problem(404, 'Not Found', 'SEED_ADMIN_PASSWORD is not set — dev auto-login needs it from the environment.'), 404, { 'Content-Type': 'application/problem+json' });
+    }
+    const origin = (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean)[0] ?? 'http://localhost:5174';
+    const signIn = await auth.handler(new Request(origin + '/api/v1/auth/sign-in/email', {
+      method: 'POST', headers: { 'content-type': 'application/json', origin }, body: JSON.stringify({ email, password }),
+    }));
+    return new Response(signIn.body, { status: signIn.status, headers: signIn.headers });
+  });
+
   app.route('/api/v1', formsRoute(db));
   app.route('/api/v1', previewRoute(db)); // public, token-gated draft previews
   app.route('/api/v1/admin', adminRoute(db, { requireRole, sessionFromRequest }));
+  app.route('/api/v1/admin', usersRoute(db, { requireRole, sessionFromRequest, auth }));
   app.route('/api/v1/admin', contentRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', mediaRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', settingsRoute(db, { requireRole, sessionFromRequest }));

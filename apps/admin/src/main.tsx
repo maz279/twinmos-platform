@@ -3,7 +3,7 @@
 // in shell.tsx and nav.ts (docs/08-ADMIN-CONSOLE-PLAN.md); this file owns state.
 import React, { useCallback, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { apiGet } from './api';
+import { API, apiGet } from './api';
 import Login from './login';
 import type { Me } from './login';
 import MfaSetup from './mfa';
@@ -111,13 +111,23 @@ function App() {
   const [me, setMe] = useState<Me | null>(null);
   const [state, setState] = useState<'loading' | 'anon' | 'authed' | 'mfa-setup'>('loading');
   useEffect(() => {
-    apiGet<Me>('/auth/get-session')
-      .then((d) => {
+    (async () => {
+      // Dev convenience: try a server-side dev session first so the console opens
+      // straight in during iteration. import.meta.env.DEV is false in production
+      // builds, and the endpoint itself is flag+NODE_ENV guarded server-side —
+      // in any non-dev deployment this call simply never happens.
+      if (import.meta.env.DEV) {
+        try { await fetch(API + '/dev/session', { method: 'POST', credentials: 'include' }); } catch { /* fall through to the login form */ }
+      }
+      try {
+        const d = await apiGet<Me>('/auth/get-session');
         setMe(d);
-        // signed-in staff without MFA get a one-time enrollment offer (skippable)
-        setState(d?.user ? (d.user.role !== 'viewer' && !d.user.twoFactorEnabled ? 'mfa-setup' : 'authed') : 'anon');
-      })
-      .catch(() => setState('anon'));
+        // signed-in staff without MFA get a one-time enrollment offer (skippable);
+        // suppressed in dev while iterating so the console opens without friction
+        const offerMfa = !!d?.user && d.user.role !== 'viewer' && !d.user.twoFactorEnabled && !import.meta.env.DEV;
+        setState(d?.user ? (offerMfa ? 'mfa-setup' : 'authed') : 'anon');
+      } catch { setState('anon'); }
+    })();
   }, []);
   const refreshMe = () => apiGet<Me>('/auth/get-session').then((d) => { setMe(d); setState(d?.user ? 'authed' : 'anon'); }).catch(() => {});
   if (state === 'loading') return null;
