@@ -421,7 +421,12 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       for (const v of valid) {
         if (v.action === 'update') {
           const id = existingBySku.get(v.sku)!;
-          await tx.update(product).set({ ...productValues(v.values as { priceUsd?: number | null }), updatedAt: new Date() }).where(eq(product.id, id));
+          // CSV-representable fields ONLY — the import must never clobber
+          // rich fields it cannot express (specs, hero, gallery, datasheets,
+          // badges); those survive re-imports untouched.
+          const { specs, heroMediaId, gallery, datasheets, badges, ...csvFields } = v.values as Record<string, unknown>;
+          void specs; void heroMediaId; void gallery; void datasheets; void badges;
+          await tx.update(product).set({ ...productValues(csvFields as { priceUsd?: number | null }), updatedAt: new Date() }).where(eq(product.id, id));
           updated++;
         } else {
           // the full row shape is validated above; the numeric priceUsd mapper's

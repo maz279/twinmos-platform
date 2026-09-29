@@ -253,12 +253,42 @@ describe('P3.3: bulk CSV import, export and template', () => {
     const u = await updated.json();
     expect(Number(u.priceUsd)).toBe(99);
     expect(u.description).toBe('updated via import');
-
     const created = await app.request('/api/v1/admin/products?q=VLT-IMP-NEW', { headers: { cookie } });
     expect((await created.json()).items).toHaveLength(1);
 
     const audit = await app.request('/api/v1/admin/audit?action=product.import', { headers: { cookie } });
     expect((await audit.json()).items.length).toBeGreaterThan(0);
+  });
+
+  it('re-import NEVER wipes rich fields the CSV cannot express (hero/gallery/specs/badges/datasheets)', async () => {
+    // decorate the fixture with everything a CSV row cannot carry
+    const decorate = await app.request('/api/v1/admin/products/' + productId, {
+      method: 'PATCH', headers: HDRS(),
+      body: JSON.stringify({
+        specs: { speed: '6000 MT/s', cas: 'CL30' },
+        badges: ['Best seller', 'New'],
+        datasheets: [{ label: 'Datasheet', url: 'https://example.com/d.pdf' }],
+        description: 'decorated before re-import',
+      }),
+    });
+    expect(decorate.status).toBe(200);
+
+    const reimport = [HEADER, 'VLT-DDR5-P11,voltx-ddr5-p11,VOLTX DDR5 P11 v3,voltx,ddr5,draft,USD,101.0,name-only update'].join('\n');
+    const res = await app.request('/api/v1/admin/products/import', {
+      method: 'POST', headers: HDRS(), body: JSON.stringify({ csv: reimport, dryRun: false }),
+    });
+    expect(res.status).toBe(200);
+    expect((await res.json()).updateCount).toBe(1);
+
+    const after = await (await app.request('/api/v1/admin/products/' + productId, { headers: { cookie } })).json();
+    // CSV-representable fields updated…
+    expect(after.name).toBe('VOLTX DDR5 P11 v3');
+    expect(Number(after.priceUsd)).toBe(101);
+    expect(after.description).toBe('name-only update');
+    // …rich fields preserved untouched
+    expect(after.specs).toEqual({ speed: '6000 MT/s', cas: 'CL30' });
+    expect(after.badges).toEqual(['Best seller', 'New']);
+    expect(after.datasheets).toEqual([{ label: 'Datasheet', url: 'https://example.com/d.pdf' }]);
   });
 
   it('rejects a wrong header outright', async () => {
