@@ -40,13 +40,13 @@ export default function SearchPage({ ctx, nav }: ModProps) {
   return (
     <div>
       <h1 style={{ margin: '0 0 2px', fontSize: 22 }}>Search</h1>
-      <p style={{ margin: '0 0 14px', color: '#5E7691', fontSize: 13 }}>
+      <p style={{ margin: '0 0 14px', color: '#66748A', fontSize: 13 }}>
         Everything manageable, one query — leads, products, content, RMA, applications and media. ⌘K opens the quick palette anywhere.
       </p>
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <input autoFocus style={{ ...input, flex: 1, fontSize: 15, padding: '10px 12px' }}
           placeholder="Search by reference, SKU, title, email, asset name…" value={q} onChange={(e) => setQ(e.target.value)} />
-        {q && <button style={{ ...input, background: '#EEF4FA', cursor: 'pointer' }} onClick={() => { setQ(''); setType(''); }}>Clear</button>}
+        {q && <button style={{ ...input, background: '#F2F5F8', cursor: 'pointer' }} onClick={() => { setQ(''); setType(''); }}>Clear</button>}
       </div>
 
       {q.trim().length < 2 && <Empty text="Type at least 2 characters to search." />}
@@ -65,17 +65,17 @@ export default function SearchPage({ ctx, nav }: ModProps) {
 
       <div style={{ display: 'grid', gap: 12 }}>
         {shown.map((g) => (
-          <div key={g.type} style={{ border: '1px solid #E3EBF3', borderRadius: 12, background: '#fff', padding: '10px 14px' }}>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.4, textTransform: 'uppercase', color: '#8CA3BA', margin: '4px 0 8px' }}>{g.type}</div>
+          <div key={g.type} style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 14px' }}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.4, textTransform: 'uppercase', color: '#93A0B4', margin: '4px 0 8px' }}>{g.type}</div>
             {g.items.map((h) => (
               <button key={`${h.kind}-${h.id}`} onClick={() => nav(h.module, { kind: h.kind, id: String(h.id), label: h.title })}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '8px 8px', border: 0, borderRadius: 8, background: 'transparent', cursor: 'pointer' }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#F0F7FC')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#E7F7F2')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                 <Icon name={(KIND_ICON[h.kind] ?? 'search') as 'doc'} size={15} style={{ color: '#0E9F7E', flexShrink: 0 }} />
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <b style={{ display: 'block', color: '#1F2A37', fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.title}</b>
-                  {h.sub && <span style={{ display: 'block', color: '#8CA3BA', fontSize: 11.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.sub}</span>}
+                  {h.sub && <span style={{ display: 'block', color: '#93A0B4', fontSize: 11.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.sub}</span>}
                 </span>
                 <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 0.6, color: '#0E9F7E', background: '#E7F7F2', borderRadius: 5, padding: '2px 6px', flexShrink: 0 }}>
                   {(MODULES.find((m) => m.id === h.module)?.label ?? h.module).toUpperCase()}
@@ -85,7 +85,7 @@ export default function SearchPage({ ctx, nav }: ModProps) {
           </div>
         ))}
       </div>
-      {busy && total === 0 && <p style={{ color: '#8CA3BA', fontSize: 12.5 }}>Searching…</p>}
+      {busy && total === 0 && <p style={{ color: '#93A0B4', fontSize: 12.5 }}>Searching…</p>}
     </div>
   );
 }

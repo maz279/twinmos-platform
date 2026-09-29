@@ -60,19 +60,19 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
           {data.items.map((p) => (
             <tr key={p.id} onClick={() => setEditing(p.id)} style={{ cursor: 'pointer' }} title="Open editor">
               <td style={{ ...td, width: 56 }}>
-                <span style={{ display: 'block', width: 44, height: 33, borderRadius: 6, background: '#E7EEF5', overflow: 'hidden' }}>
+                <span style={{ display: 'block', width: 44, height: 33, borderRadius: 6, background: '#EEF1F5', overflow: 'hidden' }}>
                   {p.heroMediaId && <img src={API + '/admin/media/' + p.heroMediaId + '/file'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                 </span>
               </td>
               <td style={td}><b>{p.sku}</b></td>
               <td style={td}>
                 <b style={{ color: NAVY }}>{p.name}</b>
-                <div style={{ color: '#8CA3BA', fontSize: 11.5 }}>{brandName(p.brandId)} · {p.slug}</div>
-                {(p.badges ?? []).slice(0, 4).map((b) => <span key={b} style={{ fontSize: 10.5, background: '#EAF6FC', color: '#0E7FB8', borderRadius: 5, padding: '1px 6px', marginRight: 4 }}>{b}</span>)}
+                <div style={{ color: '#93A0B4', fontSize: 11.5 }}>{brandName(p.brandId)} · {p.slug}</div>
+                {(p.badges ?? []).slice(0, 4).map((b) => <span key={b} style={{ fontSize: 10.5, background: '#E7F7F2', color: '#0E9F7E', borderRadius: 5, padding: '1px 6px', marginRight: 4 }}>{b}</span>)}
               </td>
-              <td style={td}>{p.priceUsd != null ? <b>{(p.currency || 'USD')} {Number(p.priceUsd).toFixed(2)}</b> : <span style={{ color: '#8CA3BA' }}>—</span>}</td>
+              <td style={td}>{p.priceUsd != null ? <b>{(p.currency || 'USD')} {Number(p.priceUsd).toFixed(2)}</b> : <span style={{ color: '#93A0B4' }}>—</span>}</td>
               <td style={td}><Badge value={p.status} /></td>
-              <td style={{ ...td, color: '#5E7691', fontSize: 12 }}>{fmtDate(p.updatedAt)}</td>
+              <td style={{ ...td, color: '#66748A', fontSize: 12 }}>{fmtDate(p.updatedAt)}</td>
               <td style={{ ...td, width: 70 }}>
                 <button style={{ ...btnGhost, padding: '4px 9px', fontSize: 12 }} onClick={(e) => { e.stopPropagation(); nav('products', { kind: 'product', id: String(p.id), label: p.sku }, { newTab: true }); }}>Tab ↗</button>
               </td>
@@ -150,7 +150,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
   }
 
   const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 700, color: NAVY, display: 'block', margin: '12px 0 4px' };
-  const sectionStyle: React.CSSProperties = { border: '1px solid #E3EBF3', borderRadius: 12, padding: '4px 16px 16px', background: '#fff', minWidth: 0 };
+  const sectionStyle: React.CSSProperties = { border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 16px', background: '#fff', minWidth: 0 };
 
   return (
     <div>
@@ -162,7 +162,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
         {canWrite && !isNew && form.status !== 'published' && <button style={btnGhost} disabled={busy} onClick={() => save(true)}>Publish</button>}
         {canWrite && <button style={btn} disabled={busy} onClick={() => save(false)}>{busy ? 'Saving…' : isNew ? 'Create product' : 'Save changes'}</button>}
       </div>
-      {err && <p role="alert" style={{ color: '#B3261E', background: '#FDECEA', borderRadius: 8, padding: '8px 12px' }}>{err}</p>}
+      {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '8px 12px' }}>{err}</p>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, alignItems: 'start' }}>
         <div style={{ display: 'grid', gap: 12 }}>
@@ -170,7 +170,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
             <h3 style={{ marginTop: 12 }}>Basics</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <span><label style={labelStyle}>Name *</label><input style={{ ...input, width: '100%' }} value={form.name} onChange={(e) => set('name', e.target.value)} /></span>
-              <span><label style={labelStyle}>SKU * <span style={{ color: '#8CA3BA', fontWeight: 400 }}>(A-Z 0-9 -)</span></label><input style={{ ...input, width: '100%' }} value={form.sku} onChange={(e) => set('sku', e.target.value)} disabled={!isNew} /></span>
+              <span><label style={labelStyle}>SKU * <span style={{ color: '#93A0B4', fontWeight: 400 }}>(A-Z 0-9 -)</span></label><input style={{ ...input, width: '100%' }} value={form.sku} onChange={(e) => set('sku', e.target.value)} disabled={!isNew} /></span>
               <span><label style={labelStyle}>Slug</label><input style={{ ...input, width: '100%' }} value={form.slug} onChange={(e) => set('slug', e.target.value)} placeholder="auto from name" /></span>
               <span><label style={labelStyle}>Status</label>
                 <select style={{ ...input, width: '100%' }} value={form.status} onChange={(e) => set('status', e.target.value)} disabled={!canWrite}>
@@ -227,7 +227,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
                   {AUTHORIZED_CURRENCIES.map((c) => <option key={c}>{c}</option>)}
                 </select></span>
             </div>
-            <label style={labelStyle}>Badges <span style={{ color: '#8CA3BA', fontWeight: 400 }}>(comma separated, max 8)</span></label>
+            <label style={labelStyle}>Badges <span style={{ color: '#93A0B4', fontWeight: 400 }}>(comma separated, max 8)</span></label>
             <input style={{ ...input, width: '100%' }} placeholder="New, Best seller,…" value={form.badges} onChange={(e) => set('badges', e.target.value)} />
           </div>
 
@@ -235,7 +235,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
             <h3 style={{ marginTop: 12 }}>Images</h3>
             <label style={labelStyle}>Hero image</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span style={{ width: 96, height: 72, borderRadius: 8, background: '#E7EEF5', overflow: 'hidden', display: 'block', flexShrink: 0 }}>
+              <span style={{ width: 96, height: 72, borderRadius: 8, background: '#EEF1F5', overflow: 'hidden', display: 'block', flexShrink: 0 }}>
                 {hero && <img src={API + '/admin/media/' + hero + '/file'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
               </span>
               <button style={btnGhost} onClick={() => setPicker('hero')}>{hero ? 'Change' : 'Choose'}</button>
@@ -244,7 +244,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
             <label style={labelStyle}>Gallery ({gallery.length}/12)</label>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
               {gallery.map((g) => (
-                <span key={g} style={{ position: 'relative', width: 64, height: 48, borderRadius: 6, background: '#E7EEF5', overflow: 'hidden' }}>
+                <span key={g} style={{ position: 'relative', width: 64, height: 48, borderRadius: 6, background: '#EEF1F5', overflow: 'hidden' }}>
                   <img src={API + '/admin/media/' + g + '/file'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   <button title="Remove" onClick={() => setGallery((s) => s.filter((x) => x !== g))}
                     style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, border: 0, borderRadius: 4, background: 'rgba(10,37,64,.75)', color: '#fff', fontSize: 10, cursor: 'pointer', lineHeight: 1 }}>✕</button>
@@ -255,7 +255,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
           </div>
 
           {!isNew && existing && (
-            <div style={{ ...sectionStyle, color: '#8CA3BA', fontSize: 12 }}>
+            <div style={{ ...sectionStyle, color: '#93A0B4', fontSize: 12 }}>
               <h3 style={{ marginTop: 12, color: NAVY }}>Record</h3>
               Created {fmtDate(existing.createdAt)} · Updated {fmtDate(existing.updatedAt)} · ID #{existing.id}
             </div>

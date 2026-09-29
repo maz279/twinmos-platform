@@ -18,7 +18,7 @@ type Submission = {
 type Note = { id: number; body: string; createdAt: string; author: string | null };
 
 const SLA_LABEL: Record<string, string> = { overdue: '⚠ overdue', due_soon: 'due soon', on_track: 'on track' };
-const SLA_COLOR: Record<string, string> = { overdue: '#B3261E', due_soon: '#B45309', on_track: '#15803D' };
+const SLA_COLOR: Record<string, string> = { overdue: '#C2453C', due_soon: '#B45309', on_track: '#1F9D62' };
 
 export default function Submissions({ canWrite, myId, ctx }: { canWrite: boolean; myId?: string; ctx?: TabCtx }) {
   const [type, setType] = useState('');
@@ -53,7 +53,7 @@ export default function Submissions({ canWrite, myId, ctx }: { canWrite: boolean
 
   return (
     <div>
-      <h1>Leads &amp; quotes{selected ? <span style={{ color: '#5E7691', fontSize: 15 }}> — {selected.refCode ?? ctx?.label ?? `#${selected.id}`}</span> : null}</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Leads &amp; quotes{selected ? <span style={{ color: '#66748A', fontSize: 15 }}> — {selected.refCode ?? ctx?.label ?? `#${selected.id}`}</span> : null}</h1>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap' }}>
         <input style={input} placeholder="Filter by type (e.g. quote)" value={type} onChange={(e) => { setType(e.target.value.trim()); setCursor(null); }} />
         <select style={input} value={status} onChange={(e) => { setStatus(e.target.value); setCursor(null); }}>
@@ -85,7 +85,7 @@ export default function Submissions({ canWrite, myId, ctx }: { canWrite: boolean
                 <td style={td}>{s.type}</td>
                 <td style={td}>{s.email}</td>
                 <td style={td}><Badge value={s.priority} /></td>
-                <td style={{ ...td, color: SLA_COLOR[s.slaState ?? ''] ?? '#5E7691' }}>{s.slaState ? SLA_LABEL[s.slaState] : '—'}</td>
+                <td style={{ ...td, color: SLA_COLOR[s.slaState ?? ''] ?? '#66748A' }}>{s.slaState ? SLA_LABEL[s.slaState] : '—'}</td>
                 <td style={td}><Badge value={s.status} /></td>
                 <td style={td}>{fmtDate(s.createdAt)}</td>
               </tr>
@@ -127,7 +127,7 @@ function Detail({ id, canWrite, myId, onSaved }: { id: number; canWrite: boolean
   const legal = (SUBMISSION_TRANSITIONS as Record<string, readonly string[]>)[sub.status] ?? [];
 
   return (
-    <div style={{ marginTop: 16, border: '1px solid #E2E8F0', borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
+    <div style={{ marginTop: 16, border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <b>{sub.refCode} — {sub.type}</b>
         <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -139,14 +139,14 @@ function Detail({ id, canWrite, myId, onSaved }: { id: number; canWrite: boolean
       {err ? <Err error={err} /> : null}
       <Table head={['Field', 'Value']}>
         {Object.entries({ email: sub.email, received: fmtDate(sub.createdAt), ip: sub.ip ?? '—', assignee: sub.assigneeEmail ?? sub.assigneeId ?? '—', ...sub.payload }).map(([k, v]) => (
-          <tr key={k}><td style={{ ...td, width: 160, color: '#5E7691' }}>{k}</td><td style={td}>{String(v)}</td></tr>
+          <tr key={k}><td style={{ ...td, width: 160, color: '#66748A' }}>{k}</td><td style={td}>{String(v)}</td></tr>
         ))}
       </Table>
 
       {canWrite && (
         <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ color: '#5E7691', fontSize: 13 }}>Move to:</span>
-          {legal.length === 0 && <span style={{ color: '#5E7691', fontSize: 13 }}>terminal state</span>}
+          <span style={{ color: '#66748A', fontSize: 13 }}>Move to:</span>
+          {legal.length === 0 && <span style={{ color: '#66748A', fontSize: 13 }}>terminal state</span>}
           {legal.map((s) => (
             <button key={s} style={s === 'spam' ? btnGhost : btn} disabled={busy} onClick={() => patch({ status: s })}>
               {s.replace('_', ' ')}
@@ -161,10 +161,10 @@ function Detail({ id, canWrite, myId, onSaved }: { id: number; canWrite: boolean
       )}
 
       <h3 style={{ margin: '16px 0 6px' }}>Internal notes</h3>
-      {(sub.notes ?? []).length === 0 && <p style={{ color: '#5E7691', fontSize: 13 }}>No notes yet.</p>}
+      {(sub.notes ?? []).length === 0 && <p style={{ color: '#66748A', fontSize: 13 }}>No notes yet.</p>}
       {(sub.notes ?? []).map((n) => (
-        <div key={n.id} style={{ borderTop: '1px solid #E2E8F0', padding: '6px 0', fontSize: 13.5 }}>
-          <span style={{ color: '#5E7691' }}>{n.author ?? 'unknown'} · {fmtDate(n.createdAt)}</span>
+        <div key={n.id} style={{ borderTop: '1px solid #E6EBF1', padding: '6px 0', fontSize: 13.5 }}>
+          <span style={{ color: '#66748A' }}>{n.author ?? 'unknown'} · {fmtDate(n.createdAt)}</span>
           <div>{n.body}</div>
         </div>
       ))}

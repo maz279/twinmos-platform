@@ -165,8 +165,8 @@ export default function AuditLog({ nav, me }: ModProps) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
-          <h1 style={{ margin: 0 }}>Audit log</h1>
-          <p style={{ color: '#5E7691', margin: '4px 0 0' }}>Comprehensive chronological trail of mutations across all platform surfaces.</p>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Audit log</h1>
+          <p style={{ color: '#66748A', margin: '4px 0 0' }}>Comprehensive chronological trail of mutations across all platform surfaces.</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button style={btnGhost} onClick={reload}>Refresh</button>
@@ -250,7 +250,7 @@ export default function AuditLog({ nav, me }: ModProps) {
       {error ? <Err error={error} /> : null}
 
       {loading && rows.length === 0 ? (
-        <p style={{ color: '#5E7691', padding: '16px 0' }}>Loading audit records…</p>
+        <p style={{ color: '#66748A', padding: '16px 0' }}>Loading audit records…</p>
       ) : rows.length > 0 ? (
         <>
           <Table head={['When', 'Action', 'Entity', 'Actor', 'IP & Request', '']}>
@@ -271,7 +271,7 @@ export default function AuditLog({ nav, me }: ModProps) {
                       row.actorId ?? '—'
                     )}
                   </td>
-                  <td style={{ ...td, color: '#5E7691', fontSize: 12 }}>
+                  <td style={{ ...td, color: '#66748A', fontSize: 12 }}>
                     <div>{row.ip ?? '—'}</div>
                     <div style={{ fontFamily: 'monospace', fontSize: 11 }}>{row.requestId ?? '—'}</div>
                   </td>
@@ -279,7 +279,7 @@ export default function AuditLog({ nav, me }: ModProps) {
                     {target && (
                       <button
                         onClick={() => nav(target, { kind: row.entity, id: row.entityId, label: `${row.entity} #${row.entityId}` }, { newTab: true })}
-                        style={{ fontSize: 12, padding: '3px 8px', cursor: 'pointer', border: '1px solid #CBD5E1', borderRadius: 6, background: '#fff' }}>
+                        style={{ fontSize: 12, padding: '3px 8px', cursor: 'pointer', border: '1px solid #D9E0E8', borderRadius: 6, background: '#fff' }}>
                         Open ↗
                       </button>
                     )}

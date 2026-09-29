@@ -76,7 +76,7 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
 
   return (
     <div>
-      <h1>Content studio</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Content studio</h1>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
         <button style={view === 'library' ? btn : btnGhost} onClick={() => { setView('library'); setEditing(null); }}>Library</button>
         <button style={view === 'review' ? btn : btnGhost} onClick={() => { setView('review'); setEditing(null); }}>
@@ -98,13 +98,13 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
       {view === 'review' ? (
         queue.error ? <Err error={queue.error} /> : queue.loading ? <p>Loading…</p> : (
           <>
-            <p style={{ color: '#5E7691', fontSize: 13, margin: '0 0 10px' }}>Items submitted for review across articles, news and pages — open one to diff it against the live version, leave feedback, then publish or send back.</p>
+            <p style={{ color: '#66748A', fontSize: 13, margin: '0 0 10px' }}>Items submitted for review across articles, news and pages — open one to diff it against the live version, leave feedback, then publish or send back.</p>
             <Table head={['Title', 'Type', 'Submitted', '']}>
               {queueRows.map(({ row, entity: e }) => (
                 <tr key={`${e}-${row.id}`}>
                   <td style={td}><b>{row.title ?? row.question}</b></td>
                   <td style={td}>{e}</td>
-                  <td style={{ ...td, color: '#5E7691' }}>{fmtDate(row.updatedAt)}</td>
+                  <td style={{ ...td, color: '#66748A' }}>{fmtDate(row.updatedAt)}</td>
                   <td style={td}><button style={btnGhost} onClick={() => openFromQueue(row, e)}>Review</button></td>
                 </tr>
               ))}
@@ -119,7 +119,7 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
               {data.items.map((row) => (
                 <tr key={row.id}>
                   <td style={td}><b>{row.title ?? row.question}</b></td>
-                  <td style={{ ...td, color: '#5E7691' }}>{row.slug ?? row.groupKey}</td>
+                  <td style={{ ...td, color: '#66748A' }}>{row.slug ?? row.groupKey}</td>
                   <td style={td}><Badge value={row.status} /></td>
                   <td style={td}>{fmtDate(row.updatedAt ?? row.publishAt)}</td>
                   <td style={td}><button style={btnGhost} onClick={() => setEditing(row)}>Edit</button></td>
@@ -283,7 +283,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
   };
 
   return (
-    <div style={{ marginTop: 16, border: '1px solid #E2E8F0', borderRadius: 10, padding: 16, background: '#fff' }}>
+    <div style={{ marginTop: 16, border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#fff' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         <b>{isNew ? 'New ' + entity : 'Edit ' + entity}</b>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -315,7 +315,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
         <div style={{ margin: '10px 0' }}>
           <label style={{ fontSize: 13 }}>Publish at: </label>
           <input type="datetime-local" style={input} value={publishAt} onChange={(e) => setPublishAt(e.target.value)} />
-          <span style={{ color: '#5E7691', fontSize: 12 }}> (then → published)</span>
+          <span style={{ color: '#66748A', fontSize: 12 }}> (then → published)</span>
         </div>
       )}
 
@@ -364,7 +364,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
                   <div>
                     <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
                       <button style={{ ...btnGhost, fontSize: 12 }} onClick={() => { setRawBlocksText(JSON.stringify(blocks, null, 2)); setRawBlocks(true); }}>{'{ } JSON'}</button>
-                      <span style={{ color: '#8CA3BA', fontSize: 11.5, alignSelf: 'center' }}>escape hatch for power users</span>
+                      <span style={{ color: '#93A0B4', fontSize: 11.5, alignSelf: 'center' }}>escape hatch for power users</span>
                     </div>
                     <PageBuilder blocks={blocks} onChange={setBlocks} />
                   </div>
@@ -379,13 +379,13 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
           )}
           <div>
             <button style={btn} disabled={busy || !canWrite} onClick={save}>{isNew ? 'Create draft' : 'Save'}</button>
-            {previewUrl && <span style={{ marginLeft: 10, fontSize: 12.5, color: '#5E7691' }}>Preview: {previewUrl}</span>}
+            {previewUrl && <span style={{ marginLeft: 10, fontSize: 12.5, color: '#66748A' }}>Preview: {previewUrl}</span>}
           </div>
         </div>
       )}
 
       {tab === 'preview' && (
-        <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: 14, marginTop: 12, background: '#F8FAFC' }}>
+        <div style={{ border: '1px solid #E6EBF1', borderRadius: 8, padding: 14, marginTop: 12, background: '#F8FAFC' }}>
           {entity === 'page' ? (
             <div style={{ background: '#fff', borderRadius: 8, padding: 16, display: 'grid', gap: 22 }}>
               <h2 style={{ marginTop: 0, color: '#1F2A37' }}>{title || '(title)'}</h2>
@@ -404,7 +404,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
         <div style={{ marginTop: 12 }}>
           {revisions.length === 0 && <Empty text="No revisions yet — every publish snapshots the prior version." />}
           {revisions.map((rev) => (
-            <div key={rev.id} style={{ borderBottom: '1px solid #EEF2F6', padding: '8px 2px' }}>
+            <div key={rev.id} style={{ borderBottom: '1px solid #F0F3F7', padding: '8px 2px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 13.5 }}>#{rev.id} · {fmtDate(rev.createdAt)} · by {rev.actorId ?? 'system'}</span>
                 <span style={{ display: 'flex', gap: 6 }}>
@@ -426,8 +426,8 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
         <div style={{ marginTop: 12 }}>
           {comments.length === 0 && <Empty text="No review comments yet — coordinate editorial feedback here." />}
           {comments.map((cm) => (
-            <div key={cm.id} style={{ borderTop: '1px solid #EEF2F6', padding: '7px 0' }}>
-              <span style={{ color: '#5E7691', fontSize: 12.5 }}>{cm.authorName ?? cm.authorEmail ?? cm.authorId ?? 'staff'} · {fmtDate(cm.createdAt)}</span>
+            <div key={cm.id} style={{ borderTop: '1px solid #F0F3F7', padding: '7px 0' }}>
+              <span style={{ color: '#66748A', fontSize: 12.5 }}>{cm.authorName ?? cm.authorEmail ?? cm.authorId ?? 'staff'} · {fmtDate(cm.createdAt)}</span>
               <div style={{ fontSize: 13.5 }}>{cm.body}</div>
             </div>
           ))}

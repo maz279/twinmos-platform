@@ -66,21 +66,21 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
 
   return (
     <div>
-      <h1>Translations</h1>
-      <p style={{ color: '#5E7691' }}>9-locale plan (EN launch; BN removed). Export a namespace, translate the JSON, import it back — every change is audited.</p>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Translations</h1>
+      <p style={{ color: '#66748A' }}>9-locale plan (EN launch; BN removed). Export a namespace, translate the JSON, import it back — every change is audited.</p>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
         <select style={input} value={locale} onChange={(e) => setLocale(e.target.value)}>
           {LOCALES.map((l) => <option key={l} value={l}>{l === 'en' ? 'en (source)' : l}</option>)}
         </select>
         <input style={input} placeholder="namespace (e.g. common)" value={ns} onChange={(e) => setNs(e.target.value)} />
         <button style={btnGhost} onClick={exportJson}>Export JSON</button>
-        {isSuperAdmin ? <span style={{ color: '#5E7691', fontSize: 12.5 }}>writes enabled (super_admin)</span> : <span style={{ color: '#B3261E', fontSize: 12.5 }}>read-only — writes need super_admin</span>}
+        {isSuperAdmin ? <span style={{ color: '#66748A', fontSize: 12.5 }}>writes enabled (super_admin)</span> : <span style={{ color: '#C2453C', fontSize: 12.5 }}>read-only — writes need super_admin</span>}
       </div>
       {error ? <Err error={error} /> : null}
       {notice ? <p style={{ color: '#047857' }}>{notice}</p> : null}
 
       {isSuperAdmin && (
-        <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 14, margin: '12px 0', background: '#F8FAFC' }}>
+        <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 14, margin: '12px 0', background: '#F8FAFC' }}>
           <b style={{ fontSize: 14 }}>Import {locale}/{ns}</b>
           <textarea
             style={{ ...input, minHeight: 120, fontFamily: 'ui-monospace, monospace', fontSize: 13, marginTop: 8 }}

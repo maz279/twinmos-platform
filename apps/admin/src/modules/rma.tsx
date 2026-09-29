@@ -24,7 +24,7 @@ export default function RmaBoard({ canWrite }: { canWrite: boolean }) {
 
   return (
     <div>
-      <h1>RMA board</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>RMA board</h1>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap' }}>
         <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All states</option>
@@ -71,7 +71,7 @@ function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boo
   if (!data) return null;
   const legal = RMA_TRANSITIONS[data.status] ?? [];
   return (
-    <div style={{ marginTop: 16, border: '1px solid #E2E8F0', borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
+    <div style={{ marginTop: 16, border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <b>{data.number}</b>
         <Badge value={data.status} />
@@ -92,12 +92,12 @@ function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boo
             {ev.fromStatus === ev.toStatus
               ? <span>Case created — <b>{ev.toStatus.replace(/_/g, ' ')}</b></span>
               : <span><b>{ev.fromStatus.replace(/_/g, ' ')}</b> → <b>{ev.toStatus.replace(/_/g, ' ')}</b></span>}
-            <span style={{ color: '#5E7691' }}> · {fmtDate(ev.at)}{ev.note ? ` · ${ev.note}` : ''}</span>
+            <span style={{ color: '#66748A' }}> · {fmtDate(ev.at)}{ev.note ? ` · ${ev.note}` : ''}</span>
           </li>
         ))}
       </ol>
       {canWrite && (
-        <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: 12 }}>
+        <div style={{ borderTop: '1px solid #E6EBF1', paddingTop: 12 }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <input style={{ ...input, flex: '1 1 240px' }} placeholder="Note (optional, included in customer email)" value={note} onChange={(e) => setNote(e.target.value)} />
             <label style={{ fontSize: 13, display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -105,7 +105,7 @@ function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boo
             </label>
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            {legal.length === 0 && <span style={{ color: '#5E7691' }}>Case is closed — no further transitions.</span>}
+            {legal.length === 0 && <span style={{ color: '#66748A' }}>Case is closed — no further transitions.</span>}
             {legal.map((s) => (
               <button key={s} style={s === 'closed' ? btnGhost : btn} disabled={busy} onClick={() => transition(s)}>
                 Move to {s.replace(/_/g, ' ')}

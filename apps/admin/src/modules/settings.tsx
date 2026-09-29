@@ -13,7 +13,7 @@ export default function Settings({ canManage, isSuperAdmin }: { canManage: boole
   const [tab, setTab] = useState<'redirects' | 'menus' | 'locales'>('redirects');
   return (
     <div>
-      <h1>Settings</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Settings</h1>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
         {(['redirects', 'menus', 'locales'] as const).map((t) => (
           <button key={t} style={tab === t ? btn : btnGhost} onClick={() => setTab(t)}>{t[0].toUpperCase() + t.slice(1)}</button>
@@ -60,14 +60,14 @@ function Redirects({ canManage }: { canManage: boolean }) {
       {error ? <Err error={error} /> : null}
       {loadError ? <Err error={loadError} /> : loading ? <p>Loading…</p> : data ? (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
-          <thead><tr>{['From', 'To', 'Code', ''].map((h) => <th key={h} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E2E8F0' }}>{h}</th>)}</tr></thead>
+          <thead><tr>{['From', 'To', 'Code', ''].map((h) => <th key={h} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>)}</tr></thead>
           <tbody>
             {data.items.map((r) => (
               <tr key={r.id}>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>{r.from}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>{r.to}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>{r.code}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{r.from}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{r.to}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{r.code}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
                   {canManage && <button style={btnGhost} disabled={busy} onClick={() => remove(r.id)}>Delete</button>}
                 </td>
               </tr>
@@ -111,7 +111,7 @@ function Menus({ canManage }: { canManage: boolean }) {
   }
   return (
     <div>
-      <p style={{ color: '#5E7691' }}>Menus are stored as a settings document (label/url per slot). The site build consumes this at P4 localization.</p>
+      <p style={{ color: '#66748A' }}>Menus are stored as a settings document (label/url per slot). The site build consumes this at P4 localization.</p>
       {error ? <Err error={error} /> : loading ? <p>Loading…</p> : (
         <>
           <textarea style={{ ...input, minHeight: 260, fontFamily: 'ui-monospace, monospace', fontSize: 13 }} value={text} onChange={(e) => setDraft(e.target.value)} disabled={!canManage} />
@@ -135,15 +135,15 @@ function Locales({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     <div>
       {error ? <Err error={error} /> : loading ? <p>Loading…</p> : data ? (
         <table style={{ borderCollapse: 'collapse', fontSize: 13.5 }}>
-          <thead><tr>{['Code', 'Name', 'Direction', 'Active', ''].map((h) => <th key={h} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E2E8F0' }}>{h}</th>)}</tr></thead>
+          <thead><tr>{['Code', 'Name', 'Direction', 'Active', ''].map((h) => <th key={h} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>)}</tr></thead>
           <tbody>
             {data.items.map((l) => (
               <tr key={l.code}>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}><b>{l.code}</b></td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>{l.name}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>{l.dir}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>{l.active ? '✓' : '—'}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}><b>{l.code}</b></td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{l.name}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{l.dir}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{l.active ? '✓' : '—'}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
                   {isSuperAdmin && <button style={btnGhost} disabled={busy} onClick={() => toggle(l.code, !l.active)}>{l.active ? 'Deactivate' : 'Activate'}</button>}
                 </td>
               </tr>

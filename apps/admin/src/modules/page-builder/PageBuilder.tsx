@@ -63,19 +63,19 @@ export default function PageBuilder({ blocks, onChange }: {
     <div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '8px 0 12px', flexWrap: 'wrap' }}>
         <button style={btn} onClick={() => setPalette((v) => !v)}>+ Add block</button>
-        <span style={{ color: '#8CA3BA', fontSize: 12.5 }}>{blocks.length} block{blocks.length === 1 ? '' : 's'} — drag cards to reorder</span>
+        <span style={{ color: '#93A0B4', fontSize: 12.5 }}>{blocks.length} block{blocks.length === 1 ? '' : 's'} — drag cards to reorder</span>
       </div>
 
       {palette && (
-        <div style={{ border: '1px solid #D9E4EF', borderRadius: 10, background: '#F7FAFD', padding: 12, marginBottom: 12 }}>
+        <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, background: '#F8FAFB', padding: 12, marginBottom: 12 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(215px,1fr))', gap: 8 }}>
             {BLOCK_DEFS.map((b) => (
               <button key={b.type} onClick={() => addBlock(b.type)} title={b.desc}
-                style={{ display: 'flex', gap: 8, alignItems: 'flex-start', textAlign: 'left', border: '1px solid #E3EBF3', borderRadius: 9, background: '#fff', padding: '8px 10px', cursor: 'pointer' }}>
+                style={{ display: 'flex', gap: 8, alignItems: 'flex-start', textAlign: 'left', border: '1px solid #E6EBF1', borderRadius: 9, background: '#fff', padding: '8px 10px', cursor: 'pointer' }}>
                 <span style={{ fontSize: 17 }}>{b.icon}</span>
                 <span>
                   <b style={{ display: 'block', color: NAVY, fontSize: 13 }}>{b.label}</b>
-                  <span style={{ color: '#8CA3BA', fontSize: 11.5, lineHeight: 1.35 }}>{b.desc}</span>
+                  <span style={{ color: '#93A0B4', fontSize: 11.5, lineHeight: 1.35 }}>{b.desc}</span>
                 </span>
               </button>
             ))}
@@ -84,7 +84,7 @@ export default function PageBuilder({ blocks, onChange }: {
       )}
 
       {blocks.length === 0 && (
-        <div style={{ border: '1px dashed #CBD5E1', borderRadius: 10, padding: '26px 16px', textAlign: 'center', color: '#8CA3BA', fontSize: 13.5 }}>
+        <div style={{ border: '1px dashed #D9E0E8', borderRadius: 10, padding: '26px 16px', textAlign: 'center', color: '#93A0B4', fontSize: 13.5 }}>
           Empty page — click <b style={{ color: NAVY }}>+ Add block</b> to compose it from sections.
         </div>
       )}
@@ -100,15 +100,15 @@ export default function PageBuilder({ blocks, onChange }: {
               onDragOver={(e) => { e.preventDefault(); setOverIdx(i); }}
               onDrop={(e) => { e.preventDefault(); if (dragIdx != null && dragIdx !== i) move(dragIdx, i); }}
               style={{
-                border: `1px solid ${overIdx === i && dragIdx != null && dragIdx !== i ? CYAN : '#E3EBF3'}`,
-                borderRadius: 10, background: dragIdx === i ? '#F0F7FC' : '#fff', overflow: 'hidden',
+                border: `1px solid ${overIdx === i && dragIdx != null && dragIdx !== i ? CYAN : '#E6EBF1'}`,
+                borderRadius: 10, background: dragIdx === i ? '#E7F7F2' : '#fff', overflow: 'hidden',
                 opacity: dragIdx === i ? 0.7 : 1,
               }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: '#F7FAFD', borderBottom: expanded ? '1px solid #E3EBF3' : 'none', cursor: 'grab' }}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: '#F8FAFB', borderBottom: expanded ? '1px solid #E6EBF1' : 'none', cursor: 'grab' }}
                 onClick={() => setOpen(expanded ? null : i)}>
-                <span title="Drag to reorder" style={{ color: '#8CA3BA', fontSize: 13, letterSpacing: 1 }}>⠿</span>
+                <span title="Drag to reorder" style={{ color: '#93A0B4', fontSize: 13, letterSpacing: 1 }}>⠿</span>
                 <span>{def?.icon ?? '▪️'}</span>
-                <b style={{ color: NAVY, fontSize: 13.5, flex: 1 }}>{def?.label ?? block.type} <span style={{ color: '#8CA3BA', fontWeight: 400, fontSize: 11.5 }}>#{i + 1}</span></b>
+                <b style={{ color: NAVY, fontSize: 13.5, flex: 1 }}>{def?.label ?? block.type} <span style={{ color: '#93A0B4', fontWeight: 400, fontSize: 11.5 }}>#{i + 1}</span></b>
                 <span style={{ display: 'flex', gap: 4 }}>
                   <IconBtn title="Move up" disabled={i === 0} onClick={(e) => { e.stopPropagation(); move(i, i - 1); }}>↑</IconBtn>
                   <IconBtn title="Move down" disabled={i === blocks.length - 1} onClick={(e) => { e.stopPropagation(); move(i, i + 1); }}>↓</IconBtn>
@@ -148,7 +148,7 @@ export default function PageBuilder({ blocks, onChange }: {
 function IconBtn({ title, children, disabled, onClick }: { title: string; children: React.ReactNode; disabled?: boolean; onClick?: (e: React.MouseEvent) => void }) {
   return (
     <button title={title} disabled={disabled} onClick={onClick}
-      style={{ width: 24, height: 24, border: '1px solid #D9E4EF', borderRadius: 6, background: '#fff', color: NAVY, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.4 : 1, fontSize: 12, padding: 0 }}>
+      style={{ width: 24, height: 24, border: '1px solid #E6EBF1', borderRadius: 6, background: '#fff', color: NAVY, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.4 : 1, fontSize: 12, padding: 0 }}>
       {children}
     </button>
   );
@@ -159,24 +159,24 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
   field: FieldDef; value: unknown; basePath: (number | string)[];
   onChange: (path: (number | string)[], v: unknown) => void; onMediaPick: (path: (number | string)[]) => void;
 }) {
-  const label = <label style={{ fontSize: 11.5, fontWeight: 700, color: '#5E7691', display: 'block', marginBottom: 3 }}>{field.label}</label>;
+  const label = <label style={{ fontSize: 11.5, fontWeight: 700, color: '#66748A', display: 'block', marginBottom: 3 }}>{field.label}</label>;
 
   if (field.k === 'list') {
     const items = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
     return (
-      <div style={{ border: '1px solid #EEF2F6', borderRadius: 8, padding: 10 }}>
+      <div style={{ border: '1px solid #F0F3F7', borderRadius: 8, padding: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
           <b style={{ fontSize: 12, color: NAVY }}>{field.label}</b>
-          <span style={{ color: '#8CA3BA', fontSize: 11.5 }}>{items.length}{field.max ? `/${field.max}` : ''}</span>
+          <span style={{ color: '#93A0B4', fontSize: 11.5 }}>{items.length}{field.max ? `/${field.max}` : ''}</span>
           {(!field.max || items.length < field.max) && (
             <button style={{ ...btnGhost, padding: '2px 9px', fontSize: 11.5, marginLeft: 'auto' }}
               onClick={() => onChange(basePath, [...items, JSON.parse(JSON.stringify(field.defaultItem))])}>+ Add {field.itemLabel.toLowerCase()}</button>
           )}
         </div>
         {items.map((item, idx) => (
-          <div key={idx} style={{ display: 'grid', gap: 8, border: '1px solid #EEF2F6', borderRadius: 7, padding: 8, marginBottom: 8, background: '#FBFDFE' }}>
+          <div key={idx} style={{ display: 'grid', gap: 8, border: '1px solid #F0F3F7', borderRadius: 7, padding: 8, marginBottom: 8, background: '#FBFDFE' }}>
             <div style={{ display: 'flex', gap: 4 }}>
-              <b style={{ fontSize: 11.5, color: '#5E7691', flex: 1 }}>{field.itemLabel} {idx + 1}</b>
+              <b style={{ fontSize: 11.5, color: '#66748A', flex: 1 }}>{field.itemLabel} {idx + 1}</b>
               <IconBtn title="Move up" disabled={idx === 0} onClick={() => {
                 const next = [...items]; const [x] = next.splice(idx, 1); next.splice(idx - 1, 0, x); onChange(basePath, next);
               }}>↑</IconBtn>
@@ -191,7 +191,7 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
             ))}
           </div>
         ))}
-        {items.length === 0 && <span style={{ color: '#8CA3BA', fontSize: 12 }}>No {field.label.toLowerCase()} yet.</span>}
+        {items.length === 0 && <span style={{ color: '#93A0B4', fontSize: 12 }}>No {field.label.toLowerCase()} yet.</span>}
       </div>
     );
   }
@@ -202,7 +202,7 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
       <div>
         {label}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ width: 88, height: 62, borderRadius: 7, background: '#E7EEF5', overflow: 'hidden', display: 'block', flexShrink: 0 }}>
+          <span style={{ width: 88, height: 62, borderRadius: 7, background: '#EEF1F5', overflow: 'hidden', display: 'block', flexShrink: 0 }}>
             {id != null && Number.isFinite(id) && <img src={API + '/admin/media/' + id + '/file'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
           </span>
           <button style={{ ...btnGhost, fontSize: 12 }} onClick={() => onMediaPick(basePath)}>{id ? 'Change' : 'Choose image'}</button>

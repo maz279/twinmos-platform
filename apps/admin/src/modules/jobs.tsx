@@ -25,7 +25,7 @@ export default function Jobs({ canWrite }: { canWrite: boolean }) {
 
   return (
     <div>
-      <h1>Job applications</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Job applications</h1>
       <div style={{ margin: '12px 0' }}>
         <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All statuses</option>
@@ -41,7 +41,7 @@ export default function Jobs({ canWrite }: { canWrite: boolean }) {
               <td style={td}>{app.refCode}</td>
               <td style={td}>
                 <b>{String(app.payload?.name ?? app.email)}</b>
-                <div style={{ color: '#5E7691', fontSize: 12.5 }}>{app.email}</div>
+                <div style={{ color: '#66748A', fontSize: 12.5 }}>{app.email}</div>
                 {typeof app.payload?.portfolio === 'string' && (
                   <div style={{ fontSize: 12.5 }}>Portfolio: {String(app.payload.portfolio).slice(0, 80)}</div>
                 )}
@@ -62,7 +62,7 @@ export default function Jobs({ canWrite }: { canWrite: boolean }) {
       ) : null}
       {data && data.items.length === 0 && <Empty text="No applications yet." />}
       {data && data.items.length > 0 && (
-        <p style={{ color: '#5E7691', fontSize: 12.5, marginTop: 8 }}>
+        <p style={{ color: '#66748A', fontSize: 12.5, marginTop: 8 }}>
           Full application payloads (cover letter links, documents) are in the submissions inbox under type “job-application”.
         </p>
       )}

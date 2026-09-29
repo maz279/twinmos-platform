@@ -11,14 +11,14 @@ import { API } from './api';
 const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
 const LOGO = '/assets/img/logo.webp';
 const cardIn: React.CSSProperties = {
-  width: '100%', padding: '11px 13px', border: '1px solid #CBD5E1', borderRadius: 8,
+  width: '100%', padding: '11px 13px', border: '1px solid #D9E0E8', borderRadius: 8,
   fontSize: 14, marginBottom: 12, background: '#fff', boxSizing: 'border-box',
 };
 const btnMain: React.CSSProperties = {
   padding: '11px 18px', border: 0, borderRadius: 8, background: CYAN, color: '#fff',
   fontWeight: 800, fontSize: 14.5, cursor: 'pointer',
 };
-const btnGhost: React.CSSProperties = { ...btnMain, background: '#EEF4FA' };
+const btnGhost: React.CSSProperties = { ...btnMain, background: '#F2F5F8' };
 
 function QrCanvas({ text, size = 190 }: { text: string; size?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -29,8 +29,8 @@ function QrCanvas({ text, size = 190 }: { text: string; size?: number }) {
       .then(() => setFailed(false))
       .catch(() => setFailed(true));
   }, [text, size]);
-  if (failed) return <p style={{ color: '#B3261E', fontSize: 13 }}>QR render failed — enter the key manually below.</p>;
-  return <canvas ref={ref} style={{ width: size, height: size, borderRadius: 8, border: '1px solid #E2E8F0' }} />;
+  if (failed) return <p style={{ color: '#C2453C', fontSize: 13 }}>QR render failed — enter the key manually below.</p>;
+  return <canvas ref={ref} style={{ width: size, height: size, borderRadius: 8, border: '1px solid #E6EBF1' }} />;
 }
 
 export default function MfaSetup({ onEnrolled, onSkip }: { onEnrolled: () => void; onSkip: () => void }) {
@@ -69,13 +69,13 @@ export default function MfaSetup({ onEnrolled, onSkip }: { onEnrolled: () => voi
   const secret = (totpURI.match(/secret=([A-Za-z2-7]+)/) || [])[1] || '';
 
   return (
-    <div style={{ maxWidth: 580, margin: '24px auto', background: '#fff', borderRadius: 14, padding: '26px 28px', border: '1px solid #E2E8F0', boxShadow: '0 10px 34px rgba(10,37,64,.10)' }}>
+    <div style={{ maxWidth: 580, margin: '24px auto', background: '#fff', borderRadius: 14, padding: '26px 28px', border: '1px solid #E6EBF1', boxShadow: '0 10px 34px rgba(10,37,64,.10)' }}>
       <img src={LOGO} alt="TwinMOS" style={{ height: 26, width: 'auto', display: 'block', margin: '0 auto 10px' }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
         <span style={{ fontSize: 22 }}>🛡️</span>
         <h2 style={{ margin: 0, fontSize: 19, color: NAVY }}>Secure your account — enable MFA</h2>
       </div>
-      <p style={{ color: '#5E7691', fontSize: 13.5, margin: '0 0 18px' }}>
+      <p style={{ color: '#66748A', fontSize: 13.5, margin: '0 0 18px' }}>
         TwinMOS staff accounts use time-based one-time passwords (TOTP). Scan the QR with Google Authenticator,
         Microsoft Authenticator, 1Password or any TOTP app, then confirm with a live code.
       </p>
@@ -95,10 +95,10 @@ export default function MfaSetup({ onEnrolled, onSkip }: { onEnrolled: () => voi
         <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
           <div style={{ textAlign: 'center' }}>
             <QrCanvas text={totpURI} size={190} />
-            <p style={{ fontSize: 12, color: '#8CA3BA', margin: '8px 0 0' }}>Scan with your authenticator</p>
+            <p style={{ fontSize: 12, color: '#93A0B4', margin: '8px 0 0' }}>Scan with your authenticator</p>
           </div>
           <div style={{ flex: 1, minWidth: 220 }}>
-            <p style={{ fontSize: 12.5, color: '#5E7691', margin: '0 0 6px' }}>Can't scan? Enter this key manually:</p>
+            <p style={{ fontSize: 12.5, color: '#66748A', margin: '0 0 6px' }}>Can't scan? Enter this key manually:</p>
             <code style={{ display: 'block', background: '#F1F6FB', borderRadius: 8, padding: '8px 10px', fontSize: 13, letterSpacing: 1, wordBreak: 'break-all', marginBottom: 14 }}>{secret || '—'}</code>
             <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 5 }}>Enter the 6-digit code</label>
             <input autoFocus value={code} onChange={e => setCode(e.target.value)} placeholder="123 456" inputMode="numeric" style={{ ...cardIn, letterSpacing: 4, fontWeight: 700, textAlign: 'center', fontSize: 18 }} />
@@ -109,8 +109,8 @@ export default function MfaSetup({ onEnrolled, onSkip }: { onEnrolled: () => voi
 
       {phase === 'done' && (
         <div>
-          <p style={{ color: '#15803D', fontWeight: 700, fontSize: 15 }}>✓ Multi-factor authentication is now active.</p>
-          <p style={{ color: '#5E7691', fontSize: 13.5 }}>Save these one-time recovery codes somewhere safe — each works once if you lose your device:</p>
+          <p style={{ color: '#1F9D62', fontWeight: 700, fontSize: 15 }}>✓ Multi-factor authentication is now active.</p>
+          <p style={{ color: '#66748A', fontSize: 13.5 }}>Save these one-time recovery codes somewhere safe — each works once if you lose your device:</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, margin: '12px 0 16px' }}>
             {backupCodes.map(c => <code key={c} style={{ background: '#F1F6FB', borderRadius: 6, padding: '6px 10px', fontSize: 13 }}>{c}</code>)}
           </div>
@@ -126,7 +126,7 @@ export default function MfaSetup({ onEnrolled, onSkip }: { onEnrolled: () => voi
         </div>
       )}
 
-      {err && <p role="alert" style={{ color: '#B3261E', fontSize: 13.5, margin: '12px 0 0' }}>{err}</p>}
+      {err && <p role="alert" style={{ color: '#C2453C', fontSize: 13.5, margin: '12px 0 0' }}>{err}</p>}
     </div>
   );
 }

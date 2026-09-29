@@ -17,7 +17,7 @@ export default function Partners({ canManage }: { canManage: boolean }) {
   const [tab, setTab] = useState<'orgs' | 'sn'>('orgs');
   return (
     <div>
-      <h1>Partners</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Partners</h1>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
         <button style={tab === 'orgs' ? btn : btnGhost} onClick={() => setTab('orgs')}>Organizations</button>
         <button style={tab === 'sn' ? btn : btnGhost} onClick={() => setTab('sn')}>SN-check report</button>
@@ -64,7 +64,7 @@ function Orgs({ canManage }: { canManage: boolean }) {
         <Table head={['Org', 'Type', 'Status', 'Members', 'Created', '']}>
           {data.items.map((o) => (
             <tr key={o.id}>
-              <td style={td}><b>{o.name}</b><div style={{ color: '#5E7691', fontSize: 12 }}>{o.country ?? '—'}</div></td>
+              <td style={td}><b>{o.name}</b><div style={{ color: '#66748A', fontSize: 12 }}>{o.country ?? '—'}</div></td>
               <td style={td}>{o.type}</td>
               <td style={td}><span style={{ color: STATUS_TONE[o.status] ?? '#64748B', fontWeight: 700 }}>{o.status}</span></td>
               <td style={td}>{o.memberCount}</td>
@@ -126,7 +126,7 @@ function OrgDetail({ id, onChanged }: { id: number; onChanged: () => void }) {
   }
 
   return (
-    <div style={{ marginTop: 16, border: '1px solid #E2E8F0', borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
+    <div style={{ marginTop: 16, border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
       <b>Members</b>
       {err ? <Err error={err} /> : null}
       {error ? <Err error={error} /> : loading ? <p>Loading…</p> : (
@@ -138,7 +138,7 @@ function OrgDetail({ id, onChanged }: { id: number; onChanged: () => void }) {
                 onClick={() => removeMember(m.id)}>Remove</button>
             </div>
           ))}
-          {data && data.items.length === 0 && <p style={{ color: '#5E7691', fontSize: 13 }}>No members — add the partner's site account email.</p>}
+          {data && data.items.length === 0 && <p style={{ color: '#66748A', fontSize: 13 }}>No members — add the partner's site account email.</p>}
         </>
       )}
       <div style={{ display: 'flex', gap: 8, margin: '8px 0 16px' }}>
@@ -175,12 +175,12 @@ function SnChecks() {
   if (!data) return null;
   return (
     <div>
-      <p style={{ color: '#5E7691' }}>Window: {fmtDate(data.window.from)} → {fmtDate(data.window.to)} · <b>{data.total}</b> checks ({data.byResult.valid ?? 0} valid / {data.byResult.unverified ?? 0} unverified)</p>
+      <p style={{ color: '#66748A' }}>Window: {fmtDate(data.window.from)} → {fmtDate(data.window.to)} · <b>{data.total}</b> checks ({data.byResult.valid ?? 0} valid / {data.byResult.unverified ?? 0} unverified)</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div>
           <h3>Top serials</h3>
           {data.topSerials.map((s) => (
-            <div key={s.serial} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #EEF2F6', padding: '6px 2px', fontSize: 13.5 }}>
+            <div key={s.serial} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F0F3F7', padding: '6px 2px', fontSize: 13.5 }}>
               <span>{s.serial}</span><b>{s.checks}</b>
             </div>
           ))}
@@ -190,9 +190,9 @@ function SnChecks() {
           <Table head={['Serial', 'Result', 'IP', 'When']}>
             {data.recent.slice(0, 15).map((r) => (
               <tr key={r.id}>
-                <td style={td}>{r.serial}{r.sku ? <span style={{ color: '#5E7691' }}> ({r.sku})</span> : null}</td>
+                <td style={td}>{r.serial}{r.sku ? <span style={{ color: '#66748A' }}> ({r.sku})</span> : null}</td>
                 <td style={td}><Badge value={r.result} /></td>
-                <td style={{ ...td, color: '#5E7691', fontSize: 12 }}>{r.ip ?? '—'}</td>
+                <td style={{ ...td, color: '#66748A', fontSize: 12 }}>{r.ip ?? '—'}</td>
                 <td style={td}>{fmtDate(r.checkedAt)}</td>
               </tr>
             ))}

@@ -95,7 +95,7 @@ function Workspace({ me, onSignOut, onMfaChange }: { me: Me; onSignOut: () => vo
       openTab={openTab} closeTab={closeTab} onSignOut={onSignOut} onMfaChange={onMfaChange}
       onMfaSetup={() => setMfaOpen(true)} onOpenSearch={() => setSearchOpen(true)}
       mfaPanel={mfaOpen ? (
-        <div style={{ minHeight: '100vh', background: '#F5F8FB' }}>
+        <div style={{ minHeight: '100vh', background: '#F2F4F6' }}>
           <MfaSetup onEnrolled={() => { setMfaOpen(false); onMfaChange(); }} onSkip={() => setMfaOpen(false)} />
         </div>
       ) : null}>
@@ -134,7 +134,7 @@ function App() {
   if (state === 'anon') return <Login onDone={refreshMe} />;
   if (state === 'mfa-setup') {
     return (
-      <div style={{ minHeight: '100vh', background: '#F5F8FB' }}>
+      <div style={{ minHeight: '100vh', background: '#F2F4F6' }}>
         <MfaSetup onEnrolled={refreshMe} onSkip={() => setState('authed')} />
       </div>
     );

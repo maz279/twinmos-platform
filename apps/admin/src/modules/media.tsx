@@ -68,9 +68,9 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div>
-      <h1>Media library</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Media library</h1>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: missing ? '#FDEEE6' : '#EAF7EF', color: missing ? '#B3261E' : '#15803D' }}>
+        <span style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: missing ? '#FCECEB' : '#E7F6EE', color: missing ? '#C2453C' : '#1F9D62' }}>
           {total - missing}/{total} alt-text compliant
         </span>
         <button style={{ ...btnGhost, fontWeight: missingOnly ? 800 : 400, borderColor: missingOnly ? '#1DBF9F' : undefined, color: missingOnly ? '#0E9F7E' : undefined }}
@@ -92,19 +92,19 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
         view === 'grid' ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(168px,1fr))', gap: 12 }}>
             {items.map((m) => (
-              <div key={m.id} style={{ border: '1px solid #E3EBF3', borderRadius: 10, background: '#fff', overflow: 'hidden' }}>
-                <a href={fileUrl(m.id)} target="_blank" rel="noopener" style={{ display: 'block', aspectRatio: '4/3', background: '#E7EEF5' }}>
+              <div key={m.id} style={{ border: '1px solid #E6EBF1', borderRadius: 10, background: '#fff', overflow: 'hidden' }}>
+                <a href={fileUrl(m.id)} target="_blank" rel="noopener" style={{ display: 'block', aspectRatio: '4/3', background: '#EEF1F5' }}>
                   {m.kind === 'image'
                     ? <img src={fileUrl(m.id)} alt={m.alt ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    : <span style={{ display: 'grid', placeItems: 'center', height: '100%', color: '#8CA3BA', fontSize: 12 }}>{m.kind}</span>}
+                    : <span style={{ display: 'grid', placeItems: 'center', height: '100%', color: '#93A0B4', fontSize: 12 }}>{m.kind}</span>}
                 </a>
                 <div style={{ padding: '8px 10px' }}>
                   <b style={{ display: 'block', fontSize: 12, color: '#1F2A37', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.meta?.origName ?? m.key}>{m.meta?.origName ?? m.key}</b>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '4px 0 6px' }}>
                     <Badge value={m.kind} />
                     {m.alt
-                      ? <span style={{ fontSize: 11, color: '#15803D' }}>alt ✓</span>
-                      : <span style={{ fontSize: 11, color: '#B3261E' }}>⚠ no alt</span>}
+                      ? <span style={{ fontSize: 11, color: '#1F9D62' }}>alt ✓</span>
+                      : <span style={{ fontSize: 11, color: '#C2453C' }}>⚠ no alt</span>}
                     {isAdmin && <button style={{ ...btnGhost, marginLeft: 'auto', padding: '2px 7px', fontSize: 11 }} disabled={busy} onClick={() => remove(m.id)}>Delete</button>}
                   </div>
                   {editing === m.id ? (
@@ -114,7 +114,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                     </span>
                   ) : (
                     <span style={{ display: 'flex', gap: 6 }}>
-                      <span style={{ flex: 1, fontSize: 11, color: '#5E7691', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.alt ?? ''}>{m.alt ?? '—'}</span>
+                      <span style={{ flex: 1, fontSize: 11, color: '#66748A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.alt ?? ''}>{m.alt ?? '—'}</span>
                       <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} onClick={() => { setEditing(m.id); setEditAlt(m.alt ?? ''); }}>Alt</button>
                       <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} onClick={() => copyUrl(m.id)}>{copied === m.id ? '✓' : 'URL'}</button>
                     </span>
@@ -126,18 +126,18 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
         ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
           <thead><tr>{['File', 'Kind', 'Alt text', 'Size', 'Uploaded', ''].map((h) => (
-            <th key={h} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E2E8F0' }}>{h}</th>
+            <th key={h} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>
           ))}</tr></thead>
           <tbody>
             {items.map((m) => (
               <tr key={m.id}>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
                   <b>{m.meta?.origName ?? m.key}</b>
-                  <div style={{ color: '#5E7691', fontSize: 12 }}>{m.key}</div>
+                  <div style={{ color: '#66748A', fontSize: 12 }}>{m.key}</div>
                   <a href={fileUrl(m.id)} target="_blank" rel="noopener" style={{ fontSize: 12 }}>View file ↗</a>
                 </td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}><Badge value={m.kind} /></td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}><Badge value={m.kind} /></td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
                   {editing === m.id ? (
                     <span style={{ display: 'flex', gap: 6 }}>
                       <input style={input} value={editAlt} onChange={(e) => setEditAlt(e.target.value)} />
@@ -150,9 +150,9 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                     </span>
                   )}
                 </td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>{m.meta?.bytes ? Math.round(m.meta.bytes / 1024) + ' KB' : '—'}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>{fmtDate(m.createdAt)}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #EEF2F6' }}>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{m.meta?.bytes ? Math.round(m.meta.bytes / 1024) + ' KB' : '—'}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{fmtDate(m.createdAt)}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
                   <button style={{ ...btnGhost, marginRight: 6 }} onClick={() => copyUrl(m.id)}>{copied === m.id ? 'Copied ✓' : 'Copy URL'}</button>
                   {isAdmin && <button style={btnGhost} disabled={busy} onClick={() => remove(m.id)}>Delete</button>}
                 </td>

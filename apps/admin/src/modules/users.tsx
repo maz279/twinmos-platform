@@ -28,7 +28,7 @@ const ROLE_COLORS: Record<UserRole, { bg: string; text: string; border: string }
   admin: { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' },
   editor: { bg: '#ECFDF5', text: '#047857', border: '#A7F3D0' },
   author: { bg: '#FFFBEB', text: '#B45309', border: '#FDE68A' },
-  viewer: { bg: '#F1F5F9', text: '#475569', border: '#CBD5E1' },
+  viewer: { bg: '#F1F5F9', text: '#475569', border: '#D9E0E8' },
 };
 
 export default function UsersModule({ me }: ModProps) {
@@ -96,8 +96,8 @@ export default function UsersModule({ me }: ModProps) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
-          <h1 style={{ margin: 0 }}>Users & Roles</h1>
-          <p style={{ color: '#5E7691', margin: '4px 0 0' }}>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Users & Roles</h1>
+          <p style={{ color: '#66748A', margin: '4px 0 0' }}>
             Platform staff directory, role governance, MFA enforcement, and active session management.
             {data?.total != null ? ` (${data.total} registered staff account${data.total === 1 ? '' : 's'})` : ''}
           </p>
@@ -145,7 +145,7 @@ export default function UsersModule({ me }: ModProps) {
       {error ? <Err error={error} /> : null}
 
       {loading ? (
-        <p style={{ color: '#5E7691', padding: '16px 0' }}>Loading user directory…</p>
+        <p style={{ color: '#66748A', padding: '16px 0' }}>Loading user directory…</p>
       ) : data ? (
         <Table head={['Staff Member', 'Role', 'Status', 'MFA / 2FA', 'Email Verified', 'Last Active', 'Joined', 'Actions']}>
           {data.items.map((u) => {
@@ -155,7 +155,7 @@ export default function UsersModule({ me }: ModProps) {
               <tr key={u.id} style={{ background: u.banned ? '#FEF2F2' : undefined }}>
                 <td style={td}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#475569', fontSize: 13 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#E6EBF1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#475569', fontSize: 13 }}>
                       {(u.name || u.email).slice(0, 2).toUpperCase()}
                     </div>
                     <div>
@@ -194,7 +194,7 @@ export default function UsersModule({ me }: ModProps) {
                 <td style={td}>
                   {u.banned ? (
                     <div>
-                      <span style={{ background: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5', borderRadius: 99, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
+                      <span style={{ background: '#FEE2E2', color: '#9C3230', border: '1px solid #FCA5A5', borderRadius: 99, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
                         Suspended
                       </span>
                       {u.banExpires && (
@@ -203,7 +203,7 @@ export default function UsersModule({ me }: ModProps) {
                         </div>
                       )}
                       {u.banReason && (
-                        <div style={{ fontSize: 11, color: '#991B1B', marginTop: 2, maxWidth: 160 }} title={u.banReason}>
+                        <div style={{ fontSize: 11, color: '#9C3230', marginTop: 2, maxWidth: 160 }} title={u.banReason}>
                           {u.banReason}
                         </div>
                       )}
@@ -221,7 +221,7 @@ export default function UsersModule({ me }: ModProps) {
                       ✓ Enabled
                     </span>
                   ) : (
-                    <span style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #CBD5E1', borderRadius: 99, padding: '2px 8px', fontSize: 11 }}>
+                    <span style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #D9E0E8', borderRadius: 99, padding: '2px 8px', fontSize: 11 }}>
                       Disabled
                     </span>
                   )}
@@ -235,7 +235,7 @@ export default function UsersModule({ me }: ModProps) {
                   )}
                 </td>
 
-                <td style={{ ...td, color: '#5E7691', fontSize: 12 }}>
+                <td style={{ ...td, color: '#66748A', fontSize: 12 }}>
                   {u.lastActiveAt ? fmtDate(u.lastActiveAt) : 'Never'}
                 </td>
 
@@ -269,7 +269,7 @@ export default function UsersModule({ me }: ModProps) {
                         </button>
                       ) : (
                         <button
-                          style={{ ...btnGhost, background: '#FEE2E2', color: '#991B1B', fontSize: 11, padding: '4px 8px' }}
+                          style={{ ...btnGhost, background: '#FEE2E2', color: '#9C3230', fontSize: 11, padding: '4px 8px' }}
                           onClick={() => setBanModalUser(u)}
                         >
                           Suspend
@@ -286,7 +286,7 @@ export default function UsersModule({ me }: ModProps) {
 
       {data && data.total != null && data.total > pageSize && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, flexWrap: 'wrap', gap: 12 }}>
-          <span style={{ fontSize: 13, color: '#5E7691' }}>
+          <span style={{ fontSize: 13, color: '#66748A' }}>
             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, data.total)} of {data.total} staff accounts
           </span>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -528,7 +528,7 @@ function BanModal({ user, onClose, onSuccess }: { user: UserAccount; onClose: ()
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
       <div style={{ ...card, width: '100%', maxWidth: 440 }}>
-        <h2 style={{ margin: '0 0 8px', fontSize: 18, color: '#991B1B' }}>Suspend Account</h2>
+        <h2 style={{ margin: '0 0 8px', fontSize: 18, color: '#9C3230' }}>Suspend Account</h2>
         <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748B' }}>
           Suspending <b>{user.name || user.email}</b> will immediately terminate all active sessions and block sign-in until reactivated.
         </p>

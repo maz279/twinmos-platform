@@ -21,7 +21,7 @@ const glassChip: React.CSSProperties = {
 const navyLogo: React.CSSProperties = { height: 22, width: 'auto', display: 'block' };
 
 const cardIn: React.CSSProperties = {
-  width: '100%', padding: '12px 14px', border: '1px solid #CBD5E1', borderRadius: 8,
+  width: '100%', padding: '12px 14px', border: '1px solid #D9E0E8', borderRadius: 8,
   fontSize: 14.5, marginBottom: 14, background: '#fff', boxSizing: 'border-box',
   transition: 'border-color .15s, box-shadow .15s',
 };
@@ -105,7 +105,7 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
       {/* ---- brand rail ---- */}
       <aside className="tm-rail" style={{
         flex: '1 1 52%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-        padding: '46px 58px', color: '#E8F2FA', position: 'relative', overflow: 'hidden',
+        padding: '46px 58px', color: '#E7EDF3', position: 'relative', overflow: 'hidden',
         background: `linear-gradient(160deg, #182736 0%, #14212F 58%, #101B26 100%)`,
       }}>
         {/* subtle radial glow accent */}
@@ -117,7 +117,7 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
             <img src={LOGO} alt="TwinMOS" style={navyLogo} />
           </span>
           <span style={{ width: 1, height: 26, background: 'rgba(232,242,250,.25)' }} />
-          <span style={{ fontSize: 11.5, letterSpacing: 2.2, color: '#9FC1E4', fontWeight: 600 }}>CMS CONTROL PANEL</span>
+          <span style={{ fontSize: 11.5, letterSpacing: 2.2, color: '#8FA3BA', fontWeight: 600 }}>CMS CONTROL PANEL</span>
         </div>
 
         <div style={{ position: 'relative' }}>
@@ -125,18 +125,18 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
           <h1 style={{ fontSize: 32, lineHeight: 1.22, margin: '0 0 16px', fontWeight: 800, maxWidth: 480, letterSpacing: 0.2 }}>
             Memory &amp; storage,<br />managed at scale.
           </h1>
-          <p style={{ color: '#A9C6E0', maxWidth: 440, lineHeight: 1.65, fontSize: 14.5, margin: 0 }}>
+          <p style={{ color: '#9DB0C4', maxWidth: 440, lineHeight: 1.65, fontSize: 14.5, margin: 0 }}>
             The operations console for the twinmos.com platform — content, catalog, leads,
             RMA, partners and translations in one audited workspace.
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 24 }}>
             {['Content studio', 'Lead workflows', 'RMA board', 'Partner portal'].map(t => (
-              <span key={t} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 999, border: '1px solid rgba(143,180,217,.35)', color: '#C9DDF0', background: 'rgba(255,255,255,.04)' }}>{t}</span>
+              <span key={t} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 999, border: '1px solid rgba(143,180,217,.35)', color: '#C6D2DE', background: 'rgba(255,255,255,.04)' }}>{t}</span>
             ))}
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 26, fontSize: 12.5, color: '#8FB4D9', position: 'relative' }}>
+        <div style={{ display: 'flex', gap: 26, fontSize: 12.5, color: '#7C8FA5', position: 'relative' }}>
           <span>🔒 TOTP multi-factor</span>
           <span>🛡 Role-based access</span>
           <span>📜 Full audit trail</span>
@@ -153,7 +153,7 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
             }}>
               <img src={LOGO} alt="TwinMOS" style={{ ...navyLogo, height: 30, display: 'block', margin: '0 auto 18px' }} />
               <h2 style={{ margin: '0 0 4px', fontSize: 21, color: NAVY, textAlign: 'center' }}>Staff sign-in</h2>
-              <p style={{ margin: '0 0 24px', color: '#5E7691', fontSize: 13.5, textAlign: 'center' }}>
+              <p style={{ margin: '0 0 24px', color: '#66748A', fontSize: 13.5, textAlign: 'center' }}>
                 Authorised TwinMOS personnel only. Activity is logged.
               </p>
               <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>User ID (email)</label>
@@ -161,8 +161,8 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
               <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Password</label>
               <input className="tm-in" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••" type="password" required autoComplete="current-password" style={cardIn} />
               <button className="tm-btn" disabled={busy} style={{ ...btnMain, opacity: busy ? 0.65 : 1 }}>{busy ? 'Verifying…' : 'Sign in'}</button>
-              {err && <p role="alert" style={{ color: '#B3261E', fontSize: 13.5, margin: '14px 0 0', textAlign: 'center' }}>{err}</p>}
-              <p style={{ color: '#8CA3BA', fontSize: 12, margin: '20px 0 0', textAlign: 'center' }}>
+              {err && <p role="alert" style={{ color: '#C2453C', fontSize: 13.5, margin: '14px 0 0', textAlign: 'center' }}>{err}</p>}
+              <p style={{ color: '#93A0B4', fontSize: 12, margin: '20px 0 0', textAlign: 'center' }}>
                 Protected by TOTP multi-factor · TwinMOS ISO-aligned controls
               </p>
             </form>
@@ -176,15 +176,15 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
               <img src={LOGO} alt="TwinMOS" style={{ ...navyLogo, height: 26, display: 'block', margin: '0 auto 16px' }} />
               <div style={{ width: 54, height: 54, margin: '0 auto 16px', borderRadius: 14, background: `linear-gradient(135deg, ${CYAN}, #14A98B)`, display: 'grid', placeItems: 'center', fontSize: 26 }}>🔐</div>
               <h2 style={{ margin: '0 0 6px', fontSize: 20, color: NAVY }}>Two-factor verification</h2>
-              <p style={{ color: '#5E7691', fontSize: 13.5, margin: '0 0 22px' }}>
+              <p style={{ color: '#66748A', fontSize: 13.5, margin: '0 0 22px' }}>
                 Enter the 6-digit code from your authenticator app.<br />
                 <span style={{ fontSize: 12.5 }}>You may also enter a recovery code (format XXXX-XXXX).</span>
               </p>
               <input className="tm-in" autoFocus value={code} onChange={e => setCode(e.target.value)} placeholder="123 456" inputMode="numeric" autoComplete="one-time-code" required
                 style={{ ...cardIn, textAlign: 'center', fontSize: 22, letterSpacing: 6, fontWeight: 700 }} />
               <button className="tm-btn" disabled={busy} style={{ ...btnMain, opacity: busy ? 0.65 : 1 }}>{busy ? 'Checking…' : 'Verify'}</button>
-              {err && <p role="alert" style={{ color: '#B3261E', fontSize: 13.5, margin: '14px 0 0' }}>{err}</p>}
-              <button type="button" onClick={() => { setStep('credentials'); setCode(''); setErr(''); }} className="tm-link" style={{ background: 'none', border: 0, color: '#5E7691', fontSize: 13, marginTop: 18, cursor: 'pointer', textDecoration: 'underline' }}>
+              {err && <p role="alert" style={{ color: '#C2453C', fontSize: 13.5, margin: '14px 0 0' }}>{err}</p>}
+              <button type="button" onClick={() => { setStep('credentials'); setCode(''); setErr(''); }} className="tm-link" style={{ background: 'none', border: 0, color: '#66748A', fontSize: 13, marginTop: 18, cursor: 'pointer', textDecoration: 'underline' }}>
                 Use a different account
               </button>
             </form>
