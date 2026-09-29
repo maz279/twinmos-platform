@@ -170,6 +170,7 @@ function OrgDetail({ id, onChanged }: { id: number; onChanged: () => void }) {
 
 function SnChecks() {
   const { data, error, loading } = useAsync<SnReport>(() => apiGet('/admin/sn-checks'), []);
+  const [serials, setSerials] = useState(true); // Phase 5.3 panel toggle
   if (loading) return <p>Loading…</p>;
   if (error) return <Err error={error} />;
   if (!data) return null;
@@ -198,6 +199,119 @@ function SnChecks() {
             ))}
           </Table>
         </div>
+      </div>
+      <button style={{ ...btnGhost, marginTop: 16, fontWeight: serials ? 800 : 400 }} onClick={() => setSerials((v) => !v)}>
+        {serials ? '▾' : '▸'} Serial registry &amp; anti-counterfeit (Phase 5)
+      </button>
+      {serials && <SerialRegistry />}
+    </div>
+  );
+}
+
+// ---- Phase 5.3: serial registry management + counterfeit anomaly alerts ----
+type RegistryRow = { serial: string; sku: string | null; manufacturedAt: string | null; verifiedCount: number };
+type AnomalyRow = { serial: string; checks: number; distinctIps: number; lastSeen: string; verdict: string };
+
+function SerialRegistry() {
+  const [q, setQ] = useState('');
+  const query = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : '';
+  const registry = useAsync<{ items: RegistryRow[] }>(() => apiGet('/admin/serials' + query), [query]);
+  const anomalies = useAsync<{ threshold: number; flagged: AnomalyRow[]; notified: boolean }>(() => apiGet('/admin/serials/anomalies'), []);
+  const [csv, setCsv] = useState('');
+  const [report, setReport] = useState<{ dryRun?: boolean; imported?: number; validCount?: number; errors?: Array<{ line: number; message: string }> } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<unknown>(null);
+  const [notice, setNotice] = useState('');
+
+  async function runImport(dryRun: boolean) {
+    setBusy(true); setErr(null); setNotice('');
+    try {
+      const res = await apiSend<{ dryRun: boolean; imported?: number; validCount?: number; errors?: Array<{ line: number; message: string }> }>('POST', '/admin/serials/import', { csv, dryRun });
+      setReport(res);
+      if (!dryRun) { setNotice(`Imported ${res.imported} serial(s).`); setCsv(''); registry.reload(); }
+    } catch (e) { setErr(e); } finally { setBusy(false); }
+  }
+
+  async function alertOps() {
+    setBusy(true); setErr(null);
+    try {
+      const res = await apiGet<{ flagged: AnomalyRow[]; notified: boolean }>('/admin/serials/anomalies?notify=true');
+      setNotice(res.notified ? `Ops alert sent for ${res.flagged.length} suspicious serial(s).` : 'Alert not sent — is SERIAL_ALERT_TO/FORMS_TO configured?');
+      anomalies.reload();
+    } catch (e) { setErr(e); } finally { setBusy(false); }
+  }
+
+  const card: React.CSSProperties = { border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: 12, marginTop: 12, minWidth: 0 };
+  return (
+    <div>
+      {err ? <Err error={err} /> : null}
+      {notice ? <p style={{ color: '#0E9F7E', fontWeight: 700, fontSize: 13 }}>{notice}</p> : null}
+
+      <div style={card}>
+        <b style={{ fontSize: 13 }}>Registry batch import</b>
+        <p style={{ margin: '6px 0 8px', fontSize: 12.5, color: '#66748A' }}>
+          CSV columns: <code>serial,sku,manufacturedAt,batch</code> — upserts by serial (e.g. factory production run manifest).
+        </p>
+        <textarea style={{ ...input, width: '100%', minHeight: 80, fontFamily: 'ui-monospace, monospace', fontSize: 12 }}
+          placeholder={'serial,sku,manufacturedAt,batch\nTM26A0001,VLT-DDR5-32G,2026-08-14,FAB-07'}
+          value={csv} onChange={(e) => setCsv(e.target.value)} />
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <button style={btnGhost} disabled={busy || !csv.trim()} onClick={() => runImport(true)}>Validate (dry-run)</button>
+          <button style={btn} disabled={busy || !csv.trim()} onClick={() => runImport(false)}>Import</button>
+        </div>
+        {report?.errors?.length ? (
+          <div style={{ marginTop: 8, border: '1px solid #F5D5D2', background: '#FDF6F5', borderRadius: 8, padding: 8 }}>
+            {report.errors.map((e, i) => <div key={i} style={{ fontSize: 12, color: '#C2453C' }}><b>Line {e.line}:</b> {e.message}</div>)}
+          </div>
+        ) : null}
+        {report?.dryRun && !report.errors?.length ? (
+          <p style={{ marginTop: 8, fontSize: 12.5, color: '#1F9D62', fontWeight: 700 }}>Dry-run: {report.validCount} valid row(s), 0 errors.</p>
+        ) : null}
+      </div>
+
+      <div style={card}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+          <b style={{ fontSize: 13, flex: 1 }}>Registry ({registry.data?.items.length ?? 0})</b>
+          <input style={{ ...input, width: 220 }} placeholder="Search serial or SKU…" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+        {registry.error ? <Err error={registry.error} /> : registry.loading ? <p>Loading…</p> : (
+          (registry.data?.items ?? []).length === 0 ? <Empty text="No serials match — import a production batch above." /> : (
+            <Table head={['Serial', 'SKU', 'Manufactured', 'Verified count']}>
+              {(registry.data?.items ?? []).slice(0, 50).map((s) => (
+                <tr key={s.serial}>
+                  <td style={td}><b>{s.serial}</b></td>
+                  <td style={td}>{s.sku ?? '—'}</td>
+                  <td style={td}>{s.manufacturedAt ? fmtDate(s.manufacturedAt) : '—'}</td>
+                  <td style={td}>{s.verifiedCount}</td>
+                </tr>
+              ))}
+            </Table>
+          )
+        )}
+      </div>
+
+      <div style={card}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+          <b style={{ fontSize: 13, color: '#C2453C', flex: 1 }}>⚠ Anomalies — &gt;{anomalies.data?.threshold ?? 5} distinct IPs in 24h</b>
+          <button style={btn} disabled={busy || !(anomalies.data?.flagged ?? []).length} onClick={alertOps}>Email ops alert</button>
+        </div>
+        {anomalies.error ? <Err error={anomalies.error} /> : anomalies.loading ? <p>Loading…</p> : (
+          (anomalies.data?.flagged ?? []).length === 0
+            ? <p style={{ color: '#1F9D62', fontSize: 13, fontWeight: 700 }}>No suspicious serials in the last 24 hours. ✓</p>
+            : (
+              <Table head={['Serial', 'Checks', 'Distinct IPs', 'Last seen', 'Verdict']}>
+                {(anomalies.data?.flagged ?? []).map((a) => (
+                  <tr key={a.serial}>
+                    <td style={td}><b>{a.serial}</b></td>
+                    <td style={td}>{a.checks}</td>
+                    <td style={td}><b style={{ color: '#C2453C' }}>{a.distinctIps}</b></td>
+                    <td style={td}>{fmtDate(a.lastSeen)}</td>
+                    <td style={{ ...td, color: '#C2453C', fontSize: 12 }}>{a.verdict}</td>
+                  </tr>
+                ))}
+              </Table>
+            )
+        )}
       </div>
     </div>
   );

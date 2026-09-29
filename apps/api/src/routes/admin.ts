@@ -11,6 +11,7 @@ import {
   RMA_TRANSITIONS, SUBMISSION_STATUS, SUBMISSION_TRANSITIONS, SUBMISSION_PRIORITY, RMA_STATUS,
   variantCreateSchema, variantUpdateSchema, compatibilityCreateSchema, compatibilityUpdateSchema,
   productImportSchema, PRODUCT_IMPORT_COLUMNS, AUTHORIZED_CURRENCIES, CONTENT_STATUS, sameInstant,
+  jobPostingCreateSchema, jobPostingUpdateSchema, JOB_POSTING_STATUSES,
 } from '@twinmos/shared';
 import { auditLog, brand, category, compatibilityRule, formNote, formSubmission, jobApplication, jobPosting, product, productVariant, rmaEvent, rmaRequest, user, article, page, newsPost, faq, mediaAsset } from '@twinmos/db';
 import { sendRmaStatusMail } from '../mailer.ts';
@@ -959,6 +960,75 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const body = updated[0];
     if (idemKey) RMA_IDEM.set(idemKey, { status: 200, body });
     return c.json(body);
+  });
+
+  // ==================== Phase 5.2: job postings CRUD (careers) ====================
+  // Authors+ manage postings (draft → published → closed/archived); every
+  // mutation is audited. Applications link via postingId (set-null on delete).
+  r.get('/job-postings', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const status = c.req.query('status');
+    const rows = await db.select({
+      id: jobPosting.id, title: jobPosting.title, dept: jobPosting.dept, location: jobPosting.location,
+      type: jobPosting.type, level: jobPosting.level, status: jobPosting.status,
+      body: jobPosting.body, applyBy: jobPosting.applyBy, salaryBand: jobPosting.salaryBand,
+      equalOpportunity: jobPosting.equalOpportunity, createdAt: jobPosting.createdAt,
+      applicationCount: sql<number>`(select count(*) from ${jobApplication} where ${jobApplication.postingId} = ${jobPosting.id})`,
+    }).from(jobPosting)
+      .where(and(
+        isNull(jobPosting.deletedAt),
+        status && (JOB_POSTING_STATUSES as readonly string[]).includes(status) ? eq(jobPosting.status, status as 'draft') : undefined,
+      ))
+      .orderBy(desc(jobPosting.id)).limit(200);
+    return c.json({ items: rows.map((r2) => ({ ...r2, applicationCount: Number(r2.applicationCount) })) });
+  });
+
+  r.post('/job-postings', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const parsed = jobPostingCreateSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const d = parsed.data;
+    const rows = await db.insert(jobPosting).values({
+      title: d.title, dept: d.dept, location: d.location, type: d.type, level: d.level,
+      status: d.status as 'draft', body: d.body,
+      applyBy: d.applyBy ? new Date(d.applyBy) : null,
+      salaryBand: d.salaryBand ?? null, equalOpportunity: d.equalOpportunity,
+    }).returning();
+    await auditRow(c, guard.user.id, 'job_posting.create', 'job_posting', String(rows[0].id), d);
+    return c.json(rows[0], 201);
+  });
+
+  r.patch('/job-postings/:id', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const parsed = jobPostingUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const d = parsed.data as Record<string, unknown>;
+    const patch: Record<string, unknown> = {};
+    for (const k of ['title', 'dept', 'location', 'type', 'level', 'body', 'salaryBand', 'equalOpportunity'] as const) {
+      if (d[k] !== undefined) patch[k] = d[k];
+    }
+    if (d.status !== undefined) patch.status = d.status;
+    if (d.applyBy !== undefined) patch.applyBy = d.applyBy ? new Date(String(d.applyBy)) : null;
+    if (!Object.keys(patch).length) return c.json(problem(422, 'Validation Failed', 'Nothing to update.'), 422, { 'Content-Type': P });
+    const rows = await db.update(jobPosting).set(patch).where(and(eq(jobPosting.id, id), isNull(jobPosting.deletedAt))).returning();
+    if (!rows[0]) return c.json(problem(404, 'Job posting not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'job_posting.update', 'job_posting', String(id), patch);
+    return c.json(rows[0]);
+  });
+
+  r.delete('/job-postings/:id', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const rows = await db.update(jobPosting).set({ deletedAt: new Date() })
+      .where(and(eq(jobPosting.id, id), isNull(jobPosting.deletedAt))).returning();
+    if (!rows[0]) return c.json(problem(404, 'Job posting not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'job_posting.delete', 'job_posting', String(id), { title: rows[0].title });
+    return c.json({ deleted: true });
   });
 
   // ==================== P2: job applications (HR) ====================

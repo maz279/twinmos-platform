@@ -257,7 +257,9 @@ export const jobPosting = pgTable('job_posting', {
   location: varchar('location', { length: 60 }).notNull(), type: varchar('type', { length: 20 }).notNull().default('full-time'),
   level: varchar('level', { length: 20 }).notNull().default('mid'), status: contentStatusEnum('status').notNull().default('draft'),
   body: text('body').notNull().default(''), applyBy: timestamp('apply_by', { withTimezone: true }), createdAt: ts(), deletedAt: timestamp('deleted_at', { withTimezone: true }),
-});
+  // Phase 5.2: salary disclosure (BR-14.1, where legally required) + EO statement
+  salaryBand: varchar('salary_band', { length: 80 }), equalOpportunity: boolean('equal_opportunity').notNull().default(true),
+}, (t) => [index('job_posting_status_idx').on(t.status)]);
 export const jobApplication = pgTable('job_application', {
   id: serial('id').primaryKey(), postingId: integer('posting_id').references(() => jobPosting.id, { onDelete: 'set null' }),
   payload: jsonb('payload').notNull().default({}), email: text('email').notNull(), status: submissionStatusEnum('status').notNull().default('new'),

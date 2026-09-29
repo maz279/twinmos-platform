@@ -356,6 +356,27 @@ export const translationDeleteSchema = z.object({
   key: keyField,
 });
 
+// ---- Phase 5.2: careers job postings ----
+export const JOB_DEPARTMENTS = ['R&D', 'Sales', 'Marketing', 'Operations', 'Support', 'QA'] as const;
+export const JOB_LOCATIONS = ['Taipei', 'Dubai', 'Cologne', 'San Jose', 'Remote'] as const;
+export const JOB_TYPES = ['full-time', 'part-time', 'contract', 'internship'] as const;
+export const JOB_LEVELS = ['entry', 'mid', 'senior', 'lead', 'executive'] as const;
+export const JOB_POSTING_STATUSES = ['draft', 'published', 'closed', 'archived'] as const;
+export const jobPostingCreateSchema = z.object({
+  title: z.string().trim().min(2).max(160),
+  dept: z.enum(JOB_DEPARTMENTS),
+  location: z.enum(JOB_LOCATIONS),
+  type: z.enum(JOB_TYPES).default('full-time'),
+  level: z.enum(JOB_LEVELS).default('mid'),
+  status: z.enum(JOB_POSTING_STATUSES).default('draft'),
+  body: z.string().trim().max(20_000).default(''),
+  applyBy: z.string().datetime().nullable().default(null),
+  salaryBand: z.string().trim().max(80).nullable().default(null),
+  equalOpportunity: z.boolean().default(true),
+});
+export const jobPostingUpdateSchema = jobPostingCreateSchema.partial();
+export type JobPostingInput = z.infer<typeof jobPostingCreateSchema>;
+
 // ---- P5: partner portal + anti-counterfeit ----
 export const PARTNER_TYPES = ['distributor', 'oem', 'si'] as const;
 export const PARTNER_TYPE_SCHEMA = z.enum(PARTNER_TYPES);

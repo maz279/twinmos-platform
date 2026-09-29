@@ -92,3 +92,118 @@ export function snReportRoute(db: DB, deps: { requireRole: (r: any) => Guard; se
 
   return r;
 }
+
+// ==================== Phase 5.3: serial registry management ====================
+// Batch CSV ingest of factory production runs, registry search, and
+// anti-counterfeit anomaly detection: a serial queried from >5 distinct IPs
+// inside a rolling 24h window is flagged "suspicious" and (on demand) the
+// ops/compliance team is notified by email via the existing mailer (Resend).
+const SERIAL_CSV_COLUMNS = ['serial', 'sku', 'manufacturedat', 'batch'] as const;
+
+export function serialAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }, mail: { sendOpsAlert: (subject: string, text: string) => Promise<boolean> }) {
+  const r = new Hono();
+
+  async function editorGuard(c: any): Promise<Exclude<AuthSession, null> | Response> {
+    const s = await deps.sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+    return (await deps.requireRole('editor')(c.req.raw)) ? s : c.json(problem(403, 'Requires editor role or above'), 403, { 'Content-Type': P });
+  }
+  async function auditRow(c: any, actorId: string | undefined, action: string, entityId: string, diff: unknown) {
+    const { auditLog } = await import('@twinmos/db');
+    await db.insert(auditLog).values({
+      actorId: actorId ?? null, action, entity: 'serial_registry', entityId, diff: diff ?? null,
+      requestId: c.req.header('x-request-id') ?? c.get('requestId') ?? null,
+      ip: c.req.header('cf-connecting-ip') ?? null,
+    });
+  }
+
+  /** Registry search — serial prefix / exact SKU, newest batches first. */
+  r.get('/serials', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const q = (c.req.query('q') ?? '').trim().toUpperCase();
+    const rows = await db.select().from(serialRegistry)
+      .where(q ? sql`upper(${serialRegistry.serial}) like ${'%' + q + '%'} or upper(coalesce(${serialRegistry.sku}, '')) like ${'%' + q + '%'}` : undefined)
+      .orderBy(desc(serialRegistry.serial)).limit(200);
+    return c.json({ items: rows });
+  });
+
+  /** Batch CSV import — columns: serial,sku,manufacturedAt,batch. Upsert by
+   *  serial (PK); manufacturedAt ISO date; batch lands in a sidecar column of
+   *  the row report (registry has no batch column — kept in the audit diff). */
+  r.post('/serials/import', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const body = await c.req.json().catch(() => ({}));
+    const csv = String((body as any).csv ?? '');
+    const dryRun = (body as any).dryRun !== false;
+    const lines = csv.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    if (lines.length < 2) return c.json(problem(422, 'Validation Failed', 'CSV needs a header and at least one row.'), 422, { 'Content-Type': P });
+    const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
+    if (header.join(',') !== SERIAL_CSV_COLUMNS.join(',')) {
+      return c.json(problem(422, 'Validation Failed', 'Header must be exactly: ' + SERIAL_CSV_COLUMNS.join(',')), 422, { 'Content-Type': P });
+    }
+    type Parsed = { serial: string; sku: string | null; manufacturedAt: Date | null; batch: string | null };
+    const valid: Parsed[] = [];
+    const errors: Array<{ line: number; message: string }> = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map((s) => s.trim());
+      const [serial, sku, mfg, batch] = cols;
+      const lineNo = i + 1;
+      if (!/^[A-Z0-9-]{4,60}$/i.test(serial ?? '')) { errors.push({ line: lineNo, message: 'Serial must be 4-60 chars of A-Z, 0-9, dashes.' }); continue; }
+      let mfgDate: Date | null = null;
+      if (mfg) {
+        mfgDate = new Date(mfg);
+        if (Number.isNaN(mfgDate.getTime())) { errors.push({ line: lineNo, message: 'manufacturedAt must be an ISO date (e.g. 2026-08-14).' }); continue; }
+      }
+      valid.push({ serial: serial.toUpperCase(), sku: sku ? sku.toUpperCase() : null, manufacturedAt: mfgDate, batch: batch || null });
+    }
+    if (dryRun) return c.json({ dryRun: true, validCount: valid.length, errors });
+    if (errors.length) return c.json(problem(422, 'Validation Failed', errors.length + ' row(s) failed — fix and re-run.', errors), 422, { 'Content-Type': P });
+    for (const v of valid) {
+      await db.insert(serialRegistry).values({ serial: v.serial, sku: v.sku, manufacturedAt: v.manufacturedAt })
+        .onConflictDoUpdate({ target: serialRegistry.serial, set: { sku: v.sku, manufacturedAt: v.manufacturedAt } });
+    }
+    await auditRow(c, guard.user.id, 'serial.import', 'batch', { count: valid.length, batches: [...new Set(valid.map((v) => v.batch).filter(Boolean))] });
+    return c.json({ dryRun: false, imported: valid.length });
+  });
+
+  /** Anomaly scan — serials checked from >threshold distinct IPs in the last
+   *  24h. Optional notify=true fires the ops/compliance email. */
+  r.get('/serials/anomalies', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const threshold = Math.min(Math.max(Number(c.req.query('threshold') ?? 5) || 5, 2), 100);
+    const since = new Date(Date.now() - 24 * 3600_000);
+    const rows = await db
+      .select({
+        serial: snCheck.serial,
+        checks: sql<number>`count(*)`,
+        distinctIps: sql<number>`count(distinct ${snCheck.ip})`,
+        lastSeen: sql<string>`max(${snCheck.checkedAt})`,
+      })
+      .from(snCheck)
+      .where(gte(snCheck.checkedAt, since))
+      .groupBy(snCheck.serial)
+      .having(sql`count(distinct ${snCheck.ip}) > ${threshold}`)
+      .orderBy(desc(sql`count(distinct ${snCheck.ip})`))
+      .limit(100);
+    const flagged = rows.map((x: any) => ({
+      serial: x.serial, checks: Number(x.checks), distinctIps: Number(x.distinctIps), lastSeen: x.lastSeen,
+      verdict: 'suspicious — suspected counterfeit distribution',
+    }));
+
+    let notified = false;
+    if (c.req.query('notify') === 'true' && flagged.length) {
+      const list = flagged.map((f) => `${f.serial}: ${f.checks} checks from ${f.distinctIps} IPs (last ${f.lastSeen})`).join('\n');
+      notified = await mail.sendOpsAlert(
+        `TwinMOS anti-counterfeit alert — ${flagged.length} suspicious serial(s) in 24h`,
+        `The following serials were verified from more than ${threshold} distinct IP addresses in the last 24 hours —\na pattern consistent with counterfeit distribution or serial leakage.\n\n${list}\n\nReview in the admin console: Partners & channel → SN-check → Anomalies.`,
+      );
+      await auditRow(c, guard.user.id, 'serial.anomaly.alert', 'batch', { flagged: flagged.length, notified });
+    }
+    return c.json({ windowHours: 24, threshold, flagged, notified });
+  });
+
+  return r;
+}

@@ -15,7 +15,8 @@ import { mediaRoute } from './routes/media.ts';
 import { settingsRoute } from './routes/settings.ts';
 import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
 import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
-import { snCheckRoute, snReportRoute } from './routes/sncheck.ts';
+import { snCheckRoute, snReportRoute, serialAdminRoute } from './routes/sncheck.ts';
+import { sendMail } from './mailer.ts';
 import { auditLog } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { Context } from 'hono';
@@ -193,6 +194,16 @@ export function buildApp(db: DB) {
   app.route('/api/v1/admin', partnerAdminRoute(db, { requireRole, sessionFromRequest })); // P5 portal (admin)
   app.route('/api/v1', snCheckRoute(db)); // P5 public anti-counterfeit check
   app.route('/api/v1/admin', snReportRoute(db, { requireRole, sessionFromRequest })); // P5 reporting
+  // Phase 5.3: serial registry management — batch CSV ingest, search and the
+  // >5-distinct-IPs/24h counterfeit anomaly scan. Ops alert recipient comes
+  // from env (SERIAL_ALERT_TO, falling back to FORMS_TO) — never a literal.
+  app.route('/api/v1/admin', serialAdminRoute(db, { requireRole, sessionFromRequest }, {
+    sendOpsAlert: async (subject, text) => {
+      const to = process.env.SERIAL_ALERT_TO ?? process.env.FORMS_TO;
+      if (!to) return false;
+      return sendMail({ to, subject, text, meta: { kind: 'serial-anomaly' } });
+    },
+  }));
 
   // Manual trigger for external cron (production); the in-process scheduler
   // lives in index.ts so tests never inherit an interval.
