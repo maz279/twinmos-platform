@@ -156,3 +156,28 @@ writing to a second, orphaned database). Consequence for the operator: the dev
 DB was rebuilt, so the browser session and the previously enrolled dev MFA
 secret were wiped — sign in with `admin@twinmos.dev` and re-enable MFA from the
 top bar if wanted (the old QR is dead).
+
+## Evidence — iteration 3: dev auto-login (commit 6d551f9, 2026-09-29)
+
+Operator convenience while the console is being enhanced: skip the manual
+user-id/password (+MFA) entry on every reload.
+
+- `POST /api/v1/dev/session` replays the REAL Better Auth sign-in for the seed
+  admin (cookies/sessions/audit identical to a manual login). Triple-guarded:
+  `API_DEV_AUTOLOGIN=1` required; **403 under `NODE_ENV=production` regardless
+  of the flag**; password only from `SEED_ADMIN_PASSWORD` (env — no credential
+  literal in source; 404 if unset). Wrong password → normal 401.
+- Admin bundle attempts it once on load **only in dev builds**
+  (`import.meta.env.DEV` is false in production bundles); the skippable MFA
+  enrollment offer is suppressed in dev; any failure falls through to the
+  regular login form.
+- 5 tests (p8c-devsession): default-off 404, no-env-password 404, production
+  403, enabled 200 + working session + admin reads, wrong-password 401.
+- Browser-verified: fresh load of `localhost:5174` lands **directly in the
+  console** (no login form, no MFA nag), all 6 workspace tabs restored, live
+  dashboard stats load.
+- `.env.production.example` documents both dev-only flags as NEVER-in-production
+  (and is now actually tracked — `.gitignore` whitelisted it after being
+  silently ignored since P7).
+- Gates: typecheck clean, build green, suite **153/153**; sealed scan
+  `scan-2026-09-29T12-26-46.815Z` shows zero new rule classes vs baseline.
