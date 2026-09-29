@@ -500,3 +500,49 @@ four projects; admin build green.
 Deliberate scope notes: XLSX import (plan said CSV/XLSX) stays CSV-only
 — template + dry-run cover the workflow without a spreadsheet parser
 dependency; drag-and-drop image ingest remains deferred to Phase 4 DAM.
+
+## Evidence — Phase 4: Media DAM COMPLETE (TWN-ADMIN-CMS-AUDIT-PLAN-2026-001 §4)
+
+**4.1 Pluggable storage** (`apps/api/src/storage.ts`). `StorageDriver`
+interface + `LocalStorageDriver` (MEDIA_DIR) + `S3StorageDriver` with
+hand-rolled SigV4 request signing and presigned GET URLs (S3/R2/B2).
+Credentials env-only (`S3_*`); `MEDIA_STORAGE=s3` with an incomplete env
+set throws at startup rather than silently writing local disk. Keys are
+normalised against traversal. Every media byte (originals + variants)
+now moves through the driver — routes are storage-agnostic; production
+flips MEDIA_STORAGE + S3_* and nothing else changes.
+
+**4.2 Sharp variants.** Raster uploads derive thumb 150×150, card
+400×300, hero 1200×800 (WebP + AVIF) and full ≤2560-inside WebP;
+dimensions + colour profile land in `media_asset.meta`. Served via
+`GET /admin/media/:id/file?variant=` with `immutable` caching; the grid
+uses the card variant. Content-addressed keys dedupe identical uploads
+(200 + existing row; latest alt/folder win) instead of erroring.
+Masters under 1200px wide get a `low-res` chip (BR-1.2 hint).
+Two sharp gotchas found in testing: derivative mimes must come from the
+spec (sharp reports AVIF as container family 'heif'), and Drizzle wraps
+driver errors in `.cause` — unique-violation matching walks message +
+cause + SQLSTATE.
+
+**4.3 Folders + referential integrity.** Migration `0011_media_folders`
+(media_folder + media_asset.folder_id, FK set-null). `/admin/
+media-folders` CRUD with subtree-cycle and non-empty guards; uploads
+accept folderId; PATCH /media/:id moves assets; DELETE refuses with
+409 "In use" while the asset is a product hero/gallery image
+(`id = ANY(gallery)` — gallery is integer[], NOT jsonb) or an
+article/news hero, listing referencing items; deletion purges all
+derivative bytes from storage. Media UI: folder tree sidebar with live
+counts + create/rename/delete, upload-into-folder, per-asset move
+dropdown, variant chips T/C/H/F, low-res chip, and an in-use dialog.
+
+**Gates:** p12-dam.e2e.test.ts 11/11 (driver round-trip, SigV4 shape,
+env gating with a complete env restore — spread-copy restore CANNOT
+delete keys and leaked MEDIA_STORAGE into the suite, Map-based
+snapshot/restore fixed it — variant derivation + serving, folders,
+in-use 409 + purge, empty-folder delete). Suite **185/185** across 14
+files; typecheck 0 across all four projects; admin build green; dev DB
+migrated to 0011. Live-verified: a 1300×900 gradient PNG produced all
+5 variants (hero AVIF 4.8 KB vs WebP 9.2 KB), every ?variant= mime
+served, folder filtering with counts, chips render. Note: node
+--experimental-strip-types rejects constructor parameter properties —
+the drivers declare fields explicitly.
