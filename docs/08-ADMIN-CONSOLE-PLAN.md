@@ -571,3 +571,24 @@ Gates: p12 → 13 tests, suite **187/187** (14 files), typecheck clean,
 admin build green. Ops note: dev API runs with --watch — an edit can
 race the old listener for port 8787; if health fails after a change,
 clear the port and restart (done once this pass).
+
+## Evidence — cross-iteration audit (commit 26a268b)
+
+Swept every delivered phase against the plan and each other. One serious
+cross-feature bug surfaced — the intersection of §3.3 (bulk import) with
+§3.1/0007 (rich product fields):
+
+**Bulk-import updates wiped rich fields.** The commit path reused the
+create-shaped row for updates, so `specs:{}`, `heroMediaId:null`,
+`gallery:[]`, `datasheets:[]`, `badges:[]` were written on every update —
+re-importing a catalog would have destroyed hero images, galleries,
+specs, badges and datasheets across the catalog. Fixed by projecting
+only the CSV-representable fields on update; regression test decorates a
+product, re-imports a name+price-only row, and asserts the rich fields
+survive while CSV fields update. p11 → 17 tests; suite **188/188**.
+
+Everything else re-checked clean: §4 driver interface matches the plan
+verbatim; variant sizes match spec; no direct fs calls in media routes;
+variant fallback + thumbnail wiring + folder audit entity + audit-filter
+parity from the previous audit pass hold; optimistic locking covers both
+PATCH surfaces; search covers all entities; hash deep-links work.
