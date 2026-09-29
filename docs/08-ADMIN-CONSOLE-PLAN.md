@@ -546,3 +546,28 @@ migrated to 0011. Live-verified: a 1300×900 gradient PNG produced all
 served, folder filtering with counts, chips render. Note: node
 --experimental-strip-types rejects constructor parameter properties —
 the drivers declare fields explicitly.
+
+## Evidence — Phase 4 audit pass (commit 83656ce)
+
+Re-audited §4 deliverables against the plan text and the running app;
+four gaps found and closed:
+
+1. **Variant fallback** — `?variant=` on derivative-less assets (legacy
+   pre-DAM uploads, SVG, animated GIF) served 404; now serves the
+   original bytes (no immutable header). Unknown variant names still
+   404. New p12 test uses an SVG upload; also verified live against a
+   legacy asset (200, image/png).
+2. **Thumbnails actually derived** — the products list, product editor
+   (hero=card, gallery=thumb) and media picker still fetched full
+   originals, negating the pipeline where it matters most; all now load
+   `?variant=` URLs with `loading="lazy"`.
+3. **Folder audit entity** — media.folder.* rows landed under
+   media_asset; auditRow now takes the entity and folders audit as
+   media_folder (test-asserted for create/update/delete).
+4. **Audit filter parity** — Entity dropdown + icon map gained Product
+   Variants, Compatibility Rules and Media Folders (verified rendering).
+
+Gates: p12 → 13 tests, suite **187/187** (14 files), typecheck clean,
+admin build green. Ops note: dev API runs with --watch — an edit can
+race the old listener for port 8787; if health fails after a change,
+clear the port and restart (done once this pass).
