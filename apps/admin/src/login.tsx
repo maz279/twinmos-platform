@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { API, apiGet } from './api';
 
-const NAVY = '#0A2540'; const CYAN = '#00A3E0'; const GOLD = '#D9A441';
+const NAVY = '#16222F'; const CYAN = '#1DBF9F'; const GOLD = '#E8A33D';
 const LOGO = '/assets/img/logo.webp';
 // Rail top: the ORIGINAL navy TwinMOS wordmark on a frosted-glass chip — true
 // brand colours stay visible against the dark rail regardless of width/zoom
@@ -25,10 +25,10 @@ const cardIn: React.CSSProperties = {
   fontSize: 14.5, marginBottom: 14, background: '#fff', boxSizing: 'border-box',
   transition: 'border-color .15s, box-shadow .15s',
 };
-const cardInFocus = 'outline:none;border-color:#00A3E0;box-shadow:0 0 0 3px rgba(0,163,224,.15)';
+const cardInFocus = 'outline:none;border-color:#1DBF9F;box-shadow:0 0 0 3px rgba(29,191,159,.16)';
 const btnMain: React.CSSProperties = {
   width: '100%', padding: '12px 16px', border: 0, borderRadius: 8,
-  background: `linear-gradient(135deg, ${CYAN} 0%, #0E7FB8 100%)`,
+  background: `linear-gradient(135deg, ${CYAN} 0%, #14A98B 100%)`,
   color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer', letterSpacing: 0.3,
   transition: 'transform .12s, box-shadow .15s, opacity .15s',
 };
@@ -90,26 +90,27 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
   }
 
   const focusUplift = `
+    button, input { font: inherit; }
     .tm-in:focus { ${cardInFocus} }
-    .tm-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,163,224,.35); }
+    .tm-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(20,169,139,.35); }
     .tm-btn:active { transform: translateY(0); }
-    .tm-link:hover { color: #0E7FB8; }
+    .tm-link:hover { color: #0E9F7E; }
     @media (max-width: 880px) { .tm-rail { display: none !important; } }
   `;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0B1B31', fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#0F1720', fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif' }}>
       <style>{focusUplift}</style>
 
       {/* ---- brand rail ---- */}
       <aside className="tm-rail" style={{
         flex: '1 1 52%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
         padding: '46px 58px', color: '#E8F2FA', position: 'relative', overflow: 'hidden',
-        background: `linear-gradient(160deg, ${NAVY} 0%, #0D3A66 58%, #0E4E85 100%)`,
+        background: `linear-gradient(160deg, #182736 0%, #14212F 58%, #101B26 100%)`,
       }}>
         {/* subtle radial glow accent */}
-        <div style={{ position: 'absolute', right: '-120px', top: '20%', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,163,224,.16) 0%, transparent 65%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', left: '-90px', bottom: '-60px', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(217,164,65,.10) 0%, transparent 60%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', right: '-120px', top: '20%', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(29,191,159,.15) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', left: '-90px', bottom: '-60px', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,163,61,.09) 0%, transparent 60%)', pointerEvents: 'none' }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
           <span style={glassChip}>
@@ -143,7 +144,7 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
       </aside>
 
       {/* ---- credential card ---- */}
-      <main style={{ flex: '1 1 48%', display: 'grid', placeItems: 'center', padding: 32, background: '#0B1B31' }}>
+      <main style={{ flex: '1 1 48%', display: 'grid', placeItems: 'center', padding: 32, background: '#0F1720' }}>
         <div style={{ width: '100%', maxWidth: 400 }}>
           {step === 'credentials' && (
             <form onSubmit={submitCredentials} style={{
@@ -173,7 +174,7 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
               boxShadow: '0 28px 80px rgba(2,12,28,.55)', textAlign: 'center',
             }}>
               <img src={LOGO} alt="TwinMOS" style={{ ...navyLogo, height: 26, display: 'block', margin: '0 auto 16px' }} />
-              <div style={{ width: 54, height: 54, margin: '0 auto 16px', borderRadius: 14, background: `linear-gradient(135deg, ${CYAN}, #0E4E85)`, display: 'grid', placeItems: 'center', fontSize: 26 }}>🔐</div>
+              <div style={{ width: 54, height: 54, margin: '0 auto 16px', borderRadius: 14, background: `linear-gradient(135deg, ${CYAN}, #14A98B)`, display: 'grid', placeItems: 'center', fontSize: 26 }}>🔐</div>
               <h2 style={{ margin: '0 0 6px', fontSize: 20, color: NAVY }}>Two-factor verification</h2>
               <p style={{ color: '#5E7691', fontSize: 13.5, margin: '0 0 22px' }}>
                 Enter the 6-digit code from your authenticator app.<br />

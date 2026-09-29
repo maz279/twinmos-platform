@@ -8,14 +8,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { API } from './api';
 
-const NAVY = '#0A2540'; const CYAN = '#00A3E0';
+const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
 const LOGO = '/assets/img/logo.webp';
 const cardIn: React.CSSProperties = {
   width: '100%', padding: '11px 13px', border: '1px solid #CBD5E1', borderRadius: 8,
   fontSize: 14, marginBottom: 12, background: '#fff', boxSizing: 'border-box',
 };
 const btnMain: React.CSSProperties = {
-  padding: '11px 18px', border: 0, borderRadius: 8, background: CYAN, color: NAVY,
+  padding: '11px 18px', border: 0, borderRadius: 8, background: CYAN, color: '#fff',
   fontWeight: 800, fontSize: 14.5, cursor: 'pointer',
 };
 const btnGhost: React.CSSProperties = { ...btnMain, background: '#EEF4FA' };
@@ -25,7 +25,7 @@ function QrCanvas({ text, size = 190 }: { text: string; size?: number }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     if (!ref.current || !text) return;
-    QRCode.toCanvas(ref.current, text, { width: size, margin: 2, color: { dark: '#0A2540', light: '#ffffff' } })
+    QRCode.toCanvas(ref.current, text, { width: size, margin: 2, color: { dark: '#16222F', light: '#ffffff' } })
       .then(() => setFailed(false))
       .catch(() => setFailed(true));
   }, [text, size]);

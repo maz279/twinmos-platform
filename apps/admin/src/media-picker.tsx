@@ -38,7 +38,7 @@ export function MediaPicker({ multi, selected, onConfirm, onClose }: {
       <div onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Choose media"
         style={{ width: 'min(760px, 94vw)', background: '#fff', borderRadius: 14, boxShadow: '0 30px 80px rgba(2,12,28,.5)', padding: 18, maxHeight: '78vh', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <b style={{ color: '#0A2540', flex: 1 }}>Choose {multi ? 'gallery images' : 'an image'} <span style={{ color: '#8CA3BA', fontWeight: 400 }}>— from the media library ({pick.length} selected)</span></b>
+          <b style={{ color: '#1F2A37', flex: 1 }}>Choose {multi ? 'gallery images' : 'an image'} <span style={{ color: '#93A0B4', fontWeight: 400 }}>— from the media library ({pick.length} selected)</span></b>
           <input style={{ ...input, width: 200 }} placeholder="Filter by name/alt" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         {err ? <p style={{ color: '#B3261E' }}>Could not load the media library.</p> : null}
@@ -49,13 +49,13 @@ export function MediaPicker({ multi, selected, onConfirm, onClose }: {
               const on = pick.includes(m.id);
               return (
                 <button key={m.id} onClick={() => toggle(m.id)} title={m.alt ?? m.key}
-                  style={{ position: 'relative', border: on ? '2px solid #00A3E0' : '1px solid #E3EBF3', borderRadius: 10, background: '#F7FAFD', padding: 6, cursor: 'pointer', textAlign: 'left' }}>
+                  style={{ position: 'relative', border: on ? '2px solid #1DBF9F' : '1px solid #E6EBF1', borderRadius: 10, background: '#F7FAFD', padding: 6, cursor: 'pointer', textAlign: 'left' }}>
                   <span style={{ display: 'block', aspectRatio: '4/3', borderRadius: 7, background: '#E7EEF5', overflow: 'hidden' }}>
                     <img src={API + '/admin/media/' + m.id + '/file'} alt={m.alt ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   </span>
                   <span style={{ display: 'block', fontSize: 11, color: '#33475C', marginTop: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.meta?.origName ?? m.key}</span>
                   {!m.alt && <span style={{ fontSize: 10, color: '#B3261E' }}>no alt</span>}
-                  {on && <span style={{ position: 'absolute', top: 8, right: 8, background: '#00A3E0', color: '#fff', borderRadius: 999, fontSize: 10.5, fontWeight: 800, padding: '1px 7px' }}>✓</span>}
+                  {on && <span style={{ position: 'absolute', top: 8, right: 8, background: '#1DBF9F', color: '#fff', borderRadius: 999, fontSize: 10.5, fontWeight: 800, padding: '1px 7px' }}>✓</span>}
                 </button>
               );
             })}

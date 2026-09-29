@@ -87,10 +87,10 @@ export default function SearchPalette({ onClose, open }: { onClose: () => void; 
       <div onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Global search" onKeyDown={key}
         style={{ width: 'min(620px, 92vw)', background: '#fff', borderRadius: 14, boxShadow: '0 30px 80px rgba(2,12,28,.5)', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: '1px solid #E3EBF3' }}>
-          <Icon name="search" size={17} style={{ color: '#00A3E0' }} />
+          <Icon name="search" size={17} style={{ color: '#1DBF9F' }} />
           <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)}
             placeholder="Search leads, products, content, RMA, media… or jump to a module"
-            style={{ flex: 1, border: 0, outline: 'none', fontSize: 15.5, color: '#0A2540' }} />
+            style={{ flex: 1, border: 0, outline: 'none', fontSize: 15.5, color: '#1F2A37' }} />
           {busy && <span style={{ fontSize: 11.5, color: '#8CA3BA' }}>searching…</span>}
           <kbd style={{ fontSize: 10.5, border: '1px solid #D9E4EF', borderRadius: 5, padding: '1px 6px', color: '#8CA3BA' }}>esc</kbd>
         </div>
@@ -106,13 +106,13 @@ export default function SearchPalette({ onClose, open }: { onClose: () => void; 
             const isModule = row.sel === 'module';
             return (
               <button key={`${row.sel}-${row.id}-${i}`} onClick={(e) => fire(row, e.shiftKey)} onMouseEnter={() => setActive(i)}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '9px 16px', border: 0, cursor: 'pointer', background: on ? '#EAF6FC' : '#fff' }}>
-                <Icon name={MODULES.find((m) => m.id === row.module)?.icon ?? 'search'} size={15} style={{ color: isModule ? '#0E7FB8' : '#8CA3BA', flexShrink: 0 }} />
+                style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '9px 16px', border: 0, cursor: 'pointer', background: on ? '#E7F7F2' : '#fff' }}>
+                <Icon name={MODULES.find((m) => m.id === row.module)?.icon ?? 'search'} size={15} style={{ color: isModule ? '#0E9F7E' : '#93A0B4', flexShrink: 0 }} />
                 <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', color: '#0A2540', fontSize: 13.5, fontWeight: isModule ? 700 : 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.title}</span>
+                  <span style={{ display: 'block', color: '#1F2A37', fontSize: 13.5, fontWeight: isModule ? 700 : 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.title}</span>
                   <span style={{ display: 'block', color: '#8CA3BA', fontSize: 11.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.sub}</span>
                 </span>
-                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 0.6, color: '#0E7FB8', background: '#EAF6FC', borderRadius: 5, padding: '2px 6px', flexShrink: 0 }}>{modLabel(row.module).toUpperCase()}</span>
+                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 0.6, color: '#0E9F7E', background: '#E7F7F2', borderRadius: 5, padding: '2px 6px', flexShrink: 0 }}>{modLabel(row.module).toUpperCase()}</span>
               </button>
             );
           })}
@@ -120,7 +120,7 @@ export default function SearchPalette({ onClose, open }: { onClose: () => void; 
         <div style={{ display: 'flex', gap: 14, alignItems: 'center', padding: '9px 16px', borderTop: '1px solid #E3EBF3', background: '#F7FAFD', color: '#8CA3BA', fontSize: 11.5 }}>
           <span>↑↓ navigate</span><span>↵ open</span><span>⇧↵ new tab</span><span>esc close</span>
           <button onClick={() => { open('search', { kind: 'q', id: q.trim(), label: q.trim() ? `Search: ${q.trim()}` : 'Search' }); onClose(); }}
-            style={{ marginLeft: 'auto', border: '1px solid #D9E4EF', background: '#fff', borderRadius: 7, padding: '4px 10px', fontSize: 11.5, fontWeight: 700, color: '#0E7FB8', cursor: 'pointer' }}>
+            style={{ marginLeft: 'auto', border: '1px solid #E6EBF1', background: '#fff', borderRadius: 7, padding: '4px 10px', fontSize: 11.5, fontWeight: 700, color: '#0E9F7E', cursor: 'pointer' }}>
             Open full search ↗
           </button>
         </div>

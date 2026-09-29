@@ -10,7 +10,7 @@ import { MediaPicker } from '../media-picker';
 import { AUTHORIZED_CURRENCIES } from '@twinmos/shared';
 import type { ModProps, TabCtx } from '../nav';
 
-const NAVY = '#0A2540'; const CYAN = '#00A3E0';
+const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
 
 type Product = {
   id: number; sku: string; slug: string; name: string; brandId: number; categoryId: number;

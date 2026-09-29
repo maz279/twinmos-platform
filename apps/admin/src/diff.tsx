@@ -61,7 +61,7 @@ export function DiffView({ oldText, newText, labelOld = 'Published', labelNew = 
   return (
     <div>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 6, fontSize: 12.5 }}>
-        <span style={{ color: '#5E7691' }}><b style={{ color: '#0A2540' }}>{labelNew}</b> vs <b>{labelOld}</b></span>
+        <span style={{ color: '#5E7691' }}><b style={{ color: '#1F2A37' }}>{labelNew}</b> vs <b>{labelOld}</b></span>
         <span style={{ background: '#EAF7EF', color: '#15803D', fontWeight: 800, borderRadius: 999, padding: '1px 9px' }}>+{stats.added}</span>
         <span style={{ background: '#FDEEE6', color: '#C2410C', fontWeight: 800, borderRadius: 999, padding: '1px 9px' }}>−{stats.removed}</span>
       </div>

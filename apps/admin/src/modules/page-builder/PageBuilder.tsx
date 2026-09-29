@@ -10,7 +10,7 @@ import { MediaPicker } from '../../media-picker';
 import { API } from '../../api';
 import { btn, btnGhost, input } from '../../ui';
 
-const NAVY = '#0A2540'; const CYAN = '#00A3E0';
+const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
 
 export default function PageBuilder({ blocks, onChange }: {
   blocks: PageBlock[]; onChange: (next: PageBlock[]) => void;

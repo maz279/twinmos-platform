@@ -7,7 +7,7 @@ import React, { useRef, useState } from 'react';
 import { MediaPicker } from './media-picker';
 import { API } from './api';
 
-const NAVY = '#0A2540';
+const NAVY = '#1F2A37';
 
 type Ops = { label: string; title: string; wrap?: [string, string]; prefix?: string; block?: string; table?: boolean };
 

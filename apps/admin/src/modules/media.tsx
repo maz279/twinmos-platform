@@ -73,7 +73,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
         <span style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: missing ? '#FDEEE6' : '#EAF7EF', color: missing ? '#B3261E' : '#15803D' }}>
           {total - missing}/{total} alt-text compliant
         </span>
-        <button style={{ ...btnGhost, fontWeight: missingOnly ? 800 : 400, borderColor: missingOnly ? '#00A3E0' : undefined, color: missingOnly ? '#0E7FB8' : undefined }}
+        <button style={{ ...btnGhost, fontWeight: missingOnly ? 800 : 400, borderColor: missingOnly ? '#1DBF9F' : undefined, color: missingOnly ? '#0E9F7E' : undefined }}
           onClick={() => setMissingOnly((v) => !v)}>
           {missingOnly ? `Showing ${missing} missing alt only` : `Show missing alt (${missing})`}
         </button>
@@ -99,7 +99,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                     : <span style={{ display: 'grid', placeItems: 'center', height: '100%', color: '#8CA3BA', fontSize: 12 }}>{m.kind}</span>}
                 </a>
                 <div style={{ padding: '8px 10px' }}>
-                  <b style={{ display: 'block', fontSize: 12, color: '#0A2540', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.meta?.origName ?? m.key}>{m.meta?.origName ?? m.key}</b>
+                  <b style={{ display: 'block', fontSize: 12, color: '#1F2A37', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.meta?.origName ?? m.key}>{m.meta?.origName ?? m.key}</b>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '4px 0 6px' }}>
                     <Badge value={m.kind} />
                     {m.alt

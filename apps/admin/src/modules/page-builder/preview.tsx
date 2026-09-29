@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { API } from '../../api';
 import type { PageBlock } from './blocks';
 
-const NAVY = '#0A2540'; const CYAN = '#00A3E0'; const GOLD = '#D9A441';
+const NAVY = '#1F2A37'; const CYAN = '#1DBF9F'; const GOLD = '#E8A33D';
 const S = (o: React.CSSProperties): React.CSSProperties => o;
 
 function Media({ id, alt, style }: { id: unknown; alt?: string; style?: React.CSSProperties }) {
@@ -261,7 +261,7 @@ export function PreviewModal({ blocks, title, onClose }: { blocks: PageBlock[]; 
           <b style={{ color: NAVY, flex: 1, fontSize: 14 }}>Preview — {title || 'Untitled page'}</b>
           {VIEWPORTS.map(([label, w], i) => (
             <button key={label} onClick={() => setVp(i)}
-              style={{ border: vp === i ? '1px solid #00A3E0' : '1px solid #D9E4EF', background: vp === i ? '#EAF6FC' : '#fff', color: vp === i ? '#0E7FB8' : '#5E7691', borderRadius: 7, padding: '4px 12px', fontSize: 12, fontWeight: vp === i ? 800 : 500, cursor: 'pointer' }}>
+              style={{ border: vp === i ? '1px solid #1DBF9F' : '1px solid #E6EBF1', background: vp === i ? '#E7F7F2' : '#fff', color: vp === i ? '#0E9F7E' : '#66748A', borderRadius: 7, padding: '4px 12px', fontSize: 12, fontWeight: vp === i ? 800 : 500, cursor: 'pointer' }}>
               {label} <span style={{ opacity: 0.7 }}>{w}px</span>
             </button>
           ))}

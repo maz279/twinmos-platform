@@ -80,7 +80,7 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
         <button style={view === 'library' ? btn : btnGhost} onClick={() => { setView('library'); setEditing(null); }}>Library</button>
         <button style={view === 'review' ? btn : btnGhost} onClick={() => { setView('review'); setEditing(null); }}>
-          Review queue {queueRows.length ? <span style={{ background: '#0A2540', color: '#fff', borderRadius: 999, fontSize: 10.5, padding: '1px 7px', marginLeft: 6 }}>{queueRows.length}</span> : null}
+          Review queue {queueRows.length ? <span style={{ background: '#1DBF9F', color: '#fff', borderRadius: 999, fontSize: 10.5, padding: '1px 7px', marginLeft: 6 }}>{queueRows.length}</span> : null}
         </button>
         <span style={{ flex: 1 }} />
         {view === 'library' && <>
@@ -388,7 +388,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
         <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: 14, marginTop: 12, background: '#F8FAFC' }}>
           {entity === 'page' ? (
             <div style={{ background: '#fff', borderRadius: 8, padding: 16, display: 'grid', gap: 22 }}>
-              <h2 style={{ marginTop: 0, color: '#0A2540' }}>{title || '(title)'}</h2>
+              <h2 style={{ marginTop: 0, color: '#1F2A37' }}>{title || '(title)'}</h2>
               <BlockPreview blocks={blocks} />
             </div>
           ) : (
