@@ -75,11 +75,17 @@ function Sidebar({ modules, activeModule, badges, collapsed, onToggleCollapse, o
         const closed = closedGroups.includes(g);
         return (
           <div key={g} style={{ marginBottom: 2 }}>
-            {!collapsed && (
+            {/* group header only when the group has 2+ items — a single-item
+                group (e.g. Careers → Careers) would render two identical
+                buttons and the first click would just toggle collapse */}
+            {!collapsed && items.length > 1 && (
               <button className="tm-side-group-h" onClick={() => setClosedGroups((s) => (closed ? s.filter((x) => x !== g) : [...s, g]))}>
                 <span style={{ flex: 1, textAlign: 'left' }}>{g}</span>
                 <Icon name="chevron" size={12} style={{ transform: closed ? 'rotate(-90deg)' : 'none', transition: 'transform .12s' }} />
               </button>
+            )}
+            {!collapsed && items.length === 1 && (
+              <div style={{ fontSize: 10.5, letterSpacing: 1.6, textTransform: 'uppercase', color: '#5E7CA6', fontWeight: 700, padding: '14px 12px 4px' }}>{g}</div>
             )}
             {collapsed && <div style={{ height: 1, background: 'rgba(255,255,255,.10)', margin: '8px 4px' }} />}
             {(!closed || collapsed) && items.map((m) => {

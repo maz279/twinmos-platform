@@ -62,17 +62,17 @@ function Workspace({ me, onSignOut, onMfaChange }: { me: Me; onSignOut: () => vo
     const mod = MODULES.find((m) => m.id === module);
     if (!mod) return;
     const key = tabKey(module, ctx);
+    // ONE pure updater: focus the existing tab when it exists (unless newTab),
+    // otherwise append. Calling a second setState from inside an updater is
+    // impure — React may drop it, which made sidebar clicks to already-open
+    // modules silently fail to activate.
     setTabState((prev) => {
-      if (!opts?.newTab) {
-        const exists = prev.tabs.find((t) => t.id === key);
-        if (exists) { setActive(key); return prev; }
+      if (!opts?.newTab && prev.tabs.some((t) => t.id === key)) {
+        return prev.activeId === key ? prev : { ...prev, activeId: key };
       }
       const id = opts?.newTab ? `${key}#${Date.now().toString(36)}` : key;
-      const tab: Tab = { id, module, ctx, title: ctx?.label ?? mod.label };
-      setActive(id);
-      return { tabs: [...prev.tabs, tab], activeId: id };
+      return { tabs: [...prev.tabs, { id, module, ctx, title: ctx?.label ?? mod.label }], activeId: id };
     });
-    function setActive(id: string) { setTabState((p) => (p.activeId === id ? p : { ...p, activeId: id })); }
   }, []);
 
   const closeTab = useCallback((id: string) => {
