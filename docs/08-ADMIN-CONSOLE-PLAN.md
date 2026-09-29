@@ -181,3 +181,51 @@ user-id/password (+MFA) entry on every reload.
   silently ignored since P7).
 - Gates: typecheck clean, build green, suite **153/153**; sealed scan
   `scan-2026-09-29T12-26-46.815Z` shows zero new rule classes vs baseline.
+
+## Evidence — Phase 1 (Security, User Governance & RBAC) COMPLETE
+Plan source: `admin_panel/plan/TwinMOS_Admin_Panel_and_CMS_Comprehensive_Audit_and_Improvement_Plan.md`
+(TWN-ADMIN-CMS-AUDIT-PLAN-2026-001), Part 3 §Phase 1 — implemented in commit
+399e3ae (with wiring landing across 6d551f9/399e3ae), verified 2026-09-29.
+
+**1.1 Users & Roles + Better Auth admin() plugin** — DONE.
+`auth.ts` configures `admin()` with an access-control role map; `routes/users.ts`
+(super_admin-guarded, every mutation audited): `GET /users` paginated list with
+role/emailVerified/twoFactorEnabled/banned state + `lastActiveAt` (session
+subquery), `POST /users/invite` (mailer), `PATCH /users/:id/role`
+(mutex-serialized, last-active-super_admin protected), `POST /:id/revoke-sessions`,
+`/:id/ban` (with banExpires) & `/:id/unban`. UI module under Administration,
+minRole super_admin. Tests: 10 (incl. 3 concurrency-race cases).
+Browser: module renders with invite/search/role filter; admin row visible.
+
+**1.2 Forensic currency compliance** — DONE.
+`AUTHORIZED_CURRENCIES = ['USD','EUR','AED','SAR','INR','RUB']` +
+`currencySchema` enum in shared; product create/update validated against it;
+editor dropdown renders exactly the six authorized codes (browser-verified —
+no BDT/GBP). Corpus scan: 'BDT' appears only inside the test asserting its
+rejection. Dev DB data: all products USD. Tests: 4 (BDT 422 on create+patch,
+all six accepted, patch isolation).
+
+**1.3 Audit deep filtering + CSV export** — DONE.
+`GET /admin/audit` filters: actorId, entity, action (ilike), from/to (ISO or
+date), cursor keyset pagination (≤200/pg); `GET /admin/audit/actors` distinct
+actor directory for editor+ readers; `GET /admin/audit.csv` same filters,
+formula-injection-neutralised cells, `attachment; filename="twinmos-audit-log.csv"`.
+UI: filter bar (Entity 15 options / Actor / Action / From / To / Reset / Export
+CSV). Browser: entity=product filter narrowed rows 2→1 (all product); CSV
+verified live (200, text/csv, correct header, filtered rows).
+Tests: 4 (multi-filter, CSV neutralisation, actors, RBAC editor/viewer).
+
+**1.4 Media deletion physical cleanup** — DONE.
+`DELETE /media/:id` resolves the target under MEDIA_DIR with a strict
+containment check, unlinks the file (ENOENT-tolerant), then removes the DB row
++ audit row. Tests: 2 (file gone from disk; ENOENT graceful).
+
+**Part 5 acceptance gates (current state):**
+1. typecheck — 0 errors across all projects.
+2. suite — **153/153** (11 files) incl. the 20 Phase-1 governance tests.
+3. Forensic integrity — zero BDT outside the rejection test.
+4. RBAC — anonymous 401 RFC 9457 on every new endpoint (tested); role matrix
+   enforced (super_admin-only users module; editor+ audit read).
+5. Audit guarantee — every governance mutation writes an audit row (tested).
+6. Cross-browser/responsive — single-browser verification only; noted as a
+   remaining manual gate (was already the case for prior phases).
