@@ -272,8 +272,8 @@ export default function AuditLog({ nav, me }: ModProps) {
                     )}
                   </td>
                   <td style={{ ...td, color: '#66748A', fontSize: 12 }}>
-                    <div>{row.ip ?? '—'}</div>
-                    <div style={{ fontFamily: 'monospace', fontSize: 11 }}>{row.requestId ?? '—'}</div>
+                    <div>{row.ip ?? <span style={{ color: '#93A0B4' }}>no IP on record</span>}</div>
+                    {row.requestId && <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#93A0B4' }}>{row.requestId}</div>}
                   </td>
                   <td style={{ ...td, width: 90 }}>
                     {target && (

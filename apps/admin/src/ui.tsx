@@ -31,6 +31,11 @@ export const globalCss = `
   .tm-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.24); }
   .tm-scroll-light::-webkit-scrollbar { width: 8px; height: 8px; }
   .tm-scroll-light::-webkit-scrollbar-thumb { background: #D3DAE3; border-radius: 8px; }
+  /* tab strip scrolls horizontally when crowded — hide the bar (wheel/drag still work) */
+  .tm-tabs-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+  .tm-tabs-scroll::-webkit-scrollbar { display: none; }
+  /* professional row affordance on every data table */
+  main table tbody tr:hover td { background: #F8FAFB; }
   .tm-card-hover { transition: box-shadow .14s, border-color .14s, transform .14s; }
   .tm-card-hover:hover { border-color: ${TEAL}; box-shadow: 0 6px 18px rgba(16,24,40,.10); }
 `;

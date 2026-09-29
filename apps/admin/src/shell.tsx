@@ -21,10 +21,10 @@ const SIDE_TEXT = '#A9B8C8';
 
 const shellCss = `
   .tm-side-group-h { display:flex; align-items:center; gap:8px; width:100%; border:0; background:none; color:#5E7186;
-    font-size:10px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; padding:14px 10px 6px; }
+    font-size:10px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; padding:11px 10px 5px; }
   .tm-side-group-h:hover { color:#8FA3BA; }
   .tm-side-item { display:flex; align-items:center; gap:10px; width:100%; border:0; background:none; text-align:left;
-    color:${SIDE_TEXT}; font-size:13px; padding:7px 10px; border-radius:8px; cursor:pointer; position:relative;
+    color:${SIDE_TEXT}; font-size:13px; padding:6px 10px; border-radius:8px; cursor:pointer; position:relative;
     transition:background .12s, color .12s; }
   .tm-side-item:hover { background:rgba(255,255,255,.06); color:#fff; }
   .tm-side-item.on { background:linear-gradient(90deg, rgba(29,191,159,.22), rgba(29,191,159,.05)); color:#fff; font-weight:700; }
@@ -252,7 +252,7 @@ function TabStrip({ tabs, activeId, onSelect, onClose }: {
   tabs: Tab[]; activeId: string; onSelect: (id: string) => void; onClose: (id: string) => void;
 }) {
   return (
-    <div role="tablist" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px 0', overflowX: 'auto', flexShrink: 0 }}>
+    <div role="tablist" className="tm-tabs-scroll" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px 0', overflowX: 'auto', flexShrink: 0 }}>
       {tabs.map((t) => {
         const mod = MODULES.find((m) => m.id === t.module);
         const on = t.id === activeId;
