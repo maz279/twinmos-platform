@@ -254,3 +254,13 @@ export const jobApplication = pgTable('job_application', {
   payload: jsonb('payload').notNull().default({}), email: text('email').notNull(), status: submissionStatusEnum('status').notNull().default('new'),
   refCode: varchar('ref_code', { length: 24 }).notNull().unique(), createdAt: ts(),
 });
+
+/** Phase 2 §2.3: editorial review comments on content entities (migration 0009). */
+export const contentComment = pgTable('content_comment', {
+  id: serial('id').primaryKey(),
+  entity: varchar('entity', { length: 20 }).notNull(),
+  entityId: integer('entity_id').notNull(),
+  authorId: text('author_id').references(() => user.id, { onDelete: 'set null' }),
+  body: text('body').notNull(),
+  createdAt: ts(),
+}, (t) => [index('content_comment_target_idx').on(t.entity, t.entityId)]);

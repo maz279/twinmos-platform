@@ -13,7 +13,7 @@ import {
   contentTransitionSchema, contentRevertSchema, CONTENT_TRANSITIONS, CONTENT_ENTITY_SCHEMA,
   CONTENT_STATUS, problem, slugify,
 } from '@twinmos/shared';
-import { article, newsPost, page, faq, contentRevision, auditLog } from '@twinmos/db';
+import { article, newsPost, page, faq, contentRevision, contentComment, auditLog, user } from '@twinmos/db';
 import { IdempotencyStore } from '../idem.ts';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
@@ -21,6 +21,9 @@ import type { AuthSession } from '../auth.ts';
 type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
 const TRANSITION_IDEM = new IdempotencyStore();
+
+/** Phase 2 §2.3: review-comment body contract. */
+const commentBodySchema = z.object({ body: z.string().trim().min(1).max(2000) });
 
 /** Preview tokens: random, TTL-bounded, in-memory (Redis in prod). */
 const PREVIEW_TTL_MS = Number(process.env.PREVIEW_TTL_MS ?? 30 * 60 * 1000);
@@ -247,6 +250,39 @@ export function contentRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
       .from(contentRevision).where(and(eq(contentRevision.entity, entity), eq(contentRevision.entityId, id)))
       .orderBy(desc(contentRevision.id)).limit(50);
     return c.json({ items: rows });
+  });
+
+  // ---- Phase 2 §2.3: editorial review comments (readers: any staff; posting: author+) ----
+  r.get('/content/:entity/:id/comments', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const entity = resolveEntity(c);
+    if (entity instanceof Response) return entity;
+    const id = Number(c.req.param('id'));
+    if (!Number.isFinite(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
+    const rows = await db.select({
+      id: contentComment.id, body: contentComment.body, createdAt: contentComment.createdAt,
+      authorId: contentComment.authorId, authorEmail: user.email, authorName: user.name,
+    }).from(contentComment)
+      .leftJoin(user, eq(contentComment.authorId, user.id))
+      .where(and(eq(contentComment.entity, entity), eq(contentComment.entityId, id)))
+      .orderBy(contentComment.id).limit(200);
+    return c.json({ items: rows });
+  });
+
+  r.post('/content/:entity/:id/comments', async (c) => {
+    const guard = await authorGuard(c);
+    if (guard instanceof Response) return guard;
+    const entity = resolveEntity(c);
+    if (entity instanceof Response) return entity;
+    const id = Number(c.req.param('id'));
+    if (!Number.isFinite(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
+    const parsed = commentBodySchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const rows = await db.insert(contentComment).values({ entity, entityId: id, authorId: guard.user.id, body: parsed.data.body })
+      .returning({ id: contentComment.id });
+    await auditRow(c, guard.user.id, 'content.comment', entity, String(id), { commentId: rows[0]?.id, chars: parsed.data.body.length });
+    return c.json({ id: rows[0]?.id, ok: true }, 201);
   });
 
   r.post('/content/:entity/:id/revert', async (c) => {
