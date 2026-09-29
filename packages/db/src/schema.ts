@@ -2,6 +2,7 @@
 // SECURITY: application code uses the Drizzle query builder only; every value is
 // parameter-bound. Never assemble SQL from strings (repo lint + review enforce).
 import { pgTable, pgEnum, text, varchar, integer, boolean, timestamp, jsonb, serial, numeric, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 export const roleEnum = pgEnum('role', ['super_admin', 'admin', 'editor', 'author', 'viewer']);
 export const contentStatusEnum = pgEnum('content_status', ['draft', 'in_review', 'scheduled', 'published', 'archived']);
@@ -68,8 +69,16 @@ export const auditLog = pgTable('audit_log', {
 export const mediaAsset = pgTable('media_asset', {
   id: serial('id').primaryKey(), key: text('key').notNull().unique(), kind: varchar('kind', { length: 20 }).notNull().default('image'),
   width: integer('width'), height: integer('height'), alt: text('alt'), uploadedBy: text('uploaded_by').references(() => user.id, { onDelete: 'set null' }),
+  folderId: integer('folder_id').references((): AnyPgColumn => mediaFolder.id, { onDelete: 'set null' }),
   meta: jsonb('meta').default({}), createdAt: ts(),
-});
+}, (t) => [index('media_asset_folder_idx').on(t.folderId)]);
+// Phase 4.3 — virtual folder hierarchy for the media library (products/,
+// banners/, news/…). Deleting a folder keeps its assets (folder_id → null).
+export const mediaFolder = pgTable('media_folder', {
+  id: serial('id').primaryKey(), name: text('name').notNull(),
+  parentId: integer('parent_id').references((): AnyPgColumn => mediaFolder.id, { onDelete: 'cascade' }),
+  createdAt: ts(),
+}, (t) => [index('media_folder_parent_idx').on(t.parentId)]);
 export const setting = pgTable('setting', { key: text('key').primaryKey(), value: jsonb('value').notNull(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow() });
 export const redirect = pgTable('redirect', { id: serial('id').primaryKey(), from: text('from').notNull().unique(), to: text('to').notNull(), code: integer('code').notNull().default(301) });
 export const locale = pgTable('locale', { code: varchar('code', { length: 10 }).primaryKey(), name: text('name').notNull(), dir: varchar('dir', { length: 3 }).notNull().default('ltr'), active: boolean('active').notNull().default(false) });

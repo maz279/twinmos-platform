@@ -1,16 +1,17 @@
-// P3 media library — multipart upload to MEDIA_DIR (dev: local disk; the prod
-// driver swaps to object storage without touching callers). Guards: size cap,
-// extension allow-list, content sniffed from the bytes, alt-text required for
-// accessibility compliance (docs/04 §Media). Columns align to media_asset:
-// key (stored name) · kind · alt · meta{origName,mime,bytes,folder} · uploadedBy.
+// Phase 4 — Media DAM (TWN-ADMIN-CMS-AUDIT-PLAN §4): all bytes move through
+// the pluggable StorageDriver (local disk dev/test; S3/R2/B2 in prod, env
+// configured); raster uploads get Sharp-derived responsive variants
+// (thumb/card/hero/full WebP + hero AVIF) with dimensions + color profile in
+// meta; assets live in a virtual folder hierarchy (media_folder) with a
+// referential in-use guard that blocks deleting assets referenced by
+// products (hero/gallery), articles or news.
+// Upload guards unchanged from P3: size cap, extension allow-list, magic-byte
+// sniffing, SVG active-content rejection, mandatory alt text (docs/04 §Media).
 import { Hono } from 'hono';
-import { desc, eq, like } from 'drizzle-orm';
+import { and, desc, eq, isNull, like, or, sql } from 'drizzle-orm';
 import { problem } from '@twinmos/shared';
-import { mediaAsset, auditLog } from '@twinmos/db';
-import { mkdirSync, writeFileSync, readFileSync, statSync } from 'node:fs';
-import { unlink } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
-import { join, resolve, sep, relative, isAbsolute } from 'node:path';
+import { article, auditLog, mediaAsset, mediaFolder, newsPost, product } from '@twinmos/db';
+import { getStorage } from '../storage.ts';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 
@@ -19,10 +20,6 @@ const P = 'application/problem+json';
 const MAX_BYTES = Number(process.env.MEDIA_MAX_BYTES ?? 10 * 1024 * 1024);
 const ALLOWED = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.avif', '.pdf', '.webm', '.mp4']);
 
-function isSafeMediaTarget(root: string, target: string): boolean {
-  const rel = relative(root, target);
-  return !rel.startsWith('..') && !isAbsolute(rel) && rel !== '';
-}
 const MIME_BY_EXT: Record<string, string> = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
   '.gif': 'image/gif', '.svg': 'image/svg+xml', '.avif': 'image/avif', '.pdf': 'application/pdf',
@@ -43,7 +40,7 @@ function sniffMime(bytes: Uint8Array): string | null {
 }
 
 /** Native dimension parsing (no deps) for PNG / GIF / JPEG / WebP — populates
- *  the width/height columns so the library can flag oversized assets later. */
+ *  the width/height columns so the library can flag low-resolution assets. */
 function sniffDimensions(bytes: Uint8Array, mime: string): { width: number; height: number } | null {
   const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   try {
@@ -80,13 +77,63 @@ function sniffDimensions(bytes: Uint8Array, mime: string): { width: number; heig
   return null;
 }
 
+// ---------------- Phase 4.2: Sharp variant pipeline -------------------------
+// Raster images (excluding SVG and animated GIF) are derived into responsive
+// variants at upload; every byte lands in the storage driver alongside the
+// original and the manifest is stored in media_asset.meta.variants.
+type VariantSpec = { name: string; width: number; height: number; format: 'webp' | 'avif'; fit: 'cover' | 'inside'; quality: number; suffix: string };
+const VARIANT_SPECS: VariantSpec[] = [
+  { name: 'thumb', width: 150, height: 150, format: 'webp', fit: 'cover', quality: 80, suffix: '.thumb.webp' },
+  { name: 'card', width: 400, height: 300, format: 'webp', fit: 'cover', quality: 82, suffix: '.card.webp' },
+  { name: 'hero', width: 1200, height: 800, format: 'webp', fit: 'cover', quality: 85, suffix: '.hero.webp' },
+  { name: 'heroAvif', width: 1200, height: 800, format: 'avif', fit: 'cover', quality: 60, suffix: '.hero.avif' },
+  { name: 'full', width: 2560, height: 2560, format: 'webp', fit: 'inside', quality: 85, suffix: '.full.webp' },
+];
+
+async function deriveVariants(baseKey: string, bytes: Uint8Array, mime: string): Promise<{
+  variants?: Record<string, { key: string; mime: string; bytes: number; width: number; height: number }>;
+  profile?: { format: string; space: string; hasAlpha: boolean };
+  variantError?: string;
+}> {
+  // SVG is vector (scale-free) and GIF may be animated — no raster pipeline.
+  if (mime === 'image/svg+xml' || mime === 'image/gif') return {};
+  try {
+    const sharp = (await import('sharp')).default;
+    const img = sharp(Buffer.from(bytes), { failOn: 'none' });
+    const meta = await img.metadata();
+    const out: Record<string, { key: string; mime: string; bytes: number; width: number; height: number }> = {};
+    const storage = getStorage();
+    for (const spec of VARIANT_SPECS) {
+      const derived = await img.clone()
+        .resize(spec.width, spec.height, { fit: spec.fit, withoutEnlargement: spec.fit === 'inside' })
+        [spec.format]({ quality: spec.quality })
+        .toBuffer({ resolveWithObject: true });
+      const key = baseKey + spec.suffix;
+      // mime from the SPEC, not sharp's info.format — sharp reports AVIF
+      // derivatives with the container family name ('heif')
+      const mime = spec.format === 'avif' ? 'image/avif' : 'image/webp';
+      await storage.put(key, new Uint8Array(derived.data), mime);
+      out[spec.name] = { key, mime, bytes: derived.data.byteLength, width: derived.info.width, height: derived.info.height };
+    }
+    return { variants: out, profile: { format: meta.format ?? 'unknown', space: meta.space ?? 'srgb', hasAlpha: !!meta.hasAlpha } };
+  } catch (e) {
+    // An image sharp cannot chew must still upload — the original is the
+    // source of truth; the manifest records why derivatives are missing.
+    return { variantError: e instanceof Error ? e.message.slice(0, 200) : 'variant derivation failed' };
+  }
+}
+
 export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
   const r = new Hono();
-  const MEDIA_DIR = process.env.MEDIA_DIR ?? './data/media';
 
   async function authed(c: any): Promise<Exclude<AuthSession, null> | Response> {
     const s = await deps.sessionFromRequest(c.req.raw);
     return s ?? c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+  }
+  async function authorGuard(c: any): Promise<Exclude<AuthSession, null> | Response> {
+    const s = await deps.sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+    return (await deps.requireRole('author')(c.req.raw)) ? s : c.json(problem(403, 'Requires author role or above'), 403, { 'Content-Type': P });
   }
   async function auditRow(c: any, actorId: string | undefined, action: string, entityId: string, diff: unknown) {
     await db.insert(auditLog).values({
@@ -96,20 +143,125 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     });
   }
 
+  /** Entities currently referencing an asset (in-use guard, §4.3). */
+  async function usageOf(id: number): Promise<Array<{ entity: string; id: number; label: string }>> {
+    const refs: Array<{ entity: string; id: number; label: string }> = [];
+    const products = await db.select({ id: product.id, sku: product.sku, name: product.name })
+      .from(product)
+      .where(or(eq(product.heroMediaId, id), sql`${id} = ANY(${product.gallery})`))
+      .limit(50);
+    for (const p of products) refs.push({ entity: 'product', id: p.id, label: `${p.sku} — ${p.name}` });
+    const articles = await db.select({ id: article.id, title: article.title }).from(article)
+      .where(and(eq(article.heroMediaId, id), isNull(article.deletedAt))).limit(50);
+    for (const a of articles) refs.push({ entity: 'article', id: a.id, label: a.title });
+    const news = await db.select({ id: newsPost.id, title: newsPost.title }).from(newsPost)
+      .where(and(eq(newsPost.heroMediaId, id), isNull(newsPost.deletedAt))).limit(50);
+    for (const n of news) refs.push({ entity: 'news', id: n.id, label: n.title });
+    return refs;
+  }
+
+  // ---------------- Phase 4.3: folder hierarchy ----------------
+  r.get('/media-folders', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const folders = await db.select().from(mediaFolder).orderBy(mediaFolder.parentId, mediaFolder.name);
+    const counts = await db.select({ folderId: mediaAsset.folderId, n: sql<number>`count(*)` })
+      .from(mediaAsset).groupBy(mediaAsset.folderId);
+    const byFolder = new Map(counts.map((x) => [x.folderId, Number(x.n)]));
+    const unfiled = await db.select({ n: sql<number>`count(*)` }).from(mediaAsset).where(isNull(mediaAsset.folderId));
+    return c.json({
+      items: folders.map((f) => ({ ...f, assetCount: byFolder.get(f.id) ?? 0 })),
+      unfiledCount: Number(unfiled[0]?.n ?? 0),
+    });
+  });
+
+  r.post('/media-folders', async (c) => {
+    const s = await authorGuard(c);
+    if (s instanceof Response) return s;
+    const body = await c.req.json().catch(() => ({}));
+    const name = String((body as any).name ?? '').trim().slice(0, 60);
+    const parentId = (body as any).parentId == null ? null : Number((body as any).parentId);
+    if (!name) return c.json(problem(422, 'Validation Failed', 'Folder name is required.'), 422, { 'Content-Type': P });
+    if (parentId != null) {
+      if (!Number.isInteger(parentId) || !(await db.select({ id: mediaFolder.id }).from(mediaFolder).where(eq(mediaFolder.id, parentId)).limit(1))[0]) {
+        return c.json(problem(422, 'Validation Failed', 'Parent folder does not exist.'), 422, { 'Content-Type': P });
+      }
+    }
+    const rows = await db.insert(mediaFolder).values({ name, parentId }).returning();
+    await auditRow(c, s.user.id, 'media.folder.create', String(rows[0].id), { name, parentId });
+    return c.json(rows[0], 201);
+  });
+
+  r.patch('/media-folders/:id', async (c) => {
+    const s = await authorGuard(c);
+    if (s instanceof Response) return s;
+    const id = Number(c.req.param('id'));
+    const body = await c.req.json().catch(() => ({}));
+    const patch: Record<string, unknown> = {};
+    if ((body as any).name !== undefined) {
+      const name = String((body as any).name ?? '').trim().slice(0, 60);
+      if (!name) return c.json(problem(422, 'Validation Failed', 'Folder name cannot be empty.'), 422, { 'Content-Type': P });
+      patch.name = name;
+    }
+    if ((body as any).parentId !== undefined) {
+      const parentId = (body as any).parentId == null ? null : Number((body as any).parentId);
+      if (parentId != null) {
+        if (parentId === id) return c.json(problem(422, 'Validation Failed', 'A folder cannot be its own parent.'), 422, { 'Content-Type': P });
+        // walk up from the new parent — it must not pass through this folder
+        let cursor: number | null = parentId;
+        const seen = new Set<number>();
+        while (cursor != null && !seen.has(cursor)) {
+          seen.add(cursor);
+          if (cursor === id) return c.json(problem(422, 'Validation Failed', 'Cannot move a folder inside its own subtree.'), 422, { 'Content-Type': P });
+          const row: { parentId: number | null } | undefined = (await db.select({ parentId: mediaFolder.parentId }).from(mediaFolder).where(eq(mediaFolder.id, cursor)).limit(1))[0];
+          cursor = row?.parentId ?? null;
+        }
+      }
+      patch.parentId = parentId;
+    }
+    const rows = await db.update(mediaFolder).set(patch).where(eq(mediaFolder.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Folder not found'), 404, { 'Content-Type': P });
+    await auditRow(c, s.user.id, 'media.folder.update', String(id), patch);
+    return c.json(rows[0]);
+  });
+
+  r.delete('/media-folders/:id', async (c) => {
+    const s = await authorGuard(c);
+    if (s instanceof Response) return s;
+    const id = Number(c.req.param('id'));
+    const childCount = await db.select({ n: sql<number>`count(*)` }).from(mediaFolder).where(eq(mediaFolder.parentId, id));
+    const assetCount = await db.select({ n: sql<number>`count(*)` }).from(mediaAsset).where(eq(mediaAsset.folderId, id));
+    if (Number(childCount[0]?.n ?? 0) > 0) {
+      return c.json(problem(409, 'Conflict', 'Folder still contains sub-folders — delete or move them first.'), 409, { 'Content-Type': P });
+    }
+    if (Number(assetCount[0]?.n ?? 0) > 0) {
+      return c.json(problem(409, 'Conflict', `Folder still contains ${assetCount[0].n} asset(s) — move them elsewhere first.`), 409, { 'Content-Type': P });
+    }
+    const rows = await db.delete(mediaFolder).where(eq(mediaFolder.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Folder not found'), 404, { 'Content-Type': P });
+    await auditRow(c, s.user.id, 'media.folder.delete', String(id), { name: rows[0].name });
+    return c.json({ deleted: true });
+  });
+
+  // ---------------- assets ----------------
   r.get('/media', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
     const q = c.req.query('q');
+    const folder = c.req.query('folder');
+    const filters = [];
+    if (q) filters.push(like(mediaAsset.key, `%${q.replace(/[%_]/g, '')}%`));
+    if (folder === 'none') filters.push(isNull(mediaAsset.folderId));
+    else if (folder && Number.isInteger(Number(folder))) filters.push(eq(mediaAsset.folderId, Number(folder)));
     const rows = await db.select().from(mediaAsset)
-      .where(q ? like(mediaAsset.key, `%${q.replace(/[%_]/g, '')}%`) : undefined)
-      .orderBy(desc(mediaAsset.id)).limit(100);
+      .where(filters.length ? and(...filters) : undefined)
+      .orderBy(desc(mediaAsset.id)).limit(200);
     return c.json({ items: rows });
   });
 
   r.post('/media', async (c) => {
-    const s = await deps.sessionFromRequest(c.req.raw);
-    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
-    if (!(await deps.requireRole('author')(c.req.raw))) return c.json(problem(403, 'Requires author role or above'), 403, { 'Content-Type': P });
+    const s = await authorGuard(c);
+    if (s instanceof Response) return s;
 
     const form = await c.req.formData().catch(() => null);
     const file = form?.get('file');
@@ -129,7 +281,6 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     const bytes = new Uint8Array(await file.arrayBuffer());
     const sniffed = sniffMime(bytes) ?? (ext === '.svg' ? 'image/svg+xml' : null);
     if (!sniffed) return c.json(problem(422, 'Validation Failed', 'File content does not look like an allowed media type.'), 422, { 'Content-Type': P });
-    if (sniffed.startsWith('video/')) { /* mp4/webm magic is codec-varied; extension allow-list governs */ }
     if (ext === '.svg') {
       const text = new TextDecoder().decode(bytes).toLowerCase();
       if (text.includes('<script') || text.includes('onload=')) {
@@ -138,63 +289,127 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     }
     const kind = sniffed.startsWith('video/') ? 'video' : sniffed === 'application/pdf' ? 'document' : 'image';
 
-    const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 16);
-    const stored = `${hash}${ext}`;
-    mkdirSync(MEDIA_DIR, { recursive: true });
-    writeFileSync(join(MEDIA_DIR, stored), bytes);
+    // folder assignment (optional; folder must exist)
+    let folderId: number | null = null;
+    const rawFolder = form?.get('folderId');
+    if (rawFolder != null && String(rawFolder) !== '') {
+      const fid = Number(rawFolder);
+      const exists = Number.isInteger(fid) && (await db.select({ id: mediaFolder.id }).from(mediaFolder).where(eq(mediaFolder.id, fid)).limit(1))[0];
+      if (!exists) return c.json(problem(422, 'Validation Failed', 'Target folder does not exist.'), 422, { 'Content-Type': P });
+      folderId = fid;
+    }
 
-    const folder = String(form?.get('folder') ?? 'uploads').replace(/[^a-z0-9-]/gi, '').slice(0, 40) || 'uploads';
+    const storage = getStorage();
+    const hash = (await import('node:crypto')).createHash('sha256').update(bytes).digest('hex').slice(0, 16);
+    const stored = `${hash}${ext}`;
+    await storage.put(stored, bytes, sniffed);
+
+    // Phase 4.2: responsive variants + colour profile (best-effort)
+    const derived = kind === 'image' ? await deriveVariants(stored, bytes, sniffed) : {};
     const dims = sniffDimensions(bytes, sniffed);
-    const rows = await db.insert(mediaAsset).values({
-      key: stored, kind,
-      alt: alt.slice(0, 500),
-      width: dims?.width ?? null,
-      height: dims?.height ?? null,
-      meta: { origName: file.name.slice(0, 180), mime: sniffed, bytes: file.size, folder },
-      uploadedBy: s.user.id,
-    }).returning();
-    await auditRow(c, s.user.id, 'media.create', String(rows[0].id), { key: stored, kind, bytes: file.size });
-    return c.json(rows[0], 201);
+
+    const meta: Record<string, unknown> = {
+      origName: file.name.slice(0, 180), mime: sniffed, bytes: file.size,
+      ...(derived.variants ? { variants: derived.variants } : {}),
+      ...(derived.profile ? { profile: derived.profile } : {}),
+      ...(derived.variantError ? { variantError: derived.variantError } : {}),
+    };
+    try {
+      const rows = await db.insert(mediaAsset).values({
+        key: stored, kind,
+        alt: alt.slice(0, 500),
+        width: dims?.width ?? null,
+        height: dims?.height ?? null,
+        folderId,
+        meta,
+        uploadedBy: s.user.id,
+      }).returning();
+      await auditRow(c, s.user.id, 'media.create', String(rows[0].id), { key: stored, kind, bytes: file.size, folderId });
+      return c.json(rows[0], 201);
+    } catch (e) {
+      // Content-addressed keys: identical bytes already stored → dedupe.
+      // The fresh upload wins on alt/folder (latest user intent) and the
+      // existing asset (with its variants) is returned instead of erroring.
+      // Drizzle wraps driver errors — match message, cause chain AND SQLSTATE.
+      const isDup = [
+        String((e as Error)?.message ?? ''),
+        String((e as { cause?: { message?: string } })?.cause?.message ?? ''),
+        String((e as { code?: string })?.code ?? ''),
+      ].some((s) => /unique|duplicate|23505/i.test(s));
+      if (isDup) {
+        const existing = (await db.select().from(mediaAsset).where(eq(mediaAsset.key, stored)).limit(1))[0];
+        if (existing) {
+          const patch: Record<string, unknown> = {};
+          if (alt.slice(0, 500) !== existing.alt) patch.alt = alt.slice(0, 500);
+          if (folderId !== existing.folderId) patch.folderId = folderId;
+          const rows = Object.keys(patch).length
+            ? await db.update(mediaAsset).set(patch).where(eq(mediaAsset.id, existing.id)).returning()
+            : [existing];
+          await auditRow(c, s.user.id, 'media.dedupe', String(existing.id), { key: stored, patch });
+          return c.json({ ...rows[0], deduplicated: true }, 200);
+        }
+      }
+      throw e;
+    }
   });
 
   r.get('/media/:id/file', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
     const id = Number(c.req.param('id'));
+    const variant = c.req.query('variant');
     const rows = await db.select().from(mediaAsset).where(eq(mediaAsset.id, id)).limit(1);
     const asset = rows[0];
     if (!asset) return c.json(problem(404, 'Media not found'), 404, { 'Content-Type': P });
-    // path-traversal guard: resolve and require the file to live inside MEDIA_DIR
-    const root = resolve(MEDIA_DIR);
-    const target = resolve(join(MEDIA_DIR, asset.key));
-    if (!isSafeMediaTarget(root, target)) {
-      return c.json(problem(400, 'Invalid media key'), 400, { 'Content-Type': P });
+
+    let key = asset.key;
+    let mime = String((asset.meta as any)?.mime ?? 'application/octet-stream');
+    let immutable = false;
+    if (variant) {
+      const spec = VARIANT_SPECS.find((v) => v.name === variant);
+      const manifest = ((asset.meta as any)?.variants ?? {}) as Record<string, { key: string; mime: string }>;
+      const target = manifest[variant];
+      if (!spec || !target) return c.json(problem(404, 'Variant not derived for this asset'), 404, { 'Content-Type': P });
+      key = target.key;
+      mime = target.mime;
+      immutable = true; // derivative bytes never change for a given key
     }
-    let bytes: Uint8Array;
-    try {
-      const st = statSync(target);
-      if (!st.isFile()) throw new Error('not a file');
-      bytes = new Uint8Array(readFileSync(target));
-    } catch {
-      return c.json(problem(404, 'Media file missing on disk'), 404, { 'Content-Type': P });
-    }
-    const mime = String((asset.meta as any)?.mime ?? 'application/octet-stream');
-    if (mime === 'image/svg+xml') {
+
+    const obj = await getStorage().get(key);
+    if (!obj) return c.json(problem(404, 'Media file missing in storage'), 404, { 'Content-Type': P });
+    const serveMime = variant ? mime : (obj.mime === 'application/octet-stream' ? mime : obj.mime);
+    if (serveMime === 'image/svg+xml') {
       c.header('Content-Disposition', 'attachment; filename="' + asset.key + '"'); // SVG never renders inline here
     }
-    return c.body(bytes as any, 200, { 'Content-Type': mime, 'Cache-Control': 'private, max-age=60' });
+    return c.body(obj.bytes as any, 200, {
+      'Content-Type': serveMime,
+      'Cache-Control': immutable ? 'private, max-age=86400, immutable' : 'private, max-age=60',
+    });
   });
 
   r.patch('/media/:id', async (c) => {
-    const s = await deps.sessionFromRequest(c.req.raw);
-    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
-    if (!(await deps.requireRole('author')(c.req.raw))) return c.json(problem(403, 'Requires author role or above'), 403, { 'Content-Type': P });
+    const s = await authorGuard(c);
+    if (s instanceof Response) return s;
     const id = Number(c.req.param('id'));
-    const alt = String((await c.req.json().catch(() => ({}))).alt ?? '').trim();
-    if (!alt) return c.json(problem(422, 'Validation Failed', 'alt text cannot be empty.'), 422, { 'Content-Type': P });
-    const rows = await db.update(mediaAsset).set({ alt: alt.slice(0, 500) }).where(eq(mediaAsset.id, id)).returning();
+    const body = await c.req.json().catch(() => ({}));
+    const patch: Record<string, unknown> = {};
+    if ((body as any).alt !== undefined) {
+      const alt = String((body as any).alt ?? '').trim();
+      if (!alt) return c.json(problem(422, 'Validation Failed', 'alt text cannot be empty.'), 422, { 'Content-Type': P });
+      patch.alt = alt.slice(0, 500);
+    }
+    if ((body as any).folderId !== undefined) {
+      const folderId = (body as any).folderId == null ? null : Number((body as any).folderId);
+      if (folderId != null) {
+        const exists = Number.isInteger(folderId) && (await db.select({ id: mediaFolder.id }).from(mediaFolder).where(eq(mediaFolder.id, folderId)).limit(1))[0];
+        if (!exists) return c.json(problem(422, 'Validation Failed', 'Target folder does not exist.'), 422, { 'Content-Type': P });
+      }
+      patch.folderId = folderId;
+    }
+    if (!Object.keys(patch).length) return c.json(problem(422, 'Validation Failed', 'Nothing to update (alt and/or folderId).'), 422, { 'Content-Type': P });
+    const rows = await db.update(mediaAsset).set(patch).where(eq(mediaAsset.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Media not found'), 404, { 'Content-Type': P });
-    await auditRow(c, s.user.id, 'media.update', String(id), { alt: alt.slice(0, 80) });
+    await auditRow(c, s.user.id, 'media.update', String(id), patch);
     return c.json(rows[0]);
   });
 
@@ -208,24 +423,21 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     const asset = rows[0];
     if (!asset) return c.json(problem(404, 'Media not found'), 404, { 'Content-Type': P });
 
-    // Strict path containment check against MEDIA_DIR
-    const root = resolve(MEDIA_DIR);
-    const target = resolve(join(MEDIA_DIR, asset.key));
-    if (!isSafeMediaTarget(root, target)) {
-      return c.json(problem(400, 'Invalid media key'), 400, { 'Content-Type': P });
+    // Phase 4.3: referential integrity — refuse to delete an asset that is
+    // still the hero or gallery image of a live product/article/news item.
+    const usage = await usageOf(id);
+    if (usage.length) {
+      const listing = usage.slice(0, 8).map((u) => `${u.entity} #${u.id} (${u.label})`).join('; ');
+      return c.json(problem(409, 'In use', `Asset is referenced by ${usage.length} item(s): ${listing}${usage.length > 8 ? ' …' : ''}`), 409, { 'Content-Type': P });
     }
 
-    try {
-      await unlink(target);
-    } catch (err: any) {
-      if (err?.code !== 'ENOENT') {
-        console.error('[media.delete] unlink error', err);
-        return c.json(problem(500, 'Failed to delete file from disk', err?.message), 500, { 'Content-Type': P });
-      }
-    }
+    const storage = getStorage();
+    await storage.delete(asset.key);
+    const variants = ((asset.meta as any)?.variants ?? {}) as Record<string, { key: string }>;
+    for (const v of Object.values(variants)) await storage.delete(v.key);
 
     await db.delete(mediaAsset).where(eq(mediaAsset.id, id));
-    await auditRow(c, s.user.id, 'media.delete', String(id), { key: asset.key });
+    await auditRow(c, s.user.id, 'media.delete', String(id), { key: asset.key, variants: Object.keys(variants) });
     return c.json({ deleted: true });
   });
 
