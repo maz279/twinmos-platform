@@ -15,6 +15,7 @@ type Group = { type: string; items: Hit[] };
 const KIND_ICON: Record<string, string> = {
   article: 'doc', page: 'doc', news: 'doc', faq: 'doc',
   product: 'layers', lead: 'inbox', rma: 'tool', application: 'briefcase', posting: 'briefcase', media: 'image',
+  compat: 'shield', q: 'search',
 };
 
 export default function SearchPage({ ctx, nav }: ModProps) {

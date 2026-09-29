@@ -1,7 +1,7 @@
 // TwinMOS Admin — P1+ console: login/MFA state machine + tab workspace shell.
 // Navigation architecture (grouped sidebar, mega menu, multi-tab, ⌘K search) lives
 // in shell.tsx and nav.ts (docs/08-ADMIN-CONSOLE-PLAN.md); this file owns state.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { API, apiGet } from './api';
 import Login from './login';
@@ -21,6 +21,28 @@ function tabKey(module: string, ctx?: TabCtx): string {
 }
 function defaultTab(): Tab {
   return { id: 'dashboard::', module: 'dashboard', title: 'Dashboard' };
+}
+
+// ---- URL hash deep-links ---------------------------------------------------
+// The console is state-driven; the hash makes the workspace shareable and
+// gives visitors an explicit home:  #/home → dashboard,
+// #/m/<module> → module tab,  #/m/<module>/<ctxKind>/<ctxId> → deep-linked tab.
+function tabFromHash(hash: string): { module: string; ctx?: TabCtx } | null {
+  const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+  if (parts.length === 0 || (parts.length === 1 && parts[0] === 'home')) return { module: 'dashboard' };
+  if (parts[0] === 'm' && parts.length >= 2) {
+    const ctx = parts.length >= 4
+      ? { kind: parts[2], id: parts[3], label: parts[3] }
+      : undefined;
+    return { module: parts[1], ctx };
+  }
+  return null;
+}
+function hashFromTab(t: Tab | undefined): string {
+  if (!t || (t.module === 'dashboard' && !t.ctx)) return '#/home';
+  const segs = ['m', t.module];
+  if (t.ctx?.kind && t.ctx?.id) segs.push(t.ctx.kind, encodeURIComponent(t.ctx.id));
+  return `#/${segs.join('/')}`;
 }
 function restoreTabs(role?: string): { tabs: Tab[]; activeId: string } {
   const allowed = new Set(visibleModules(role).map((m) => m.id));
@@ -88,6 +110,28 @@ function Workspace({ me, onSignOut, onMfaChange }: { me: Me; onSignOut: () => vo
 
   const activeTab = tabs.find((t) => t.id === activeId) ?? tabs[0];
   const mod = visibleModules(me.user?.role).find((m) => m.id === activeTab?.module);
+
+  // Hash deep-links: open the tab the URL asks for (mount + manual hash edits),
+  // and mirror the active tab back into the URL (replaceState → no history spam).
+  const openRef = useRef(openTab);
+  openRef.current = openTab;
+  useEffect(() => {
+    const apply = () => {
+      const target = tabFromHash(location.hash);
+      if (target && visibleModules(me.user?.role).some((m) => m.id === target.module)) {
+        openRef.current(target.module, target.ctx);
+      }
+    };
+    apply();
+    window.addEventListener('hashchange', apply);
+    return () => window.removeEventListener('hashchange', apply);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    const h = hashFromTab(activeTab);
+    if (location.hash !== h) history.replaceState(null, '', h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab?.id]);
 
   return (
     <Shell

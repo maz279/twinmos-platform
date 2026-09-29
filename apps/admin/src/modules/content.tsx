@@ -403,7 +403,12 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
         <div style={{ border: '1px solid #E6EBF1', borderRadius: 8, padding: 14, marginTop: 12, background: '#F8FAFC' }}>
           {entity === 'page' ? (
             <div style={{ background: '#fff', borderRadius: 8, padding: 16, display: 'grid', gap: 22 }}>
-              <h2 style={{ marginTop: 0, color: '#1F2A37' }}>{title || '(title)'}</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <h2 style={{ marginTop: 0, color: '#1F2A37', flex: 1 }}>{title || '(title)'}</h2>
+                <button style={btnGhost} onClick={() => setShowModal(true)} title="Open the responsive preview (desktop 1200 / tablet 768 / mobile 375)">
+                  🖥 Responsive preview
+                </button>
+              </div>
               <BlockPreview blocks={blocks} />
             </div>
           ) : (

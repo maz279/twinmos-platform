@@ -71,6 +71,13 @@
       "when": 1790700000000,
       "tag": "0009_content_comments",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790790000000,
+      "tag": "0010_widen_form_factor",
+      "breakpoints": true
     }
   ]
 }

@@ -147,7 +147,7 @@ export const product = pgTable('product', {
 }, (t) => [index('product_status_idx').on(t.status), index('product_cat_idx').on(t.categoryId)]);
 export const compatibilityRule = pgTable('compatibility_rule', {
   id: serial('id').primaryKey(), deviceBrand: text('device_brand').notNull(), deviceModel: text('device_model').notNull(),
-  memoryGen: varchar('memory_gen', { length: 12 }), formFactor: varchar('form_factor', { length: 12 }), maxGb: integer('max_gb'), notes: text('notes'),
+  memoryGen: varchar('memory_gen', { length: 12 }), formFactor: varchar('form_factor', { length: 24 }), maxGb: integer('max_gb'), notes: text('notes'),
 }, (t) => [index('compat_device_idx').on(t.deviceBrand, t.deviceModel)]);
 export const productVariant = pgTable('product_variant', {
   id: serial('id').primaryKey(), productId: integer('product_id').notNull().references(() => product.id, { onDelete: 'cascade' }),

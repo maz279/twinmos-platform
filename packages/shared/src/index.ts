@@ -152,7 +152,7 @@ export type VariantInput = z.infer<typeof variantCreateSchema>;
 // 3.2 QVL compatibility matrix — motherboard/laptop validation rules.
 // NB: memory_gen and form_factor are varchar(12) columns — keep enum labels short.
 export const COMPAT_MEMORY_GENS = ['DDR4', 'DDR5'] as const;
-export const COMPAT_FORM_FACTORS = ['U-DIMM', 'SO-DIMM', 'M.2 NVMe'] as const;
+export const COMPAT_FORM_FACTORS = ['U-DIMM', 'SO-DIMM', 'M.2 2280 NVMe'] as const;
 export const compatibilityCreateSchema = z.object({
   deviceBrand: z.string().trim().min(1).max(40),
   deviceModel: z.string().trim().min(1).max(80),

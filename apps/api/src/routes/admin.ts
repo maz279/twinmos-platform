@@ -597,12 +597,13 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
   r.get('/stats', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
-    const [subsByStatus, subsByType, rmaByStatus, jobs, products] = await Promise.all([
+    const [subsByStatus, subsByType, rmaByStatus, jobs, products, variants] = await Promise.all([
       db.select({ status: formSubmission.status, n: count() }).from(formSubmission).groupBy(formSubmission.status),
       db.select({ type: formSubmission.type, n: count() }).from(formSubmission).groupBy(formSubmission.type),
       db.select({ status: rmaRequest.status, n: count() }).from(rmaRequest).groupBy(rmaRequest.status),
       db.select({ n: count() }).from(jobApplication),
       db.select({ n: count() }).from(product),
+      db.select({ n: count() }).from(productVariant),
     ]);
     const total = (rows: { n: number }[]) => rows.reduce((s, x) => s + Number(x.n), 0);
     const byKey = (rows: Array<{ n: number; [k: string]: unknown }>, key: string) =>
@@ -664,6 +665,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       jobApplications: total(jobs),
       jobsNew: Number(jobsNew[0]?.n ?? 0),
       products: total(products),
+      variants: total(variants),
       series,
       slaRisk: slaRisk.map((s) => ({ ...s, slaState: slaState({ status: s.status, dueAt: s.dueAt }, now) })),
       content: {
@@ -686,7 +688,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const like = `%${q}%`;
     const CAP = 5;
     const live = sql`is null`; // soft-delete guard fragment
-    const [articles, pages, news, faqs, products, subs, rmas, apps, postings, assets] = await Promise.all([
+    const [articles, pages, news, faqs, products, subs, rmas, apps, postings, assets, compat] = await Promise.all([
       db.select({ id: article.id, title: article.title, status: article.status, locale: article.locale })
         .from(article).where(and(ilike(article.title, like), sql`${article.deletedAt} ${live}`))
         .orderBy(desc(article.updatedAt)).limit(CAP),
@@ -715,6 +717,9 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       db.select({ id: mediaAsset.id, title: mediaAsset.key, alt: mediaAsset.alt })
         .from(mediaAsset).where(or(ilike(mediaAsset.key, like), ilike(mediaAsset.alt, like)))
         .orderBy(desc(mediaAsset.id)).limit(CAP),
+      db.select({ id: compatibilityRule.id, brand: compatibilityRule.deviceBrand, model: compatibilityRule.deviceModel, gen: compatibilityRule.memoryGen, ff: compatibilityRule.formFactor })
+        .from(compatibilityRule).where(or(ilike(compatibilityRule.deviceBrand, like), ilike(compatibilityRule.deviceModel, like)))
+        .orderBy(asc(compatibilityRule.deviceBrand)).limit(CAP),
     ]);
     type Hit = { id: number; title: string; sub?: string; module: string; kind: string };
     const groups: Array<{ type: string; items: Hit[] }> = [];
@@ -733,6 +738,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     push('RMA', rmas.map((x) => ({ id: x.id, title: x.title, sub: `${x.sku ?? '—'} · ${x.status}`, module: 'rma', kind: 'rma' })));
     push('Careers', [...apps.map((x) => ({ id: x.id, title: x.title, sub: x.email, module: 'jobs', kind: 'application' })), ...postings.map((x) => ({ id: x.id, title: x.title, sub: `posting · ${x.status}`, module: 'jobs', kind: 'posting' }))].slice(0, CAP));
     push('Media', assets.map((x) => ({ id: x.id, title: x.title, sub: x.alt ?? 'no alt text', module: 'media', kind: 'media' })));
+    push('Compatibility', compat.map((x) => ({ id: x.id, title: `${x.brand} ${x.model}`, sub: `QVL · ${x.gen ?? '—'} · ${x.ff ?? '—'}`, module: 'compatibility', kind: 'compat' })));
     return c.json({ q, groups });
   });
 

@@ -12,7 +12,7 @@ import type { ModProps } from '../nav';
 type Stats = {
   submissions: { total: number; open?: number; overdue?: number; byStatus: Record<string, number>; byType: Record<string, number> };
   rma: { total: number; open: number; byStatus: Record<string, number> };
-  jobApplications: number; jobsNew: number; products: number;
+  jobApplications: number; jobsNew: number; products: number; variants: number;
   series: Array<{ d: string; subs: number; rmas: number }>;
   slaRisk: Array<{ id: number; refCode: string; type: string; status: string; dueAt: string | null; email: string; slaState: 'overdue' | 'due_soon' | 'on_track' | null }>;
   content: { articles: number; news: number; pages: number; faqs: number };
@@ -225,7 +225,7 @@ export default function Dashboard({ nav }: ModProps) {
         <KpiCard icon="clock" label="Overdue SLA" value={<span style={{ color: (data.submissions.overdue ?? 0) > 0 ? RED : GREEN }}>{data.submissions.overdue ?? 0}</span>} hint="open leads past dueAt" color={RED} />
         <KpiCard icon="tool" label="Open RMAs" value={data.rma.open} hint={`${data.rma.total} total`} spark={rmaSeries} delta={rmaDelta} color={GOLD} />
         <KpiCard icon="doc" label="Published content" value={contentTotal} hint={`${data.content?.articles ?? 0} articles · ${data.content?.news ?? 0} news · ${data.content?.pages ?? 0} pages · ${data.content?.faqs ?? 0} FAQ`} color={PURPLE} />
-        <KpiCard icon="box" label="Catalog" value={data.products} hint="products" color={BLUE} />
+        <KpiCard icon="box" label="Catalog" value={data.products} hint={`${data.variants ?? 0} variants · ${data.products} products`} color={BLUE} />
         <KpiCard icon="users" label="Applications" value={data.jobApplications ?? 0} hint={`${data.jobsNew ?? 0} new`} color={GREEN} />
       </div>
 

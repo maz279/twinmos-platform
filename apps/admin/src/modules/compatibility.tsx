@@ -100,7 +100,10 @@ export default function Compatibility({ canWrite }: { canWrite: boolean }) {
           <h3 style={{ marginTop: 12 }}>{editId != null ? 'Edit rule' : 'Add rule'}</h3>
           {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '6px 10px' }}>{err}</p>}
           <label style={label}>Device brand *</label>
-          <input style={{ ...input, width: '100%' }} placeholder="ASUS / MSI / Dell / Lenovo…" value={brand} onChange={(e) => setBrand(e.target.value)} />
+          <input style={{ ...input, width: '100%' }} placeholder="ASUS / MSI / Dell / Lenovo…" list="tm-device-brands" value={brand} onChange={(e) => setBrand(e.target.value)} />
+          <datalist id="tm-device-brands">
+            {['ASUS', 'MSI', 'Gigabyte', 'ASRock', 'Dell', 'HP', 'Lenovo', 'Acer', 'Intel', 'AMD', 'Apple', 'Samsung'].map((b) => <option key={b} value={b} />)}
+          </datalist>
           <label style={label}>Model / chipset *</label>
           <input style={{ ...input, width: '100%' }} placeholder="ROG STRIX Z790-E / Latitude 5540…" value={model} onChange={(e) => setModel(e.target.value)} />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

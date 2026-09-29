@@ -152,7 +152,7 @@ describe('P3.2: QVL compatibility matrix CRUD', () => {
   it('creates a rule and lists it with q + memoryGen filters', async () => {
     const create = await app.request('/api/v1/admin/compatibility', {
       method: 'POST', headers: HDRS(),
-      body: JSON.stringify({ deviceBrand: 'ASUS', deviceModel: 'ROG STRIX Z790-E', memoryGen: 'DDR5', formFactor: 'U-DIMM', maxGb: 128, notes: 'Validated up to 6400MT/s' }),
+      body: JSON.stringify({ deviceBrand: 'ASUS', deviceModel: 'ROG STRIX Z790-E', memoryGen: 'DDR5', formFactor: 'M.2 2280 NVMe', maxGb: 128, notes: 'Validated up to 6400MT/s' }),
     });
     expect(create.status).toBe(201);
     ruleId = (await create.json()).id;
@@ -297,5 +297,34 @@ describe('P3.4: If-Match optimistic locking (409 on stale revision)', () => {
     expect(res.status).toBe(409);
     const body = await res.json();
     expect(body.title).toBe('Conflict');
+  });
+});
+
+// ---------------- audit-iteration hardening ----------------
+describe('Audit fixes: search coverage + stats variants', () => {
+  it('global search returns a Compatibility group with the QVL rule', async () => {
+    // own fixture — the 3.2 suite deletes its rule
+    const created = await app.request('/api/v1/admin/compatibility', {
+      method: 'POST', headers: HDRS(),
+      body: JSON.stringify({ deviceBrand: 'Gigabyte', deviceModel: 'AORUS ProArt X670', memoryGen: 'DDR5', formFactor: 'M.2 2280 NVMe' }),
+    });
+    expect(created.status).toBe(201);
+
+    const res = await app.request('/api/v1/admin/search?q=ProArt', { headers: { cookie } });
+    expect(res.status).toBe(200);
+    const groups = (await res.json()).groups as Array<{ type: string; items: Array<{ module: string; kind: string; sub: string }> }>;
+    const g = groups.find((x) => x.type === 'Compatibility');
+    expect(g).toBeTruthy();
+    expect(g!.items[0].module).toBe('compatibility');
+    expect(g!.items[0].kind).toBe('compat');
+    expect(g!.items[0].sub).toContain('M.2 2280 NVMe');
+  });
+
+  it('stats exposes the variant count for the dashboard KPI', async () => {
+    const res = await app.request('/api/v1/admin/stats', { headers: { cookie } });
+    expect(res.status).toBe(200);
+    const s = await res.json();
+    expect(typeof s.variants).toBe('number');
+    expect(s.variants).toBeGreaterThanOrEqual(0);
   });
 });
