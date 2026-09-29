@@ -461,3 +461,42 @@ match message + cause + 23505; (4) zod `.partial()` on an object with a
 nested object does NOT partial the inner shape — derive update schemas
 with `createSchema.shape.attrs.partial()`; (5) the numeric priceUsd
 mapper needs an `as typeof table.$inferInsert` cast for batch inserts.
+
+## Evidence — comprehensive audit pass (commit 2db42ec)
+
+Re-audited every prior iteration against the plan and the live app.
+
+**Root cause of the reported invisible panel:** the TwinMOS Vite dev
+server had died and an unrelated project (UniSoft CRMS) took over port
+5174 — visiting http://localhost:5174/ showed a completely different
+app. Port reclaimed; the admin now runs under a persistent task with
+`--port 5174 --strictPort`. Ops rule: TwinMOS admin owns 5174.
+
+**Gaps found and fixed (all browser-verified):**
+1. `form_factor` varchar(12) forced "M.2 NVMe"; migration
+   **0010_widen_form_factor** widens to varchar(24) — the QVL form now
+   offers the plan-exact "M.2 2280 NVMe" (journal idx 10; dev DB
+   migrated with the API stopped).
+2. Global search missed the compatibility entity — `/admin/search`
+   returns a **Compatibility** group (brand+model ilike, "QVL · gen ·
+   form factor" sub, kind `compat`); ⌘K verified: "ASUS" surfaces both
+   an article and the ASUS ProArt QVL rule.
+3. No URL routing — hash deep-links added: `#/home` → dashboard,
+   `#/m/<module>[/<kind>/<id>]` opens/focuses the tab; the active tab
+   mirrors into the URL via replaceState; manual hash edits honoured
+   (verified: `#/home` loads Dashboard, clicking Compatibility rewrites
+   to `#/m/compatibility`).
+4. PreviewModal was dead wiring — a "Responsive preview" button on the
+   page editor's preview tab now opens the desktop-1200 / tablet-768 /
+   mobile-375 modal (verified live on "Builder probe page").
+5. Stats/dashboard ignored variants — `/admin/stats` returns
+   `variants`; the Catalog KPI hint reads "N variants · M products".
+6. QVL brand field now carries a datalist of common device brands.
+
+Gates: p11 → 16 tests (compat search group incl. the M.2 sub-line,
+stats.variants); suite **174/174** (13 files); typecheck 0 across all
+four projects; admin build green.
+
+Deliberate scope notes: XLSX import (plan said CSV/XLSX) stays CSV-only
+— template + dry-run cover the workflow without a spreadsheet parser
+dependency; drag-and-drop image ingest remains deferred to Phase 4 DAM.
