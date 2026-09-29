@@ -135,9 +135,9 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
     return (await deps.requireRole('author')(c.req.raw)) ? s : c.json(problem(403, 'Requires author role or above'), 403, { 'Content-Type': P });
   }
-  async function auditRow(c: any, actorId: string | undefined, action: string, entityId: string, diff: unknown) {
+  async function auditRow(c: any, actorId: string | undefined, action: string, entityId: string, diff: unknown, entity: string = 'media_asset') {
     await db.insert(auditLog).values({
-      actorId: actorId ?? null, action, entity: 'media_asset', entityId, diff: diff ?? null,
+      actorId: actorId ?? null, action, entity, entityId, diff: diff ?? null,
       requestId: c.req.header('x-request-id') ?? c.get('requestId') ?? null,
       ip: c.req.header('cf-connecting-ip') ?? null,
     });
@@ -188,7 +188,7 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
       }
     }
     const rows = await db.insert(mediaFolder).values({ name, parentId }).returning();
-    await auditRow(c, s.user.id, 'media.folder.create', String(rows[0].id), { name, parentId });
+    await auditRow(c, s.user.id, 'media.folder.create', String(rows[0].id), { name, parentId }, 'media_folder');
     return c.json(rows[0], 201);
   });
 
@@ -221,7 +221,7 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     }
     const rows = await db.update(mediaFolder).set(patch).where(eq(mediaFolder.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Folder not found'), 404, { 'Content-Type': P });
-    await auditRow(c, s.user.id, 'media.folder.update', String(id), patch);
+    await auditRow(c, s.user.id, 'media.folder.update', String(id), patch, 'media_folder');
     return c.json(rows[0]);
   });
 
@@ -239,7 +239,7 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     }
     const rows = await db.delete(mediaFolder).where(eq(mediaFolder.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Folder not found'), 404, { 'Content-Type': P });
-    await auditRow(c, s.user.id, 'media.folder.delete', String(id), { name: rows[0].name });
+    await auditRow(c, s.user.id, 'media.folder.delete', String(id), { name: rows[0].name }, 'media_folder');
     return c.json({ deleted: true });
   });
 
@@ -367,12 +367,15 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     let immutable = false;
     if (variant) {
       const spec = VARIANT_SPECS.find((v) => v.name === variant);
-      const manifest = ((asset.meta as any)?.variants ?? {}) as Record<string, { key: string; mime: string }>;
-      const target = manifest[variant];
-      if (!spec || !target) return c.json(problem(404, 'Variant not derived for this asset'), 404, { 'Content-Type': P });
-      key = target.key;
-      mime = target.mime;
-      immutable = true; // derivative bytes never change for a given key
+      if (!spec) return c.json(problem(404, 'Unknown variant'), 404, { 'Content-Type': P });
+      const target = (((asset.meta as any)?.variants ?? {}) as Record<string, { key: string; mime: string }>)[variant];
+      if (target) {
+        key = target.key;
+        mime = target.mime;
+        immutable = true; // derivative bytes never change for a given key
+      }
+      // no manifest entry (legacy asset, SVG, animated GIF) → fall back to the
+      // original so thumbnails never 404 for pre-DAM uploads
     }
 
     const obj = await getStorage().get(key);

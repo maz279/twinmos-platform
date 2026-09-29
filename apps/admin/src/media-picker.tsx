@@ -51,7 +51,7 @@ export function MediaPicker({ multi, selected, onConfirm, onClose }: {
                 <button key={m.id} onClick={() => toggle(m.id)} title={m.alt ?? m.key}
                   style={{ position: 'relative', border: on ? '2px solid #1DBF9F' : '1px solid #E6EBF1', borderRadius: 10, background: '#F8FAFB', padding: 6, cursor: 'pointer', textAlign: 'left' }}>
                   <span style={{ display: 'block', aspectRatio: '4/3', borderRadius: 7, background: '#EEF1F5', overflow: 'hidden' }}>
-                    <img src={API + '/admin/media/' + m.id + '/file'} alt={m.alt ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    <img src={API + '/admin/media/' + m.id + '/file?variant=thumb'} alt={m.alt ?? ''} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   </span>
                   <span style={{ display: 'block', fontSize: 11, color: '#475467', marginTop: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.meta?.origName ?? m.key}</span>
                   {!m.alt && <span style={{ fontSize: 10, color: '#C2453C' }}>no alt</span>}

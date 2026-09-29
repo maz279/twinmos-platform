@@ -63,7 +63,7 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
             <tr key={p.id} onClick={() => setEditing(p.id)} style={{ cursor: 'pointer' }} title="Open editor">
               <td style={{ ...td, width: 56 }}>
                 <span style={{ display: 'block', width: 44, height: 33, borderRadius: 6, background: '#EEF1F5', overflow: 'hidden' }}>
-                  {p.heroMediaId && <img src={API + '/admin/media/' + p.heroMediaId + '/file'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                  {p.heroMediaId && <img src={API + '/admin/media/' + p.heroMediaId + '/file?variant=thumb'} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                 </span>
               </td>
               <td style={td}><b>{p.sku}</b></td>
@@ -264,7 +264,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
             <label style={labelStyle}>Hero image</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ width: 96, height: 72, borderRadius: 8, background: '#EEF1F5', overflow: 'hidden', display: 'block', flexShrink: 0 }}>
-                {hero && <img src={API + '/admin/media/' + hero + '/file'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                {hero && <img src={API + '/admin/media/' + hero + '/file?variant=card'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
               </span>
               <button style={btnGhost} onClick={() => setPicker('hero')}>{hero ? 'Change' : 'Choose'}</button>
               {hero && <button style={{ ...btnGhost, padding: '4px 8px' }} onClick={() => setHero(null)}>✕</button>}
@@ -273,7 +273,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
               {gallery.map((g) => (
                 <span key={g} style={{ position: 'relative', width: 64, height: 48, borderRadius: 6, background: '#EEF1F5', overflow: 'hidden' }}>
-                  <img src={API + '/admin/media/' + g + '/file'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <img src={API + '/admin/media/' + g + '/file?variant=thumb'} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   <button title="Remove" onClick={() => setGallery((s) => s.filter((x) => x !== g))}
                     style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, border: 0, borderRadius: 4, background: 'rgba(10,37,64,.75)', color: '#fff', fontSize: 10, cursor: 'pointer', lineHeight: 1 }}>✕</button>
                 </span>

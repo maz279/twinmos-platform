@@ -137,8 +137,24 @@ describe('P4.2: sharp responsive variants', () => {
     expect(thumb.headers.get('cache-control')).toContain('immutable');
     const avif = await app.request(`/api/v1/admin/media/${assetId}/file?variant=heroAvif`, { headers: { cookie } });
     expect(avif.headers.get('content-type')).toBe('image/avif');
-    const missing = await app.request(`/api/v1/admin/media/${assetId}/file?variant=nope`, { headers: { cookie } });
-    expect(missing.status).toBe(404);
+    const unknown = await app.request(`/api/v1/admin/media/${assetId}/file?variant=nope`, { headers: { cookie } });
+    expect(unknown.status).toBe(404);
+  });
+
+  it('variant request on a derivative-less asset (SVG) falls back to the original', async () => {
+    // SVG skips the raster pipeline — no manifest — but thumbnails must not 404
+    const svgBody = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#0E9F7E"/></svg>';
+    const form = new FormData();
+    form.append('file', new File([svgBody], 'plain.svg', { type: 'image/svg+xml' }));
+    form.append('alt', 'plain swatch');
+    const up = await app.request('/api/v1/admin/media', { method: 'POST', headers: { cookie }, body: form });
+    expect(up.status).toBe(201);
+    const svgAsset = (await up.json()).id;
+    expect((svgAsset as any).meta?.variants).toBeUndefined();
+    const fb = await app.request(`/api/v1/admin/media/${svgAsset}/file?variant=thumb`, { headers: { cookie } });
+    expect(fb.status).toBe(200);
+    expect(fb.headers.get('content-type')).toBe('image/svg+xml');
+    expect(fb.headers.get('cache-control')).not.toContain('immutable');
   });
 
   it('variant bytes differ from the original and live beside it in storage', async () => {
@@ -266,5 +282,14 @@ describe('P4.3: folder hierarchy + referential integrity', () => {
     expect(unfiled.items.some((m: any) => m.id === aid)).toBe(true);
     // cleanup product + folder for a tidy suite end
     await app.request('/api/v1/admin/media-folders/' + productsId, { method: 'DELETE', headers: { cookie } });
+  });
+
+  it('folder mutations audit under the media_folder entity', async () => {
+    const res = await app.request('/api/v1/admin/audit?entity=media_folder', { headers: { cookie } });
+    expect(res.status).toBe(200);
+    const actions = (await res.json()).items.map((r: any) => r.action);
+    expect(actions).toContain('media.folder.create');
+    expect(actions).toContain('media.folder.update');
+    expect(actions).toContain('media.folder.delete');
   });
 });
