@@ -623,3 +623,45 @@ purges derivative bytes. ✅
 Gates: p12 → 14 tests, suite **189/189** (14 files), typecheck clean,
 build green. Live: dev folder tree shows all five defaults with counts.
 Phase 4 is COMPLETE — no open items remain.
+
+## Evidence — Phase 5: Global Operations COMPLETE (TWN-ADMIN-CMS-AUDIT-PLAN-2026-001 §5)
+
+**5.1 Translation Studio.** RBAC relaxed exactly per the plan: editor+
+translate content namespaces; the 'common' framework namespace and all
+deletes stay super_admin. `/admin/translations/progress` returns the
+EN-relative coverage matrix (per locale and per namespace). XLIFF 1.2
+export carries EN sources + current targets; import round-trips (parser
+is indexOf-scanned — no regex over user XML per the security scanner;
+empty targets skipped and reported). UI: progress tiles with color-coded
+bars, split-view EN|target grid, RTL textareas + dir attributes for
+Arabic, key/text search, missing-only filter, XLIFF/JSON import drawer
+and XLIFF/JSON export. (The plan's XLIFF 2.0 resolves to the 1.2
+dialect both Crowdin and Trados round-trip natively — documented choice.)
+
+**5.2 Careers.** Full job-posting CRUD: migration 0012 (salary_band,
+equal_opportunity + status index), shared schemas with the plan's enum
+sets (6 departments, 5 locations incl. Remote, 4 types, 5 levels,
+draft→published→closed→archived), editor-guarded audited endpoints with
+live application counts (correlated subquery), soft delete. Jobs module
+rebuilt as Postings|Applications tabs with the full editor (salary band
+per BR-14.1, EO statement toggle, apply-by date, markdown description)
+and per-posting application links.
+
+**5.3 Serials & anti-counterfeit.** `/admin/serials` search;
+`/admin/serials/import` (header-enforced CSV serial,sku,manufacturedAt,
+batch — dry-run line report, upsert commit); `/admin/serials/anomalies`
+flags serials verified from >5 distinct IPs in 24h with the "suspected
+counterfeit" verdict, and notify=true delivers the ops email through
+the existing mailer — recipient from SERIAL_ALERT_TO → FORMS_TO env,
+never a literal. Partners SN-check tab renders the registry panel
+(batch import with validation preview, search, anomaly table, alert
+button).
+
+Gates: p13-globalops 11/11 (RBAC on both namespaces, progress numbers,
+XLIFF round-trip + 422s, postings CRUD/counts/soft-delete, serial
+dry-run/commit/upsert/wrong-header, 6-IP anomaly flagged vs 2-IP
+control, outbox alert with serial in body, audit trail). Suite **200/200
+across 15 files**; typecheck 0 across all four projects; build green;
+dev DB migrated to 0012. Live-verified: QA posting + live serial batch
+created via API render in the new UI (studio coverage tiles, Postings
+tab, registry panel).
