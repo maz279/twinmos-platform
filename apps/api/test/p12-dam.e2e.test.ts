@@ -175,13 +175,22 @@ describe('P4.3: folder hierarchy + referential integrity', () => {
   let brandingId = 0;
   let assetId = 0;
 
-  it('creates folders (RBAC: anon 401) and nests them', async () => {
+  it('seeds the §4.3 default folder structure idempotently on first read', async () => {
+    const list = await app.request('/api/v1/admin/media-folders', { headers: { cookie } });
+    expect(list.status).toBe(200);
+    const first = (await list.json()) as { items: Array<{ id: number; name: string; parentId: number | null }> };
+    for (const def of ['products', 'banners', 'news', 'branding', 'datasheets']) {
+      expect(first.items.map((f) => f.name), 'default folder ' + def).toContain(def);
+    }
+    // second read does not duplicate
+    const again = await app.request('/api/v1/admin/media-folders', { headers: { cookie } });
+    const second = (await again.json()) as { items: Array<{ name: string }> };
+    expect(second.items.filter((f) => f.name === 'banners').length).toBe(1);
+    productsId = first.items.find((f) => f.name === 'products' && f.parentId == null)!.id;
+  });
+
+  it('creates folders (RBAC: anon 401) and nests under the seeded root', async () => {
     expect((await app.request('/api/v1/admin/media-folders')).status).toBe(401);
-    const root = await app.request('/api/v1/admin/media-folders', {
-      method: 'POST', headers: HDRS(), body: JSON.stringify({ name: 'products' }),
-    });
-    expect(root.status).toBe(201);
-    productsId = (await root.json()).id;
     const child = await app.request('/api/v1/admin/media-folders', {
       method: 'POST', headers: HDRS(), body: JSON.stringify({ name: 'banners', parentId: productsId }),
     });

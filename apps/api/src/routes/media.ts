@@ -161,9 +161,24 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
   }
 
   // ---------------- Phase 4.3: folder hierarchy ----------------
+  /** §4.3 default structure — /products, /banners, /news, /branding,
+   *  /datasheets — created idempotently (once per process) so every
+   *  environment converges on the canonical roots without migration games. */
+  const DEFAULT_FOLDERS = ['products', 'banners', 'news', 'branding', 'datasheets'] as const;
+  let defaultsSeeded = false;
+  async function seedDefaultFolders(): Promise<void> {
+    if (defaultsSeeded) return;
+    defaultsSeeded = true;
+    const existing = await db.select({ name: mediaFolder.name }).from(mediaFolder);
+    const have = new Set(existing.map((f) => f.name));
+    const missing = DEFAULT_FOLDERS.filter((n) => !have.has(n));
+    if (missing.length) await db.insert(mediaFolder).values(missing.map((name) => ({ name })));
+  }
+
   r.get('/media-folders', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
+    await seedDefaultFolders();
     const folders = await db.select().from(mediaFolder).orderBy(mediaFolder.parentId, mediaFolder.name);
     const counts = await db.select({ folderId: mediaAsset.folderId, n: sql<number>`count(*)` })
       .from(mediaAsset).groupBy(mediaAsset.folderId);
