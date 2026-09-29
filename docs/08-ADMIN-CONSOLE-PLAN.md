@@ -348,3 +348,28 @@ library, Media grid, ⌘K search ("VLT" → 2 product hits, chips PRODUCTS),
 sign-out → login → dev auto-login round-trip.
 
 Gates: typecheck 0, admin build green, suite 158/158 (12 files).
+
+## Evidence — restyle gap-closure pass (commit 155aeb0)
+
+Audit of the first theme pass found three gap classes, all closed:
+
+1. **Typography drift** — 10 module screens still used browser-default
+   `<h1>` (32px black) next to the dashboard's 22px/800 ink titles. All
+   ten (Content, Leads, RMA, Partners, Careers, Media, Users, Audit,
+   Settings, Translations) now use the standard header style.
+2. **Off-token literals** — ~200 leftover gray/border/tint hexes across
+   21 files (first pass only swept navy/cyan/gold). Remapped to the token
+   system: grays→FAINT/MUTED, borders→LINE/#D9E0E8, hairlines/tracks→
+   #F0F3F7, cyan text/tints→teal family, status greens/reds→GREEN/RED
+   tints. Post-sweep grep for 32 legacy hexes returns zero matches.
+3. **Canvas stragglers** — main.tsx MFA wrappers and the login rail text
+   tints now use PAGE / the sidebar's neutral family.
+
+Re-verified after the sweep: typecheck 0, build green, suite 158/158;
+browser QA — Leads list + lead detail (teal transitions, red overdue
+chip, teal context crumb), RMA board, Users & Roles, Audit log,
+Settings, Translations, Partners, Careers, product editor (14 controls,
+taxonomy selects), Content review queue (count chip), inline page-block
+preview, sidebar collapse 82↔264px round-trip. Note: PreviewModal in
+content.tsx is pre-existing dead wiring (setShowModal never called) —
+the live preview is the inline tab; not a restyle regression.
