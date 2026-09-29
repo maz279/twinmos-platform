@@ -400,3 +400,64 @@ Defects found by the vision review and fixed:
    tightened so the last item and version footer fit.
 
 Gates re-run: typecheck 0, admin build green, suite 158/158 (12 files).
+
+## Evidence — Phase 3: Catalog Engineering COMPLETE (TWN-ADMIN-CMS-AUDIT-PLAN-2026-001 §3)
+
+**3.1 Product Variants.** `variantCreateSchema`/`variantUpdateSchema`
+(packages/shared) — hardware attrs (capacity/speed/finish/lighting) plus
+per-variant priceUsd/stock/status stored inside the variant jsonb attrs
+(no migration required). API: GET/POST/PATCH/DELETE
+`/admin/products/:id/variants` — editor-guarded, audited
+(`product.variant.create|update|delete`), unique-SKU violations surfaced
+as 409 via an isUniqueViolation helper (message + cause + SQLSTATE 23505).
+UI: "Variants & SKUs" tab in the product editor — auto-suggested SKU
+(base-capacity-speed-lighting), attribute chips, per-row edit/delete.
+Verified live: variant `VLT-DDR5-32G-32GB-6000MT-S-RGB` created via the
+form at $129.50 with 32GB/6000MT/s/Titanium/RGB chips.
+
+**3.2 QVL Compatibility Matrix.** `compatibilityCreateSchema`
+(DDR4/DDR5 × U-DIMM/SO-DIMM/M.2 NVMe, both ≤ the varchar(12) columns);
+`/admin/compatibility` CRUD with q + memoryGen filters, audited. New
+`modules/compatibility.tsx` registered under the Catalog group (shield
+icon) — side-by-side add/edit form + rules table. Verified live: ASUS
+ProArt Z790-Creator WiFi / DDR5 / U-DIMM / 128 GB rule created via UI.
+
+**3.3 Bulk CSV import/export.** `POST /admin/products/import` with a
+quoted-field parser, per-line validation (SKU/slug/name/brand-slug/
+category-slug/status/authorized currency — BDT rejected with the
+forensic-audit note — price), in-file duplicate rejection, existing-SKU
+rows classified as upserts, dry-run report {rows, errors, create/update
+counts}, transactional commit with a single `product.import` audit row.
+`GET /admin/products/export.csv` (formula-injection hardened) and
+`import-template.csv`. Three-step modal: template/export → upload →
+validate-then-commit. **Route-ordering trap:** the CSV GETs must be
+registered BEFORE `/products/:id` — otherwise "export.csv" matched :id,
+`Number('export.csv')` → NaN → 500 (caught live, fixed, tested).
+Verified live: dry-run "3/4 valid (2 new, 1 updates)" + "Line 6
+(bad-row!): SKU must be…" then "✓ Committed — 2 created, 1 updated",
+imported SKU visible in the list.
+
+**3.4 Optimistic locking.** `sameInstant` (shared) compares an If-Match
+header (optionally quoted ISO) against updatedAt; PATCH
+`/admin/products/:id` and `/admin/content/:entity/:id` return 409
+Conflict on mismatch. Both editors send their loaded revision and render
+a reload-fresh / keep-mine conflict banner (amber, not applied).
+Verified conflict-free save round-trip in the UI; 409s covered by tests.
+
+**Gates:** p11-catalog.e2e.test.ts 14/14 (RBAC, attrs round-trip, dup
+409, audit trail, QVL filters, template/export, dry-run report, refused
++ committed upsert import, wrong-header 422, stale/fresh/absent If-Match,
+content stale 409). Suite 172/172 across 13 files; typecheck 0; admin
+build green.
+
+**Carry-forward learnings (memory):** (1) Hono matches routes in
+registration order — static suffix routes (`.csv`) must precede `:id`
+params; (2) React 19 controlled inputs in automation: use the native
+HTMLInputElement value setter + `input` event, then act in the SAME
+synchronous block — DOM-only sets are wiped on the next render, and
+placeholder-substring locators can collide with filter bars (match on
+the most specific substring); (3) PGlite unique-violation text varies —
+match message + cause + 23505; (4) zod `.partial()` on an object with a
+nested object does NOT partial the inner shape — derive update schemas
+with `createSchema.shape.attrs.partial()`; (5) the numeric priceUsd
+mapper needs an `as typeof table.$inferInsert` cast for batch inserts.
