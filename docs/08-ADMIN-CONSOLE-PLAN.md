@@ -229,3 +229,42 @@ containment check, unlinks the file (ENOENT-tolerant), then removes the DB row
 5. Audit guarantee — every governance mutation writes an audit row (tested).
 6. Cross-browser/responsive — single-browser verification only; noted as a
    remaining manual gate (was already the case for prior phases).
+
+## Evidence — Phase 2 (Visual Page Builder & CMS Authoring Studio) COMPLETE
+Plan source: TWN-ADMIN-CMS-AUDIT-PLAN-2026-001 §Phase 2 — commit 65cf25f,
+verified 2026-09-29.
+
+**§2.1 Visual page builder** — DONE. All 13 block types from the plan ship in
+`modules/page-builder/`: a registry (`blocks.ts`) drives both the generic
+settings editor (`PageBuilder.tsx`: palette, drag-to-reorder + up/down/
+duplicate/delete, collapsible cards, media fields through the shared picker) and
+the visual renderer (`preview.tsx`) with a responsive PreviewModal
+(desktop 1200 / tablet 768 / mobile 375). The raw blocks-JSON textarea is gone
+(JSON remains as an explicit power-user escape hatch). Browser-verified: builder
+mounts with all 13 palette entries; a Hero block was added, filled and saved
+(page persisted as draft with the block intact); the preview modal rendered the
+composed page at all three viewports. Tests: 13-block create/read round-trip +
+PATCH-replaces-blocks.
+
+**§2.2 Rich-text studio** — DONE. Formatting toolbar on article/news/FAQ bodies
+with every operation from the plan (H1–H3, bold, italic, strikethrough,
+bulleted + numbered lists, blockquote, code block, table generator) plus the 🖼
+Image button that opens the media picker and inserts `![alt](url)` at the caret.
+Browser-verified: all 12 buttons present by title; Bold functionally wrapped the
+selected text (**…**, +4 chars).
+
+**§2.3 Two-person review (BR-5.1)** — DONE. Migration 0009 (`content_comment`)
++ `GET/POST /admin/content/:entity/:id/comments` (read: any staff; post:
+author+; 1–2000 chars; audited). Content studio gains Library | Review-queue
+views (queue spans articles/news/pages with a live count badge), a prominent
+"Submit for review" action, an in-review banner, a Comments tab, and a
+"Diff vs draft" LCS visual diff (green/red, fold markers, +N/−N stats) on every
+revision. Browser-verified end-to-end: page submitted for review → appears in
+the Review queue → review comment posted and listed.
+Tests: transition-to-queue, comments CRUD/RBAC (viewer 403 write)/validation/
+audit-row.
+
+**Gates** — typecheck 0 errors, admin build green, suite **158/158** (5 new).
+Sealed scan `scan-2026-09-29T13-39-09.058Z`: 45 findings — identical count to
+the accepted baseline, zero new rule classes. Migration 0009 applied to the
+dev DB.
