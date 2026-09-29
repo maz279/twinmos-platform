@@ -106,3 +106,42 @@ export async function sendRmaStatusMail(to: string, number: string, from: string
     meta: { kind: 'rma-status', number, from, toStatus },
   });
 }
+
+/** Staff invitation email containing login link and temporary credentials. */
+export async function sendStaffInviteMail(
+  to: string,
+  name: string,
+  role: string,
+  temporaryPassword?: string,
+): Promise<boolean> {
+  const adminUrl = process.env.ADMIN_URL ?? 'https://admin.twinmos.com';
+  const text = [
+    `Hello ${name},`,
+    '',
+    `You have been invited to join the TwinMOS Administration Portal with the role: ${role}.`,
+    '',
+    ...(temporaryPassword
+      ? [
+          'Your temporary login credentials are provided below:',
+          `- Portal: ${adminUrl}`,
+          `- Email: ${to}`,
+          `- Temporary Password: ${temporaryPassword}`,
+          '',
+          'For security, you must sign in and change your password immediately or enroll in Two-Factor Authentication (TOTP).',
+        ]
+      : [
+          `Access the portal at: ${adminUrl}`,
+        ]),
+    '',
+    'Regards,',
+    'TwinMOS Security & Operations Team',
+  ].join('\n');
+
+  return sendMail({
+    to,
+    subject: `TwinMOS Admin Portal — Staff Invitation [${role}]`,
+    text,
+    meta: { kind: 'staff-invite', role, email: to },
+  });
+}
+

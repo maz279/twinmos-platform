@@ -86,25 +86,42 @@ export const formSubmissionSchema = z.object({
 });
 export type FormSubmissionInput = z.infer<typeof formSubmissionSchema>;
 
+// Authoritative TwinMOS currency set per FORENSIC_AUDIT_REPORT_2026-09-23#L43
+export const AUTHORIZED_CURRENCIES = ['USD', 'EUR', 'AED', 'SAR', 'INR', 'RUB'] as const;
+export type AuthorizedCurrency = (typeof AUTHORIZED_CURRENCIES)[number];
+export const currencySchema = z.enum(AUTHORIZED_CURRENCIES);
+
 // ---- admin CRUD contracts (product shown; others follow same shape in P2/P3) ----
-export const productCreateSchema = z.object({
+export const productBaseSchema = z.object({
   sku: z.string().trim().regex(/^[A-Z0-9-]{3,40}$/),
   slug: z.string().trim().regex(/^[a-z0-9-]{3,80}$/),
   name: z.string().trim().min(2).max(160),
   brandId: z.number().int().positive(),
   categoryId: z.number().int().positive(),
+  status: z.enum(CONTENT_STATUS),
+  specs: z.record(z.string(), z.unknown()),
+  // 0007: rich product fields — marketing copy + list pricing + media
+  description: z.string().trim().max(8000),
+  priceUsd: z.number().nonnegative().max(9_999_999).nullable(),
+  currency: currencySchema,
+  heroMediaId: z.number().int().positive().nullable(),
+  gallery: z.array(z.number().int().positive()).max(12),
+  datasheets: z.array(z.object({ label: z.string().trim().min(1).max(80), url: z.url().max(500) })).max(6),
+  badges: z.array(z.string().max(40)).max(8),
+});
+
+export const productCreateSchema = productBaseSchema.extend({
   status: z.enum(CONTENT_STATUS).default('draft'),
   specs: z.record(z.string(), z.unknown()).default({}),
-  // 0007: rich product fields — marketing copy + list pricing + media
   description: z.string().trim().max(8000).default(''),
   priceUsd: z.number().nonnegative().max(9_999_999).nullable().default(null),
-  currency: z.string().trim().length(3).default('USD'),
+  currency: currencySchema.default('USD'),
   heroMediaId: z.number().int().positive().nullable().default(null),
   gallery: z.array(z.number().int().positive()).max(12).default([]),
   datasheets: z.array(z.object({ label: z.string().trim().min(1).max(80), url: z.url().max(500) })).max(6).default([]),
   badges: z.array(z.string().max(40)).max(8).default([]),
 });
-export const productUpdateSchema = productCreateSchema.partial();
+export const productUpdateSchema = productBaseSchema.partial();
 
 // ---- RFC 9457 problem details helper ----
 export function problem(status: number, title: string, detail?: string, errors?: unknown) {
@@ -156,47 +173,67 @@ export const CONTENT_TRANSITIONS: Record<(typeof CONTENT_STATUS)[number], (typeo
 
 const slugField = z.string().trim().regex(/^[a-z0-9][a-z0-9-]{1,118}$/, 'lowercase letters, digits and dashes');
 const bodyField = z.string().max(200_000);
-const localeField = z.string().trim().regex(/^[a-z]{2}(-[A-Za-z]{2,4})?$/, 'e.g. en, zh-cn').default('en');
+const localeField = z.string().trim().regex(/^[a-z]{2}(-[A-Za-z]{2,4})?$/, 'e.g. en, zh-cn');
 
-export const articleCreateSchema = z.object({
+export const articleBaseSchema = z.object({
   slug: slugField.optional(), // derived from title when omitted
   title: z.string().trim().min(2).max(200),
   deck: z.string().trim().max(400).optional(),
+  body: bodyField,
+  category: z.string().trim().max(40),
+  tags: z.array(z.string().max(40)).max(12),
+  locale: localeField,
+  seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
+});
+export const articleCreateSchema = articleBaseSchema.extend({
   body: bodyField.default(''),
   category: z.string().trim().max(40).default('Article'),
   tags: z.array(z.string().max(40)).max(12).default([]),
-  locale: localeField,
+  locale: localeField.default('en'),
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
 });
-export const articleUpdateSchema = articleCreateSchema.partial();
+export const articleUpdateSchema = articleBaseSchema.partial();
 
-export const newsCreateSchema = z.object({
+export const newsBaseSchema = z.object({
   slug: slugField.optional(),
   title: z.string().trim().min(2).max(200),
-  body: bodyField.default(''),
+  body: bodyField,
   tag: z.string().trim().max(40).optional(),
   eventDate: z.string().datetime().optional(), // ISO — set for event-type posts
   locale: localeField,
 });
-export const newsUpdateSchema = newsCreateSchema.partial();
+export const newsCreateSchema = newsBaseSchema.extend({
+  body: bodyField.default(''),
+  locale: localeField.default('en'),
+});
+export const newsUpdateSchema = newsBaseSchema.partial();
 
-export const pageCreateSchema = z.object({
+export const pageBaseSchema = z.object({
   slug: slugField.optional(),
   title: z.string().trim().min(2).max(200),
-  blocks: z.array(z.record(z.string(), z.unknown())).default([]),
+  blocks: z.array(z.record(z.string(), z.unknown())),
   locale: localeField,
+  seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
+});
+export const pageCreateSchema = pageBaseSchema.extend({
+  blocks: z.array(z.record(z.string(), z.unknown())).default([]),
+  locale: localeField.default('en'),
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
 });
-export const pageUpdateSchema = pageCreateSchema.partial();
+export const pageUpdateSchema = pageBaseSchema.partial();
 
-export const faqCreateSchema = z.object({
+export const faqBaseSchema = z.object({
   groupKey: z.string().trim().regex(/^[a-z0-9-]{2,40}$/),
   question: z.string().trim().min(4).max(500),
   answer: z.string().trim().min(1).max(20_000),
-  sort: z.number().int().min(0).max(9999).default(0),
+  sort: z.number().int().min(0).max(9999),
   locale: localeField,
 });
-export const faqUpdateSchema = faqCreateSchema.partial();
+export const faqCreateSchema = faqBaseSchema.extend({
+  sort: z.number().int().min(0).max(9999).default(0),
+  locale: localeField.default('en'),
+});
+export const faqUpdateSchema = faqBaseSchema.partial();
 
 export const contentTransitionSchema = z.object({
   to: z.enum(CONTENT_STATUS),
@@ -204,12 +241,15 @@ export const contentTransitionSchema = z.object({
 });
 export const contentRevertSchema = z.object({ revisionId: z.number().int().positive() });
 
-export const redirectCreateSchema = z.object({
+export const redirectBaseSchema = z.object({
   from: z.string().trim().min(1).max(500).regex(/^\//, 'must start with /'),
   to: z.string().trim().min(1).max(500),
+  code: z.union([z.literal(301), z.literal(302), z.literal(308)]),
+});
+export const redirectCreateSchema = redirectBaseSchema.extend({
   code: z.union([z.literal(301), z.literal(302), z.literal(308)]).default(301),
 });
-export const redirectUpdateSchema = redirectCreateSchema.partial();
+export const redirectUpdateSchema = redirectBaseSchema.partial();
 
 export const settingUpdateSchema = z.object({
   key: z.string().trim().min(1).max(80),

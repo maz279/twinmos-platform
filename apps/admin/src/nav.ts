@@ -16,6 +16,7 @@ import Partners from './modules/partners';
 import Jobs from './modules/jobs';
 import Media from './modules/media';
 import Translations from './modules/translations';
+import UsersModule from './modules/users';
 import AuditLog from './modules/audit';
 import Settings from './modules/settings';
 
@@ -64,6 +65,7 @@ export const MODULES: ModuleDef[] = [
   { id: 'jobs', label: 'Careers', group: 'Careers', icon: 'briefcase', minRole: 'viewer', badge: 'pendingApps', desc: 'Job postings editor and applications inbox.', comp: Jobs },
   { id: 'media', label: 'Media library', group: 'Media Library', icon: 'image', minRole: 'viewer', desc: 'Uploads, alt-text compliance and usage references.', comp: (p) => h(Media, { isAdmin: isAdminRole(p.me.user?.role) }) },
   { id: 'translations', label: 'Translations', group: 'Localization', icon: 'translate', minRole: 'viewer', desc: '9-locale translation strings with import/export.', comp: (p) => h(Translations, { isSuperAdmin: p.me.user?.role === 'super_admin' }) },
-  { id: 'audit', label: 'Audit log', group: 'Administration', icon: 'shield', minRole: 'admin', desc: 'Filterable trail of every mutation (12-month retention).', comp: AuditLog },
+  { id: 'users', label: 'Users & Roles', group: 'Administration', icon: 'users', minRole: 'super_admin', desc: 'Staff directory, role governance, MFA enforcement, and active session management.', comp: UsersModule },
+  { id: 'audit', label: 'Audit log', group: 'Administration', icon: 'shield', minRole: 'editor', desc: 'Filterable trail of every mutation (12-month retention).', comp: AuditLog },
   { id: 'settings', label: 'Settings', group: 'Administration', icon: 'sliders', minRole: 'admin', desc: 'Site settings, redirects and locale management.', comp: (p) => h(Settings, { canManage: isAdminRole(p.me.user?.role), isSuperAdmin: p.me.user?.role === 'super_admin' }) },
 ];

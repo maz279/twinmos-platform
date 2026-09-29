@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { API, apiGet, apiSend, fmtDate } from '../api';
 import { Badge, btn, btnGhost, Empty, Err, input, Table, td, useAsync } from '../ui';
 import { MediaPicker } from '../media-picker';
+import { AUTHORIZED_CURRENCIES } from '@twinmos/shared';
 import type { ModProps, TabCtx } from '../nav';
 
 const NAVY = '#0A2540'; const CYAN = '#00A3E0';
@@ -69,7 +70,7 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
                 <div style={{ color: '#8CA3BA', fontSize: 11.5 }}>{brandName(p.brandId)} · {p.slug}</div>
                 {(p.badges ?? []).slice(0, 4).map((b) => <span key={b} style={{ fontSize: 10.5, background: '#EAF6FC', color: '#0E7FB8', borderRadius: 5, padding: '1px 6px', marginRight: 4 }}>{b}</span>)}
               </td>
-              <td style={td}>{p.priceUsd != null ? <b>${Number(p.priceUsd).toFixed(2)}</b> : <span style={{ color: '#8CA3BA' }}>—</span>}</td>
+              <td style={td}>{p.priceUsd != null ? <b>{(p.currency || 'USD')} {Number(p.priceUsd).toFixed(2)}</b> : <span style={{ color: '#8CA3BA' }}>—</span>}</td>
               <td style={td}><Badge value={p.status} /></td>
               <td style={{ ...td, color: '#5E7691', fontSize: 12 }}>{fmtDate(p.updatedAt)}</td>
               <td style={{ ...td, width: 70 }}>
@@ -223,7 +224,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
               <span><label style={labelStyle}>List price</label><input style={{ ...input, width: '100%' }} placeholder="e.g. 129.99" inputMode="decimal" value={form.price} onChange={(e) => set('price', e.target.value)} /></span>
               <span><label style={labelStyle}>Cur.</label>
                 <select style={{ ...input, width: '100%' }} value={form.currency} onChange={(e) => set('currency', e.target.value)}>
-                  {['USD', 'EUR', 'GBP', 'BDT', 'INR', 'JPY'].map((c) => <option key={c}>{c}</option>)}
+                  {AUTHORIZED_CURRENCIES.map((c) => <option key={c}>{c}</option>)}
                 </select></span>
             </div>
             <label style={labelStyle}>Badges <span style={{ color: '#8CA3BA', fontWeight: 400 }}>(comma separated, max 8)</span></label>

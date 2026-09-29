@@ -3,7 +3,7 @@
 // Every mutation: session + RBAC guard, Zod validation, parameter-bound Drizzle
 // queries, audit row. Reads: any authenticated role; writes: editor+.
 import { Hono } from 'hono';
-import { and, asc, count, desc, eq, ilike, inArray, isNull, lt, lte, isNotNull, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNull, lt, lte, isNotNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import {
   jobApplicationUpdateSchema, productCreateSchema, productUpdateSchema, problem,
@@ -103,8 +103,13 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
   });
 
   /** 0007: numeric(10,2) columns are string-typed in Drizzle — map the Zod number. */
-  const productValues = <T extends { priceUsd?: number | null }>(d: T): Omit<T, 'priceUsd'> & { priceUsd: string | null } =>
-    ({ ...d, priceUsd: d.priceUsd == null ? null : String(d.priceUsd) });
+  const productValues = <T extends { priceUsd?: number | null }>(d: T): Omit<T, 'priceUsd'> & { priceUsd?: string | null } => {
+    if (d.priceUsd === undefined) {
+      const { priceUsd, ...rest } = d;
+      return rest as any;
+    }
+    return { ...d, priceUsd: d.priceUsd === null ? null : String(d.priceUsd) };
+  };
 
   r.post('/products', async (c) => {
     const guard = await editorGuard(c);
@@ -129,14 +134,156 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     return c.json(rows[0]);
   });
 
+  /** Distinct actors who have audited events, joined with user for name/email (editor+). */
+  r.get('/audit/actors', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const ok = await deps.requireRole('editor')(c.req.raw);
+    if (!ok) return c.json(problem(403, 'Requires editor role or above (read)'), 403, { 'Content-Type': P });
+
+    const rows = await db.select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    }).from(user)
+      .innerJoin(auditLog, eq(user.id, auditLog.actorId))
+      .groupBy(user.id, user.name, user.email)
+      .orderBy(asc(user.name));
+
+    return c.json({ items: rows });
+  });
+
   r.get('/audit', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
     // docs/04 RBAC: audit log — admin full, editor read
     const ok = await deps.requireRole('editor')(c.req.raw);
     if (!ok) return c.json(problem(403, 'Requires editor role or above (read)'), 403, { 'Content-Type': P });
-    const rows = await db.select().from(auditLog).orderBy(desc(auditLog.id)).limit(100);
-    return c.json({ items: rows });
+
+    const actorId = c.req.query('actorId');
+    const entity = c.req.query('entity');
+    const action = c.req.query('action');
+    const from = c.req.query('from');
+    const to = c.req.query('to');
+    const cursor = c.req.query('cursor');
+    const limit = Math.min(Number(c.req.query('limit') ?? 100) || 100, 200);
+
+    const filters = [];
+    if (actorId) filters.push(eq(auditLog.actorId, actorId));
+    if (entity && entity !== 'all') filters.push(eq(auditLog.entity, entity));
+    if (action && action !== 'all') {
+      filters.push(ilike(auditLog.action, `%${action.replace(/[%_]/g, '')}%`));
+    }
+    if (from) {
+      const fromDate = new Date(from.length === 10 ? from + 'T00:00:00.000Z' : from);
+      if (!isNaN(fromDate.getTime())) filters.push(gte(auditLog.at, fromDate));
+    }
+    if (to) {
+      const toDate = new Date(to.length === 10 ? to + 'T23:59:59.999Z' : to);
+      if (!isNaN(toDate.getTime())) filters.push(lte(auditLog.at, toDate));
+    }
+    if (cursor) {
+      const cursorId = Number(cursor);
+      if (!isNaN(cursorId) && cursorId > 0) filters.push(lt(auditLog.id, cursorId));
+    }
+
+    const rows = await db.select({
+      id: auditLog.id,
+      actorId: auditLog.actorId,
+      actorEmail: user.email,
+      action: auditLog.action,
+      entity: auditLog.entity,
+      entityId: auditLog.entityId,
+      diff: auditLog.diff,
+      requestId: auditLog.requestId,
+      ip: auditLog.ip,
+      at: auditLog.at,
+    }).from(auditLog)
+      .leftJoin(user, eq(auditLog.actorId, user.id))
+      .where(filters.length ? and(...filters) : undefined)
+      .orderBy(desc(auditLog.id))
+      .limit(limit);
+
+    return c.json({ items: rows, cursor: rows.length === limit ? rows[rows.length - 1].id : null });
+  });
+
+  /** Audit log CSV export with formula-injection prevention (editor+; compliance/archiving). */
+  r.get('/audit.csv', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const ok = await deps.requireRole('editor')(c.req.raw);
+    if (!ok) return c.json(problem(403, 'Requires editor role or above (read)'), 403, { 'Content-Type': P });
+
+    const actorId = c.req.query('actorId');
+    const entity = c.req.query('entity');
+    const action = c.req.query('action');
+    const from = c.req.query('from');
+    const to = c.req.query('to');
+
+    const filters = [];
+    if (actorId) filters.push(eq(auditLog.actorId, actorId));
+    if (entity && entity !== 'all') filters.push(eq(auditLog.entity, entity));
+    if (action && action !== 'all') {
+      filters.push(ilike(auditLog.action, `%${action.replace(/[%_]/g, '')}%`));
+    }
+    if (from) {
+      const fromDate = new Date(from.length === 10 ? from + 'T00:00:00.000Z' : from);
+      if (!isNaN(fromDate.getTime())) filters.push(gte(auditLog.at, fromDate));
+    }
+    if (to) {
+      const toDate = new Date(to.length === 10 ? to + 'T23:59:59.999Z' : to);
+      if (!isNaN(toDate.getTime())) filters.push(lte(auditLog.at, toDate));
+    }
+
+    const rows = await db.select({
+      id: auditLog.id,
+      actorId: auditLog.actorId,
+      actorEmail: user.email,
+      action: auditLog.action,
+      entity: auditLog.entity,
+      entityId: auditLog.entityId,
+      diff: auditLog.diff,
+      requestId: auditLog.requestId,
+      ip: auditLog.ip,
+      at: auditLog.at,
+    }).from(auditLog)
+      .leftJoin(user, eq(auditLog.actorId, user.id))
+      .where(filters.length ? and(...filters) : undefined)
+      .orderBy(desc(auditLog.id))
+      .limit(5000);
+
+    // CSV-cell hardening: formula injection prevention:
+    // neutralise spreadsheet formula injection (=, +, -, @, ', |, %, TAB, CR leading chars)
+    // even when prefixed by whitespace, by prefixing an apostrophe.
+    const cell = (v: unknown) => {
+      let s = (typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v ?? '')).replace(/"/g, '""').slice(0, 1000);
+      const trimmed = s.trimStart();
+      if (/^[=+\-@\t\r|%']/.test(trimmed)) s = "'" + s;
+      return '"' + s + '"';
+    };
+
+    const lines = ['id,at,actor_id,actor_email,action,entity,entity_id,ip,request_id,diff'];
+    for (const row of rows) {
+      lines.push([
+        row.id,
+        row.at ? new Date(row.at).toISOString() : '',
+        row.actorId ?? '',
+        row.actorEmail ?? '',
+        row.action,
+        row.entity,
+        row.entityId ?? '',
+        row.ip ?? '',
+        row.requestId ?? '',
+        row.diff ? JSON.stringify(row.diff) : '',
+      ].map(cell).join(','));
+    }
+
+    await auditRow(c, a.user.id, 'audit.export', 'audit_log', 'csv', { rows: rows.length });
+    return c.body(lines.join('\r\n') + '\r\n', 200, {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': 'attachment; filename="twinmos-audit-log.csv"',
+      'Cache-Control': 'no-store',
+    });
   });
 
   // ==================== P2: dashboard KPIs ====================

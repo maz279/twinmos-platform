@@ -19,6 +19,9 @@ export const user = pgTable('user', {
   role: roleEnum('role').notNull().default('viewer'),
   image: text('image'),
   twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false), // P7+ MFA flag (Better Auth twoFactor plugin)
+  banned: boolean('banned').default(false),
+  banReason: text('ban_reason'),
+  banExpires: timestamp('ban_expires', { withTimezone: true }),
   createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -35,7 +38,9 @@ export const twoFactor = pgTable('two_factor', {
 export const session = pgTable('session', {
   id: text('id').primaryKey(), userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   token: text('token').notNull().unique(), expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  ipAddress: text('ip_address'), userAgent: text('user_agent'), createdAt: ts(),
+  ipAddress: text('ip_address'), userAgent: text('user_agent'),
+  impersonatedBy: text('impersonated_by'),
+  createdAt: ts(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 export const account = pgTable('account', {

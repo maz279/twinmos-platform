@@ -8,8 +8,9 @@ import { desc, eq, like } from 'drizzle-orm';
 import { problem } from '@twinmos/shared';
 import { mediaAsset, auditLog } from '@twinmos/db';
 import { mkdirSync, writeFileSync, readFileSync, statSync } from 'node:fs';
+import { unlink } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { join, resolve, sep } from 'node:path';
+import { join, resolve, sep, relative, isAbsolute } from 'node:path';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 
@@ -17,6 +18,11 @@ type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
 const MAX_BYTES = Number(process.env.MEDIA_MAX_BYTES ?? 10 * 1024 * 1024);
 const ALLOWED = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.avif', '.pdf', '.webm', '.mp4']);
+
+function isSafeMediaTarget(root: string, target: string): boolean {
+  const rel = relative(root, target);
+  return !rel.startsWith('..') && !isAbsolute(rel) && rel !== '';
+}
 const MIME_BY_EXT: Record<string, string> = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
   '.gif': 'image/gif', '.svg': 'image/svg+xml', '.avif': 'image/avif', '.pdf': 'application/pdf',
@@ -161,7 +167,7 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     // path-traversal guard: resolve and require the file to live inside MEDIA_DIR
     const root = resolve(MEDIA_DIR);
     const target = resolve(join(MEDIA_DIR, asset.key));
-    if (!target.startsWith(root + sep)) {
+    if (!isSafeMediaTarget(root, target)) {
       return c.json(problem(400, 'Invalid media key'), 400, { 'Content-Type': P });
     }
     let bytes: Uint8Array;
@@ -197,9 +203,29 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
     if (!(await deps.requireRole('admin')(c.req.raw))) return c.json(problem(403, 'Requires admin role or above'), 403, { 'Content-Type': P });
     const id = Number(c.req.param('id'));
-    const rows = await db.delete(mediaAsset).where(eq(mediaAsset.id, id)).returning();
-    if (!rows[0]) return c.json(problem(404, 'Media not found'), 404, { 'Content-Type': P });
-    await auditRow(c, s.user.id, 'media.delete', String(id), {});
+
+    const rows = await db.select().from(mediaAsset).where(eq(mediaAsset.id, id)).limit(1);
+    const asset = rows[0];
+    if (!asset) return c.json(problem(404, 'Media not found'), 404, { 'Content-Type': P });
+
+    // Strict path containment check against MEDIA_DIR
+    const root = resolve(MEDIA_DIR);
+    const target = resolve(join(MEDIA_DIR, asset.key));
+    if (!isSafeMediaTarget(root, target)) {
+      return c.json(problem(400, 'Invalid media key'), 400, { 'Content-Type': P });
+    }
+
+    try {
+      await unlink(target);
+    } catch (err: any) {
+      if (err?.code !== 'ENOENT') {
+        console.error('[media.delete] unlink error', err);
+        return c.json(problem(500, 'Failed to delete file from disk', err?.message), 500, { 'Content-Type': P });
+      }
+    }
+
+    await db.delete(mediaAsset).where(eq(mediaAsset.id, id));
+    await auditRow(c, s.user.id, 'media.delete', String(id), { key: asset.key });
     return c.json({ deleted: true });
   });
 

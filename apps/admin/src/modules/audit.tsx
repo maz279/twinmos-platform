@@ -1,51 +1,304 @@
-// Audit log — read-only, filterable trail (admin role required server-side).
-// P1: adopted to the ModProps contract; rows offer cross-nav to the touched entity.
-import { apiGet, fmtDate } from '../api';
-import { Empty, Err, Table, td, useAsync } from '../ui';
+// Audit log — read-only, deep-filterable trail (admin role required server-side).
+// Phase 1: Interactive filter bar (Entity selector, Actor dropdown, Action type, Date picker, Reset, Export CSV).
+import React, { useEffect, useMemo, useState } from 'react';
+import { API, apiGet, fmtDate } from '../api';
+import { btn, btnGhost, card, Empty, Err, input, Table, td, useAsync } from '../ui';
 import type { ModProps } from '../nav';
 
-type AuditRow = { id: number; action: string; entity: string; entityId: string; actorId: string | null; requestId: string | null; ip: string | null; at: string };
-
-const ENTITY_MODULE: Record<string, string> = {
-  product: 'products', submission: 'submissions', rma: 'rma',
-  article: 'content', news_post: 'content', page: 'content', faq: 'content',
-  job_application: 'jobs', job_posting: 'jobs', media_asset: 'media',
-  partner_org: 'partners', translation: 'translations', setting: 'settings', redirect: 'settings',
+type AuditRow = {
+  id: number;
+  action: string;
+  entity: string;
+  entityId: string;
+  actorId: string | null;
+  actorEmail?: string | null;
+  requestId: string | null;
+  ip: string | null;
+  at: string;
 };
 
-export default function AuditLog({ nav }: ModProps) {
-  const { data, error, loading } = useAsync<{ items: AuditRow[] }>(() => apiGet('/admin/audit'), []);
+type UserOption = { id: string; email: string; name: string };
+
+const ENTITY_MODULE: Record<string, string> = {
+  product: 'products',
+  submission: 'submissions',
+  form_submission: 'submissions',
+  rma: 'rma',
+  rma_request: 'rma',
+  article: 'content',
+  news_post: 'content',
+  page: 'content',
+  faq: 'content',
+  job_application: 'jobs',
+  job_posting: 'jobs',
+  media_asset: 'media',
+  partner_org: 'partners',
+  translation: 'translations',
+  setting: 'settings',
+  redirect: 'settings',
+  user: 'users',
+};
+
+const ENTITIES = [
+  { value: '', label: 'All Entities' },
+  { value: 'product', label: 'Products' },
+  { value: 'article', label: 'Articles' },
+  { value: 'news_post', label: 'News Posts' },
+  { value: 'page', label: 'Pages' },
+  { value: 'faq', label: 'FAQ' },
+  { value: 'form_submission', label: 'Submissions / Leads' },
+  { value: 'rma_request', label: 'RMA Requests' },
+  { value: 'job_application', label: 'Job Applications' },
+  { value: 'job_posting', label: 'Job Postings' },
+  { value: 'media_asset', label: 'Media Assets' },
+  { value: 'partner_org', label: 'Partner Orgs' },
+  { value: 'translation', label: 'Translations' },
+  { value: 'setting', label: 'Settings' },
+  { value: 'redirect', label: 'Redirects' },
+  { value: 'user', label: 'Users & Roles' },
+];
+
+export default function AuditLog({ nav, me }: ModProps) {
+  const [entity, setEntity] = useState('');
+  const [actorId, setActorId] = useState('');
+  const [action, setAction] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [rows, setRows] = useState<AuditRow[]>([]);
+  const [cursor, setCursor] = useState<number | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Load known actors from audit history for all audit readers (editor+)
+  const { data: actorsData } = useAsync<{ items: UserOption[] }>(
+    () => apiGet<{ items: UserOption[] }>('/admin/audit/actors').catch(() => ({ items: [] })),
+    [],
+  );
+  // Also load full users directory if caller is super_admin
+  const { data: usersData } = useAsync<{ items: UserOption[] }>(
+    () => me?.user?.role === 'super_admin' ? apiGet<{ items: UserOption[] }>('/admin/users').catch(() => ({ items: [] })) : Promise.resolve({ items: [] }),
+    [me?.user?.role],
+  );
+
+  const query = useMemo(() => {
+    const p = new URLSearchParams();
+    if (entity) p.set('entity', entity);
+    if (actorId) p.set('actorId', actorId);
+    if (action) p.set('action', action);
+    if (from) p.set('from', from);
+    if (to) p.set('to', to);
+    const qs = p.toString();
+    return qs ? `?${qs}` : '';
+  }, [entity, actorId, action, from, to]);
+
+  const { data, error, loading, reload } = useAsync<{ items: AuditRow[]; cursor: number | null }>(
+    () => apiGet('/admin/audit' + query),
+    [query],
+  );
+
+  useEffect(() => {
+    if (data?.items) {
+      setRows(data.items);
+      setCursor(data.cursor);
+    }
+  }, [data]);
+
+  async function loadMore() {
+    if (!cursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const sep = query ? '&' : '?';
+      const res = await apiGet<{ items: AuditRow[]; cursor: number | null }>(
+        `/admin/audit${query}${sep}cursor=${cursor}`
+      );
+      setRows((prev) => [...prev, ...(res.items || [])]);
+      setCursor(res.cursor);
+    } catch (e) {
+      alert('Failed to load older records: ' + String(e));
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  function reset() {
+    setEntity('');
+    setActorId('');
+    setAction('');
+    setFrom('');
+    setTo('');
+  }
+
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const res = await fetch(API + '/admin/audit.csv' + query, { credentials: 'include' });
+      if (!res.ok) {
+        const problemBody = await res.json().catch(() => null);
+        throw new Error(problemBody?.detail || problemBody?.title || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `twinmos-audit-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      alert('Failed to export CSV: ' + (e?.message ?? String(e)));
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const usersList = useMemo(() => {
+    const map = new Map<string, UserOption>();
+    for (const u of usersData?.items ?? []) map.set(u.id, u);
+    for (const a of actorsData?.items ?? []) {
+      if (!map.has(a.id)) map.set(a.id, a);
+    }
+    return Array.from(map.values());
+  }, [usersData, actorsData]);
+
   return (
     <div>
-      <h1>Audit log</h1>
-      <p style={{ color: '#5E7691' }}>Last 100 mutations across all modules (admin role required).</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+        <div>
+          <h1 style={{ margin: 0 }}>Audit log</h1>
+          <p style={{ color: '#5E7691', margin: '4px 0 0' }}>Comprehensive chronological trail of mutations across all platform surfaces.</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button style={btnGhost} onClick={reload}>Refresh</button>
+          <button style={btn} disabled={exporting} onClick={exportCsv}>
+            {exporting ? 'Exporting…' : 'Export CSV'}
+          </button>
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div style={{ ...card, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end', marginBottom: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Entity</label>
+          <select
+            style={{ ...input, minWidth: 160 }}
+            value={entity}
+            onChange={(e) => setEntity(e.target.value)}
+          >
+            {ENTITIES.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Actor</label>
+          {usersList.length > 0 ? (
+            <select
+              style={{ ...input, minWidth: 160 }}
+              value={actorId}
+              onChange={(e) => setActorId(e.target.value)}
+            >
+              <option value="">All Actors</option>
+              {usersList.map((u) => (
+                <option key={u.id} value={u.id}>{u.name || u.email} ({u.email})</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              style={{ ...input, width: 140 }}
+              placeholder="Actor ID"
+              value={actorId}
+              onChange={(e) => setActorId(e.target.value)}
+            />
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Action</label>
+          <input
+            style={{ ...input, width: 140 }}
+            placeholder="e.g. create, update"
+            value={action}
+            onChange={(e) => setAction(e.target.value)}
+          />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>From Date</label>
+          <input
+            type="date"
+            style={input}
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>To Date</label>
+          <input
+            type="date"
+            style={input}
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
+        </div>
+
+        <button style={btnGhost} onClick={reset}>Reset</button>
+      </div>
+
       {error ? <Err error={error} /> : null}
-      {loading ? <p>Loading…</p> : data ? (
-        <Table head={['When', 'Action', 'Entity', 'Actor', 'Request', '']}>
-          {data.items.map((row) => {
-            const target = ENTITY_MODULE[row.entity];
-            return (
-              <tr key={row.id}>
-                <td style={td}>{fmtDate(row.at)}</td>
-                <td style={td}><b>{row.action}</b></td>
-                <td style={td}>{row.entity} #{row.entityId}</td>
-                <td style={td}>{row.actorId ?? '—'}</td>
-                <td style={{ ...td, color: '#5E7691', fontSize: 12 }}>{row.requestId ?? '—'}</td>
-                <td style={{ ...td, width: 90 }}>
-                  {target && (
-                    <button
-                      onClick={() => nav(target, { kind: row.entity, id: row.entityId, label: `${row.entity} #${row.entityId}` }, { newTab: true })}
-                      style={{ fontSize: 12, padding: '3px 8px', cursor: 'pointer', border: '1px solid #CBD5E1', borderRadius: 6, background: '#fff' }}>
-                      Open ↗
-                    </button>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </Table>
+
+      {loading && rows.length === 0 ? (
+        <p style={{ color: '#5E7691', padding: '16px 0' }}>Loading audit records…</p>
+      ) : rows.length > 0 ? (
+        <>
+          <Table head={['When', 'Action', 'Entity', 'Actor', 'IP & Request', '']}>
+            {rows.map((row) => {
+              const target = ENTITY_MODULE[row.entity];
+              return (
+                <tr key={row.id}>
+                  <td style={td}>{fmtDate(row.at)}</td>
+                  <td style={td}><b>{row.action}</b></td>
+                  <td style={td}>{row.entity} #{row.entityId}</td>
+                  <td style={td}>
+                    {row.actorEmail ? (
+                      <div>
+                        <div>{row.actorEmail}</div>
+                        <span style={{ fontSize: 11, color: '#64748B' }}>{row.actorId}</span>
+                      </div>
+                    ) : (
+                      row.actorId ?? '—'
+                    )}
+                  </td>
+                  <td style={{ ...td, color: '#5E7691', fontSize: 12 }}>
+                    <div>{row.ip ?? '—'}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 11 }}>{row.requestId ?? '—'}</div>
+                  </td>
+                  <td style={{ ...td, width: 90 }}>
+                    {target && (
+                      <button
+                        onClick={() => nav(target, { kind: row.entity, id: row.entityId, label: `${row.entity} #${row.entityId}` }, { newTab: true })}
+                        style={{ fontSize: 12, padding: '3px 8px', cursor: 'pointer', border: '1px solid #CBD5E1', borderRadius: 6, background: '#fff' }}>
+                        Open ↗
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </Table>
+          {cursor && (
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <button style={btnGhost} disabled={loadingMore} onClick={loadMore}>
+                {loadingMore ? 'Loading older records…' : 'Load More Older Records ↓'}
+              </button>
+            </div>
+          )}
+        </>
       ) : null}
-      {data && data.items.length === 0 && <Empty text="No audit rows yet." />}
+
+      {!loading && rows.length === 0 && <Empty text="No audit records match the selected filters." />}
     </div>
   );
 }
