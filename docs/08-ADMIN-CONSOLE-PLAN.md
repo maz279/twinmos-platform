@@ -268,3 +268,40 @@ audit-row.
 Sealed scan `scan-2026-09-29T13-39-09.058Z`: 45 findings — identical count to
 the accepted baseline, zero new rule classes. Migration 0009 applied to the
 dev DB.
+
+## Evidence — full manual/visual QA sweep (commit b36adda, 2026-09-29)
+
+Operator-requested walkthrough: every menu, button, option and data-entry form
+clicked live in the browser across all 12 modules. **Two real defects found and
+fixed**; everything else passed interactively.
+
+**Defect 1 (fixed):** sidebar clicks to an already-open module did nothing —
+`openTab` called a nested setState inside a state updater (impure; React drops
+it). Rewritten as one pure updater (focus-or-append). Verified: sidebar
+Content ↔ Dashboard switching activates the existing tab.
+
+**Defect 2 (fixed):** single-module groups rendered two identical buttons
+("Careers" header + "Careers" item) — the header swallowed the click, making
+the module look unreachable. Single-module groups now show a plain label;
+verified sidebar Careers opens Job applications.
+
+**Verified working (interactive, not snapshot-only):** Dashboard — 6 KPI cards,
+5 info cards, 4 quick-actions open tabs, SLA-risk row deep-links the lead,
+media-compliance link opens Media. Search — in-place results, type chips
+filter. Content — Library/Review-queue, entity tabs, article editor toolbar
+ops, page builder (palette 13 blocks, save, preview modal), submit-for-review,
+review queue lists the item, comments post+list, diff viewer. Products — q +
+status filters, create-form required-field validation, full save (QA-SWEEP-
+DDR5-16 created at $74.50, verified via API + list), currency dropdown
+authorized-only. Leads — filters, detail, internal note added, transition
+buttons, CSV 200 text/csv. RMA — state filter + search. Partners — orgs +
+SN-check tabs, add-org form validation (disabled until filled). Careers —
+applications table + status filter. Media — compliance chip, inline alt edit
+saved, grid/table toggle. Translations — locale selector renders. Users &
+Roles — table + invite modal. Audit — 16-entity filter, actor filter, export
+CSV. Settings — redirect created live (/qa-sweep-old → /qa-sweep-new). Shell —
+mega menu opens and navigates, rail collapse 260→84px, tab persistence across
+reload.
+
+Gates: typecheck 0, build green, suite 158/158, sealed scan baseline (45, no
+new classes).
