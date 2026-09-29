@@ -123,6 +123,69 @@ export const productCreateSchema = productBaseSchema.extend({
 });
 export const productUpdateSchema = productBaseSchema.partial();
 
+// ---- Phase 3: catalog engineering contracts (TWN-ADMIN-CMS-AUDIT-PLAN-2026-001 §3) ----
+// 3.1 product variants — hardware attributes + per-variant pricing/inventory.
+// Pricing & stock live inside the variant's jsonb attrs (the table's designed
+// dumping ground), so no migration is required.
+export const variantCreateSchema = z.object({
+  attrs: z.object({
+    capacity: z.string().trim().min(1).max(20),            // e.g. 16GB / 32GB / 1TB
+    speed: z.string().trim().min(1).max(20).optional(),     // e.g. 6000MT/s
+    finish: z.string().trim().min(1).max(20).optional(),    // Black / Titanium / White
+    lighting: z.enum(['RGB', 'Non-RGB']).optional(),
+  }),
+  sku: z.string().trim().regex(/^[A-Z0-9-]{3,40}$/),
+  priceUsd: z.number().nonnegative().max(9_999_999).nullable().default(null),
+  status: z.enum(['active', 'discontinued']).default('active'),
+  stock: z.number().int().min(0).max(9_999_999).default(0),
+});
+export const variantUpdateSchema = z.object({
+  // partial INSIDE attrs too — a PATCH may touch only e.g. finish or stock
+  attrs: variantCreateSchema.shape.attrs.partial(),
+  sku: variantCreateSchema.shape.sku,
+  priceUsd: variantCreateSchema.shape.priceUsd,
+  status: variantCreateSchema.shape.status,
+  stock: variantCreateSchema.shape.stock,
+}).partial();
+export type VariantInput = z.infer<typeof variantCreateSchema>;
+
+// 3.2 QVL compatibility matrix — motherboard/laptop validation rules.
+// NB: memory_gen and form_factor are varchar(12) columns — keep enum labels short.
+export const COMPAT_MEMORY_GENS = ['DDR4', 'DDR5'] as const;
+export const COMPAT_FORM_FACTORS = ['U-DIMM', 'SO-DIMM', 'M.2 NVMe'] as const;
+export const compatibilityCreateSchema = z.object({
+  deviceBrand: z.string().trim().min(1).max(40),
+  deviceModel: z.string().trim().min(1).max(80),
+  memoryGen: z.enum(COMPAT_MEMORY_GENS).nullable().default(null),
+  formFactor: z.enum(COMPAT_FORM_FACTORS).nullable().default(null),
+  maxGb: z.number().int().positive().max(1024).nullable().default(null),
+  notes: z.string().trim().max(500).nullable().default(null),
+});
+export const compatibilityUpdateSchema = compatibilityCreateSchema.partial();
+export type CompatibilityInput = z.infer<typeof compatibilityCreateSchema>;
+
+// 3.3 bulk import envelope — the CSV text is parsed/validated server-side.
+export const productImportSchema = z.object({
+  csv: z.string().min(1).max(2_000_000),
+  dryRun: z.boolean().default(true),
+});
+/** Canonical import column order (also the export order + template header). */
+export const PRODUCT_IMPORT_COLUMNS = ['sku', 'slug', 'name', 'brand', 'category', 'status', 'currency', 'priceUsd', 'description'] as const;
+
+// 3.4 optimistic locking — compare an If-Match header (optionally quoted ISO
+// timestamp) against the row's stored updatedAt. Returns true when equal OR
+// when no header was supplied (guard not requested).
+export function sameInstant(headerVal: string | undefined | null, dbVal: Date | string | null | undefined): boolean {
+  if (!headerVal) return true;
+  const parse = (v: string) => {
+    const d = new Date(v.replace(/^"|"$/g, ''));
+    return isNaN(d.getTime()) ? null : d.getTime();
+  };
+  const a = parse(headerVal);
+  const b = dbVal == null ? null : parse(typeof dbVal === 'string' ? dbVal : dbVal.toISOString());
+  return a != null && b != null && a === b;
+}
+
 // ---- RFC 9457 problem details helper ----
 export function problem(status: number, title: string, detail?: string, errors?: unknown) {
   return { type: 'about:blank', status, title, ...(detail ? { detail } : {}), ...(errors ? { errors } : {}) };

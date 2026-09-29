@@ -9,8 +9,10 @@ import {
   jobApplicationUpdateSchema, productCreateSchema, productUpdateSchema, problem,
   rmaTransitionSchema, submissionUpdateSchema, formNoteCreateSchema,
   RMA_TRANSITIONS, SUBMISSION_STATUS, SUBMISSION_TRANSITIONS, SUBMISSION_PRIORITY, RMA_STATUS,
+  variantCreateSchema, variantUpdateSchema, compatibilityCreateSchema, compatibilityUpdateSchema,
+  productImportSchema, PRODUCT_IMPORT_COLUMNS, AUTHORIZED_CURRENCIES, CONTENT_STATUS, sameInstant,
 } from '@twinmos/shared';
-import { auditLog, brand, category, formNote, formSubmission, jobApplication, jobPosting, product, rmaEvent, rmaRequest, user, article, page, newsPost, faq, mediaAsset } from '@twinmos/db';
+import { auditLog, brand, category, compatibilityRule, formNote, formSubmission, jobApplication, jobPosting, product, productVariant, rmaEvent, rmaRequest, user, article, page, newsPost, faq, mediaAsset } from '@twinmos/db';
 import { sendRmaStatusMail } from '../mailer.ts';
 import { IdempotencyStore } from '../idem.ts';
 import type { DB } from '@twinmos/db';
@@ -93,6 +95,44 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     return c.json({ brands, categories });
   });
 
+  // Phase 3.3 CSV endpoints MUST be registered before /products/:id —
+  // otherwise "export.csv" matches the :id param and Number() yields NaN.
+  /** CSV-cell hardening (same policy as audit.csv): quote-escape and neutralise
+   *  spreadsheet formula injection even behind leading whitespace. */
+  const csvCell = (v: unknown) => {
+    let s = (typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v ?? '')).replace(/"/g, '""').slice(0, 1000);
+    const trimmed = s.trimStart();
+    if (/^[=+\-@\t\r|%']/.test(trimmed)) s = "'" + s;
+    return '"' + s + '"';
+  };
+
+  r.get('/products/export.csv', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const rows = await db.select({
+      sku: product.sku, slug: product.slug, name: product.name,
+      brand: brand.slug, category: category.slug, status: product.status,
+      currency: product.currency, priceUsd: product.priceUsd, description: product.description,
+    }).from(product)
+      .innerJoin(brand, eq(product.brandId, brand.id))
+      .innerJoin(category, eq(product.categoryId, category.id))
+      .where(isNull(product.deletedAt)).orderBy(asc(product.sku)).limit(5000);
+    const lines = [PRODUCT_IMPORT_COLUMNS.join(',')];
+    for (const row of rows) lines.push([row.sku, row.slug, row.name, row.brand, row.category, row.status, row.currency, row.priceUsd ?? '', row.description].map(csvCell).join(','));
+    return c.body(lines.join('\r\n') + '\r\n', 200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="twinmos-products.csv"' });
+  });
+
+  r.get('/products/import-template.csv', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const lines = [
+      PRODUCT_IMPORT_COLUMNS.join(','),
+      'VLT-DDR5-6000-16G,voltx-ddr5-6000-16g,VOLTX DDR5 6000MT/s 16GB,voltx,gaming-dram,draft,USD,59.9,Example DDR5 module',
+      'VLT-SSD-1TB,voltx-ssd-1tb,VOLTX NVMe SSD 1TB,voltx,solid-state-drives,draft,USD,79.0,Example NVMe drive',
+    ];
+    return c.body(lines.join('\r\n') + '\r\n', 200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="twinmos-products-template.csv"' });
+  });
+
   r.get('/products/:id', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
@@ -127,12 +167,279 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const id = Number(c.req.param('id'));
     const parsed = productUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    // Phase 3.4: optimistic locking — a stale If-Match (the updatedAt the
+    // editor loaded) means someone else saved first; refuse with 409 instead
+    // of silently overwriting their work.
+    const ifMatch = c.req.header('if-match');
+    const current = (await db.select({ updatedAt: product.updatedAt }).from(product).where(eq(product.id, id)).limit(1))[0];
+    if (!current) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
+    if (ifMatch && !sameInstant(ifMatch, current.updatedAt)) {
+      return c.json(problem(409, 'Conflict', 'This product was modified by someone else after you loaded it. Reload the latest version and re-apply your changes.'), 409, { 'Content-Type': P });
+    }
     const rows = await db.update(product).set({ ...productValues(parsed.data), updatedAt: new Date() })
       .where(eq(product.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'product.update', 'product', String(id), parsed.data);
     return c.json(rows[0]);
   });
+
+  // ==================== Phase 3.1: product variants ====================
+  // Variants carry hardware attributes (capacity/speed/finish/lighting) plus
+  // per-variant price, stock and lifecycle status inside the jsonb attrs —
+  // the table's designed extension point, so no migration was needed.
+
+  r.get('/products/:id/variants', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const id = Number(c.req.param('id'));
+    const rows = await db.select().from(productVariant).where(eq(productVariant.productId, id)).orderBy(asc(productVariant.id));
+    return c.json({ items: rows });
+  });
+
+  const variantAttrs = (d: { attrs: Record<string, unknown>; priceUsd: number | null; status: string; stock: number }) =>
+    ({ ...d.attrs, priceUsd: d.priceUsd, status: d.status, stock: d.stock });
+
+  /** PGlite surfaces unique violations with varying shapes — match message,
+   *  cause chain and SQLSTATE 23505 so callers always see a clean 409. */
+  const isUniqueViolation = (e: unknown): boolean => {
+    const parts = [
+      String((e as Error)?.message ?? ''),
+      String((e as { cause?: { message?: string } })?.cause?.message ?? ''),
+      String((e as { code?: string })?.code ?? ''),
+    ];
+    return parts.some((s) => /unique|duplicate|23505/i.test(s));
+  };
+
+  r.post('/products/:id/variants', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const exists = (await db.select({ id: product.id }).from(product).where(eq(product.id, id)).limit(1))[0];
+    if (!exists) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
+    const parsed = variantCreateSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    try {
+      const rows = await db.insert(productVariant).values({ productId: id, sku: parsed.data.sku, attrs: variantAttrs(parsed.data) }).returning();
+      await auditRow(c, guard.user.id, 'product.variant.create', 'product_variant', String(rows[0].id), parsed.data);
+      return c.json(rows[0], 201);
+    } catch (e) {
+      if (isUniqueViolation(e)) {
+        return c.json(problem(409, 'Conflict', `Variant SKU ${parsed.data.sku} already exists.`), 409, { 'Content-Type': P });
+      }
+      throw e;
+    }
+  });
+
+  r.patch('/products/:id/variants/:varId', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const varId = Number(c.req.param('varId'));
+    const parsed = variantUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    // narrow the partial() inference to an explicit shape (nested attrs makes
+    // the inferred union awkward to index)
+    const data = parsed.data as Partial<{ attrs: Partial<Record<'capacity' | 'speed' | 'finish' | 'lighting', string>>; sku: string; priceUsd: number | null; status: 'active' | 'discontinued'; stock: number }>;
+    const existing = (await db.select().from(productVariant).where(and(eq(productVariant.id, varId), eq(productVariant.productId, id))).limit(1))[0];
+    if (!existing) return c.json(problem(404, 'Variant not found'), 404, { 'Content-Type': P });
+    const merged: Record<string, unknown> = { ...(existing.attrs as Record<string, unknown>) };
+    if (data.attrs) Object.assign(merged, data.attrs);
+    if (data.priceUsd !== undefined) merged.priceUsd = data.priceUsd;
+    if (data.status !== undefined) merged.status = data.status;
+    if (data.stock !== undefined) merged.stock = data.stock;
+    try {
+      const rows = await db.update(productVariant)
+        .set({ ...(data.sku !== undefined ? { sku: data.sku } : {}), attrs: merged })
+        .where(and(eq(productVariant.id, varId), eq(productVariant.productId, id))).returning();
+      await auditRow(c, guard.user.id, 'product.variant.update', 'product_variant', String(varId), data);
+      return c.json(rows[0]);
+    } catch (e) {
+      if (isUniqueViolation(e)) {
+        return c.json(problem(409, 'Conflict', `Variant SKU ${data.sku} already exists.`), 409, { 'Content-Type': P });
+      }
+      throw e;
+    }
+  });
+
+  r.delete('/products/:id/variants/:varId', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const varId = Number(c.req.param('varId'));
+    const rows = await db.delete(productVariant).where(and(eq(productVariant.id, varId), eq(productVariant.productId, id))).returning();
+    if (!rows[0]) return c.json(problem(404, 'Variant not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'product.variant.delete', 'product_variant', String(varId), rows[0].sku);
+    return c.json({ ok: true });
+  });
+
+  // ==================== Phase 3.2: QVL compatibility matrix ====================
+  r.get('/compatibility', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const q = (c.req.query('q') ?? '').trim();
+    const gen = c.req.query('memoryGen');
+    const filters = [];
+    if (q) filters.push(or(ilike(compatibilityRule.deviceBrand, `%${q}%`), ilike(compatibilityRule.deviceModel, `%${q}%`))!);
+    if (gen === 'DDR4' || gen === 'DDR5') filters.push(eq(compatibilityRule.memoryGen, gen));
+    const rows = await db.select().from(compatibilityRule)
+      .where(filters.length ? and(...filters) : undefined)
+      .orderBy(asc(compatibilityRule.deviceBrand), asc(compatibilityRule.deviceModel)).limit(200);
+    return c.json({ items: rows });
+  });
+
+  r.post('/compatibility', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const parsed = compatibilityCreateSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const rows = await db.insert(compatibilityRule).values(parsed.data).returning();
+    await auditRow(c, guard.user.id, 'compatibility.create', 'compatibility_rule', String(rows[0].id), parsed.data);
+    return c.json(rows[0], 201);
+  });
+
+  r.patch('/compatibility/:id', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const parsed = compatibilityUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const rows = await db.update(compatibilityRule).set(parsed.data).where(eq(compatibilityRule.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Compatibility rule not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'compatibility.update', 'compatibility_rule', String(id), parsed.data);
+    return c.json(rows[0]);
+  });
+
+  r.delete('/compatibility/:id', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const rows = await db.delete(compatibilityRule).where(eq(compatibilityRule.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Compatibility rule not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'compatibility.delete', 'compatibility_rule', String(id), rows[0].deviceBrand + ' ' + rows[0].deviceModel);
+    return c.json({ ok: true });
+  });
+
+  // ==================== Phase 3.3: bulk CSV import (export/template live above
+  // the /products/:id route — see the ordering note there) ====================
+
+  /** Minimal quoted-field-aware single-line CSV parser (RFC 4180 subset). */
+  function parseCsvLine(line: string): string[] {
+    const out: string[] = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQ) {
+        if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+        else cur += ch;
+      } else if (ch === '"') inQ = true;
+      else if (ch === ',') { out.push(cur); cur = ''; }
+      else cur += ch;
+    }
+    out.push(cur);
+    return out.map((s) => s.trim());
+  }
+
+  r.post('/products/import', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const parsed = productImportSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+
+    const rawLines = parsed.data.csv.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    if (rawLines.length < 2) return c.json(problem(422, 'Validation Failed', 'CSV needs a header row and at least one data row.'), 422, { 'Content-Type': P });
+    // case-insensitive on both sides — toLowerCase() would mangle priceUsd
+    const header = parseCsvLine(rawLines[0]).map((h) => h.trim().toLowerCase());
+    if (header.join(',') !== PRODUCT_IMPORT_COLUMNS.map((h) => h.toLowerCase()).join(',')) {
+      return c.json(problem(422, 'Validation Failed', `Header must be exactly: ${PRODUCT_IMPORT_COLUMNS.join(',')}. Use the downloadable template.`), 422, { 'Content-Type': P });
+    }
+
+    // Reference data for by-slug validation (small tables, loaded once)
+    const [brands, cats, existing] = await Promise.all([
+      db.select({ id: brand.id, slug: brand.slug }).from(brand),
+      db.select({ id: category.id, slug: category.slug }).from(category),
+      db.select({ id: product.id, sku: product.sku }).from(product).where(isNull(product.deletedAt)),
+    ]);
+    const brandBySlug = new Map(brands.map((b) => [b.slug, b.id]));
+    const catBySlug = new Map(cats.map((x) => [x.slug, x.id]));
+    const existingBySku = new Map(existing.map((x) => [x.sku, x.id]));
+    const seenSkus = new Set<string>();
+
+    type ValidRow = { line: number; action: 'create' | 'update'; sku: string; name: string; brandId: number; categoryId: number; values: Record<string, unknown> };
+    const valid: ValidRow[] = [];
+    const errors: Array<{ line: number; sku?: string; message: string }> = [];
+
+    for (let i = 1; i < rawLines.length; i++) {
+      const lineNo = i + 1;
+      const cols = parseCsvLine(rawLines[i]);
+      const [sku, slug, name, brandSlug, catSlug, status, currency, priceUsd, description] = cols;
+      const fail = (message: string) => errors.push({ line: lineNo, sku: sku || undefined, message });
+      if (!/^[A-Z0-9-]{3,40}$/.test(sku)) { fail('SKU must be 3-40 chars of A-Z, 0-9 and dashes.'); continue; }
+      if (seenSkus.has(sku)) { fail(`Duplicate SKU ${sku} within this file.`); continue; }
+      seenSkus.add(sku);
+      if (!/^[a-z0-9-]{3,80}$/.test(slug)) { fail('Slug must be 3-80 chars of a-z, 0-9 and dashes.'); continue; }
+      if (!name || name.length < 2 || name.length > 160) { fail('Name must be 2-160 characters.'); continue; }
+      const brandId = brandBySlug.get(brandSlug);
+      if (!brandId) { fail(`Unknown brand slug "${brandSlug}".`); continue; }
+      const categoryId = catBySlug.get(catSlug);
+      if (!categoryId) { fail(`Unknown category slug "${catSlug}".`); continue; }
+      if (!(CONTENT_STATUS as readonly string[]).includes(status)) { fail(`Status must be one of ${CONTENT_STATUS.join(', ')}.`); continue; }
+      const cur = currency || 'USD';
+      if (!(AUTHORIZED_CURRENCIES as readonly string[]).includes(cur)) { fail(`Currency must be one of ${AUTHORIZED_CURRENCIES.join(', ')} (forensic audit compliance — no BDT).`); continue; }
+      let price: number | null = null;
+      if (priceUsd !== '') {
+        price = Number(priceUsd);
+        if (!Number.isFinite(price) || price < 0 || price > 9_999_999) { fail('priceUsd must be empty or a number between 0 and 9,999,999.'); continue; }
+      }
+      if (description && description.length > 8000) { fail('Description exceeds 8000 characters.'); continue; }
+
+      const prev = existingBySku.get(sku);
+      valid.push({
+        line: lineNo, action: prev ? 'update' : 'create', sku, name, brandId, categoryId,
+        values: {
+          sku, slug, name, brandId, categoryId,
+          status: status as (typeof CONTENT_STATUS)[number],
+          specs: {}, description: description ?? '', priceUsd: price, currency: cur,
+          heroMediaId: null, gallery: [], datasheets: [], badges: [],
+        },
+      });
+    }
+
+    if (parsed.data.dryRun) {
+      return c.json({
+        dryRun: true, committed: false, total: rawLines.length - 1,
+        validCount: valid.length, updateCount: valid.filter((v) => v.action === 'update').length,
+        createCount: valid.filter((v) => v.action === 'create').length,
+        rows: valid.map(({ line, action, sku, name }) => ({ line, action, sku, name })),
+        errors,
+      });
+    }
+    if (errors.length) {
+      return c.json(problem(422, 'Validation Failed', `${errors.length} row(s) failed validation — fix them and re-run (dry-run first is recommended).`, errors), 422, { 'Content-Type': P });
+    }
+
+    let created = 0; let updated = 0;
+    await db.transaction(async (tx) => {
+      for (const v of valid) {
+        if (v.action === 'update') {
+          const id = existingBySku.get(v.sku)!;
+          await tx.update(product).set({ ...productValues(v.values as { priceUsd?: number | null }), updatedAt: new Date() }).where(eq(product.id, id));
+          updated++;
+        } else {
+          // the full row shape is validated above; the numeric priceUsd mapper's
+          // generic return defeats the insert overload, so hand it the concrete row
+          await tx.insert(product).values(productValues(v.values as { priceUsd?: number | null }) as typeof product.$inferInsert);
+          created++;
+        }
+      }
+    });
+    await auditRow(c, guard.user.id, 'product.import', 'product', 'bulk', { total: valid.length, created, updated });
+    return c.json({
+      dryRun: false, committed: true, total: valid.length, validCount: valid.length,
+      updateCount: updated, createCount: created,
+      rows: valid.map(({ line, action, sku, name }) => ({ line, action, sku, name })),
+      errors: [],
+    });
+  });
+
 
   /** Distinct actors who have audited events, joined with user for name/email (editor+). */
   r.get('/audit/actors', async (c) => {

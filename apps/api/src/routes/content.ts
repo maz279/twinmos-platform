@@ -11,7 +11,7 @@ import {
   articleCreateSchema, articleUpdateSchema, newsCreateSchema, newsUpdateSchema,
   pageCreateSchema, pageUpdateSchema, faqCreateSchema, faqUpdateSchema,
   contentTransitionSchema, contentRevertSchema, CONTENT_TRANSITIONS, CONTENT_ENTITY_SCHEMA,
-  CONTENT_STATUS, problem, slugify,
+  CONTENT_STATUS, problem, slugify, sameInstant,
 } from '@twinmos/shared';
 import { article, newsPost, page, faq, contentRevision, contentComment, auditLog, user } from '@twinmos/db';
 import { IdempotencyStore } from '../idem.ts';
@@ -167,6 +167,12 @@ export function contentRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
     // authors may only edit their own drafts; editor+ edits anything
     if (guard.user.role === 'author' && existing.authorId !== guard.user.id) {
       return c.json(problem(403, 'Authors may only edit their own content'), 403, { 'Content-Type': P });
+    }
+    // Phase 3.4: optimistic locking — a stale If-Match (the updatedAt the
+    // editor loaded) means someone else saved first; refuse with 409.
+    const ifMatch = c.req.header('if-match');
+    if (ifMatch && !sameInstant(ifMatch, existing.updatedAt)) {
+      return c.json(problem(409, 'Conflict', 'This item was modified by someone else after you loaded it. Reload the latest version and re-apply your changes.'), 409, { 'Content-Type': P });
     }
 
     const patch: Record<string, unknown> = { ...parsed.data, updatedAt: new Date() };

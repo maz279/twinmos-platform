@@ -8,7 +8,7 @@
 //     revision before approving.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { marked } from 'marked';
-import { apiGet, apiSend, fmtDate } from '../api';
+import { ApiError, apiGet, apiSend, fmtDate } from '../api';
 import { Badge, btn, btnGhost, Empty, Err, input, Table, td, useAsync } from '../ui';
 import { CONTENT_STATUS } from '@twinmos/shared';
 import PageBuilder from './page-builder/PageBuilder';
@@ -172,6 +172,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
   const [publishAt, setPublishAt] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const [conflict, setConflict] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [revisions, setRevisions] = useState<Revision[]>([]);
@@ -218,10 +219,16 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
         onCreated(created); // parent remounts the editor on the real row → workflow buttons appear
         onSaved();
       } else {
-        await apiSend('PATCH', `/admin/content/${entity}/${(row as Row).id}`, payload());
+        // Phase 3.4: send the loaded revision — the API refuses with 409 when
+        // someone else saved first (no silent overwrites).
+        await apiSend('PATCH', `/admin/content/${entity}/${(row as Row).id}`, payload(),
+          { 'If-Match': new Date((row as Row).updatedAt).toISOString() });
       }
       onSaved();
-    } catch (e) { setError(e); } finally { setBusy(false); }
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 409) setConflict(true);
+      else setError(e);
+    } finally { setBusy(false); }
   }
 
   async function transition(to: string) {
@@ -306,6 +313,14 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
         </div>
       </div>
       {error ? <Err error={error} /> : null}
+      {conflict && (
+        <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', margin: '10px 0', color: '#8A5A00', background: '#FBF3E2', border: '1px solid #E8CE9A', borderRadius: 8, padding: '8px 12px' }}>
+          <b>Conflict:</b>
+          <span style={{ flex: 1, minWidth: 200 }}>this item was saved by someone else while you were editing — your changes were NOT applied.</span>
+          <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={() => { setConflict(false); onSaved(); }}>Reload fresh</button>
+          <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={() => setConflict(false)}>Keep mine on screen</button>
+        </div>
+      )}
       {status === 'in_review' && (
         <div style={{ margin: '10px 0', background: '#FFF7E6', border: '1px solid #F1DCA8', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#8A6420' }}>
           In review — editors see this item in their <b>Review queue</b>. Use the Comments tab for feedback.

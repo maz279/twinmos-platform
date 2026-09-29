@@ -10,6 +10,7 @@ import Dashboard from './modules/dashboard';
 import SearchPage from './modules/search';
 import Content from './modules/content';
 import Products from './modules/products';
+import Compatibility from './modules/compatibility';
 import Submissions from './modules/submissions';
 import RmaBoard from './modules/rma';
 import Partners from './modules/partners';
@@ -59,6 +60,7 @@ export const MODULES: ModuleDef[] = [
   { id: 'search', label: 'Search', group: 'Overview', icon: 'search', minRole: 'viewer', desc: 'Search everything — leads, products, content, RMA, media.', comp: SearchPage },
   { id: 'content', label: 'Content', group: 'Content Studio', icon: 'doc', minRole: 'viewer', desc: 'Articles, news, pages and FAQ — workflow, revisions, preview.', comp: (p) => h(Content, { canPublish: canPublishRole(p.me.user?.role), canWrite: p.canWrite }) },
   { id: 'products', label: 'Products', group: 'Catalog', icon: 'layers', minRole: 'viewer', desc: 'Product catalog: SKUs, specs, variants and badges.', comp: Products },
+  { id: 'compatibility', label: 'Compatibility', group: 'Catalog', icon: 'shield', minRole: 'viewer', desc: 'QVL matrix — validated motherboard/laptop compatibility rules.', comp: (p) => h(Compatibility, { canWrite: p.canWrite }) },
   { id: 'submissions', label: 'Leads & quotes', group: 'Support & Leads', icon: 'inbox', minRole: 'viewer', badge: 'newLeads', desc: 'Lead inbox — SLA-tracked workflow, notes, CSV export.', comp: (p) => h(Submissions, { canWrite: p.canWrite, myId: p.me.user?.id, ctx: p.ctx }) },
   { id: 'rma', label: 'RMA board', group: 'Support & Leads', icon: 'tool', minRole: 'viewer', badge: 'openRma', desc: 'Returns board — 7-state pipeline with audited transitions.', comp: RmaBoard },
   { id: 'partners', label: 'Partners & channel', group: 'Channel & Partners', icon: 'share', minRole: 'viewer', desc: 'Distributors, marketplace listings and partner assets.', comp: (p) => h(Partners, { canManage: isAdminRole(p.me.user?.role) }) },

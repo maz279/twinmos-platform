@@ -4,7 +4,7 @@
 // specifications (key/value), badges and datasheets. Deep-linkable per product
 // via tab ctx { kind:'product', id }.
 import React, { useEffect, useMemo, useState } from 'react';
-import { API, apiGet, apiSend, fmtDate } from '../api';
+import { API, ApiError, apiGet, apiSend, fmtDate } from '../api';
 import { Badge, btn, btnGhost, Empty, Err, input, Table, td, useAsync } from '../ui';
 import { MediaPicker } from '../media-picker';
 import { AUTHORIZED_CURRENCIES } from '@twinmos/shared';
@@ -28,6 +28,7 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
 
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
+  const [bulk, setBulk] = useState(false);
   const query = useMemo(() => {
     const qs = new URLSearchParams();
     if (q.trim()) qs.set('q', q.trim());
@@ -48,6 +49,7 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
         <h1 style={{ margin: 0, fontSize: 22 }}>Products</h1>
         {canWrite && <button style={btn} onClick={() => setEditing('new')}>+ New product</button>}
+        <button style={btnGhost} onClick={() => setBulk(true)} title="Bulk CSV import and full-catalog export">Import / Export</button>
         <span style={{ flex: 1 }} />
         <input style={{ ...input, width: 240 }} placeholder="Search name or SKU…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -81,6 +83,7 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
         </Table>
       ) : null}
       {data && data.items.length === 0 && <Empty text="No products match — run npm run db:seed or clear the filters." />}
+      {bulk && <BulkModal canImport={canWrite} onClose={() => setBulk(false)} onDone={reload} />}
     </div>
   );
 }
@@ -89,7 +92,10 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
   id: number | null; taxonomy: Taxonomy | null; canWrite: boolean; onDone: () => void; onCancel: () => void;
 }) {
   const isNew = id == null;
-  const { data: existing, error, loading } = useAsync<Product | null>(() => (isNew ? Promise.resolve(null) : apiGet('/admin/products/' + id)), [id]);
+  const { data: existing, error, loading, reload } = useAsync<Product | null>(() => (isNew ? Promise.resolve(null) : apiGet('/admin/products/' + id)), [id]);
+  // Phase 3: editor sub-tabs (Basics / Variants & SKUs) + optimistic-lock conflict flag
+  const [tab, setTab] = useState<'basics' | 'variants'>('basics');
+  const [conflict, setConflict] = useState(false);
   const [form, setForm] = useState({
     sku: '', slug: '', name: '', brandId: 0, categoryId: 0, status: 'draft',
     description: '', price: '', currency: 'USD', badges: '',
@@ -141,11 +147,15 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
         if (!form.sku || !form.name || !form.brandId || !form.categoryId) { setErr('SKU, name, brand and category are required for a new product.'); setBusy(false); return; }
         await apiSend('POST', '/admin/products', body);
       } else {
-        await apiSend('PATCH', '/admin/products/' + id, body);
+        // Phase 3.4: send the revision we loaded — the API refuses with 409
+        // when someone else saved in the meantime (no silent overwrites).
+        await apiSend('PATCH', '/admin/products/' + id, body,
+          existing ? { 'If-Match': new Date(existing.updatedAt).toISOString() } : undefined);
       }
       onDone();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Save failed.');
+      if (e instanceof ApiError && e.status === 409) setConflict(true);
+      else setErr(e instanceof Error ? e.message : 'Save failed.');
     } finally { setBusy(false); }
   }
 
@@ -163,7 +173,25 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
         {canWrite && <button style={btn} disabled={busy} onClick={() => save(false)}>{busy ? 'Saving…' : isNew ? 'Create product' : 'Save changes'}</button>}
       </div>
       {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '8px 12px' }}>{err}</p>}
+      {conflict && (
+        <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', color: '#8A5A00', background: '#FBF3E2', border: '1px solid #E8CE9A', borderRadius: 8, padding: '8px 12px' }}>
+          <b>Conflict:</b>
+          <span style={{ flex: 1, minWidth: 200 }}>this product was saved by someone else while you were editing — your changes were NOT applied.</span>
+          <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={() => { setConflict(false); reload(); }}>Reload fresh</button>
+          <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={() => setConflict(false)}>Keep mine on screen</button>
+        </div>
+      )}
 
+      {!isNew && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          <button style={tab === 'basics' ? btn : btnGhost} onClick={() => setTab('basics')}>Basics</button>
+          <button style={tab === 'variants' ? btn : btnGhost} onClick={() => setTab('variants')}>Variants &amp; SKUs</button>
+        </div>
+      )}
+
+      {tab === 'variants' && !isNew && id != null ? (
+        <VariantsTab productId={id} baseSku={existing?.sku ?? ''} canWrite={canWrite} />
+      ) : (
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, alignItems: 'start' }}>
         <div style={{ display: 'grid', gap: 12 }}>
           <div style={sectionStyle}>
@@ -262,6 +290,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
           )}
         </div>
       </div>
+      )}
 
       {picker && (
         <MediaPicker
@@ -271,6 +300,269 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
           onClose={() => setPicker(null)}
         />
       )}
+    </div>
+  );
+}
+
+// ---- Phase 3.1: Variants & SKUs tab -------------------------------------
+type VariantRow = {
+  id: number; productId: number; sku: string;
+  attrs: { capacity?: string; speed?: string; finish?: string; lighting?: string; priceUsd?: number | null; status?: string; stock?: number };
+};
+
+function VariantsTab({ productId, baseSku, canWrite }: { productId: number; baseSku: string; canWrite: boolean }) {
+  const { data, error, loading, reload } = useAsync<{ items: VariantRow[] }>(() => apiGet(`/admin/products/${productId}/variants`), [productId]);
+  const [capacity, setCapacity] = useState('16GB');
+  const [speed, setSpeed] = useState('');
+  const [finish, setFinish] = useState('');
+  const [lighting, setLighting] = useState<'RGB' | 'Non-RGB' | ''>('');
+  const [price, setPrice] = useState('');
+  const [stock, setStock] = useState('0');
+  const [status, setStatus] = useState<'active' | 'discontinued'>('active');
+  const [sku, setSku] = useState('');
+  const [editId, setEditId] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  // Suggested SKU: base SKU + capacity + speed + lighting (e.g. VLT-DDR5-16GB-6000-RGB)
+  const suggested = useMemo(() => {
+    const parts = [baseSku, capacity, speed, lighting].filter(Boolean).join('-').toUpperCase();
+    return parts.replace(/[^A-Z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+  }, [baseSku, capacity, speed, lighting]);
+
+  function reset() { setEditId(null); setSku(''); setPrice(''); setStock('0'); setStatus('active'); setErr(null); }
+
+  function loadForEdit(v: VariantRow) {
+    setEditId(v.id); setSku(v.sku);
+    setCapacity(v.attrs.capacity ?? ''); setSpeed(v.attrs.speed ?? ''); setFinish(v.attrs.finish ?? '');
+    setLighting((v.attrs.lighting as 'RGB' | 'Non-RGB') ?? '');
+    setPrice(v.attrs.priceUsd != null ? String(v.attrs.priceUsd) : '');
+    setStock(String(v.attrs.stock ?? 0));
+    setStatus((v.attrs.status as 'active' | 'discontinued') ?? 'active');
+  }
+
+  async function submit() {
+    if (!canWrite) return;
+    setErr(null);
+    if (!capacity.trim()) { setErr('Capacity is required (e.g. 16GB, 32GB, 1TB).'); return; }
+    const finalSku = (sku.trim() || suggested).toUpperCase();
+    if (!/^[A-Z0-9-]{3,40}$/.test(finalSku)) { setErr('SKU must be 3-40 chars of A-Z, 0-9 and dashes.'); return; }
+    const p = price.trim() === '' ? null : Number(price);
+    if (p != null && !Number.isFinite(p)) { setErr('Price must be a number (or empty).'); return; }
+    const body = {
+      attrs: {
+        capacity: capacity.trim(),
+        ...(speed.trim() ? { speed: speed.trim() } : {}),
+        ...(finish.trim() ? { finish: finish.trim() } : {}),
+        ...(lighting ? { lighting } : {}),
+      },
+      sku: finalSku, priceUsd: p, status, stock: Math.max(0, Math.trunc(Number(stock) || 0)),
+    };
+    setBusy(true);
+    try {
+      if (editId != null) await apiSend('PATCH', `/admin/products/${productId}/variants/${editId}`, body);
+      else await apiSend('POST', `/admin/products/${productId}/variants`, body);
+      reset(); reload();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Save failed.');
+    } finally { setBusy(false); }
+  }
+
+  async function remove(v: VariantRow) {
+    setErr(null); setBusy(true);
+    try { await apiSend('DELETE', `/admin/products/${productId}/variants/${v.id}`); reload(); }
+    catch (e) { setErr(e instanceof Error ? e.message : 'Delete failed.'); }
+    finally { setBusy(false); }
+  }
+
+  const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: '#93A0B4', display: 'block', margin: '10px 0 4px' };
+  const items = data?.items ?? [];
+
+  return (
+    <div style={{ display: 'grid', gap: 12 }}>
+      <div style={{ border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 16px', background: '#fff' }}>
+        <h3 style={{ marginTop: 12 }}>{editId != null ? 'Edit variant' : 'Add variant'}</h3>
+        {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '6px 10px' }}>{err}</p>}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10 }}>
+          <span><label style={label}>Capacity *</label>
+            <input style={{ ...input, width: '100%' }} placeholder="16GB / 32GB / 1TB" value={capacity} onChange={(e) => setCapacity(e.target.value)} /></span>
+          <span><label style={label}>Speed</label>
+            <input style={{ ...input, width: '100%' }} placeholder="6000MT/s" value={speed} onChange={(e) => setSpeed(e.target.value)} /></span>
+          <span><label style={label}>Finish</label>
+            <input style={{ ...input, width: '100%' }} placeholder="Black / Titanium" value={finish} onChange={(e) => setFinish(e.target.value)} /></span>
+          <span><label style={label}>Lighting</label>
+            <select style={{ ...input, width: '100%' }} value={lighting} onChange={(e) => setLighting(e.target.value as 'RGB' | 'Non-RGB' | '')}>
+              <option value="">—</option><option>RGB</option><option>Non-RGB</option>
+            </select></span>
+          <span><label style={label}>SKU <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>(suggested: {suggested || '—'})</span></label>
+            <input style={{ ...input, width: '100%' }} placeholder={suggested} value={sku} onChange={(e) => setSku(e.target.value)} /></span>
+          <span><label style={label}>Price (USD)</label>
+            <input style={{ ...input, width: '100%' }} placeholder="e.g. 74.50" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} /></span>
+          <span><label style={label}>Stock</label>
+            <input style={{ ...input, width: '100%' }} inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value)} /></span>
+          <span><label style={label}>Status</label>
+            <select style={{ ...input, width: '100%' }} value={status} onChange={(e) => setStatus(e.target.value as 'active' | 'discontinued')}>
+              <option value="active">active</option><option value="discontinued">discontinued</option>
+            </select></span>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          {canWrite && <button style={btn} disabled={busy} onClick={submit}>{busy ? 'Saving…' : editId != null ? 'Save variant' : 'Add variant'}</button>}
+          {editId != null && <button style={btnGhost} onClick={reset}>Cancel edit</button>}
+          {!canWrite && <span style={{ color: '#93A0B4', fontSize: 12.5, alignSelf: 'center' }}>Read-only — editor role required to manage variants.</span>}
+        </div>
+      </div>
+
+      <div style={{ border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 12px', background: '#fff' }}>
+        <h3 style={{ marginTop: 12 }}>Variants ({items.length})</h3>
+        {error ? <Err error={error} /> : loading ? <p>Loading…</p> : items.length === 0 ? (
+          <Empty text="No variants yet — add capacities, speeds, finishes and lighting above." />
+        ) : (
+          <Table head={['SKU', 'Attributes', 'Price', 'Stock', 'Status', '']}>
+            {items.map((v) => (
+              <tr key={v.id}>
+                <td style={td}><b>{v.sku}</b></td>
+                <td style={td}>
+                  <span style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap' }}>
+                    {[v.attrs.capacity, v.attrs.speed, v.attrs.finish, v.attrs.lighting].filter(Boolean).map((a, i) => (
+                      <span key={i} style={{ fontSize: 11, background: '#F1F4F8', color: '#475467', borderRadius: 5, padding: '1px 7px' }}>{a}</span>
+                    ))}
+                  </span>
+                </td>
+                <td style={td}>{v.attrs.priceUsd != null ? <b>${Number(v.attrs.priceUsd).toFixed(2)}</b> : <span style={{ color: '#93A0B4' }}>—</span>}</td>
+                <td style={td}>{v.attrs.stock ?? 0}</td>
+                <td style={td}><Badge value={v.attrs.status ?? 'active'} /></td>
+                <td style={{ ...td, width: 110 }}>
+                  {canWrite && <>
+                    <button style={{ ...btnGhost, padding: '3px 8px', fontSize: 12, marginRight: 4 }} onClick={() => loadForEdit(v)}>Edit</button>
+                    <button style={{ ...btnGhost, padding: '3px 8px', fontSize: 12 }} disabled={busy} onClick={() => remove(v)}>✕</button>
+                  </>}
+                </td>
+              </tr>
+            ))}
+          </Table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---- Phase 3.3: bulk CSV import / export modal ---------------------------
+type ImportReport = {
+  dryRun: boolean; committed: boolean; total: number; validCount: number; createCount: number; updateCount: number;
+  rows: Array<{ line: number; action: 'create' | 'update'; sku: string; name: string }>;
+  errors: Array<{ line: number; sku?: string; message: string }>;
+};
+
+function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose: () => void; onDone: () => void }) {
+  const [csv, setCsv] = useState('');
+  const [report, setReport] = useState<ImportReport | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  function download(path: string, fallbackName: string) {
+    fetch(API + path, { credentials: 'include' })
+      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+      .then((b) => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(b); a.download = fallbackName; a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      })
+      .catch(() => setErr('Download failed — is the API running?'));
+  }
+
+  async function run(dryRun: boolean) {
+    setErr(null); setBusy(true);
+    try {
+      const res = await apiSend<ImportReport>('POST', '/admin/products/import', { csv, dryRun });
+      setReport(res);
+      if (!dryRun) onDone();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Import failed.');
+    } finally { setBusy(false); }
+  }
+
+  const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(10,22,40,.45)', display: 'grid', placeItems: 'center', zIndex: 60, padding: 20 };
+  const card: React.CSSProperties = { width: 'min(760px, 94vw)', maxHeight: '84vh', overflowY: 'auto', background: '#fff', borderRadius: 14, boxShadow: '0 30px 80px rgba(2,12,28,.5)', padding: 18 };
+  return (
+    <div style={overlay} onClick={onClose}>
+      <div style={card} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Bulk import and export">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <b style={{ fontSize: 15, color: '#1F2A37', flex: 1 }}>Bulk import &amp; export</b>
+          <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={onClose}>✕</button>
+        </div>
+        {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '8px 12px', whiteSpace: 'pre-wrap' }}>{err}</p>}
+
+        <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12, marginBottom: 12 }}>
+          <b style={{ fontSize: 13 }}>1 · Get the data</b>
+          <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: '#66748A' }}>
+            Download the template to see the exact columns (sku, slug, name, brand, category, status, currency, priceUsd, description —
+            brand and category are slugs, currency must be one of the authorized six), or export the full catalog.
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button style={btnGhost} onClick={() => download('/admin/products/import-template.csv', 'twinmos-products-template.csv')}>⬇ CSV template</button>
+            <button style={btnGhost} onClick={() => download('/admin/products/export.csv', 'twinmos-products.csv')}>⬇ Export catalog CSV</button>
+          </div>
+        </div>
+
+        <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12, marginBottom: 12 }}>
+          <b style={{ fontSize: 13 }}>2 · Upload your CSV</b>
+          <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: '#66748A' }}>Choose a .csv file, then validate it first — nothing is written during a dry-run.</p>
+          <input type="file" accept=".csv,text/csv" style={input} disabled={!canImport}
+            onChange={(e) => {
+              const f = e.target.files?.[0]; if (!f) return;
+              f.text().then((t) => { setCsv(t); setReport(null); setErr(null); });
+            }} />
+          {csv && <p style={{ margin: '8px 0 0', fontSize: 12, color: '#0E9F7E', fontWeight: 700 }}>✓ Loaded {csv.split(/\r?\n/).filter((l) => l.trim()).length - 1} data row(s)</p>}
+        </div>
+
+        <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12 }}>
+          <b style={{ fontSize: 13 }}>3 · Validate, then import</b>
+          <div style={{ display: 'flex', gap: 8, margin: '10px 0' }}>
+            <button style={btnGhost} disabled={!canImport || !csv || busy} onClick={() => run(true)}>{busy ? 'Working…' : 'Validate (dry-run)'}</button>
+            <button style={btn} disabled={!canImport || !csv || busy || !report || report.errors.length > 0 || report.validCount === 0} onClick={() => run(false)}>
+              Import {report ? `${report.validCount} row(s)` : ''}
+            </button>
+          </div>
+
+          {report && (
+            <div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 999, background: report.committed ? '#E7F6EE' : '#F1F4F8', color: report.committed ? '#1F9D62' : '#475467' }}>
+                  {report.committed ? `✓ Committed — ${report.createCount} created, ${report.updateCount} updated` : `Dry-run — ${report.validCount}/${report.total} valid (${report.createCount} new, ${report.updateCount} updates)`}
+                </span>
+                {report.errors.length > 0 && (
+                  <span style={{ fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 999, background: '#FCECEB', color: '#C2453C' }}>{report.errors.length} error(s)</span>
+                )}
+              </div>
+              {report.errors.length > 0 && (
+                <div style={{ border: '1px solid #F5D5D2', background: '#FDF6F5', borderRadius: 8, padding: 8, marginBottom: 8, maxHeight: 140, overflowY: 'auto' }}>
+                  {report.errors.map((e, i) => (
+                    <div key={i} style={{ fontSize: 12, color: '#C2453C', padding: '2px 0' }}>
+                      <b>Line {e.line}{e.sku ? ` (${e.sku})` : ''}:</b> {e.message}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {report.rows.length > 0 && (
+                <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+                  <Table head={['Line', 'Action', 'SKU', 'Name']}>
+                    {report.rows.map((r) => (
+                      <tr key={r.line}>
+                        <td style={td}>{r.line}</td>
+                        <td style={td}>{r.action === 'create'
+                          ? <span style={{ fontSize: 11, background: '#E7F7F2', color: '#0E9F7E', borderRadius: 5, padding: '1px 7px', fontWeight: 700 }}>create</span>
+                          : <span style={{ fontSize: 11, background: '#FBF3E2', color: '#8A6420', borderRadius: 5, padding: '1px 7px', fontWeight: 700 }}>update</span>}</td>
+                        <td style={td}><b>{r.sku}</b></td>
+                        <td style={td}>{r.name}</td>
+                      </tr>
+                    ))}
+                  </Table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
