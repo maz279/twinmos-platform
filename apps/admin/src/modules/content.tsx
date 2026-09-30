@@ -9,7 +9,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { marked } from 'marked';
 import { ApiError, apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, Empty, Err, input, Table, td, useAsync } from '../ui';
+import { Badge, btn, btnGhost, Empty, Err, input, PageHeader, Table, td, Toolbar, useAsync } from '../ui';
 import { CONTENT_STATUS } from '@twinmos/shared';
 import PageBuilder from './page-builder/PageBuilder';
 import { BlockPreview, PreviewModal } from './page-builder/preview';
@@ -76,8 +76,8 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
 
   return (
     <div>
-      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Content studio</h1>
-      <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
+      <PageHeader title="Content studio" />
+      <Toolbar style={{ margin: '12px 0' }}>
         <button style={view === 'library' ? btn : btnGhost} onClick={() => { setView('library'); setEditing(null); }}>Library</button>
         <button style={view === 'review' ? btn : btnGhost} onClick={() => { setView('review'); setEditing(null); }}>
           Review queue {queueRows.length ? <span style={{ background: '#1DBF9F', color: '#fff', borderRadius: 999, fontSize: 10.5, padding: '1px 7px', marginLeft: 6 }}>{queueRows.length}</span> : null}
@@ -93,7 +93,7 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
           </select>
           <button style={btn} onClick={() => setEditing('new')}>+ New {entity}</button>
         </>}
-      </div>
+      </Toolbar>
 
       {view === 'review' ? (
         queue.error ? <Err error={queue.error} /> : queue.loading ? <p>Loading…</p> : (

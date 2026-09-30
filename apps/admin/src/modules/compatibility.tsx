@@ -5,7 +5,7 @@
 // + model, memory generation (DDR4/DDR5), form factor and max capacity.
 import { useMemo, useState } from 'react';
 import { apiSend, apiGet } from '../api';
-import { Badge, btn, btnGhost, Empty, Err, input, Table, td, useAsync } from '../ui';
+import { Badge, btn, btnGhost, Empty, Err, Field, formGrid, input, PageHeader, SectionCard, Table, td, Toolbar, useAsync } from '../ui';
 import { COMPAT_MEMORY_GENS, COMPAT_FORM_FACTORS } from '@twinmos/shared';
 
 type Rule = {
@@ -73,65 +73,64 @@ export default function Compatibility({ canWrite }: { canWrite: boolean }) {
     finally { setBusy(false); }
   }
 
-  const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: '#93A0B4', display: 'block', margin: '10px 0 4px' };
-  const card: React.CSSProperties = { border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 16px', background: '#fff' };
   const items = data?.items ?? [];
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Compatibility Matrix</h1>
-      </div>
-      <p style={{ margin: '2px 0 12px', color: '#66748A', fontSize: 13 }}>
-        QVL rules powering the public compatibility finder — validated motherboards and laptops per memory generation, form factor and maximum capacity.
-      </p>
+      <PageHeader
+        title="Compatibility Matrix"
+        subtitle="QVL rules powering the public compatibility finder — validated motherboards and laptops per memory generation, form factor and maximum capacity."
+        style={{ marginBottom: 12 }}
+      />
 
-      <div style={{ display: 'flex', gap: 8, margin: '0 0 12px', flexWrap: 'wrap', alignItems: 'center' }}>
+      <Toolbar>
         <input style={{ ...input, width: 240 }} placeholder="Search brand or model (e.g. ASUS, Z790)…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select style={input} value={gen} onChange={(e) => setGen(e.target.value)}>
           <option value="">All generations</option>
           {COMPAT_MEMORY_GENS.map((g) => <option key={g}>{g}</option>)}
         </select>
         {(q || gen) && <button style={btnGhost} onClick={() => { setQ(''); setGen(''); }}>Reset</button>}
-      </div>
+      </Toolbar>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px,2fr) 3fr', gap: 12, alignItems: 'start' }}>
-        <div style={card}>
-          <h3 style={{ marginTop: 12 }}>{editId != null ? 'Edit rule' : 'Add rule'}</h3>
+        <SectionCard title={editId != null ? 'Edit rule' : 'Add rule'}>
           {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '6px 10px' }}>{err}</p>}
-          <label style={label}>Device brand *</label>
-          <input style={{ ...input, width: '100%' }} placeholder="ASUS / MSI / Dell / Lenovo…" list="tm-device-brands" value={brand} onChange={(e) => setBrand(e.target.value)} />
+          <Field label="Device brand *">
+            <input style={{ ...input, width: '100%' }} placeholder="ASUS / MSI / Dell / Lenovo…" list="tm-device-brands" value={brand} onChange={(e) => setBrand(e.target.value)} />
+          </Field>
           <datalist id="tm-device-brands">
             {['ASUS', 'MSI', 'Gigabyte', 'ASRock', 'Dell', 'HP', 'Lenovo', 'Acer', 'Intel', 'AMD', 'Apple', 'Samsung'].map((b) => <option key={b} value={b} />)}
           </datalist>
-          <label style={label}>Model / chipset *</label>
-          <input style={{ ...input, width: '100%' }} placeholder="ROG STRIX Z790-E / Latitude 5540…" value={model} onChange={(e) => setModel(e.target.value)} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <span><label style={label}>Memory gen</label>
+          <Field label="Model / chipset *">
+            <input style={{ ...input, width: '100%' }} placeholder="ROG STRIX Z790-E / Latitude 5540…" value={model} onChange={(e) => setModel(e.target.value)} />
+          </Field>
+          <div style={formGrid()}>
+            <Field label="Memory gen">
               <select style={{ ...input, width: '100%' }} value={memoryGen} onChange={(e) => setMemoryGen(e.target.value)}>
                 <option value="">—</option>
                 {COMPAT_MEMORY_GENS.map((g) => <option key={g}>{g}</option>)}
-              </select></span>
-            <span><label style={label}>Form factor</label>
+              </select></Field>
+            <Field label="Form factor">
               <select style={{ ...input, width: '100%' }} value={formFactor} onChange={(e) => setFormFactor(e.target.value)}>
                 <option value="">—</option>
                 {COMPAT_FORM_FACTORS.map((f) => <option key={f}>{f}</option>)}
-              </select></span>
+              </select></Field>
           </div>
-          <label style={label}>Max RAM (GB)</label>
-          <input style={{ ...input, width: '100%' }} placeholder="e.g. 128" inputMode="numeric" value={maxGb} onChange={(e) => setMaxGb(e.target.value)} />
-          <label style={label}>Notes</label>
-          <textarea style={{ ...input, width: '100%', minHeight: 64, fontFamily: 'inherit' }} placeholder="Validated speed profiles, slot layout, caveats…"
-            value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <Field label="Max RAM (GB)">
+            <input style={{ ...input, width: '100%' }} placeholder="e.g. 128" inputMode="numeric" value={maxGb} onChange={(e) => setMaxGb(e.target.value)} />
+          </Field>
+          <Field label="Notes">
+            <textarea style={{ ...input, width: '100%', minHeight: 64, fontFamily: 'inherit' }} placeholder="Validated speed profiles, slot layout, caveats…"
+              value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </Field>
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             {canWrite && <button style={btn} disabled={busy} onClick={submit}>{busy ? 'Saving…' : editId != null ? 'Save rule' : 'Add rule'}</button>}
             {editId != null && <button style={btnGhost} onClick={reset}>Cancel edit</button>}
             {!canWrite && <span style={{ color: '#93A0B4', fontSize: 12.5, alignSelf: 'center' }}>Read-only — editor role required.</span>}
           </div>
-        </div>
+        </SectionCard>
 
-        <div style={card}>
-          <h3 style={{ marginTop: 12 }}>Rules ({items.length})</h3>
+        <SectionCard title={`Rules (${items.length})`}>
           {error ? <Err error={error} /> : loading ? <p>Loading…</p> : items.length === 0 ? (
             <Empty text="No compatibility rules match — add the first QVL entry on the left." />
           ) : (
@@ -156,7 +155,7 @@ export default function Compatibility({ canWrite }: { canWrite: boolean }) {
               ))}
             </Table>
           )}
-        </div>
+        </SectionCard>
       </div>
     </div>
   );

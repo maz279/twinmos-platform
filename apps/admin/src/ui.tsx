@@ -2,6 +2,7 @@
 // Palette extracted from the approved design boards in admin_panel/design_sample:
 // deep-navy sidebar, teal accent, light-gray canvas, white soft-shadow cards.
 import React from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // ---- design tokens -------------------------------------------------------
 export const NAVY = '#16222F';   // sidebar / brand rail
@@ -112,19 +113,150 @@ export function Err({ error }: { error: unknown }) {
   const e = error as { message?: string; detail?: string; status?: number };
   return <p role="alert" style={{ background: '#FCECEB', color: '#9C3230', borderRadius: 8, padding: 10 }}>{e?.status ? `HTTP ${e.status}: ` : ''}{e?.message ?? String(error)}{e?.detail ? ` — ${e.detail}` : ''}</p>;
 }
+/** djb2 hashed to base36 — a short stable id for a useAsync CALL SITE. `fn` is
+ *  re-created every render, but its source text is byte-identical across
+ *  renders of the same call site, so the hash is a stable key component. */
+function fnKeyOf(fn: () => unknown): string {
+  let h = 5381;
+  const src = fn.toString();
+  for (let i = 0; i < src.length; i++) h = (((h << 5) + h + src.charCodeAt(i)) >>> 0);
+  return h.toString(36);
+}
+
+/** Data-fetching hook behind every module view, backed by TanStack Query
+ *  (TASK 6.1). Public contract — { data: T|null, error, loading, reload } — is
+ *  unchanged, so no caller needed to move.
+ *
+ *  The query key is [fnKey, ...deps]: fnKey identifies the call site (a djb2
+ *  hash of the fetcher's source text — see fnKeyOf) and deps carry its
+ *  parameters (strings/numbers in every caller, so keys serialize and collide
+ *  only intentionally). Because keys are shared app-wide, two workspace tabs
+ *  viewing the same data resolve to ONE cache entry: switching tabs paints from
+ *  cache within the client's staleTime (60s), mounted views refetch together on
+ *  window focus, and in-flight requests for the same key are deduped.
+ *
+ *  `loading` maps to Query's isPending (true only while NO data exists yet for
+ *  the current key), matching the previous hook's visible behavior — the
+ *  "Loading…" placeholder shows on first load and on dep changes, while
+ *  background refetches keep the previous data on screen. `reload()` invalidates
+ *  exactly this key, refetching every active view of it. */
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): { data: T | null; error: unknown; loading: boolean; reload: () => void } {
-  const [data, setData] = React.useState<T | null>(null);
-  const [error, setError] = React.useState<unknown>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [tick, setTick] = React.useState(0);
-  React.useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    fn().then((d) => { if (alive) { setData(d); setError(null); } })
-      .catch((e) => { if (alive) setError(e); })
-      .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, tick]);
-  return { data, error, loading, reload: () => setTick((t) => t + 1) };
+  const qc = useQueryClient();
+  const fnKey = fnKeyOf(fn);
+  const queryKey = [fnKey, ...deps];
+  const q = useQuery<T>({ queryKey, queryFn: fn });
+  return {
+    data: q.data ?? null,
+    error: q.error,
+    loading: q.isPending,
+    reload: () => { void qc.invalidateQueries({ queryKey }); },
+  };
+}
+
+// ---- layout & form primitives (Phase 6.4/6.5) ------------------------------
+// Extracted from the patterns repeated across the module views so editors stop
+// re-declaring them inline. Built ONLY from the tokens above — no new colors,
+// no new sizes: each primitive renders the same styles as the inline markup it
+// replaces. Call sites may override spacing via `style` where their local
+// rhythm differed (e.g. gap 10 toolbars), which keeps the conversion pixel-faithful.
+
+/** Responsive form grid — the 6.5 multi-column discipline. One shared
+ *  auto-fit minmax pattern for editor forms: columns never shrink below `min`
+ *  px (default 150, the products Variants form's proven value) and empty
+ *  tracks collapse, so a two-field row (compatibility's Memory gen / Form
+ *  factor) fills its card exactly like the old `1fr 1fr` while narrow windows
+ *  drop to a single column instead of overflowing. Use a larger `min` where a
+ *  form must keep fewer, wider columns. */
+export function formGrid(min = 150): React.CSSProperties {
+  return { display: 'grid', gridTemplateColumns: `repeat(auto-fit,minmax(${min}px,1fr))`, gap: 10 };
+}
+
+/** Uppercase micro-label + control wrapper — the caption style repeated in
+ *  every editor form (compatibility, product variants, jobs, translations):
+ *  11px / 800 / uppercase FAINT with the 10px-over-4px rhythm. `hint` renders
+ *  the non-uppercase parenthetical some fields carry (e.g. a suggested SKU). */
+export function Field({ label, hint, children, style }: {
+  label: React.ReactNode; hint?: React.ReactNode; children: React.ReactNode; style?: React.CSSProperties;
+}) {
+  return (
+    <label style={{ display: 'block', minWidth: 0, ...style }}>
+      <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: FAINT, display: 'block', margin: '10px 0 4px' }}>
+        {label}{hint != null && <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>{' '}{hint}</span>}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+/** Filter-chip / toolbar row — the flex-wrap container above data tables and
+ *  around editor action rows. Defaults reproduce the module filter rows
+ *  (gap 8, centered, 12px bottom margin); pass `style` for the local variants
+ *  (e.g. `{{ gap: 10 }}`) so converted call sites keep their exact spacing. */
+export function Toolbar({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '0 0 12px', ...style }}>{children}</div>;
+}
+
+/** Module page header: 22px / 800 ink title, muted 13px subtitle underneath
+ *  and a right-aligned action row — the markup the compatibility and content
+ *  studio headers render inline today. No bottom margin by default; add one
+ *  via `style` to reproduce a page's existing rhythm. */
+export function PageHeader({ title, subtitle, actions, style }: {
+  title: React.ReactNode; subtitle?: React.ReactNode; actions?: React.ReactNode; style?: React.CSSProperties;
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', ...style }}>
+      <div style={{ minWidth: 0 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: INK, letterSpacing: -0.2 }}>{title}</h1>
+        {subtitle != null && <p style={{ margin: '4px 0 0', color: MUTED, fontSize: 13 }}>{subtitle}</p>}
+      </div>
+      {actions != null && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{actions}</div>}
+    </div>
+  );
+}
+
+/** White rounded section card with an h3 title — the container repeated across
+ *  the products editor, the variants tab and the compatibility form: 1px LINE
+ *  border, 12px radius, `4px 16px 16px` padding on #fff, and a plain h3 with
+ *  the 12px top rhythm (inherited color, so it matches today's headings).
+ *  `divider` swaps in the dashboard-style heading row (title + FAINT subtitle
+ *  over a #F0F3F7 hairline). `collapsible` turns the heading into a chevron
+ *  toggle for progressive disclosure — default open; pass `defaultOpen={false}`
+ *  for sections that start collapsed (e.g. the products Record card). */
+export function SectionCard({ title, subtitle, children, collapsible = false, defaultOpen = true, divider = false, style, titleStyle }: {
+  title: React.ReactNode; subtitle?: React.ReactNode; children: React.ReactNode;
+  collapsible?: boolean; defaultOpen?: boolean; divider?: boolean;
+  style?: React.CSSProperties; titleStyle?: React.CSSProperties;
+}) {
+  const [open, setOpen] = React.useState(defaultOpen);
+  let header: React.ReactNode;
+  if (divider) {
+    header = (
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginTop: 12, marginBottom: 10, paddingBottom: 9, borderBottom: '1px solid #F0F3F7' }}>
+        <h3 style={{ margin: 0, fontSize: 13.5, fontWeight: 800, color: INK, ...titleStyle }}>{title}</h3>
+        {subtitle != null && <span style={{ fontSize: 11.5, color: FAINT }}>{subtitle}</span>}
+      </div>
+    );
+  } else if (collapsible) {
+    header = (
+      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}
+        title={open ? 'Collapse section' : 'Expand section'}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', marginTop: 12, padding: 0, border: 0, background: 'none', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}>
+        <h3 style={{ margin: 0, ...titleStyle }}>{title}</h3>
+        {subtitle != null && <span style={{ fontSize: 11.5, color: FAINT }}>{subtitle}</span>}
+        {/* same chevron glyph as icons.tsx, inlined so ui.tsx keeps no imports beyond React */}
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+          style={{ marginLeft: 'auto', flexShrink: 0, color: FAINT, transform: open ? 'rotate(90deg)' : 'none' }}>
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+    );
+  } else {
+    header = <h3 style={{ marginTop: 12, ...titleStyle }}>{title}</h3>;
+  }
+  return (
+    <div style={{ border: `1px solid ${LINE}`, borderRadius: 12, padding: '4px 16px 16px', background: '#fff', minWidth: 0, ...style }}>
+      {header}
+      {collapsible ? (open ? <div style={{ marginTop: 4 }}>{children}</div> : null) : children}
+    </div>
+  );
 }

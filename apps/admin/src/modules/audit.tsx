@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { API, apiGet, fmtDate } from '../api';
 import { btn, btnGhost, card, Empty, Err, input, Table, td, useAsync } from '../ui';
+import { useToast } from '../toast';
 import type { ModProps } from '../nav';
 
 type AuditRow = {
@@ -67,6 +68,7 @@ const ENTITIES = [
 ];
 
 export default function AuditLog({ nav, me }: ModProps) {
+  const toast = useToast();
   const [entity, setEntity] = useState('');
   const [actorId, setActorId] = useState('');
   const [action, setAction] = useState('');
@@ -122,7 +124,7 @@ export default function AuditLog({ nav, me }: ModProps) {
       setRows((prev) => [...prev, ...(res.items || [])]);
       setCursor(res.cursor);
     } catch (e) {
-      alert('Failed to load older records: ' + String(e));
+      toast.error('Failed to load older records: ' + String(e), { action: { label: 'Retry', run: () => void loadMore() } });
     } finally {
       setLoadingMore(false);
     }
@@ -154,7 +156,7 @@ export default function AuditLog({ nav, me }: ModProps) {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (e: any) {
-      alert('Failed to export CSV: ' + (e?.message ?? String(e)));
+      toast.error('Failed to export CSV: ' + (e?.message ?? String(e)), { action: { label: 'Retry', run: () => void exportCsv() } });
     } finally {
       setExporting(false);
     }

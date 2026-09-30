@@ -3,23 +3,30 @@
 // the sidebar/mega-menu/tabs from this registry, role-filtered via ROLE_RANK.
 // Modules import ONLY types from this file, so the component wiring here is acyclic.
 // (createElement instead of JSX keeps this a .ts module — no build ambiguity.)
-import React from 'react';
+//
+// TASK 6.2 (code splitting): every module ships as its OWN chunk via React.lazy,
+// so the entry bundle keeps react/react-dom/shell/ui/login while the 14 modules
+// load on first tab open (suspensed in main.tsx with ModuleSkeleton). This stays
+// a .ts registry of createElement adapters — only the component references became
+// lazy; lazy components accept props exactly like the eager ones they replaced.
+import React, { lazy } from 'react';
 import type { IconName } from './icons';
 import type { Me } from './login';
-import Dashboard from './modules/dashboard';
-import SearchPage from './modules/search';
-import Content from './modules/content';
-import Products from './modules/products';
-import Compatibility from './modules/compatibility';
-import Submissions from './modules/submissions';
-import RmaBoard from './modules/rma';
-import Partners from './modules/partners';
-import Jobs from './modules/jobs';
-import Media from './modules/media';
-import Translations from './modules/translations';
-import UsersModule from './modules/users';
-import AuditLog from './modules/audit';
-import Settings from './modules/settings';
+
+const Dashboard = lazy(() => import('./modules/dashboard'));
+const SearchPage = lazy(() => import('./modules/search'));
+const Content = lazy(() => import('./modules/content'));
+const Products = lazy(() => import('./modules/products'));
+const Compatibility = lazy(() => import('./modules/compatibility'));
+const Submissions = lazy(() => import('./modules/submissions'));
+const RmaBoard = lazy(() => import('./modules/rma'));
+const Partners = lazy(() => import('./modules/partners'));
+const Jobs = lazy(() => import('./modules/jobs'));
+const Media = lazy(() => import('./modules/media'));
+const Translations = lazy(() => import('./modules/translations'));
+const UsersModule = lazy(() => import('./modules/users'));
+const AuditLog = lazy(() => import('./modules/audit'));
+const Settings = lazy(() => import('./modules/settings'));
 
 /** Per-tab context for deep links, e.g. { kind:'lead', id:'42', label:'QT-0042' }. */
 export type TabCtx = { kind: string; id?: string; label?: string };

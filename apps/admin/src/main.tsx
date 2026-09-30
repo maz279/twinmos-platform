@@ -3,6 +3,7 @@
 // in shell.tsx and nav.ts (docs/08-ADMIN-CONSOLE-PLAN.md); this file owns state.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { API, apiGet } from './api';
 import Login from './login';
 import type { Me } from './login';
@@ -12,9 +13,28 @@ import type { NavOpen, TabCtx } from './nav';
 import { Shell } from './shell';
 import type { Badges, Tab } from './shell';
 import SearchPalette from './search';
+import { ToastProvider } from './toast';
+import { LINE, PAGE } from './ui';
 
 const WRITE_ROLES = ['super_admin', 'admin', 'editor', 'author'];
 const canWrite = (role?: string) => !!role && WRITE_ROLES.includes(role);
+
+// TASK 6.2: modules are React.lazy chunks (see nav.ts) — this is the Suspense
+// fallback shown while a module chunk streams in. Static placeholder cards on
+// the PAGE canvas using LINE borders, mirroring the dashboard KPI/panel grid
+// (repeat(auto-fit,minmax(...)) with the same 12px gaps) so the swap-in doesn't
+// shift. Deliberately no animation loop.
+function ModuleSkeleton() {
+  return (
+    <div style={{ background: PAGE, padding: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(196px,1fr))', gap: 12, marginBottom: 12 }}>
+        {[0, 1, 2].map((i) => (
+          <div key={i} style={{ height: 108, borderRadius: 12, border: `1px solid ${LINE}`, background: '#FFFFFF' }} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function tabKey(module: string, ctx?: TabCtx): string {
   return `${module}:${ctx?.kind ?? ''}:${ctx?.id ?? ''}`;
@@ -144,8 +164,15 @@ function Workspace({ me, onSignOut, onMfaChange }: { me: Me; onSignOut: () => vo
         </div>
       ) : null}>
       {/* key per tab: two tabs of the same module must NOT share component state
-          (a Search tab focused on "VLT" would otherwise keep the previous query) */}
-      {mod ? <mod.comp key={activeTab?.id} canWrite={canWrite(me.user?.role)} me={me} ctx={activeTab?.ctx} nav={openTab} /> : null}
+          (a Search tab focused on "VLT" would otherwise keep the previous query).
+          Suspense boundary per active module: swapping tabs shows ModuleSkeleton
+          only while that module's lazy chunk loads; an already-loaded chunk
+          re-renders synchronously with no fallback flash. */}
+      {mod ? (
+        <React.Suspense fallback={<ModuleSkeleton />}>
+          <mod.comp key={activeTab?.id} canWrite={canWrite(me.user?.role)} me={me} ctx={activeTab?.ctx} nav={openTab} />
+        </React.Suspense>
+      ) : null}
       {searchOpen && <SearchPalette onClose={() => setSearchOpen(false)} open={openTab} />}
     </Shell>
   );
@@ -186,4 +213,27 @@ function App() {
   return <Workspace me={me ?? {}} onSignOut={() => setState('anon')} onMfaChange={refreshMe} />;
 }
 
-createRoot(document.getElementById('root')!).render(<App />);
+// TASK 6.1: one QueryClient for the whole console — the single shared cache
+// behind useAsync (ui.tsx). staleTime 60s means switching workspace tabs back
+// to recently-viewed data paints from cache; refetchOnWindowFocus keeps every
+// mounted view fresh when the operator returns to the tab; retry 1 avoids
+// hammering the API on hard failures while riding out a single blip.
+// Nesting order: QueryClientProvider OUTSIDE ToastProvider — the query client
+// is pure infrastructure (no UI, no toasts), and every branch of the state
+// machine below (Login, MFA setup, Workspace modules via useAsync) must sit
+// inside BOTH providers, so this order keeps ToastProvider wrapping the whole
+// app exactly as before while the client context reaches everything.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 60000, refetchOnWindowFocus: true, retry: 1 },
+  },
+});
+
+// ToastProvider wraps the WHOLE app so every branch of the state machine —
+// anon (Login), mfa-setup and the authed Workspace that hosts the module
+// components — sits inside it and can call useToast().
+createRoot(document.getElementById('root')!).render(
+  <QueryClientProvider client={queryClient}>
+    <ToastProvider><App /></ToastProvider>
+  </QueryClientProvider>,
+);

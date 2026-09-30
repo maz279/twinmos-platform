@@ -723,3 +723,153 @@ Gates: p13 → 14 tests; suite **203/203** (15 files); typecheck ×4;
 build green; dev DB on 0013; live-verified (Serials search group,
 batch persistence). Ops: dev API runs as a plain background node
 process (no --watch) — stable since.
+
+## Evidence - Phase 6: Frontend Modernization COMPLETE
+
+Working-root note: the npm-workspaces monorepo lives in `twinmso_codebase/`
+one level below the stated project root; every path below is relative to that
+actual root.
+
+**6.1 TanStack Query data layer** — `@tanstack/react-query@5.104.0` installed
+under `apps/admin`. One module-scope `QueryClient` in `main.tsx`
+(`defaultOptions.queries { staleTime: 60000, refetchOnWindowFocus: true,
+retry: 1 }`), provider mounted OUTSIDE ToastProvider (client is pure
+infrastructure; the toast provider must keep wrapping every branch of the
+login/MFA/workspace state machine — rationale also in a code comment).
+`useAsync` in `ui.tsx` was rewritten on `useQuery` while preserving its public
+contract exactly — `{ data: T|null, error, loading, reload }`: queryKey =
+`[fnKey, ...deps]` with fnKey a djb2-hash-to-base36 of the fetcher's source
+text (stable per call site), `data` maps `query.data ?? null`, `reload()`
+invalidates that exact key via `useQueryClient`, refetching every active view.
+Because keys are shared app-wide, two workspace tabs viewing the same data
+resolve to ONE cache entry: they paint from cache inside the 60s staleTime,
+dedupe in-flight requests and refetch together on window focus — the 6.1
+goal. No module file changed; all 31 existing call sites keep compiling
+(deps patterns surveyed across the 13 modules — strings/numbers/undefined at
+every site, so structural key hashing is unambiguous, and the two conditional
+fetchers' keys fully determine which branch runs). Deliberate semantic note,
+flagged: `loading` maps to `isPending`, so a reload() or focus refetch keeps
+prior data on screen instead of flashing "Loading…" (first-load/deps-change
+behavior identical, background-refresh UX improves); fnKey is recomputed each
+render rather than memoized (fetcher identity changes per render anyway —
+avoids any stale-key risk); a theoretical key collision (byte-identical
+fetcher text + equal deps) was surveyed across all 31 sites and none exists.
+
+**6.2 Lazy module chunks** — all 14 module imports in `nav.ts` converted to
+`React.lazy(() => import('./modules/<x>'))`; the file remains a `.ts` registry
+of `React.createElement` adapters, so the prop-wrapping adapters for content,
+submissions, compatibility, partners, media, translations and settings work
+unchanged. A per-module `<React.Suspense>` boundary in `main.tsx` renders a
+new `ModuleSkeleton` fallback — three static white LINE-bordered cards on the
+PAGE canvas in a `repeat(auto-fit, minmax(196px,1fr))` grid with the
+dashboard's 12px gaps, no animation loop, tokens from `ui.tsx`. `nav.ts` was
+the only eager module importer (grep-verified), so the split is complete;
+login, MFA and the ⌘K palette stay in the entry. Entry went **622.32 kB
+(177.01 kB gzip) → 298.29 kB (94.23 kB gzip, −52%)**, and Vite's >500 kB
+warning is gone. **17 JS chunks** total: 14 per-module (search 3.77, rma 4.92,
+settings 5.38, submissions 6.73, compatibility 6.74, audit 7.40, translations
+9.77, jobs 10.00, partners 12.59, media 12.96, dashboard 14.21, users 15.48,
+products 25.78, content 92.34 kB) plus 2 bundler-hoisted shared chunks —
+media-picker (3.36 kB, used by content+products) and a 97.35 kB
+zod/@twinmos/shared runtime statically imported by exactly 7 modules. Honest
+miss: the plan's <80 kB entry target does NOT hold and is not claimed —
+react-dom plus the deliberately-eager shell/ui/login/mfa/search-palette set a
+floor; what does hold is that every module now loads on demand. Wiring was
+verified against the build output: the entry contains exactly 14 dynamic
+`import()` expressions each resolving to a file on disk, entry-chunk string
+probes find login/mfa/palette/shell/skeleton markers, and `vite preview`
+served index/entry/shared/content/media-picker chunks HTTP 200 with expected
+byte sizes. Ops note: the preview server was stopped with a blanket
+`taskkill /IM node.exe`, which would have terminated any other node processes
+on that dev box.
+
+**6.3 Toast system** — new `src/toast.tsx` exports a `ToastProvider` (React
+context) plus `useToast()` returning `{ success, error, info }`, each taking
+`(msg, opts?)` with `opts = { action?: { label, run }, durationMs? }`. Per
+spec: auto-dismiss 5000 ms (10000 ms when an action is present, both
+overridable per call), click-anywhere-on-card to dismiss, stack capped at 4
+with the oldest dropped and its timer cancelled, region carries
+`aria-live="polite"`, and the action is a real `<button>` that stops
+propagation and dismisses after running. Inline styles from `ui.tsx` tokens
+only — white rounded cards (LINE border, CARD_SHADOW) with a 4px tone rail
+and IconChip glyph: GREEN success, **#C2453C** error (the tint the plan
+names), TEAL info; `zIndex 1100` sits above the console's highest overlay
+(1000 modals in users.tsx; palette/overlays are 60–70) and the container is
+`pointer-events:none` so empty stack space never blocks the page. The
+provider wraps `<App/>` such that the Login screen, the MFA-setup branch and
+the Workspace hosting AuditLog all sit inside it (final nesting per 6.1:
+QueryClientProvider > ToastProvider > App). `audit.tsx`'s two `alert()` calls
+(older-records load failure, CSV export failure) became `toast.error(...)`,
+each carrying a Retry action bound to `loadMore()` / `exportCsv()` — an
+addition beyond the literal "toast.error(...)" wording that also exercises
+the 10s-with-action duration path. Caveats, honestly: two `window.alert()`
+calls remain at `modules/users.tsx:415,418` (temp-password display) —
+deliberately untouched per that stage's "do not touch any other module" rule,
+flagged there for a later stage; no admin test suite exists to run
+(`@twinmos/admin` package.json has only dev/build scripts), so verification is
+typecheck + production build + code reading — timers, click-to-dismiss and
+aria announcement were NOT driven in a browser in that stage.
+
+**6.4/6.5 UI primitives + parity bar** — five primitives appended to
+`ui.tsx` (append-only, after `useAsync`; lines 1–155 — every existing token
+and atom — verified byte-identical): `SectionCard` (the white 1px-LINE /
+12px-radius section container with plain h3, optional dashboard-style hairline
+`divider`, and a chevron-toggle header via `collapsible` defaulting open),
+`PageHeader` (22px/800 INK title + muted 13px subtitle + right-aligned action
+row), `Toolbar` (the flex-wrap filter-chip row), `Field` (the 11px/800
+uppercase FAINT micro-label + control wrapper) and `formGrid(min=150)` (the
+documented auto-fit minmax grid constant for multi-column discipline).
+Converted: **products** (list header + editor bar → Toolbar with gap-10
+overrides; six editor sections → SectionCard, Datasheets collapsible
+default-open and Record collapsible default-collapsed per 6.5; VariantsTab
+cards → SectionCard, its eight labels → Field, its grid → formGrid()),
+**compatibility** (PageHeader with marginBottom 12 reproducing the old
+h1/subtitle rhythm, Toolbar filter row, both cards → SectionCard, six labels
+→ Field, gen/form-factor row → formGrid()) and the **content** library header
+(PageHeader + Toolbar). Parity discipline, honestly applied: primitives are
+built only from existing tokens plus literals already at the call sites, with
+spacing passed as style overrides so converted markup renders identically —
+and where adoption would have changed pixels it was declined: products Basics
+keeps `1fr 1fr` (the plan text called it "auto-fit" but the code never was,
+and the shell has no max-width — switching would change wide-monitor column
+counts), the products list h1 keeps its current inline style inside a Toolbar
+rather than PageHeader (the fixed 22/800 spec would change its weight/color
+and relocating +New/Import would break parity), and Basics/Pricing/Images
+labels keep 12px/700 INK (not the uppercase pattern Field extracts). The two
+new-affordance notes: collapsible headers have no prior pixels to match
+(instant toggle, `aria-expanded` set, body 4px under the chevron — documented
+in the SectionCard doc comment), and compatibility's SectionCards gain
+`minWidth:0` so inner tables scroll rather than blow out the grid when
+squeezed (no-op at normal widths).
+
+**6.6 RMA Kanban** — `modules/rma.tsx` rewritten Kanban-first. The default
+view renders **7 columns** by mapping over `RMA_STATUS` in pipeline order
+(submitted, under_review, approved, in_repair, shipped, delivered, closed)
+inside a horizontally scrollable flex strip (maxHeight 72vh) with sticky
+column headers showing the existing `<Badge>` pill per status plus a live
+count chip. Cards are white with LINE borders on the PAGE canvas
+(`tm-card-hover`) and carry the RMA number (clickable → the retained detail
+panel), customer name + email/phone, a monospace SKU chip, and an age chip
+from createdAt (m/h/d, GOLD at 7+ days). **Legal-transition quick actions**
+render exactly one compact button per state in `RMA_TRANSITIONS[rma.status]`
+— click-to-transition, no drag-and-drop; 'closed' targets use the ghost
+variant. Every transition (card and detail panel) reuses the module's
+existing `apiSend('POST', /admin/rma/:id/transition, …)` and refreshes via
+the existing `useAsync` reload(), firing `useToast()` toasts: success
+`<number> -> <state>` with an **UNDO** action only when `inverseOf(from, to)`
+finds a legal inverse in the matrix (single both-directions lookup
+`RMA_TRANSITIONS[to].includes(from)`), and an error toast carrying the API
+problem title+detail via an errText helper mirroring the `<Err>` atom. A
+**Board|Table** segmented toggle (`aria-pressed`) keeps the original dense
+table verbatim for administrative export; the status filter + RMA-number
+search row is retained above it. Honest caveats: the list query now sends
+`limit=100` (the API's cap; was the default 50) so later pipeline columns
+aren't silently starved — the one deviation from "reuse loading exactly",
+flagged; under today's forward-only RMA_TRANSITIONS **no legal inverse
+exists, so no UNDO action ever renders at runtime** (verified by script
+against the shared constant — the implementation is matrix-driven and
+activates automatically if a reopen path is added); toast UX was not
+exercised in a browser in that stage — correctness rests on typecheck, build
+and the toast.tsx contract.
+
+Gates: typecheck x4 clean, admin build green, API e2e suite 16/16.

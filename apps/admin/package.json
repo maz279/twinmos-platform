@@ -7,6 +7,7 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.104.0",
     "@twinmos/shared": "0.1.0",
     "marked": "18.0.14",
     "qrcode": "1.5.4",

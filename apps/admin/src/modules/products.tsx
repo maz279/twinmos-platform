@@ -5,7 +5,7 @@
 // via tab ctx { kind:'product', id }.
 import React, { useEffect, useMemo, useState } from 'react';
 import { API, ApiError, apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, Empty, Err, input, Table, td, useAsync } from '../ui';
+import { Badge, btn, btnGhost, Empty, Err, Field, formGrid, input, SectionCard, Table, td, Toolbar, useAsync } from '../ui';
 import { MediaPicker } from '../media-picker';
 import { AUTHORIZED_CURRENCIES } from '@twinmos/shared';
 import type { ModProps, TabCtx } from '../nav';
@@ -46,7 +46,7 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
   const brandName = (id: number) => tax.data?.brands.find((b) => b.id === id)?.name ?? `#${id}`;
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+      <Toolbar style={{ gap: 10 }}>
         <h1 style={{ margin: 0, fontSize: 22 }}>Products</h1>
         {canWrite && <button style={btn} onClick={() => setEditing('new')}>+ New product</button>}
         <button style={btnGhost} onClick={() => setBulk(true)} title="Bulk CSV import and full-catalog export">Import / Export</button>
@@ -56,7 +56,7 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
           <option value="">All statuses</option>
           {['draft', 'in_review', 'scheduled', 'published', 'archived'].map((s) => <option key={s}>{s}</option>)}
         </select>
-      </div>
+      </Toolbar>
       {error ? <Err error={error} /> : loading ? <p>Loading…</p> : data ? (
         <Table head={['', 'SKU', 'Product', 'Price', 'Status', 'Updated', '']}>
           {data.items.map((p) => (
@@ -160,18 +160,17 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
   }
 
   const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 700, color: NAVY, display: 'block', margin: '12px 0 4px' };
-  const sectionStyle: React.CSSProperties = { border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 16px', background: '#fff', minWidth: 0 };
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+      <Toolbar style={{ gap: 10, marginBottom: 14 }}>
         <button style={btnGhost} onClick={onCancel}>← Back to list</button>
         <h1 style={{ margin: 0, fontSize: 20 }}>{isNew ? 'New product' : `Edit ${existing?.sku ?? ''}`}</h1>
         {!isNew && existing && <Badge value={form.status} />}
         <span style={{ flex: 1 }} />
         {canWrite && !isNew && form.status !== 'published' && <button style={btnGhost} disabled={busy} onClick={() => save(true)}>Publish</button>}
         {canWrite && <button style={btn} disabled={busy} onClick={() => save(false)}>{busy ? 'Saving…' : isNew ? 'Create product' : 'Save changes'}</button>}
-      </div>
+      </Toolbar>
       {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '8px 12px' }}>{err}</p>}
       {conflict && (
         <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', color: '#8A5A00', background: '#FBF3E2', border: '1px solid #E8CE9A', borderRadius: 8, padding: '8px 12px' }}>
@@ -194,8 +193,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
       ) : (
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, alignItems: 'start' }}>
         <div style={{ display: 'grid', gap: 12 }}>
-          <div style={sectionStyle}>
-            <h3 style={{ marginTop: 12 }}>Basics</h3>
+          <SectionCard title="Basics">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <span><label style={labelStyle}>Name *</label><input style={{ ...input, width: '100%' }} value={form.name} onChange={(e) => set('name', e.target.value)} /></span>
               <span><label style={labelStyle}>SKU * <span style={{ color: '#93A0B4', fontWeight: 400 }}>(A-Z 0-9 -)</span></label><input style={{ ...input, width: '100%' }} value={form.sku} onChange={(e) => set('sku', e.target.value)} disabled={!isNew} /></span>
@@ -218,10 +216,9 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
             <label style={labelStyle}>Description</label>
             <textarea style={{ ...input, width: '100%', minHeight: 120, fontFamily: 'inherit' }} placeholder="Marketing copy shown on the product page…"
               value={form.description} onChange={(e) => set('description', e.target.value)} />
-          </div>
+          </SectionCard>
 
-          <div style={sectionStyle}>
-            <h3 style={{ marginTop: 12 }}>Specifications</h3>
+          <SectionCard title="Specifications">
             {specs.map(([k, v], i) => (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '180px 1fr 30px', gap: 8, marginBottom: 6 }}>
                 <input style={input} placeholder="Label (e.g. Speed)" value={k} onChange={(e) => setSpecs((s) => s.map((r, j) => (j === i ? [e.target.value, r[1]] : r)))} />
@@ -230,10 +227,9 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
               </div>
             ))}
             <button style={{ ...btnGhost, fontSize: 12 }} onClick={() => setSpecs((s) => [...s, ['', '']])}>+ Add specification</button>
-          </div>
+          </SectionCard>
 
-          <div style={sectionStyle}>
-            <h3 style={{ marginTop: 12 }}>Datasheets</h3>
+          <SectionCard title="Datasheets" collapsible>
             {datasheets.map((d, i) => (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '160px 1fr 30px', gap: 8, marginBottom: 6 }}>
                 <input style={input} placeholder="Label" value={d.label} onChange={(e) => setDatasheets((s) => s.map((r, j) => (j === i ? { ...r, label: e.target.value } : r)))} />
@@ -242,12 +238,11 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
               </div>
             ))}
             {datasheets.length < 6 && <button style={{ ...btnGhost, fontSize: 12 }} onClick={() => setDatasheets((s) => [...s, { label: '', url: '' }])}>+ Add datasheet</button>}
-          </div>
+          </SectionCard>
         </div>
 
         <div style={{ display: 'grid', gap: 12 }}>
-          <div style={sectionStyle}>
-            <h3 style={{ marginTop: 12 }}>Pricing</h3>
+          <SectionCard title="Pricing">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: 8 }}>
               <span><label style={labelStyle}>List price</label><input style={{ ...input, width: '100%' }} placeholder="e.g. 129.99" inputMode="decimal" value={form.price} onChange={(e) => set('price', e.target.value)} /></span>
               <span><label style={labelStyle}>Cur.</label>
@@ -257,10 +252,9 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
             </div>
             <label style={labelStyle}>Badges <span style={{ color: '#93A0B4', fontWeight: 400 }}>(comma separated, max 8)</span></label>
             <input style={{ ...input, width: '100%' }} placeholder="New, Best seller,…" value={form.badges} onChange={(e) => set('badges', e.target.value)} />
-          </div>
+          </SectionCard>
 
-          <div style={sectionStyle}>
-            <h3 style={{ marginTop: 12 }}>Images</h3>
+          <SectionCard title="Images">
             <label style={labelStyle}>Hero image</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ width: 96, height: 72, borderRadius: 8, background: '#EEF1F5', overflow: 'hidden', display: 'block', flexShrink: 0 }}>
@@ -280,13 +274,12 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
               ))}
             </div>
             <button style={{ ...btnGhost, fontSize: 12 }} onClick={() => setPicker('gallery')}>+ Add gallery images</button>
-          </div>
+          </SectionCard>
 
           {!isNew && existing && (
-            <div style={{ ...sectionStyle, color: '#93A0B4', fontSize: 12 }}>
-              <h3 style={{ marginTop: 12, color: NAVY }}>Record</h3>
+            <SectionCard title="Record" collapsible defaultOpen={false} titleStyle={{ color: NAVY }} style={{ color: '#93A0B4', fontSize: 12 }}>
               Created {fmtDate(existing.createdAt)} · Updated {fmtDate(existing.updatedAt)} · ID #{existing.id}
-            </div>
+            </SectionCard>
           )}
         </div>
       </div>
@@ -375,45 +368,42 @@ function VariantsTab({ productId, baseSku, canWrite }: { productId: number; base
     finally { setBusy(false); }
   }
 
-  const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: '#93A0B4', display: 'block', margin: '10px 0 4px' };
   const items = data?.items ?? [];
 
   return (
     <div style={{ display: 'grid', gap: 12 }}>
-      <div style={{ border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 16px', background: '#fff' }}>
-        <h3 style={{ marginTop: 12 }}>{editId != null ? 'Edit variant' : 'Add variant'}</h3>
+      <SectionCard title={editId != null ? 'Edit variant' : 'Add variant'}>
         {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '6px 10px' }}>{err}</p>}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10 }}>
-          <span><label style={label}>Capacity *</label>
-            <input style={{ ...input, width: '100%' }} placeholder="16GB / 32GB / 1TB" value={capacity} onChange={(e) => setCapacity(e.target.value)} /></span>
-          <span><label style={label}>Speed</label>
-            <input style={{ ...input, width: '100%' }} placeholder="6000MT/s" value={speed} onChange={(e) => setSpeed(e.target.value)} /></span>
-          <span><label style={label}>Finish</label>
-            <input style={{ ...input, width: '100%' }} placeholder="Black / Titanium" value={finish} onChange={(e) => setFinish(e.target.value)} /></span>
-          <span><label style={label}>Lighting</label>
+        <div style={formGrid()}>
+          <Field label="Capacity *">
+            <input style={{ ...input, width: '100%' }} placeholder="16GB / 32GB / 1TB" value={capacity} onChange={(e) => setCapacity(e.target.value)} /></Field>
+          <Field label="Speed">
+            <input style={{ ...input, width: '100%' }} placeholder="6000MT/s" value={speed} onChange={(e) => setSpeed(e.target.value)} /></Field>
+          <Field label="Finish">
+            <input style={{ ...input, width: '100%' }} placeholder="Black / Titanium" value={finish} onChange={(e) => setFinish(e.target.value)} /></Field>
+          <Field label="Lighting">
             <select style={{ ...input, width: '100%' }} value={lighting} onChange={(e) => setLighting(e.target.value as 'RGB' | 'Non-RGB' | '')}>
               <option value="">—</option><option>RGB</option><option>Non-RGB</option>
-            </select></span>
-          <span><label style={label}>SKU <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>(suggested: {suggested || '—'})</span></label>
-            <input style={{ ...input, width: '100%' }} placeholder={suggested} value={sku} onChange={(e) => setSku(e.target.value)} /></span>
-          <span><label style={label}>Price (USD)</label>
-            <input style={{ ...input, width: '100%' }} placeholder="e.g. 74.50" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} /></span>
-          <span><label style={label}>Stock</label>
-            <input style={{ ...input, width: '100%' }} inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value)} /></span>
-          <span><label style={label}>Status</label>
+            </select></Field>
+          <Field label="SKU" hint={`(suggested: ${suggested || '—'})`}>
+            <input style={{ ...input, width: '100%' }} placeholder={suggested} value={sku} onChange={(e) => setSku(e.target.value)} /></Field>
+          <Field label="Price (USD)">
+            <input style={{ ...input, width: '100%' }} placeholder="e.g. 74.50" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
+          <Field label="Stock">
+            <input style={{ ...input, width: '100%' }} inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value)} /></Field>
+          <Field label="Status">
             <select style={{ ...input, width: '100%' }} value={status} onChange={(e) => setStatus(e.target.value as 'active' | 'discontinued')}>
               <option value="active">active</option><option value="discontinued">discontinued</option>
-            </select></span>
+            </select></Field>
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
           {canWrite && <button style={btn} disabled={busy} onClick={submit}>{busy ? 'Saving…' : editId != null ? 'Save variant' : 'Add variant'}</button>}
           {editId != null && <button style={btnGhost} onClick={reset}>Cancel edit</button>}
           {!canWrite && <span style={{ color: '#93A0B4', fontSize: 12.5, alignSelf: 'center' }}>Read-only — editor role required to manage variants.</span>}
         </div>
-      </div>
+      </SectionCard>
 
-      <div style={{ border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 12px', background: '#fff' }}>
-        <h3 style={{ marginTop: 12 }}>Variants ({items.length})</h3>
+      <SectionCard title={`Variants (${items.length})`} style={{ paddingBottom: 12 }}>
         {error ? <Err error={error} /> : loading ? <p>Loading…</p> : items.length === 0 ? (
           <Empty text="No variants yet — add capacities, speeds, finishes and lighting above." />
         ) : (
@@ -441,7 +431,7 @@ function VariantsTab({ productId, baseSku, canWrite }: { productId: number; base
             ))}
           </Table>
         )}
-      </div>
+      </SectionCard>
     </div>
   );
 }
