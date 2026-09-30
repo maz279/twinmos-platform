@@ -108,6 +108,10 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // Hydrate the form ONCE PER PRODUCT (deps: the id, not the object) — a
+  // background refetch (TanStack refetchOnWindowFocus) produces a new
+  // `existing` object and must never clobber unsaved edits mid-session.
+  // Re-entering the editor for another product changes the id and rehydrates.
   useEffect(() => {
     if (!existing) return;
     setForm({
@@ -120,7 +124,8 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
     setHero(existing.heroMediaId ?? null);
     setGallery(existing.gallery ?? []);
     setDatasheets(existing.datasheets ?? []);
-  }, [existing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing?.id]);
 
   if (!isNew && loading) return <p>Loading…</p>;
   if (!isNew && error) return <Err error={error} />;

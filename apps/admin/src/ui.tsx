@@ -238,17 +238,23 @@ export function SectionCard({ title, subtitle, children, collapsible = false, de
     );
   } else if (collapsible) {
     header = (
-      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}
-        title={open ? 'Collapse section' : 'Expand section'}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', marginTop: 12, padding: 0, border: 0, background: 'none', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}>
-        <h3 style={{ margin: 0, ...titleStyle }}>{title}</h3>
-        {subtitle != null && <span style={{ fontSize: 11.5, color: FAINT }}>{subtitle}</span>}
-        {/* same chevron glyph as icons.tsx, inlined so ui.tsx keeps no imports beyond React */}
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-          style={{ marginLeft: 'auto', flexShrink: 0, color: FAINT, transform: open ? 'rotate(90deg)' : 'none' }}>
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-      </button>
+      // the <h3> stays the section heading and WRAPS the toggle button —
+      // heading content permits interactive phrasing elements, whereas an
+      // <h3> inside <button> is invalid HTML and swallows the heading for
+      // screen readers (review finding, ui.tsx collapsible header).
+      <h3 style={{ margin: 0, marginTop: 12, ...titleStyle }}>
+        <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}
+          title={open ? 'Collapse section' : 'Expand section'}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: 0, border: 0, background: 'none', cursor: 'pointer', textAlign: 'left', font: 'inherit', color: 'inherit' }}>
+          <span>{title}</span>
+          {subtitle != null && <span style={{ fontSize: 11.5, color: FAINT }}>{subtitle}</span>}
+          {/* same chevron glyph as icons.tsx, inlined so ui.tsx keeps no imports beyond React */}
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+            style={{ marginLeft: 'auto', flexShrink: 0, color: FAINT, transform: open ? 'rotate(90deg)' : 'none' }}>
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </h3>
     );
   } else {
     header = <h3 style={{ marginTop: 12, ...titleStyle }}>{title}</h3>;

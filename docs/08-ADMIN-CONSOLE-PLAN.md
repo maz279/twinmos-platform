@@ -872,4 +872,13 @@ activates automatically if a reopen path is added); toast UX was not
 exercised in a browser in that stage — correctness rests on typecheck, build
 and the toast.tsx contract.
 
-Gates: typecheck x4 clean, admin build green, API e2e suite 16/16.
+Gates: typecheck x4 clean, admin build green, API e2e suite 207/207 across
+16 files (re-verified post-commit; the workflow's in-run count of "16/16"
+was a file-count misparse). Post-commit review pass fixed all four
+independent-reviewer findings: a ModuleErrorBoundary now wraps every lazy
+chunk (a stale-chunk 404 after redeploy previously white-screened the whole
+console), the products/jobs editors hydrate per-id so background refetches
+can no longer clobber unsaved edits, the audit Load More pages merge-by-id
+on same-query refetch instead of collapsing to page one, the toast contract
+comment cites the real spec location, and SectionCard's collapsible header
+keeps the h3 OUTSIDE the button (valid HTML + heading semantics).

@@ -36,6 +36,38 @@ function ModuleSkeleton() {
   );
 }
 
+/** Review finding (medium): a REJECTED dynamic import — stale hashed chunk
+ *  after a redeploy, or a network drop — throws during render and React
+ *  unmounts the whole console (white screen, all tab state lost). Suspense
+ *  does not catch errors, so this boundary wraps each lazy module; on failure
+ *  it offers a one-click reload that pulls fresh chunk URLs. */
+class ModuleErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div style={{ background: PAGE, padding: 40, textAlign: 'center' }}>
+        <div style={{ maxWidth: 420, margin: '0 auto', border: `1px solid ${LINE}`, borderRadius: 12, background: '#fff', padding: 28 }}>
+          <h2 style={{ margin: '0 0 8px', fontSize: 17, color: '#1F2A37' }}>This module could not be loaded</h2>
+          <p style={{ margin: '0 0 16px', fontSize: 13.5, color: '#66748A', lineHeight: 1.6 }}>
+            The console was updated since this tab opened (or the network dropped), so its code
+            chunk is no longer available. Reload to pick up the current version — your other
+            tabs are unaffected until then.
+          </p>
+          <button onClick={() => location.reload()}
+            style={{ padding: '9px 18px', border: 0, borderRadius: 8, background: '#1DBF9F', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+            Reload console
+          </button>
+        </div>
+      </div>
+    );
+  }
+}
+
 function tabKey(module: string, ctx?: TabCtx): string {
   return `${module}:${ctx?.kind ?? ''}:${ctx?.id ?? ''}`;
 }
@@ -169,9 +201,11 @@ function Workspace({ me, onSignOut, onMfaChange }: { me: Me; onSignOut: () => vo
           only while that module's lazy chunk loads; an already-loaded chunk
           re-renders synchronously with no fallback flash. */}
       {mod ? (
-        <React.Suspense fallback={<ModuleSkeleton />}>
-          <mod.comp key={activeTab?.id} canWrite={canWrite(me.user?.role)} me={me} ctx={activeTab?.ctx} nav={openTab} />
-        </React.Suspense>
+        <ModuleErrorBoundary>
+          <React.Suspense fallback={<ModuleSkeleton />}>
+            <mod.comp key={activeTab?.id} canWrite={canWrite(me.user?.role)} me={me} ctx={activeTab?.ctx} nav={openTab} />
+          </React.Suspense>
+        </ModuleErrorBoundary>
       ) : null}
       {searchOpen && <SearchPalette onClose={() => setSearchOpen(false)} open={openTab} />}
     </Shell>

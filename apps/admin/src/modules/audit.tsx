@@ -1,6 +1,6 @@
 // Audit log — read-only, deep-filterable trail (admin role required server-side).
 // Phase 1: Interactive filter bar (Entity selector, Actor dropdown, Action type, Date picker, Reset, Export CSV).
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { API, apiGet, fmtDate } from '../api';
 import { btn, btnGhost, card, Empty, Err, input, Table, td, useAsync } from '../ui';
 import { useToast } from '../toast';
@@ -106,12 +106,24 @@ export default function AuditLog({ nav, me }: ModProps) {
     [query],
   );
 
+  // Mirror the first page into rows. A background refetch of the SAME query
+  // (TanStack refetchOnWindowFocus) must not collapse accumulated "Load More"
+  // pages back to page one — same query merges by id (new audit rows appear,
+  // loaded history survives); a CHANGED query resets to the fresh first page.
+  const lastQuery = useRef(query);
   useEffect(() => {
-    if (data?.items) {
-      setRows(data.items);
-      setCursor(data.cursor);
-    }
-  }, [data]);
+    if (!data?.items) return;
+    const changed = lastQuery.current !== query;
+    lastQuery.current = query;
+    setRows((prev) => {
+      if (changed || prev.length === 0) return data.items;
+      const seen = new Set(data.items.map((r: AuditRow) => r.id));
+      const older = prev.filter((r) => !seen.has(r.id));
+      return [...data.items, ...older];
+    });
+    setCursor(data.cursor);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, data]);
 
   async function loadMore() {
     if (!cursor || loadingMore) return;

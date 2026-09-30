@@ -100,6 +100,8 @@ function PostingEditor({ id, canWrite, onDone, onCancel }: {
   const [form, setForm] = useState({ title: '', dept: 'R&D', location: 'Taipei', type: 'full-time', level: 'mid', status: 'draft', body: '', applyBy: '', salaryBand: '', equalOpportunity: true });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // Hydrate once per posting (deps: id) — background refetches must never
+  // clobber unsaved edits (same fix as the products editor).
   React.useEffect(() => {
     if (!existing) return;
     setForm({
@@ -108,7 +110,8 @@ function PostingEditor({ id, canWrite, onDone, onCancel }: {
       applyBy: existing.applyBy ? existing.applyBy.slice(0, 10) : '',
       salaryBand: existing.salaryBand ?? '', equalOpportunity: existing.equalOpportunity,
     });
-  }, [existing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing?.id]);
   if (!isNew && loading) return <p>Loading…</p>;
   if (!isNew && error) return <Err error={error} />;
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));

@@ -5,7 +5,9 @@
 // highest today is zIndex 1000 in modules/users.tsx) — toasts must stay
 // reachable while a dialog is open.
 //
-// Behaviour contract (docs/08-ADMIN-CONSOLE-PLAN.md §6.3):
+// Behaviour contract (master plan §6.3 — admin_panel/plan/
+// TwinMOS_Admin_Panel_and_CMS_Comprehensive_Audit_and_Improvement_Plan.md;
+// delivery recorded under "Evidence — Phase 6" in docs/08-ADMIN-CONSOLE-PLAN.md):
 //   • auto-dismiss 5s, or 10s when the toast carries an action button
 //     (both overridable per-call via durationMs)
 //   • click anywhere on the card to dismiss
