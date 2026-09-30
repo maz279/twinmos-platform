@@ -9,8 +9,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { marked } from 'marked';
 import { ApiError, apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, Empty, Err, input, PageHeader, Table, td, Toolbar, useAsync } from '../ui';
-import { CONTENT_STATUS } from '@twinmos/shared';
+import { Badge, btn, btnGhost, Empty, Err, input, PageHeader, Table, td, Toolbar, useAsync, FAINT, INK, LINE, MUTED, TEAL } from '../ui';
+import { Heatmap, WeeklyBars } from '../charts';
+import { CONTENT_STATUS, LOCALES } from '@twinmos/shared';
 import PageBuilder from './page-builder/PageBuilder';
 import { BlockPreview, PreviewModal } from './page-builder/preview';
 import type { PageBlock } from './page-builder/blocks';
@@ -77,6 +78,7 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
   return (
     <div>
       <PageHeader title="Content studio" />
+      <ContentAnalyticsStrip />
       <Toolbar style={{ margin: '12px 0' }}>
         <button style={view === 'library' ? btn : btnGhost} onClick={() => { setView('library'); setEditing(null); }}>Library</button>
         <button style={view === 'review' ? btn : btnGhost} onClick={() => { setView('review'); setEditing(null); }}>
@@ -474,4 +476,58 @@ function scheduling(status: string): boolean {
 export function MarkdownPreview({ text }: { text: string }) {
   const html = useMemo(() => String(marked.parse(text || '', { async: false })), [text]);
   return <div className="md-preview" dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+// ---- Phase 7.1: content analytics strip --------------------------------------
+type ContentAnalytics = {
+  weeks: string[];
+  velocity: Array<{ w: string; article: number; news: number; page: number; faq: number }>;
+  velocityEntities: string[];
+  pipeline: Array<{ entity: string; byStatus: Record<string, number> }>;
+  translationCoverage: { namespaces: string[]; coverage: Record<string, Record<string, number>> };
+};
+
+/** §7.1 Content dashboard above the studio: 12-week publish velocity (the
+ *  dated entities), pipeline census and the translation coverage heatmap —
+ *  all from /admin/analytics/content. Collapsible; never blocks the studio. */
+function ContentAnalyticsStrip() {
+  const { data, error, loading } = useAsync<ContentAnalytics>(() => apiGet('/admin/analytics/content'), []);
+  if (loading) return null;
+  if (error || !data) return null;
+  const pipelineTotal = (e: string) => {
+    const p = data.pipeline.find((x) => x.entity === e);
+    return p ? Object.values(p.byStatus).reduce((a, b) => a + b, 0) : 0;
+  };
+  return (
+    <details style={{ border: `1px solid ${LINE}`, borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: INK, userSelect: 'none' }}>
+        Analytics — <span style={{ color: MUTED, fontWeight: 400 }}>
+          {pipelineTotal('article')} articles · {pipelineTotal('news')} news · {pipelineTotal('page')} pages · {pipelineTotal('faq')} FAQ
+        </span>
+      </summary>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 16, marginTop: 12 }}>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: FAINT, marginBottom: 6 }}>Publish velocity — 12 weeks</div>
+          <WeeklyBars weeks={data.weeks} series={[
+            { key: 'articles', color: TEAL, values: data.velocity.map((v) => v.article) },
+            { key: 'news', color: '#7C5CDB', values: data.velocity.map((v) => v.news) },
+          ]} />
+        </div>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: FAINT, marginBottom: 6 }}>Translation coverage — key-exact vs EN</div>
+          <Heatmap namespaces={data.translationCoverage.namespaces} coverage={data.translationCoverage.coverage} locales={LOCALES} />
+        </div>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: FAINT, marginBottom: 6 }}>Pipeline</div>
+          {data.pipeline.map((p) => (
+            <div key={p.entity} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', flexWrap: 'wrap' }}>
+              <b style={{ width: 64, fontSize: 12.5, color: MUTED }}>{p.entity}</b>
+              {Object.entries(p.byStatus).map(([st, n]) => <Badge key={st} value={`${st}: ${n}`} />)}
+              {Object.keys(p.byStatus).length === 0 && <span style={{ fontSize: 12, color: FAINT }}>none yet</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </details>
+  );
 }

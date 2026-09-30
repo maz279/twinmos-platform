@@ -9,7 +9,7 @@
 // Board | Table toggle for administrative export.
 import React, { useMemo, useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, card, Empty, Err, input, Table, td, useAsync, FAINT, GOLD, INK, LINE, MUTED, PAGE } from '../ui';
+import { Badge, btn, btnGhost, card, Empty, Err, input, Table, td, useAsync, FAINT, GOLD, INK, LINE, MUTED, PAGE, PURPLE, TEAL } from '../ui';
 import { useToast } from '../toast';
 import { RMA_TRANSITIONS, RMA_STATUS } from '@twinmos/shared';
 
@@ -97,6 +97,7 @@ export default function RmaBoard({ canWrite }: { canWrite: boolean }) {
   return (
     <div>
       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: INK, letterSpacing: -0.2 }}>RMA board</h1>
+      <RmaAnalyticsStrip />
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
         <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All states</option>
@@ -294,5 +295,73 @@ function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boo
         </div>
       )}
     </div>
+  );
+}
+
+// ---- Phase 7.1: RMA analytics strip ----------------------------------------
+type RmaAnalytics = {
+  total: number; open: number;
+  byStatus: Array<{ status: string; n: number }>;
+  reasons: Array<{ category: string; n: number }>;
+  avgResolutionDays: number | null;
+  trend: Array<{ m: string; n: number }>;
+};
+
+/** Compact §7.1 dashboard above the board: status distribution bars,
+ *  return-reason bars, avg resolution and the 6-month trend. Collapsible so
+ *  board-first operators can fold it away. */
+function RmaAnalyticsStrip() {
+  const { data, error, loading } = useAsync<RmaAnalytics>(() => apiGet('/admin/analytics/rma'), []);
+  if (loading) return null;
+  if (error || !data) return null; // analytics are additive — never block the board
+  const maxReason = Math.max(1, ...data.reasons.map((x) => x.n));
+  const maxTrend = Math.max(1, ...data.trend.map((x) => x.n));
+  return (
+    <details style={{ border: `1px solid ${LINE}`, borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: INK, userSelect: 'none' }}>
+        Analytics — <span style={{ color: MUTED, fontWeight: 400 }}>{data.total} cases · {data.open} open{data.avgResolutionDays != null ? ` · avg resolution ${data.avgResolutionDays}d` : ''}</span>
+      </summary>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 16, marginTop: 12 }}>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: FAINT, marginBottom: 6 }}>Status distribution</div>
+          {data.byStatus.map((x) => (
+            <div key={x.status} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 30px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
+              <Badge value={x.status} />
+              <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+                <span style={{ display: 'block', width: `${(x.n / Math.max(1, data.total)) * 100}%`, height: '100%', background: GOLD, borderRadius: 999 }} />
+              </span>
+              <b style={{ fontSize: 12.5, color: INK, textAlign: 'right' }}>{x.n}</b>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: FAINT, marginBottom: 6 }}>Return reasons by category</div>
+          {data.reasons.map((x) => (
+            <div key={x.category} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 30px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
+              <span style={{ fontSize: 12.5, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.category}</span>
+              <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+                <span style={{ display: 'block', width: `${(x.n / maxReason) * 100}%`, height: '100%', background: TEAL, borderRadius: 999 }} />
+              </span>
+              <b style={{ fontSize: 12.5, color: INK, textAlign: 'right' }}>{x.n}</b>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: FAINT, marginBottom: 6 }}>Volume — last 6 months</div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 84, borderBottom: `1px solid ${LINE}` }}>
+            {data.trend.map((x) => (
+              <div key={x.m} title={`${x.m}: ${x.n}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                <span style={{ width: '70%', borderRadius: '3px 3px 0 0', background: PURPLE, height: `${Math.max((x.n / maxTrend) * 100, x.n ? 4 : 0)}%` }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 6, marginTop: 3 }}>
+            {data.trend.map((x) => (
+              <span key={x.m} style={{ flex: 1, textAlign: 'center', fontSize: 8.5, color: FAINT }}>{x.m.slice(5)}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </details>
   );
 }

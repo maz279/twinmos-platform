@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
 import { Badge, btn, btnGhost, Empty, Err, input, Table, td, useAsync } from '../ui';
+import { Funnel, Gauge } from '../charts';
 import { SUBMISSION_STATUS, SUBMISSION_TRANSITIONS, SUBMISSION_PRIORITY } from '@twinmos/shared';
 import type { TabCtx } from '../nav';
 
@@ -54,6 +55,7 @@ export default function Submissions({ canWrite, myId, ctx }: { canWrite: boolean
   return (
     <div>
       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Leads &amp; quotes{selected ? <span style={{ color: '#66748A', fontSize: 15 }}> — {selected.refCode ?? ctx?.label ?? `#${selected.id}`}</span> : null}</h1>
+      <LeadsAnalyticsStrip />
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap' }}>
         <input style={input} placeholder="Filter by type (e.g. quote)" value={type} onChange={(e) => { setType(e.target.value.trim()); setCursor(null); }} />
         <select style={input} value={status} onChange={(e) => { setStatus(e.target.value); setCursor(null); }}>
@@ -176,5 +178,51 @@ function Detail({ id, canWrite, myId, onSaved }: { id: number; canWrite: boolean
         </div>
       )}
     </div>
+  );
+}
+
+// ---- Phase 7.1: leads analytics strip ---------------------------------------
+type LeadsAnalytics = {
+  total: number; spam: number;
+  funnel: Array<{ stage: string; count: number }>;
+  sla: { open: number; overdue: number; dueSoon: number; onTrack: number; noSla: number; avgAgeDays: number; healthyPct: number };
+  byType: Array<{ type: string; n: number }>;
+};
+
+/** §7.1 Sales/Leads dashboard above the inbox: the cumulative funnel, the SLA
+ *  gauge and the type split, from /admin/analytics/leads. Collapsible; never
+ *  blocks the inbox on failure. */
+function LeadsAnalyticsStrip() {
+  const { data, error, loading } = useAsync<LeadsAnalytics>(() => apiGet('/admin/analytics/leads'), []);
+  if (loading) return null;
+  if (error || !data) return null;
+  return (
+    <details style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#1F2A37', userSelect: 'none' }}>
+        Analytics — <span style={{ color: '#66748A', fontWeight: 400 }}>{data.total} leads ({data.spam} spam) · {data.sla.open} open · {data.sla.overdue} overdue SLA</span>
+      </summary>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 16, marginTop: 12 }}>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>Funnel — cumulative reach</div>
+          <Funnel data={data.funnel} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 18 }}>
+          <Gauge value={data.sla.healthyPct} label="SLA healthy" sub={`${data.sla.overdue} overdue · ${data.sla.dueSoon} due soon`} />
+          <Gauge value={data.sla.open ? Math.round(((data.sla.onTrack + data.sla.dueSoon) / data.sla.open) * 100) : 100} label="Open leads" sub={`${data.sla.open} open · avg age ${data.sla.avgAgeDays}d`} />
+        </div>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>By type</div>
+          {data.byType.slice(0, 6).map((x) => (
+            <div key={x.type} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 30px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
+              <span style={{ fontSize: 12.5, color: '#66748A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.type}</span>
+              <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+                <span style={{ display: 'block', width: `${(x.n / Math.max(1, data.total - data.spam)) * 100}%`, height: '100%', background: '#1DBF9F', borderRadius: 999 }} />
+              </span>
+              <b style={{ fontSize: 12.5, color: '#1F2A37', textAlign: 'right' }}>{x.n}</b>
+            </div>
+          ))}
+        </div>
+      </div>
+    </details>
   );
 }
