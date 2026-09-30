@@ -199,6 +199,11 @@ function RmaCard({ rma, canWrite, pending, onMove, onOpen }: {
           {sku}
         </span>
       )}
+      {rma.serial && (
+        <span title="Serial number" style={{ alignSelf: 'flex-start', fontSize: 11, color: FAINT, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+          SN {rma.serial}
+        </span>
+      )}
       {canWrite && legal.length > 0 && (
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', borderTop: `1px solid ${LINE}`, paddingTop: 8 }}>
           {legal.map((s) => (
