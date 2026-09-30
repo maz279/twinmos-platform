@@ -953,3 +953,74 @@ the serial (was detail-only; fixed this pass).
 Verdict: §6 is ~92% by clause; the material open items are optimistic
 updates (6.1), 3-level nav + sticky command bars (6.4), and the RMA
 assignee column should one ever be wanted.
+
+## Evidence — Phase 6 residuals COMPLETE (§6.1 optimistic, §6.4 3-level nav + sticky bars, §6.6 assignee)
+
+Closes every material open item from the completion audit above, lifting
+§6 to 100% of its clauses (the two stated stylistic deviations — entry
+size vs the 75 KB target, fn-hash query keys — stand as documented; both
+were about approach, not missing behavior).
+
+**Backend** (migration 0014_rma_assignee): rma_request.assignee_id →
+user(id) ON DELETE SET NULL + index; PATCH /admin/rma/:id/assign
+(editor+, assigneeId must reference a staff account or null to
+unassign, audited as rma.assign); GET /admin/rma list and /admin/rma/:id
+both join user.email as assigneeEmail; GET /admin/products gains a
+?category= integer filter. p15-phase6-residual 5/5: category filter
+discriminates across two categories, assign lifecycle (401 anon → 422
+unknown staff → assign → join resolves email in list AND detail → audit
+row → null unassigns → 404 unknown case).
+
+**Optimistic primitive (§6.1)** — ui.tsx exports queryKeyOf(fn, deps)
+(the exact key derivation useAsync uses, so a mutation and its view
+address ONE cache entry) and useOptimisticUpdate: cancelQueries on the
+key → snapshot → setQueryData(apply) → server call → rollback the
+snapshot on error / invalidate on success. CommandBar (§6.4) is the
+sticky action-ribbon primitive (position:sticky, token styling).
+
+**RMA board**: card quick-actions now route through the hook — the card
+regroups into its target column the instant it is clicked; the detail
+panel's new Assignee select (options from GET /admin/audit/actors,
+editor+; current assignee kept selectable even if absent from the
+actors list) assigns/unassigns optimistically, cards carry a teal
+assignee chip (email local-part, full email on hover), detail meta
+shows the assignee.
+
+**3-level nav (§6.4)**: ModuleDef.children (NavChild: id/label/ctx) in
+the registry; the sidebar renders an expandable third level per module
+(sibling chevron button — never nested interactive elements), collapsed
+state persisted at tm.nav.closedChildren like the group state, and a
+category-ctx tab auto-expands its module. Products' children are the
+live taxonomy categories; clicking one deep-links
+#/m/products/category/<id> → the products list mounts pre-filtered
+(?category=) with the toolbar select synced.
+
+**Sticky command bars**: products, content and jobs editor headers are
+CommandBars. This surfaced a real shell defect: main's overflow-x:auto
+made it a scroll container that GREW instead of scrolling, so sticky
+never engaged — the shell is now the standard viewport-locked app shell
+(100vh row, main = the one scroll container, minHeight 0), with the
+module top gap moved into main > :first-child because Chrome resolves
+sticky top:0 against the scroll container's content box (a padding-top
+on main left a strip where content passed above the pinned bar).
+
+**Live-verified (browser, scripted network control):** with the
+transition POST artificially delayed 700 ms the card was already in its
+target column at +250 ms; with the POST rejected the card returned to
+its original column and the error toast carried the API message; assign
+produced the card chip + detail meta + toast; the category child
+deep-link filtered the table (3/3 = whole dev taxonomy is one category;
+discrimination covered by p15); the products command bar pinned flush
+(boundingBox top == scrollport top at scrollTop 900) with the form
+scrolling beneath, vision-checked; RMA board and dashboard re-checked
+under the bounded-scroll shell.
+
+Gates: typecheck ×4 clean, admin build green (entry 337.99 kB / 105.46
+gzip, 18 chunks — 14 lazy modules + charts/media-picker hoists; the
+growth from the audit's 298.29 kB accrued across the Phase 6 review
+fixes, Phase 7 strips and this pass; the eager set itself is
+unchanged), API e2e 212/212 across 17 files (207 + p15). Dev DB note:
+migration 0014 must be applied to the persistent dev PGlite (npm run
+db:migrate from apps/api) — caught live when the board 500'd on the
+missing column; tests never saw it because each suite migrates a fresh
+temp database.

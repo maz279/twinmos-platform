@@ -1,15 +1,17 @@
 // RMA board — Kanban-first case management (TASK 6.6) + dense table.
 // Default view is a 7-column board, one column per RMA_STATUS in pipeline
 // order, horizontally scrollable, sticky per-column headers with live counts.
-// Cards carry number / customer+contact / SKU chip / age chip and ONE
-// quick-action button per legal next state from the shared RMA_TRANSITIONS
-// matrix — click-to-transition only (no drag-and-drop) so the state machine
-// stays explicit and identical to the server's (POST /admin/rma/:id/transition,
-// apps/api/src/routes/admin.ts). The dense table is retained behind a
-// Board | Table toggle for administrative export.
+// Cards carry number / customer+contact / SKU chip / SN chip / assignee chip /
+// age chip and ONE quick-action button per legal next state from the shared
+// RMA_TRANSITIONS matrix — click-to-transition only (no drag-and-drop) so the
+// state machine stays explicit and identical to the server's (POST
+// /admin/rma/:id/transition, apps/api/src/routes/admin.ts). Transitions are
+// OPTIMISTIC (§6.1): the card jumps columns the instant it is clicked and the
+// cache is rolled back verbatim if the server rejects the move. The dense
+// table is retained behind a Board | Table toggle for administrative export.
 import React, { useMemo, useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, card, Empty, Err, input, Table, td, useAsync, FAINT, GOLD, INK, LINE, MUTED, PAGE, PURPLE, TEAL } from '../ui';
+import { Badge, btn, btnGhost, card, Empty, Err, input, Table, td, useAsync, useOptimisticUpdate, FAINT, GOLD, INK, LINE, MUTED, PAGE, PURPLE, TEAL, TEAL_DK } from '../ui';
 import { useToast } from '../toast';
 import { RMA_TRANSITIONS, RMA_STATUS } from '@twinmos/shared';
 
@@ -17,6 +19,7 @@ type RmaStatus = (typeof RMA_STATUS)[number];
 type RmaRow = {
   id: number; number: string; productSku: string | null; serial: string | null; issue: string;
   status: RmaStatus; customer: Record<string, unknown>; warrantyTier: string | null;
+  assigneeId: string | null; assigneeEmail: string | null;
   createdAt: string; updatedAt: string;
 };
 type RmaDetail = RmaRow & { timeline: Array<{ id: number; fromStatus: string; toStatus: string; actorId: string | null; note: string | null; at: string }> };
@@ -62,7 +65,23 @@ export default function RmaBoard({ canWrite }: { canWrite: boolean }) {
   qs.set('limit', '100');
   if (status) qs.set('status', status);
   if (q) qs.set('q', q);
-  const { data, error, loading, reload } = useAsync<{ items: RmaRow[] }>(() => apiGet('/admin/rma?' + qs.toString()), [status, q]);
+  // One shared fetcher OBJECT feeds both useAsync and the optimistic mover —
+  // the cache key is derived from the fn's source hash (ui.tsx fnKeyOf), so
+  // passing the same reference guarantees the optimistic write lands in the
+  // exact cache entry this view reads.
+  const listUrl = '/admin/rma?' + qs.toString();
+  const fetchList = () => apiGet<{ items: RmaRow[] }>(listUrl);
+  const { data, error, loading, reload } = useAsync(fetchList, [status, q]);
+
+  // §6.1 optimistic transitions: apply() regroups the card into its target
+  // column immediately; failure restores the pre-click snapshot (rollback
+  // inside the hook); success invalidates so the server truth refetches.
+  const mover = useOptimisticUpdate<{ items: RmaRow[] }, { id: number; to: RmaStatus }>({
+    fn: fetchList,
+    deps: [status, q],
+    mutationFn: ({ id, to }) => apiSend('POST', `/admin/rma/${id}/transition`, { to }),
+    apply: (cached, { id, to }) => ({ items: cached.items.map((r) => (r.id === id ? { ...r, status: to } : r)) }),
+  });
 
   // Columns are exactly RMA_STATUS (pipeline order) — every status always has
   // a column even when empty; counts are live off the current fetch.
@@ -73,22 +92,22 @@ export default function RmaBoard({ canWrite }: { canWrite: boolean }) {
     return by;
   }, [data]);
 
-  /** Card quick-action: same endpoint+payload shape as the detail panel, plus
-   *  the toast contract — success `RMA-xxx -> <state>` with UNDO when the
-   *  inverse transition is legal, error carrying the API message. */
+  /** Card quick-action: same endpoint+payload shape as the detail panel. The
+   *  hook applies the move to the cache first (card jumps columns instantly),
+   *  rolls back on failure and invalidates on success; the toast contract —
+   *  success `RMA-xxx -> <state>` with UNDO when the inverse transition is
+   *  legal, error carrying the API message — is unchanged. */
   async function move(rma: RmaRow, to: RmaStatus) {
     const from = rma.status;
-    const key = `${rma.id}:${to}`;
-    setPending(key);
+    setPending(`${rma.id}:${to}`);
     try {
-      await apiSend('POST', `/admin/rma/${rma.id}/transition`, { to });
+      await mover.mutate({ id: rma.id, to });
       const back = inverseOf(from, to);
       toast.success(`${rma.number} -> ${to}`, back
         ? { action: { label: 'Undo', run: () => { void move({ ...rma, status: to }, back); } } }
         : undefined);
-      reload();
     } catch (e) {
-      toast.error(`${rma.number}: ${errText(e)}`);
+      toast.error(`${rma.number}: ${errText(e)}`); // board has already rolled back
     } finally {
       setPending(null);
     }
@@ -204,6 +223,13 @@ function RmaCard({ rma, canWrite, pending, onMove, onOpen }: {
           SN {rma.serial}
         </span>
       )}
+      {rma.assigneeEmail && (
+        <span title={`Assigned to ${rma.assigneeEmail}`}
+          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 4, maxWidth: '100%', fontSize: 11, fontWeight: 700, color: TEAL_DK, background: TEAL + '14', border: `1px solid ${TEAL}44`, borderRadius: 6, padding: '2px 7px' }}>
+          <span aria-hidden style={{ fontSize: 10 }}>◎</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rma.assigneeEmail.split('@')[0]}</span>
+        </span>
+      )}
       {canWrite && legal.length > 0 && (
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', borderTop: `1px solid ${LINE}`, paddingTop: 8 }}>
           {legal.map((s) => (
@@ -221,7 +247,10 @@ function RmaCard({ rma, canWrite, pending, onMove, onOpen }: {
   );
 }
 
-// ---- detail drawer (timeline + note + customer email), retained; toasts added (TASK 6.6 §3) ------------------
+// ---- detail drawer (timeline + note + customer email + assignee), retained; toasts added (TASK 6.6 §3) ----
+
+/** Staff picker option — same shape /admin/audit/actors returns (editor+). */
+type StaffOpt = { id: string; name: string; email: string };
 
 function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boolean; onChanged: () => void }) {
   const toast = useToast();
@@ -229,7 +258,47 @@ function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boo
   const [notify, setNotify] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const { data, error: loadError, loading, reload } = useAsync<RmaDetail>(() => apiGet(`/admin/rma/${id}`), [id]);
+  const fetchDetail = () => apiGet<RmaDetail>(`/admin/rma/${id}`);
+  const { data, error: loadError, loading, reload } = useAsync(fetchDetail, [id]);
+
+  // Assignee source: distinct audit actors (editor+ route, same as the audit
+  // module's picker). Graceful empty fallback so the picker never breaks the
+  // panel on a fresh install with no audit history yet.
+  const { data: actorsData } = useAsync<{ items: StaffOpt[] }>(
+    () => canWrite
+      ? apiGet<{ items: StaffOpt[] }>('/admin/audit/actors').catch(() => ({ items: [] as StaffOpt[] }))
+      : Promise.resolve({ items: [] as StaffOpt[] }),
+    [canWrite],
+  );
+  // The current assignee may predate the actors list (or never have audited);
+  // keep them selectable so the select does not visually drop to "Unassigned".
+  const staff = useMemo(() => {
+    const list = [...(actorsData?.items ?? [])];
+    if (data?.assigneeId && data.assigneeEmail && !list.some((s) => s.id === data.assigneeId)) {
+      list.unshift({ id: data.assigneeId, name: data.assigneeEmail, email: data.assigneeEmail });
+    }
+    return list;
+  }, [actorsData, data?.assigneeId, data?.assigneeEmail]);
+
+  // §6.1 optimistic assign: the chip + meta row repaint instantly off the
+  // cached detail, PATCH /admin/rma/:id/assign is the truth, rollback on error.
+  const assigner = useOptimisticUpdate<RmaDetail, { assigneeId: string | null; assigneeEmail: string | null }>({
+    fn: fetchDetail,
+    deps: [id],
+    mutationFn: ({ assigneeId }) => apiSend('PATCH', `/admin/rma/${id}/assign`, { assigneeId }),
+    apply: (d, v) => ({ ...d, assigneeId: v.assigneeId, assigneeEmail: v.assigneeEmail }),
+  });
+  async function assign(assigneeId: string | null, assigneeEmail: string | null) {
+    const label = data?.number ?? `RMA #${id}`;
+    try {
+      await assigner.mutate({ assigneeId, assigneeEmail });
+      toast.success(assigneeEmail ? `${label} assigned to ${assigneeEmail}` : `${label} unassigned`);
+      onChanged(); // refresh the board list so its assignee chip follows
+    } catch (e) {
+      toast.error(`${label}: ${errText(e)}`); // detail already rolled back
+    }
+  }
+
   async function transition(to: RmaStatus) {
     setBusy(true); setError(null);
     const from = data?.status;
@@ -267,6 +336,7 @@ function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boo
         <span><b>Product:</b> {String(data.customer?.product ?? data.productSku ?? '—')}</span>
         <span><b>Serial:</b> {data.serial ?? '—'}</span>
         <span><b>Warranty:</b> {data.warrantyTier ?? '—'}</span>
+        <span><b>Assignee:</b> {data.assigneeEmail ?? '—'}</span>
         <span><b>Created:</b> {fmtDate(data.createdAt)}</span>
       </div>
       <p style={{ fontSize: 13.5 }}><b>Reported issue:</b> {data.issue}</p>
@@ -284,6 +354,21 @@ function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boo
       {canWrite && (
         <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 12 }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <label htmlFor={`rma-assignee-${id}`} style={{ fontSize: 13, color: MUTED, fontWeight: 700 }}>Assignee</label>
+            <select id={`rma-assignee-${id}`} style={{ ...input, flex: '0 1 300px' }} value={data.assigneeId ?? ''}
+              disabled={assigner.pending}
+              onChange={(e) => {
+                const sid = e.target.value || null;
+                const opt = sid ? staff.find((s) => s.id === sid) : null;
+                void assign(sid, opt?.email ?? null);
+              }}>
+              <option value="">Unassigned</option>
+              {staff.map((s) => (
+                <option key={s.id} value={s.id}>{s.name && s.name !== s.email ? `${s.name} (${s.email})` : s.email}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             <input style={{ ...input, flex: '1 1 240px' }} placeholder="Note (optional, included in customer email)" value={note} onChange={(e) => setNote(e.target.value)} />
             <label style={{ fontSize: 13, display: 'flex', gap: 6, alignItems: 'center' }}>
               <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Email customer

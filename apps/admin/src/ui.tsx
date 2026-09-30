@@ -22,8 +22,13 @@ export const PAGE = '#F2F4F6';   // canvas behind cards
 export const CARD_SHADOW = '0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.04)';
 
 /** Global polish rendered once by the shell/login: form controls inherit the
- *  console font, teal focus rings, thin dark scrollbars for the sidebar. */
+ *  console font, teal focus rings, thin dark scrollbars for the sidebar. The
+ *  main > :first-child rule keeps the module pages' top gap after the shell
+ *  moved main's padding-top to 0 — Chrome resolves a sticky child's top:0
+ *  against the scroll container's content box, so padding-top on main itself
+ *  would leave a strip where scrolled content passes ABOVE a pinned bar. */
 export const globalCss = `
+  main > :first-child { padding-top: 22px; }
   button, input, select, textarea { font: inherit; }
   .tm-in:focus { outline: none; border-color: ${TEAL}; box-shadow: 0 0 0 3px rgba(29,191,159,.16); }
   button:focus-visible, a:focus-visible { outline: 2px solid ${TEAL}; outline-offset: 1px; }
@@ -151,6 +156,66 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): { data: T | 
     loading: q.isPending,
     reload: () => { void qc.invalidateQueries({ queryKey }); },
   };
+}
+
+/** The SAME key useAsync derives for a fetch site — pass the identical fn and
+ *  deps so an optimistic mutation writes into exactly the cache entry the
+ *  view reads. Exported for useOptimisticUpdate callers. */
+export function queryKeyOf(fn: () => unknown, deps: unknown[]): readonly unknown[] {
+  return [fnKeyOf(fn), ...deps];
+}
+
+/** §6.1 optimistic updates with automatic rollback. `apply` rewrites the
+ *  cached data the moment the user acts; the server call then runs — on
+ *  failure the snapshot is restored verbatim, on success the key is
+ *  invalidated so the truth refetches. `mutate` returns the promise so
+ *  callers can toast on settle. */
+export function useOptimisticUpdate<TData, TVars>(opts: {
+  /** Same fn/deps the view's useAsync uses — the cache entry to patch. */
+  fn: () => unknown;
+  deps: unknown[];
+  mutationFn: (vars: TVars) => Promise<unknown>;
+  /** Pure rewrite of the cached value for the optimistic state. */
+  apply: (cached: TData, vars: TVars) => TData;
+}): { mutate: (vars: TVars) => Promise<void>; pending: boolean } {
+  const qc = useQueryClient();
+  const key = queryKeyOf(opts.fn, opts.deps);
+  const [pending, setPending] = React.useState(false);
+  const mutate = React.useCallback(async (vars: TVars) => {
+    setPending(true);
+    // cancel in-flight fetches for this key so a refetch cannot overwrite
+    // the optimistic write mid-flight
+    await qc.cancelQueries({ queryKey: key as unknown[] });
+    const previous = qc.getQueryData<TData>(key as unknown[]);
+    if (previous !== undefined) qc.setQueryData(key as unknown[], opts.apply(previous, vars));
+    try {
+      await opts.mutationFn(vars);
+      await qc.invalidateQueries({ queryKey: key as unknown[] });
+    } catch (e) {
+      if (previous !== undefined) qc.setQueryData(key as unknown[], previous); // rollback
+      throw e;
+    } finally {
+      setPending(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qc, opts.mutationFn, opts.apply, key.join('\u0001')]);
+  return { mutate, pending };
+}
+
+/** §6.4 command bar — the sticky contextual action ribbon pinned above
+ *  long-scrolling editor forms (Save / Publish / Back…). Stays flush at the
+ *  top of the scroll container, white with a hairline + shadow so scrolled
+ *  content slides under it. */
+export function CommandBar({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div style={{
+      position: 'sticky', top: 0, zIndex: 20,
+      display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+      background: '#fff', borderBottom: `1px solid ${LINE}`,
+      boxShadow: CARD_SHADOW, borderRadius: 8, padding: '8px 12px',
+      ...style,
+    }}>{children}</div>
+  );
 }
 
 // ---- layout & form primitives (Phase 6.4/6.5) ------------------------------

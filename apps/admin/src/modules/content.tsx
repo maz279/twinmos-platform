@@ -9,7 +9,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { marked } from 'marked';
 import { ApiError, apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, Empty, Err, input, PageHeader, Table, td, Toolbar, useAsync, FAINT, INK, LINE, MUTED, TEAL } from '../ui';
+import { Badge, btn, btnGhost, CommandBar, Empty, Err, input, PageHeader, Table, td, Toolbar, useAsync, FAINT, INK, LINE, MUTED, TEAL } from '../ui';
 import { Heatmap, WeeklyBars } from '../charts';
 import { CONTENT_STATUS, LOCALES } from '@twinmos/shared';
 import PageBuilder from './page-builder/PageBuilder';
@@ -293,7 +293,9 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
 
   return (
     <div style={{ marginTop: 16, border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#fff' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+      {/* §6.4 command bar — workflow transitions (Publish / Submit for review)
+          stay pinned under the tab strip while the long editor body scrolls */}
+      <CommandBar style={{ justifyContent: 'space-between', marginBottom: 10 }}>
         <b>{isNew ? 'New ' + entity : 'Edit ' + entity}</b>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <Badge value={status} />
@@ -313,7 +315,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
           {!isNew && <button style={btnGhost} disabled={busy} onClick={openPreview}>Preview URL</button>}
           <button style={btnGhost} onClick={onClose}>Close</button>
         </div>
-      </div>
+      </CommandBar>
       {error ? <Err error={error} /> : null}
       {conflict && (
         <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', margin: '10px 0', color: '#8A5A00', background: '#FBF3E2', border: '1px solid #E8CE9A', borderRadius: 8, padding: '8px 12px' }}>

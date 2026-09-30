@@ -73,13 +73,18 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
   r.get('/products', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
-    // P8: console filters — q matches name or SKU (parameter-bound ilike)
+    // P8: console filters — q matches name or SKU (parameter-bound ilike);
+    // category (§6.5 three-level nav) filters by taxonomy id
     const q = (c.req.query('q') ?? '').trim();
     const status = c.req.query('status');
+    const category = c.req.query('category');
     const filters = [isNull(product.deletedAt)];
     if (q) filters.push(or(ilike(product.name, `%${q}%`), ilike(product.sku, `%${q}%`))!);
     if (status && ['draft', 'in_review', 'scheduled', 'published', 'archived'].includes(status)) {
       filters.push(eq(product.status, status as 'draft' | 'in_review' | 'scheduled' | 'published' | 'archived'));
+    }
+    if (category && Number.isInteger(Number(category)) && Number(category) > 0) {
+      filters.push(eq(product.categoryId, Number(category)));
     }
     const rows = await db.select().from(product).where(and(...filters)).orderBy(desc(product.id)).limit(100);
     return c.json({ items: rows, cursor: null });
@@ -913,7 +918,16 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       status.success ? eq(rmaRequest.status, status.data) : undefined,
       q ? ilike(rmaRequest.number, `%${q.replace(/[%_]/g, '')}%`) : undefined,
     ].filter((f) => f !== undefined);
-    const rows = await db.select().from(rmaRequest)
+    // §6.6 completion: the card's assigned-technician chip — join the staff
+    // account so the board renders a name, not a raw user id.
+    const rows = await db.select({
+      id: rmaRequest.id, number: rmaRequest.number, productSku: rmaRequest.productSku,
+      serial: rmaRequest.serial, issue: rmaRequest.issue, status: rmaRequest.status,
+      customer: rmaRequest.customer, warrantyTier: rmaRequest.warrantyTier,
+      assigneeId: rmaRequest.assigneeId, assigneeEmail: user.email,
+      createdAt: rmaRequest.createdAt, updatedAt: rmaRequest.updatedAt,
+    }).from(rmaRequest)
+      .leftJoin(user, eq(rmaRequest.assigneeId, user.id))
       .where(filters.length ? and(...filters) : undefined)
       .orderBy(desc(rmaRequest.id)).limit(limit);
     return c.json({ items: rows });
@@ -926,7 +940,30 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const rows = await db.select().from(rmaRequest).where(eq(rmaRequest.id, id)).limit(1);
     if (!rows[0]) return c.json(problem(404, 'RMA not found'), 404, { 'Content-Type': P });
     const events = await db.select().from(rmaEvent).where(eq(rmaEvent.rmaId, id)).orderBy(rmaEvent.id);
-    return c.json({ ...rows[0], timeline: events });
+    const assignee = rows[0].assigneeId
+      ? (await db.select({ email: user.email }).from(user).where(eq(user.id, rows[0].assigneeId)).limit(1))[0]
+      : null;
+    return c.json({ ...rows[0], assigneeEmail: assignee?.email ?? null, timeline: events });
+  });
+
+  /** §6.6 completion: assign/reassign the technician on a case (editor+,
+   *  audited). assigneeId null unassigns; the id must reference staff. */
+  r.patch('/rma/:id/assign', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const body = await c.req.json().catch(() => ({}));
+    const assigneeId = (body as any).assigneeId === null || (body as any).assigneeId === undefined
+      ? null : String((body as any).assigneeId);
+    if (assigneeId !== null) {
+      const staff = (await db.select({ id: user.id }).from(user).where(eq(user.id, assigneeId)).limit(1))[0];
+      if (!staff) return c.json(problem(422, 'Validation Failed', 'assigneeId must reference a staff account (or null to unassign).'), 422, { 'Content-Type': P });
+    }
+    const rows = await db.update(rmaRequest).set({ assigneeId, updatedAt: new Date() })
+      .where(eq(rmaRequest.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'RMA not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'rma.assign', 'rma_request', String(id), { assigneeId });
+    return c.json(rows[0]);
   });
 
   r.post('/rma/:id/transition', async (c) => {

@@ -197,7 +197,9 @@ export const rmaRequest = pgTable('rma_request', {
   productSku: varchar('product_sku', { length: 40 }), serial: varchar('serial', { length: 60 }), issue: text('issue').notNull().default(''),
   status: rmaStatusEnum('status').notNull().default('submitted'), customer: jsonb('customer').notNull().default({}),
   warrantyTier: varchar('warranty_tier', { length: 20 }), createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
+  // Phase 6 completion (§6.6 card chip): the assigned technician
+  assigneeId: text('assignee_id').references(() => user.id, { onDelete: 'set null' }),
+}, (t) => [index('rma_assignee_idx').on(t.assigneeId)]);
 export const rmaEvent = pgTable('rma_event', {
   id: serial('id').primaryKey(), rmaId: integer('rma_id').notNull().references(() => rmaRequest.id, { onDelete: 'cascade' }),
   fromStatus: rmaStatusEnum('from_status').notNull(), toStatus: rmaStatusEnum('to_status').notNull(),

@@ -5,12 +5,12 @@
 //   • multi-tab workspace rendered as rounded pills on the light-gray canvas
 // Tab state is owned by main.tsx; this file renders from the registry in nav.ts.
 import React, { useEffect, useRef, useState } from 'react';
-import { API } from './api';
+import { API, apiGet } from './api';
 import { Icon } from './icons';
 import { GROUP_ORDER, MODULES, visibleModules } from './nav';
-import type { ModuleDef, ModProps, NavOpen, TabCtx } from './nav';
+import type { ModuleDef, ModProps, NavChild, NavOpen, TabCtx } from './nav';
 import type { Me } from './login';
-import { Badge, btn, globalCss, GOLD, GREEN, INK, LINE, MUTED, NAVY, PAGE, FAINT, TEAL, TEAL_DK } from './ui';
+import { Badge, btn, globalCss, GOLD, GREEN, INK, LINE, MUTED, NAVY, PAGE, FAINT, TEAL, TEAL_DK, useAsync } from './ui';
 
 export { NAVY };
 
@@ -30,6 +30,14 @@ const shellCss = `
   .tm-side-item.on { background:linear-gradient(90deg, rgba(29,191,159,.22), rgba(29,191,159,.05)); color:#fff; font-weight:700; }
   .tm-side-item.on svg { color:${TEAL}; }
   .tm-side-item.on::before { content:''; position:absolute; left:0; top:6px; bottom:6px; width:3px; border-radius:2px; background:${TEAL}; }
+  .tm-side-kchev { display:grid; place-items:center; width:24px; flex-shrink:0; border:0; background:none; color:#5E7186;
+    cursor:pointer; border-radius:6px; padding:0; transition:background .12s, color .12s; }
+  .tm-side-kchev:hover { background:rgba(255,255,255,.09); color:#fff; }
+  .tm-side-child { display:flex; align-items:center; width:calc(100% - 36px); margin-left:36px; border:0; background:none;
+    text-align:left; color:#7E92A9; font-size:12px; padding:4px 10px; border-radius:7px; cursor:pointer;
+    transition:background .12s, color .12s; }
+  .tm-side-child:hover { background:rgba(255,255,255,.06); color:#DCE5EE; }
+  .tm-side-child.on { background:rgba(29,191,159,.15); color:#fff; font-weight:600; box-shadow:inset 2px 0 0 ${TEAL}; }
   .tm-tab { display:flex; align-items:center; gap:8px; padding:0 6px 0 12px; height:34px; border:1px solid transparent;
     border-radius:9px; background:transparent; color:${MUTED}; font-size:12.5px; cursor:pointer; white-space:nowrap; }
   .tm-tab:hover { background:#E8EDF2; color:${INK}; }
@@ -103,14 +111,44 @@ function UserCard({ me, collapsed }: { me: Me; collapsed: boolean }) {
   );
 }
 
-function Sidebar({ modules, activeModule, badges, collapsed, onToggleCollapse, me, open }: {
-  modules: ModuleDef[]; activeModule: string; badges: Badges; collapsed: boolean; me: Me;
+function Sidebar({ modules, activeModule, activeCtx, badges, collapsed, onToggleCollapse, me, open }: {
+  modules: ModuleDef[]; activeModule: string; activeCtx?: TabCtx; badges: Badges; collapsed: boolean; me: Me;
   onToggleCollapse: () => void; open: NavOpen;
 }) {
   const [closedGroups, setClosedGroups] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('tm.nav.closedGroups') ?? '[]') as string[]; } catch { return []; }
   });
   useEffect(() => { try { localStorage.setItem('tm.nav.closedGroups', JSON.stringify(closedGroups)); } catch { /* private mode */ } }, [closedGroups]);
+  // Third-level expansion, persisted the same way as group collapse — a module
+  // whose children the operator folded stays folded across reloads (§6.4).
+  const [closedChildren, setClosedChildren] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('tm.nav.closedChildren') ?? '[]') as string[]; } catch { return []; }
+  });
+  useEffect(() => { try { localStorage.setItem('tm.nav.closedChildren', JSON.stringify(closedChildren)); } catch { /* private mode */ } }, [closedChildren]);
+  // Landing on a tab whose ctx IS a child entry (deep link / category tab)
+  // re-expands that module's third level so the active child is visible.
+  useEffect(() => {
+    if (activeCtx?.kind === 'category' && activeModule === 'products') {
+      setClosedChildren((s) => (s.includes('products') ? s.filter((x) => x !== 'products') : s));
+    }
+  }, [activeModule, activeCtx?.kind, activeCtx?.id]);
+
+  // Dynamic third level for Products: taxonomy categories. Fetched once per
+  // sidebar mount; the .catch fallback keeps the sidebar working even if the
+  // taxonomy call fails — the products module has its own independent call.
+  const tax = useAsync<{ categories: Array<{ id: number; name: string; slug: string }> }>(
+    () => apiGet<{ categories: Array<{ id: number; name: string; slug: string }> }>('/admin/taxonomy')
+      .catch(() => ({ categories: [] as Array<{ id: number; name: string; slug: string }> })),
+    [],
+  );
+  /** Static registry children + injected dynamic ones (§6.4 third level). */
+  function childrenOf(m: ModuleDef): NavChild[] {
+    const dyn: NavChild[] = m.id === 'products'
+      ? (tax.data?.categories ?? []).map((c) => ({ id: `cat:${c.id}`, label: c.name, ctx: { kind: 'category', id: String(c.id), label: c.name } }))
+      : [];
+    return [...(m.children ?? []), ...dyn];
+  }
+
   const groups = GROUP_ORDER.filter((g) => modules.some((m) => m.group === g));
   return (
     <nav className="tm-scroll" style={{ width: collapsed ? 64 : 240, flexShrink: 0, background: 'linear-gradient(180deg,#182736 0%,' + NAVY + ' 55%,#121D29 100%)', color: '#fff', padding: collapsed ? '12px 9px' : '14px 12px 10px', display: 'flex', flexDirection: 'column', transition: 'width .15s', overflowY: 'auto', overflowX: 'hidden' }}>
@@ -138,15 +176,41 @@ function Sidebar({ modules, activeModule, badges, collapsed, onToggleCollapse, m
               const n = m.badge ? badges[m.badge] : undefined;
               const on = activeModule === m.id;
               const badgeBg = m.badge === 'newLeads' ? TEAL : m.badge === 'openRma' ? GOLD : '#58C08A';
+              const kids = !collapsed ? childrenOf(m) : [];
+              const kidsOpen = kids.length > 0 && !closedChildren.includes(m.id);
               return (
-                <button key={m.id} className={'tm-side-item' + (on ? ' on' : '')} title={`${m.label}${n ? ` (${n})` : ''} — Shift+click opens a new tab`}
-                  onClick={(e) => open(m.id, undefined, { newTab: e.shiftKey })}>
-                  <Icon name={m.icon} size={16} style={{ flexShrink: 0, transition: 'color .12s' }} />
-                  {!collapsed && <span style={{ flex: 1 }}>{m.label}</span>}
-                  {!collapsed && !!n && (
-                    <span style={{ background: badgeBg, color: m.badge === 'openRma' ? '#3D2E10' : '#fff', borderRadius: 999, fontSize: 10.5, fontWeight: 800, padding: '1px 7px' }}>{n}</span>
-                  )}
-                </button>
+                <div key={m.id}>
+                  <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                    <button className={'tm-side-item' + (on ? ' on' : '')} title={`${m.label}${n ? ` (${n})` : ''} — Shift+click opens a new tab`}
+                      onClick={(e) => open(m.id, undefined, { newTab: e.shiftKey })}>
+                      <Icon name={m.icon} size={16} style={{ flexShrink: 0, transition: 'color .12s' }} />
+                      {!collapsed && <span style={{ flex: 1 }}>{m.label}</span>}
+                      {!collapsed && !!n && (
+                        <span style={{ background: badgeBg, color: m.badge === 'openRma' ? '#3D2E10' : '#fff', borderRadius: 999, fontSize: 10.5, fontWeight: 800, padding: '1px 7px' }}>{n}</span>
+                      )}
+                    </button>
+                    {/* third-level expander — a sibling button, never nested
+                        inside the module button (invalid HTML + double targets) */}
+                    {kids.length > 0 && (
+                      <button className="tm-side-kchev" aria-expanded={kidsOpen}
+                        title={kidsOpen ? `Collapse ${m.label} sections` : `Expand ${m.label} sections`}
+                        onClick={() => setClosedChildren((s) => (s.includes(m.id) ? s.filter((x) => x !== m.id) : [...s, m.id]))}>
+                        <Icon name="chevron" size={11} style={{ transform: kidsOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .12s' }} />
+                      </button>
+                    )}
+                  </div>
+                  {kidsOpen && kids.map((ch) => {
+                    const childOn = on && activeCtx?.kind === ch.ctx.kind
+                      && activeCtx?.id != null && String(activeCtx.id) === String(ch.ctx.id);
+                    return (
+                      <button key={ch.id} className={'tm-side-child' + (childOn ? ' on' : '')}
+                        title={`${m.label} → ${ch.label} — Shift+click opens a new tab`}
+                        onClick={(e) => open(m.id, ch.ctx, { newTab: e.shiftKey })}>
+                        {ch.label}
+                      </button>
+                    );
+                  })}
+                </div>
               );
             })}
           </div>
@@ -281,15 +345,21 @@ export function Shell({ me, badges, tabs, activeId, setActiveId, openTab, closeT
   const module = visible.find((m) => m.id === activeTab?.module);
   if (mfaPanel) return <>{mfaPanel}</>;
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif', background: PAGE }}>
+    // Viewport-locked app shell: the console row is exactly 100vh and main is
+    // the ONE scroll container (min-height:0 bounds the flex item). This is
+    // what makes §6.4's sticky command bars engage — with a growing column the
+    // document scrolled instead, main's own scrollport never moved, and
+    // position:sticky inside it never pinned. TopBar/TabStrip/sidebar now stay
+    // permanently visible and long editors/jobs/content scroll under them.
+    <div style={{ display: 'flex', height: '100vh', fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif', background: PAGE }}>
       <style>{shellCss}{globalCss}</style>
-      <Sidebar modules={visible} activeModule={activeTab?.module ?? ''} badges={badges} me={me}
+      <Sidebar modules={visible} activeModule={activeTab?.module ?? ''} activeCtx={activeTab?.ctx} badges={badges} me={me}
         collapsed={collapsed} onToggleCollapse={() => setCollapsed((v) => !v)} open={openTab} />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0 }}>
         <TopBar me={me} module={module} tab={activeTab} badges={badges} onOpenSearch={onOpenSearch}
           onSignOut={onSignOut} onMfaSetup={onMfaSetup} open={openTab} />
         <TabStrip tabs={tabs} activeId={activeTab?.id ?? ''} onSelect={setActiveId} onClose={closeTab} />
-        <main className="tm-scroll-light" style={{ flex: 1, padding: 22, overflowX: 'auto' }}>{children}</main>
+        <main className="tm-scroll-light" style={{ flex: 1, minHeight: 0, padding: '0 22px 22px', overflowX: 'auto', overflowY: 'auto' }}>{children}</main>
       </div>
     </div>
   );

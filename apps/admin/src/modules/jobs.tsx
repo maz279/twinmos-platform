@@ -5,7 +5,7 @@
 // server-side; postings link to their applications via postingId.
 import React, { useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, Empty, Err, input, Table, td, useAsync } from '../ui';
+import { Badge, btn, btnGhost, CommandBar, Empty, Err, input, Table, td, useAsync } from '../ui';
 import { JOB_DEPARTMENTS, JOB_LOCATIONS, JOB_TYPES, JOB_LEVELS, JOB_POSTING_STATUSES } from '@twinmos/shared';
 import type { ModProps } from '../nav';
 
@@ -140,7 +140,8 @@ function PostingEditor({ id, canWrite, onDone, onCancel }: {
 
   return (
     <div style={{ display: 'grid', gap: 12, maxWidth: 860 }}>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+      {/* §6.4 command bar — pins under the tab strip while the posting form scrolls */}
+      <CommandBar style={{ gap: 10 }}>
         <button style={btnGhost} onClick={onCancel}>← Back to postings</button>
         <h2 style={{ margin: 0, fontSize: 18, color: '#1F2A37' }}>{isNew ? 'New job posting' : `Edit: ${existing?.title ?? ''}`}</h2>
         <span style={{ flex: 1 }} />
@@ -148,7 +149,7 @@ function PostingEditor({ id, canWrite, onDone, onCancel }: {
           <button style={btnGhost} disabled={busy} onClick={() => save(true)}>Publish</button>
         )}
         {canWrite && <button style={btn} disabled={busy} onClick={() => save(false)}>{busy ? 'Saving…' : isNew ? 'Create posting' : 'Save changes'}</button>}
-      </div>
+      </CommandBar>
       {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '8px 12px' }}>{err}</p>}
 
       <div style={card}>

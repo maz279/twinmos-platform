@@ -5,7 +5,7 @@
 // via tab ctx { kind:'product', id }.
 import React, { useEffect, useMemo, useState } from 'react';
 import { API, ApiError, apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, Empty, Err, Field, formGrid, input, SectionCard, Table, td, Toolbar, useAsync } from '../ui';
+import { Badge, btn, btnGhost, CommandBar, Empty, Err, Field, formGrid, input, SectionCard, Table, td, Toolbar, useAsync } from '../ui';
 import { MediaPicker } from '../media-picker';
 import { AUTHORIZED_CURRENCIES } from '@twinmos/shared';
 import type { ModProps, TabCtx } from '../nav';
@@ -26,15 +26,21 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
   const [editing, setEditing] = useState<number | 'new' | null>(focusId ?? null);
   useEffect(() => { if (focusId != null && Number.isFinite(focusId)) setEditing(focusId); }, [focusId]);
 
+  // Third-level sidebar deep link (§6.4): ctx { kind:'category', id } opens the
+  // list pre-filtered to that taxonomy category (GET /admin/products?category=).
+  const catFilter = ctx?.kind === 'category' && ctx.id && Number.isFinite(Number(ctx.id)) ? Number(ctx.id) : null;
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
+  const [category, setCategory] = useState<number | ''>(catFilter ?? '');
+  useEffect(() => { if (catFilter != null) setCategory(catFilter); }, [catFilter]);
   const [bulk, setBulk] = useState(false);
   const query = useMemo(() => {
     const qs = new URLSearchParams();
     if (q.trim()) qs.set('q', q.trim());
     if (status) qs.set('status', status);
+    if (category !== '') qs.set('category', String(category));
     return qs.toString();
-  }, [q, status]);
+  }, [q, status, category]);
   const { data, error, loading, reload } = useAsync<{ items: Product[] }>(() => apiGet('/admin/products' + (query ? '?' + query : '')), [query]);
   const tax = useAsync<Taxonomy>(() => apiGet('/admin/taxonomy'), []);
 
@@ -52,6 +58,11 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
         <button style={btnGhost} onClick={() => setBulk(true)} title="Bulk CSV import and full-catalog export">Import / Export</button>
         <span style={{ flex: 1 }} />
         <input style={{ ...input, width: 240 }} placeholder="Search name or SKU…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <select style={input} value={category} onChange={(e) => setCategory(e.target.value ? Number(e.target.value) : '')}
+          title="Filter by taxonomy category (sidebar: Catalog → Products → category)">
+          <option value="">All categories</option>
+          {(tax.data?.categories ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
         <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All statuses</option>
           {['draft', 'in_review', 'scheduled', 'published', 'archived'].map((s) => <option key={s}>{s}</option>)}
@@ -168,14 +179,16 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
 
   return (
     <div>
-      <Toolbar style={{ gap: 10, marginBottom: 14 }}>
+      {/* §6.4 command bar — pins under the tab strip while the long editor
+          scrolls, so Save/Publish never scroll out of reach */}
+      <CommandBar style={{ gap: 10, marginBottom: 14 }}>
         <button style={btnGhost} onClick={onCancel}>← Back to list</button>
         <h1 style={{ margin: 0, fontSize: 20 }}>{isNew ? 'New product' : `Edit ${existing?.sku ?? ''}`}</h1>
         {!isNew && existing && <Badge value={form.status} />}
         <span style={{ flex: 1 }} />
         {canWrite && !isNew && form.status !== 'published' && <button style={btnGhost} disabled={busy} onClick={() => save(true)}>Publish</button>}
         {canWrite && <button style={btn} disabled={busy} onClick={() => save(false)}>{busy ? 'Saving…' : isNew ? 'Create product' : 'Save changes'}</button>}
-      </Toolbar>
+      </CommandBar>
       {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '8px 12px' }}>{err}</p>}
       {conflict && (
         <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', color: '#8A5A00', background: '#FBF3E2', border: '1px solid #E8CE9A', borderRadius: 8, padding: '8px 12px' }}>

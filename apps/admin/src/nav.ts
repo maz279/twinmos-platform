@@ -34,6 +34,11 @@ export type TabCtx = { kind: string; id?: string; label?: string };
 export type NavOpen = (module: string, ctx?: TabCtx, opts?: { newTab?: boolean }) => void;
 export type ModProps = { canWrite: boolean; me: Me; ctx?: TabCtx; nav: NavOpen };
 
+/** Third sidebar level (TASK 6.4): an entry nested under a module that opens
+ *  that module with a pre-filtered ctx. Static entries live on ModuleDef;
+ *  dynamic ones (Products → taxonomy categories) are injected by the shell. */
+export type NavChild = { id: string; label: string; ctx: TabCtx };
+
 export type ModuleDef = {
   id: string;
   label: string;
@@ -42,6 +47,8 @@ export type ModuleDef = {
   desc: string;
   minRole: string;
   badge?: 'newLeads' | 'openRma' | 'pendingApps';
+  /** Static third-level entries — see NavChild. */
+  children?: NavChild[];
   comp: React.ComponentType<ModProps>;
 };
 
