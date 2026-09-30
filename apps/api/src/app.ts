@@ -9,6 +9,7 @@ import { problem } from '@twinmos/shared';
 import { initAuth } from './auth.ts';
 import { formsRoute } from './routes/forms.ts';
 import { adminRoute } from './routes/admin.ts';
+import { analyticsRoute } from './routes/analytics.ts';
 import { usersRoute } from './routes/users.ts';
 import { contentRoute, previewRoute, promoteScheduled } from './routes/content.ts';
 import { mediaRoute } from './routes/media.ts';
@@ -184,6 +185,7 @@ export function buildApp(db: DB) {
   app.route('/api/v1', formsRoute(db));
   app.route('/api/v1', previewRoute(db)); // public, token-gated draft previews
   app.route('/api/v1/admin', adminRoute(db, { requireRole, sessionFromRequest }));
+  app.route('/api/v1/admin', analyticsRoute(db, { requireRole, sessionFromRequest })); // Phase 7.1 dashboards
   app.route('/api/v1/admin', usersRoute(db, { requireRole, sessionFromRequest, auth }));
   app.route('/api/v1/admin', contentRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', mediaRoute(db, { requireRole, sessionFromRequest }));
