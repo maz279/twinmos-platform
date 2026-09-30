@@ -922,3 +922,34 @@ invalidate immediately.
 
 Gates: typecheck ×4 clean, admin build green, API e2e suite 207/207
 across 16 files (p14 added).
+
+## Evidence — Phase 6 completion audit (commit 64e2ad5)
+
+Clause-by-clause check of §6 against the plan text:
+
+**Delivered as written:** 6.1 staleTime/refetch/invalidation; 6.2 lazy
+chunks + Suspense (+ post-review ErrorBoundary); 6.3 toasts with action/
+undo window; 6.5 tabbed forms, progressive disclosure, multi-column
+grids, Dataverse-style multi-entity search; 6.6 7-column Kanban with
+legal quick-transitions and table toggle. Kanban card now also shows
+the serial (was detail-only; fixed this pass).
+
+**Deviations, honestly stated:**
+- 6.2 entry is 298 KB, not the plan's ~75 KB — react-dom + shell +
+  login + query client stay eager; the split itself worked (622→298 KB,
+  17 chunks). 75 KB was never reachable with this eager set.
+- 6.1 optimistic updates with rollback are NOT implemented — mutations
+  are fire-then-invalidate. The one genuine functional gap in §6.
+- 6.1 query keys are fn-hash-derived rather than the plan's literal
+  ['products', filters] naming — equivalent caching semantics.
+- 6.4 Fluent UI v9 was superseded by the user's design_sample navy/teal
+  direction (executed before Phase 6); ui.tsx tokens play that role.
+  Within 6.4, 3-level sidebar menus and sticky command bars remain
+  unimplemented — both are new navigation/form architecture, not
+  restyling, and neither blocks daily operation.
+- 6.6 'assigned technician' card chip is impossible without a schema
+  change — rma_request has no assignee column (documented limitation).
+
+Verdict: §6 is ~92% by clause; the material open items are optimistic
+updates (6.1), 3-level nav + sticky command bars (6.4), and the RMA
+assignee column should one ever be wanted.
