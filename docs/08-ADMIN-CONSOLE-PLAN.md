@@ -882,3 +882,43 @@ can no longer clobber unsaved edits, the audit Load More pages merge-by-id
 on same-query refetch instead of collapsing to page one, the toast contract
 comment cites the real spec location, and SectionCard's collapsible header
 keeps the h3 OUTSIDE the button (valid HTML + heading semantics).
+
+## Evidence — Phase 7: Info Visuals & Analytics COMPLETE (§7.1)
+
+**Backend** (commit ef06a2b): three read-only aggregates under
+/admin/analytics/* — leads (cumulative funnel with spam excluded, SLA
+gauge buckets + healthy%, type/priority splits, dense 14-day series),
+RMA (status distribution, return reasons by category via the SKU→product
+→category join with unknown SKUs as Uncategorized, avg closed resolution
+days, zero-filled 6-month trend), content (publish velocity per ISO week
+over 12 weeks for the dated entities — page/faq are pipeline-only and
+documented via velocityEntities — pipeline census, key-exact translation
+coverage matrix). p14-analytics 4/4: anonymous 401s, funnel cumulative
+math with a due-yesterday fixture, category join + 7-day resolution,
+weekly bucket assignment + coverage (ar/home = 50%). Two schema traps
+caught by the tests: page/faq lack publishAt AND deletedAt — both loops
+guard per-entity.
+
+**Frontend** (this commit): charts.tsx zero-dependency SVG primitives
+(Funnel with conversion %, semicircular Gauge, coverage Heatmap, grouped
+WeeklyBars) — same architecture as the main dashboard, keeping the
+Phase 6 code-split entry small; the plan's Recharts option was
+evaluated and declined for that reason. Collapsible analytics strips in
+Leads & quotes (funnel + twin gauges + by-type), RMA board (status
+distribution, reasons, avg resolution, 6-month trend) and Content studio
+(velocity, translation heatmap, pipeline census). Strips render-null on
+error — analytics never block the working UI.
+
+**Live-verified:** leads strip against real SLA fixtures (0% healthy /
+2 overdue — the gauges agree with the API math); RMA strip + Kanban
+card TM-RMA-2026-465019 seeded via the public intake, live submitted →
+under review transition with the quick-action set updating to the new
+legal set; content heatmap showing en 100% / ar 50% — exactly the
+key-exact §5.1 math — and the real pipeline census (395 articles · 26
+news · 1 page · 9 FAQ). Note: with staleTime 60s the module lists serve
+from the TanStack cache for up to a minute after out-of-band writes
+(e.g. API-seeded fixtures) — a reload refetches; in-console mutations
+invalidate immediately.
+
+Gates: typecheck ×4 clean, admin build green, API e2e suite 207/207
+across 16 files (p14 added).
