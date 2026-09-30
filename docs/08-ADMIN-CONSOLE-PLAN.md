@@ -693,3 +693,33 @@ per-ns chips, split grid with the RTL column and Noto link rendering.
 Ops note: dev API now runs WITHOUT --watch (node src/index.ts directly)
 — the watcher's restart raced the port twice; the stable invocation
 ends that class of failure.
+
+## Evidence — cross-cutting audit, second pass (commit 3bfce39-series)
+
+Swept every delivered surface (§1–§5) for functional bugs, plan
+faithfulness and console-wide consistency. Six findings, all fixed:
+
+1. **Publish stale-closure bug** (functional): PostingEditor's Publish
+   ran setForm + setTimeout(save) — save read the pre-update status and
+   saved as draft. save(publish?) passes the override; delete errors
+   render inline (window.alert removed).
+2. **Progress math** (faithfulness): coverage was a string-count ratio
+   — a locale holding keys absent from EN could read 100%. Now
+   key-exact: per locale+ns key sets intersected against EN; per-locale
+   aggregates the exact hits.
+3. **Audit filter gap**: serial_registry was audited but not in the
+   Entity dropdown/icon map — added, cross-navigating to Partners.
+4. **Search gap**: serial registry invisible to global search —
+   /admin/search returns a Serials group (serial/SKU match).
+5. **§5.3 'IPs OR country codes'**: only the IP signal existed.
+   Migration 0013 adds sn_check.country (from CF-IPCountry) and the
+   scan flags when EITHER signal exceeds the threshold; email + table
+   show both counts. New test: 2 IPs but 6 countries → flagged.
+6. **Factory Batch not persisted**: parsed, validated, but only kept in
+   the audit diff. Migration 0013 adds serial_registry.batch; import
+   stores/upserts it (test-asserted; live import shows FAB-L2).
+
+Gates: p13 → 14 tests; suite **203/203** (15 files); typecheck ×4;
+build green; dev DB on 0013; live-verified (Serials search group,
+batch persistence). Ops: dev API runs as a plain background node
+process (no --watch) — stable since.
