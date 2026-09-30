@@ -56,6 +56,9 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
   }, [en.data, target.data, nsFilter, q, missingOnly]);
 
   const rtl = localeDir(locale) === 'rtl';
+  // §5.1: appropriate Arabic font rendering for RTL editing — Noto Sans Arabic
+  // with system fallbacks so intranet/offline deployments still render well.
+  const rtlFont: React.CSSProperties = { fontFamily: "'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif" };
 
   async function save(key: string, ns: string) {
     setBusy(true); setError(null); setNotice('');
@@ -63,6 +66,15 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
       await apiSend('PUT', '/admin/translations', { locale, ns, key, value: editValue });
       setEditing(null); reloadAll();
       setNotice(`Saved ${locale}/${ns}/${key}.`);
+    } catch (e) { setError(e); } finally { setBusy(false); }
+  }
+
+  async function remove(key: string, ns: string) {
+    setBusy(true); setError(null); setNotice('');
+    try {
+      await apiSend('DELETE', '/admin/translations', { locale, ns, key });
+      setEditing(null); reloadAll();
+      setNotice(`Deleted ${locale}/${ns}/${key}.`);
     } catch (e) { setError(e); } finally { setBusy(false); }
   }
 
@@ -149,6 +161,19 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
               );
             })}
           </div>
+          {/* §5.1: % translated per namespace for the SELECTED locale */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10, alignItems: 'center' }}>
+            <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: '#93A0B4' }}>{locale} by namespace</span>
+            {progress.data.namespaces.map((ns) => {
+              const pct = progress.data!.perNs[ns]?.[locale] ?? 0;
+              return (
+                <button key={ns} onClick={() => setNsFilter(ns)} title={`${pct}% of EN keys translated`}
+                  style={{ border: '1px solid ' + (nsFilter === ns ? '#1DBF9F' : '#E6EBF1'), borderRadius: 999, background: nsFilter === ns ? '#E7F7F2' : '#fff', padding: '3px 10px', fontSize: 11.5, fontWeight: 700, cursor: 'pointer', color: '#475467' }}>
+                  {ns} <span style={{ color: pct >= 100 ? '#1F9D62' : pct >= 50 ? '#E8A33D' : '#C2453C' }}>{pct}%</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : null}
 
@@ -201,15 +226,19 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
                 <span style={{ fontSize: 13, color: '#1F2A37', paddingInlineEnd: 12, whiteSpace: 'pre-wrap' }}>{p.source || <span style={{ color: '#93A0B4' }}>—</span>}</span>
                 {editing === p.key ? (
                   <span style={{ display: 'flex', gap: 6 }}>
-                    <textarea dir={rtl ? 'rtl' : 'ltr'} style={{ ...input, flex: 1, minHeight: 54, fontFamily: 'inherit' }} value={editValue} onChange={(e) => setEditValue(e.target.value)} autoFocus />
+                    <textarea dir={rtl ? 'rtl' : 'ltr'} style={{ ...input, flex: 1, minHeight: 54, ...(rtl ? rtlFont : {}) }} value={editValue} onChange={(e) => setEditValue(e.target.value)} autoFocus />
                     <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <button style={{ ...btn, padding: '4px 10px' }} disabled={busy} onClick={() => save(p.key, p.ns)}>Save</button>
                       <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={() => setEditing(null)}>Cancel</button>
+                      {isSuperAdmin && p.target && (
+                        <button style={{ ...btnGhost, padding: '4px 10px', color: '#C2453C' }} disabled={busy}
+                          title="Delete this translated string (super_admin)" onClick={() => remove(p.key, p.ns)}>Delete</button>
+                      )}
                     </span>
                   </span>
                 ) : (
                   <button dir={rtl ? 'rtl' : 'ltr'} onClick={() => { setEditing(p.key); setEditValue(p.target?.value ?? ''); }}
-                    style={{ border: 0, background: 'none', textAlign: 'start', cursor: 'pointer', padding: 0, fontSize: 13, color: p.target ? '#1F2A37' : '#C2453C', whiteSpace: 'pre-wrap', width: '100%' }}
+                    style={{ border: 0, background: 'none', textAlign: 'start', cursor: 'pointer', padding: 0, fontSize: 13, ...(rtl ? rtlFont : {}), color: p.target ? '#1F2A37' : '#C2453C', whiteSpace: 'pre-wrap', width: '100%' }}
                     title={p.target ? `Updated ${fmtDate(p.target.updatedAt)}` : 'Untranslated — click to add'}>
                     {p.target ? p.target.value : <span style={{ fontStyle: 'italic' }}>⚠ missing — click to translate</span>}
                   </button>

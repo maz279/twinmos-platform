@@ -115,6 +115,24 @@ describe('P5.1: translation RBAC relaxation + progress + XLIFF', () => {
     });
     expect(bad.status).toBe(422);
   });
+
+  it('XLIFF 2.0 documents (unit/segment) import too', async () => {
+    const v2 = '<?xml version="1.0" encoding="UTF-8"?>\n<xliff xmlns="urn:oasis:names:tc:xliff:document:2.0" version="2.0">\n  <file id="f1" srcLang="en" trgLang="ar">\n    <unit id="v2.key">\n      <segment>\n        <source>Hello</source>\n        <target>مرحبا</target>\n      </segment>\n    </unit>\n  </file>\n</xliff>';
+    const imp = await app.request('/api/v1/admin/translations/xliff', {
+      method: 'POST', headers: HDRS(editorCookie), body: JSON.stringify({ locale: 'ar', ns: 'home', xml: v2 }),
+    });
+    expect(imp.status).toBe(200);
+    expect((await imp.json()).imported).toBe(1);
+    const list = await app.request('/api/v1/admin/translations?locale=ar&ns=home', { headers: { cookie } });
+    expect((await list.json()).items.some((r: any) => r.key === 'v2.key' && r.value === 'مرحبا')).toBe(true);
+  });
+
+  it('super_admin can delete a translated string via the API (studio delete affordance)', async () => {
+    const del = await app.request('/api/v1/admin/translations', {
+      method: 'DELETE', headers: HDRS(), body: JSON.stringify({ locale: 'ar', ns: 'home', key: 'v2.key' }),
+    });
+    expect(del.status).toBe(200);
+  });
 });
 
 // ---------------- 5.2 careers: job postings ----------------

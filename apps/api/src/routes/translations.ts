@@ -55,6 +55,37 @@ function parseXliff12(xml: string): Array<{ id: string; source: string; target: 
   return units;
 }
 
+/** Parse XLIFF 2.0 <unit id="…"><segment><source>…</source><target>…</target>
+ *  </segment></unit> — the shape Crowdin/Trados emit for v2. Same result shape
+ *  as the 1.2 parser; version detection happens at the call site. */
+function parseXliff20(xml: string): Array<{ id: string; source: string; target: string | null }> {
+  const units: Array<{ id: string; source: string; target: string | null }> = [];
+  let i = 0;
+  for (;;) {
+    const open = xml.indexOf('<unit ', i);
+    if (open < 0) break;
+    const close = xml.indexOf('</unit>', open);
+    if (close < 0) break;
+    const body = xml.slice(open, close);
+    const idStart = body.indexOf('id="') + 4;
+    const idEnd = body.indexOf('"', idStart);
+    const id = idStart > 4 && idEnd > idStart ? unesc(body.slice(idStart, idEnd)) : '';
+    const src = tagText(body, 'source', 0).text ?? '';
+    const tgt = tagText(body, 'target', 0).text;
+    if (id) units.push({ id, source: src, target: tgt });
+    i = close + 7;
+  }
+  return units;
+}
+
+/** Version-dispatching XLIFF reader: 1.2 documents use <trans-unit>, 2.0
+ *  documents use <unit> inside <file>. Anything else is not XLIFF. */
+function parseXliff(xml: string): Array<{ id: string; source: string; target: string | null }> {
+  if (xml.includes('<trans-unit')) return parseXliff12(xml);
+  if (/<unit\s/.test(xml)) return parseXliff20(xml);
+  return [];
+}
+
 export function translationsRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
   const r = new Hono();
 
@@ -155,8 +186,8 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: any) => Guard
     if (!xml.includes('<xliff')) return c.json(problem(422, 'Validation Failed', 'Body is not an XLIFF document.'), 422, { 'Content-Type': P });
     const guard = await translateGuard(c, ns);
     if (guard instanceof Response) return guard;
-    const units = parseXliff12(xml);
-    if (!units.length) return c.json(problem(422, 'Validation Failed', 'No trans-unit elements found.'), 422, { 'Content-Type': P });
+    const units = parseXliff(xml);
+    if (!units.length) return c.json(problem(422, 'Validation Failed', 'No trans-unit (XLIFF 1.2) or unit (XLIFF 2.0) elements found.'), 422, { 'Content-Type': P });
     let imported = 0;
     let skippedEmpty = 0;
     for (const u of units) {
