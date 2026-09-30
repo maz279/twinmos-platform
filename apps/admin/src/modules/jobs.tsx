@@ -39,6 +39,13 @@ export default function Jobs({ canWrite }: ModProps) {
 function Postings({ canWrite }: { canWrite: boolean }) {
   const { data, error, loading, reload } = useAsync<{ items: Posting[] }>(() => apiGet('/admin/job-postings'), []);
   const [editing, setEditing] = useState<number | 'new' | null>(null);
+  const [delErr, setDelErr] = useState<string | null>(null);
+  async function remove(id: number) {
+    if (!canWrite) return;
+    setDelErr(null);
+    try { await apiSend('DELETE', '/admin/job-postings/' + id, {}); reload(); }
+    catch (e) { setDelErr(e instanceof Error ? e.message : 'Delete failed'); }
+  }
   if (editing !== null) {
     return <PostingEditor id={editing === 'new' ? null : editing} canWrite={canWrite}
       onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />;
@@ -52,7 +59,9 @@ function Postings({ canWrite }: { canWrite: boolean }) {
         {canWrite && <button style={btn} onClick={() => setEditing('new')}>+ New posting</button>}
       </div>
       {error ? <Err error={error} /> : loading ? <p>Loading…</p> : data ? (
-        data.items.length === 0 ? <Empty text="No postings yet — create the first role." /> : (
+        <>
+          {delErr && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '8px 12px' }}>{delErr}</p>}
+          {data.items.length === 0 ? <Empty text="No postings yet — create the first role." /> : (
           <Table head={['Role', 'Department', 'Location', 'Type', 'Level', 'Status', 'Applications', '']}>
             {data.items.map((p) => (
               <tr key={p.id}>
@@ -74,18 +83,13 @@ function Postings({ canWrite }: { canWrite: boolean }) {
               </tr>
             ))}
           </Table>
-        )
+        )}
+        </>
       ) : null}
 
       {canWrite && data?.items.length ? null : !canWrite && <p style={{ color: '#93A0B4', fontSize: 12.5 }}>Read-only — editor role required to manage postings.</p>}
     </div>
   );
-
-  async function remove(id: number) {
-    if (!canWrite) return;
-    try { await apiSend('DELETE', '/admin/job-postings/' + id, {}); reload(); }
-    catch (e) { alert(e instanceof Error ? e.message : 'Delete failed'); }
-  }
 }
 
 function PostingEditor({ id, canWrite, onDone, onCancel }: {
@@ -111,13 +115,14 @@ function PostingEditor({ id, canWrite, onDone, onCancel }: {
   const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: '#93A0B4', display: 'block', margin: '10px 0 4px' };
   const card: React.CSSProperties = { border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 16px', background: '#fff' };
 
-  async function save() {
+  async function save(publish?: boolean) {
     if (!canWrite) return;
     setErr(null);
     if (form.title.trim().length < 2) { setErr('Title is required (2+ characters).'); return; }
+    const status = publish ? 'published' : form.status;
     const body = {
       title: form.title.trim(), dept: form.dept, location: form.location, type: form.type,
-      level: form.level, status: form.status, body: form.body,
+      level: form.level, status, body: form.body,
       applyBy: form.applyBy ? new Date(form.applyBy).toISOString() : null,
       salaryBand: form.salaryBand.trim() || null, equalOpportunity: form.equalOpportunity,
     };
@@ -136,10 +141,10 @@ function PostingEditor({ id, canWrite, onDone, onCancel }: {
         <button style={btnGhost} onClick={onCancel}>← Back to postings</button>
         <h2 style={{ margin: 0, fontSize: 18, color: '#1F2A37' }}>{isNew ? 'New job posting' : `Edit: ${existing?.title ?? ''}`}</h2>
         <span style={{ flex: 1 }} />
-        {canWrite && !isNew && form.status === 'draft' && (
-          <button style={btnGhost} disabled={busy} onClick={() => { setForm((f) => ({ ...f, status: 'published' })); setTimeout(save, 0); }}>Publish</button>
+        {canWrite && !isNew && form.status !== 'published' && (
+          <button style={btnGhost} disabled={busy} onClick={() => save(true)}>Publish</button>
         )}
-        {canWrite && <button style={btn} disabled={busy} onClick={save}>{busy ? 'Saving…' : isNew ? 'Create posting' : 'Save changes'}</button>}
+        {canWrite && <button style={btn} disabled={busy} onClick={() => save(false)}>{busy ? 'Saving…' : isNew ? 'Create posting' : 'Save changes'}</button>}
       </div>
       {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '8px 12px' }}>{err}</p>}
 

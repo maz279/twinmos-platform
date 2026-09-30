@@ -210,7 +210,7 @@ function SnChecks() {
 
 // ---- Phase 5.3: serial registry management + counterfeit anomaly alerts ----
 type RegistryRow = { serial: string; sku: string | null; manufacturedAt: string | null; verifiedCount: number };
-type AnomalyRow = { serial: string; checks: number; distinctIps: number; lastSeen: string; verdict: string };
+type AnomalyRow = { serial: string; checks: number; distinctIps: number; distinctCountries: number; lastSeen: string; verdict: string };
 
 function SerialRegistry() {
   const [q, setQ] = useState('');
@@ -292,19 +292,20 @@ function SerialRegistry() {
 
       <div style={card}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-          <b style={{ fontSize: 13, color: '#C2453C', flex: 1 }}>⚠ Anomalies — &gt;{anomalies.data?.threshold ?? 5} distinct IPs in 24h</b>
+          <b style={{ fontSize: 13, color: '#C2453C', flex: 1 }}>⚠ Anomalies — &gt;{anomalies.data?.threshold ?? 5} distinct IPs or countries in 24h</b>
           <button style={btn} disabled={busy || !(anomalies.data?.flagged ?? []).length} onClick={alertOps}>Email ops alert</button>
         </div>
         {anomalies.error ? <Err error={anomalies.error} /> : anomalies.loading ? <p>Loading…</p> : (
           (anomalies.data?.flagged ?? []).length === 0
             ? <p style={{ color: '#1F9D62', fontSize: 13, fontWeight: 700 }}>No suspicious serials in the last 24 hours. ✓</p>
             : (
-              <Table head={['Serial', 'Checks', 'Distinct IPs', 'Last seen', 'Verdict']}>
+              <Table head={['Serial', 'Checks', 'Distinct IPs', 'Countries', 'Last seen', 'Verdict']}>
                 {(anomalies.data?.flagged ?? []).map((a) => (
                   <tr key={a.serial}>
                     <td style={td}><b>{a.serial}</b></td>
                     <td style={td}>{a.checks}</td>
                     <td style={td}><b style={{ color: '#C2453C' }}>{a.distinctIps}</b></td>
+                    <td style={td}><b style={{ color: '#C2453C' }}>{a.distinctCountries}</b></td>
                     <td style={td}>{fmtDate(a.lastSeen)}</td>
                     <td style={{ ...td, color: '#C2453C', fontSize: 12 }}>{a.verdict}</td>
                   </tr>

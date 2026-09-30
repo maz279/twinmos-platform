@@ -126,31 +126,43 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: any) => Guard
     return c.json({ items: rows });
   });
 
-  /** §5.1 progress matrix — string coverage per locale and per namespace
-   *  against the EN source of truth. */
+  /** §5.1 progress matrix — KEY-EXACT coverage per locale and per namespace:
+   *  a locale counts a key only when that same key exists in the EN source
+   *  (a locale full of unrelated keys can never reach 100%). */
   r.get('/translations/progress', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
-    const rows = await db.select({ locale: translation.locale, ns: translation.ns, n: sql<number>`count(*)` })
-      .from(translation).groupBy(translation.locale, translation.ns);
-    const perLocale: Record<string, { strings: number; coverage: number }> = {};
+    const rows = await db.select({ locale: translation.locale, ns: translation.ns, key: translation.key })
+      .from(translation).limit(20_000);
+    const keySets = new Map<string, Set<string>>(); // `${locale}\u0000${ns}` → keys
+    for (const r2 of rows) {
+      const k = r2.locale + '\u0000' + r2.ns;
+      (keySets.get(k) ?? keySets.set(k, new Set()).get(k)!).add(r2.key);
+    }
     const namespaces = [...new Set(rows.filter((x) => x.locale === 'en').map((x) => x.ns))];
-    const enPerNs = new Map(namespaces.map((ns) => [ns, Number(rows.find((x) => x.locale === 'en' && x.ns === ns)?.n ?? 0)]));
-    const enKeys = [...enPerNs.values()].reduce((s, n) => s + n, 0);
+    const enKeysOf = (ns: string) => keySets.get('en\u0000' + ns) ?? new Set<string>();
+    const cover = (locale: string, ns: string): number => {
+      const en = enKeysOf(ns);
+      if (!en.size) return locale === 'en' ? 100 : 0;
+      if (locale === 'en') return 100;
+      const tgt = keySets.get(locale + '\u0000' + ns) ?? new Set<string>();
+      let hit = 0;
+      for (const k of en) if (tgt.has(k)) hit += 1;
+      return Math.round((hit / en.size) * 100);
+    };
+    const perLocale: Record<string, { strings: number; coverage: number }> = {};
+    const enTotal = namespaces.reduce((s, ns) => s + enKeysOf(ns).size, 0);
     for (const l of LOCALES) {
-      const total = rows.filter((x) => x.locale === l).reduce((s, x) => s + Number(x.n), 0);
-      perLocale[l] = { strings: total, coverage: enKeys ? Math.min(100, Math.round((total / enKeys) * 100)) : (l === 'en' ? 100 : 0) };
+      const strings = rows.filter((x) => x.locale === l).length;
+      const hits = namespaces.reduce((s, ns) => s + Math.round(cover(l, ns) / 100 * enKeysOf(ns).size), 0);
+      perLocale[l] = { strings, coverage: enTotal ? Math.min(100, Math.round((hits / enTotal) * 100)) : (l === 'en' ? 100 : 0) };
     }
     const perNs: Record<string, Record<string, number>> = {};
     for (const ns of namespaces) {
       perNs[ns] = {};
-      const en = enPerNs.get(ns) ?? 0;
-      for (const l of LOCALES) {
-        const n = Number(rows.find((x) => x.locale === l && x.ns === ns)?.n ?? 0);
-        perNs[ns][l] = en ? Math.min(100, Math.round((n / en) * 100)) : 0;
-      }
+      for (const l of LOCALES) perNs[ns][l] = cover(l, ns);
     }
-    return c.json({ enKeys, perLocale, namespaces, perNs });
+    return c.json({ enKeys: enTotal, perLocale, namespaces, perNs });
   });
 
   /** §5.1 XLIFF 1.2 export — EN source + current targets for a locale/ns. */

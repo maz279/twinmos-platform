@@ -215,13 +215,21 @@ describe('P5.3: serial registry + counterfeit anomaly alerting', () => {
     expect(wrongHeader.status).toBe(422);
   });
 
-  it('registry search finds serials and SKUs', async () => {
+  it('registry search finds serials and SKUs; batch persisted from the CSV', async () => {
     const bySku = await app.request('/api/v1/admin/serials?q=VLT-DDR5-64G', { headers: { cookie } });
     const items = (await bySku.json()).items;
-    expect(items.some((s: any) => s.serial === 'TM26A0001' && s.sku === 'VLT-DDR5-64G')).toBe(true);
+    expect(items.some((s: any) => s.serial === 'TM26A0001' && s.sku === 'VLT-DDR5-64G' && s.batch === 'FAB-08')).toBe(true);
   });
 
-  it('flags serials checked from >5 distinct IPs in 24h and emails ops', async () => {
+  it('global search covers the serial registry', async () => {
+    const res = await app.request('/api/v1/admin/search?q=TM26A0001', { headers: { cookie } });
+    const groups = (await res.json()).groups as Array<{ type: string; items: Array<{ title: string; module: string }> }>;
+    const g = groups.find((x) => x.type === 'Serials');
+    expect(g?.items[0]?.title).toBe('TM26A0001');
+    expect(g?.items[0]?.module).toBe('partners');
+  });
+
+  it('flags serials checked from >5 distinct IPs OR countries in 24h and emails ops', async () => {
     // public checks: TM26A0001 from 6 distinct IPs; TM26A0002 from 2 (below threshold)
     for (let i = 1; i <= 6; i++) {
       await app.request('/api/v1/sn-check', {
@@ -235,12 +243,22 @@ describe('P5.3: serial registry + counterfeit anomaly alerting', () => {
         body: JSON.stringify({ serial: 'TM26A0002' }),
       });
     }
+    // country signal: TM26A0002 checked from 2 IPs but 6 distinct countries → flagged
+    const countries = ['DE', 'AE', 'IN', 'BR', 'ZA', 'JP'];
+    for (const c of countries) {
+      await app.request('/api/v1/sn-check', {
+        method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': `192.0.2.${c.length}`, 'cf-ipcountry': c },
+        body: JSON.stringify({ serial: 'TM26A0002' }),
+      });
+    }
     const scan = await app.request('/api/v1/admin/serials/anomalies', { headers: { cookie } });
     expect(scan.status).toBe(200);
     const s = await scan.json();
     const flagged = s.flagged.find((f: any) => f.serial === 'TM26A0001');
     expect(flagged.distinctIps).toBe(6);
-    expect(s.flagged.some((f: any) => f.serial === 'TM26A0002')).toBe(false);
+    const byCountry = s.flagged.find((f: any) => f.serial === 'TM26A0002');
+    expect(byCountry.distinctCountries).toBeGreaterThanOrEqual(6); // country signal fires
+    expect(s.flagged.some((f: any) => f.serial === 'TM26B0001')).toBe(false); // unregistered serials never hit either signal
 
     const notify = await app.request('/api/v1/admin/serials/anomalies?notify=true', { headers: { cookie } });
     const n = await notify.json();

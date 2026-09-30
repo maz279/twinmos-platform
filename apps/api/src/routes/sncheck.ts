@@ -26,6 +26,7 @@ export function snCheckRoute(db: DB) {
     await db.insert(snCheck).values({
       serial, sku: row?.sku ?? null, result,
       ip: c.req.header('cf-connecting-ip') ?? null, ua: c.req.header('user-agent') ?? null,
+      country: (c.req.header('cf-ipcountry') ?? '').slice(0, 8).toUpperCase() || null,
     });
     if (row) {
       await db.update(serialRegistry)
@@ -161,15 +162,16 @@ export function serialAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard;
     if (dryRun) return c.json({ dryRun: true, validCount: valid.length, errors });
     if (errors.length) return c.json(problem(422, 'Validation Failed', errors.length + ' row(s) failed — fix and re-run.', errors), 422, { 'Content-Type': P });
     for (const v of valid) {
-      await db.insert(serialRegistry).values({ serial: v.serial, sku: v.sku, manufacturedAt: v.manufacturedAt })
-        .onConflictDoUpdate({ target: serialRegistry.serial, set: { sku: v.sku, manufacturedAt: v.manufacturedAt } });
+      await db.insert(serialRegistry).values({ serial: v.serial, sku: v.sku, manufacturedAt: v.manufacturedAt, batch: v.batch })
+        .onConflictDoUpdate({ target: serialRegistry.serial, set: { sku: v.sku, manufacturedAt: v.manufacturedAt, batch: v.batch } });
     }
     await auditRow(c, guard.user.id, 'serial.import', 'batch', { count: valid.length, batches: [...new Set(valid.map((v) => v.batch).filter(Boolean))] });
     return c.json({ dryRun: false, imported: valid.length });
   });
 
-  /** Anomaly scan — serials checked from >threshold distinct IPs in the last
-   *  24h. Optional notify=true fires the ops/compliance email. */
+  /** Anomaly scan — §5.3 "queried >5 times across distinct IP addresses OR
+   *  distinct country codes within a 24-hour window". Optional notify=true
+   *  fires the ops/compliance email. */
   r.get('/serials/anomalies', async (c) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
@@ -180,25 +182,27 @@ export function serialAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard;
         serial: snCheck.serial,
         checks: sql<number>`count(*)`,
         distinctIps: sql<number>`count(distinct ${snCheck.ip})`,
+        distinctCountries: sql<number>`count(distinct ${snCheck.country})`,
         lastSeen: sql<string>`max(${snCheck.checkedAt})`,
       })
       .from(snCheck)
       .where(gte(snCheck.checkedAt, since))
       .groupBy(snCheck.serial)
-      .having(sql`count(distinct ${snCheck.ip}) > ${threshold}`)
+      .having(sql`count(distinct ${snCheck.ip}) > ${threshold} or count(distinct ${snCheck.country}) > ${threshold}`)
       .orderBy(desc(sql`count(distinct ${snCheck.ip})`))
       .limit(100);
     const flagged = rows.map((x: any) => ({
-      serial: x.serial, checks: Number(x.checks), distinctIps: Number(x.distinctIps), lastSeen: x.lastSeen,
+      serial: x.serial, checks: Number(x.checks), distinctIps: Number(x.distinctIps),
+      distinctCountries: Number(x.distinctCountries), lastSeen: x.lastSeen,
       verdict: 'suspicious — suspected counterfeit distribution',
     }));
 
     let notified = false;
     if (c.req.query('notify') === 'true' && flagged.length) {
-      const list = flagged.map((f) => `${f.serial}: ${f.checks} checks from ${f.distinctIps} IPs (last ${f.lastSeen})`).join('\n');
+      const list = flagged.map((f) => `${f.serial}: ${f.checks} checks from ${f.distinctIps} IPs / ${f.distinctCountries} countries (last ${f.lastSeen})`).join('\n');
       notified = await mail.sendOpsAlert(
         `TwinMOS anti-counterfeit alert — ${flagged.length} suspicious serial(s) in 24h`,
-        `The following serials were verified from more than ${threshold} distinct IP addresses in the last 24 hours —\na pattern consistent with counterfeit distribution or serial leakage.\n\n${list}\n\nReview in the admin console: Partners & channel → SN-check → Anomalies.`,
+        `The following serials were verified from more than ${threshold} distinct IP addresses OR country codes in the last 24 hours —\na pattern consistent with counterfeit distribution or serial leakage.\n\n${list}\n\nReview in the admin console: Partners & channel → SN-check → Anomalies.`,
       );
       await auditRow(c, guard.user.id, 'serial.anomaly.alert', 'batch', { flagged: flagged.length, notified });
     }

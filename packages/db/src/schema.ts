@@ -206,6 +206,8 @@ export const rmaEvent = pgTable('rma_event', {
 export const serialRegistry = pgTable('serial_registry', {
   serial: varchar('serial', { length: 60 }).primaryKey(), sku: varchar('sku', { length: 40 }),
   manufacturedAt: timestamp('manufactured_at', { withTimezone: true }), verifiedCount: integer('verified_count').notNull().default(0),
+  // Phase 5.3: factory batch tag from the CSV ingest (§5.3 "Factory Batch")
+  batch: varchar('batch', { length: 40 }),
 });
 
 // ---- P5: partner portal + anti-counterfeit ----
@@ -248,8 +250,11 @@ export const snCheck = pgTable('sn_check', {
   serial: varchar('serial', { length: 60 }).notNull(), sku: varchar('sku', { length: 40 }),
   result: varchar('result', { length: 20 }).notNull(), // valid | unverified
   ip: text('ip'), ua: text('ua'),
+  // Phase 5.3: ISO country from CF-IPCountry — the second anomaly signal
+  // (§5.3 ">5 distinct IPs OR distinct country codes")
+  country: varchar('country', { length: 8 }),
   checkedAt: timestamp('checked_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [index('sn_check_serial_idx').on(t.serial, t.checkedAt), index('sn_check_checked_at_idx').on(t.checkedAt)]);
+}, (t) => [index('sn_check_serial_idx').on(t.serial, t.checkedAt), index('sn_check_checked_at_idx').on(t.checkedAt), index('sn_check_country_idx').on(t.country)]);
 
 // ---- careers ----
 export const jobPosting = pgTable('job_posting', {

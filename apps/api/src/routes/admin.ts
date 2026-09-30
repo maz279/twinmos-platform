@@ -13,7 +13,7 @@ import {
   productImportSchema, PRODUCT_IMPORT_COLUMNS, AUTHORIZED_CURRENCIES, CONTENT_STATUS, sameInstant,
   jobPostingCreateSchema, jobPostingUpdateSchema, JOB_POSTING_STATUSES,
 } from '@twinmos/shared';
-import { auditLog, brand, category, compatibilityRule, formNote, formSubmission, jobApplication, jobPosting, product, productVariant, rmaEvent, rmaRequest, user, article, page, newsPost, faq, mediaAsset } from '@twinmos/db';
+import { auditLog, brand, category, compatibilityRule, formNote, formSubmission, jobApplication, jobPosting, product, productVariant, rmaEvent, rmaRequest, serialRegistry, user, article, page, newsPost, faq, mediaAsset } from '@twinmos/db';
 import { sendRmaStatusMail } from '../mailer.ts';
 import { IdempotencyStore } from '../idem.ts';
 import type { DB } from '@twinmos/db';
@@ -694,7 +694,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const like = `%${q}%`;
     const CAP = 5;
     const live = sql`is null`; // soft-delete guard fragment
-    const [articles, pages, news, faqs, products, subs, rmas, apps, postings, assets, compat] = await Promise.all([
+    const [articles, pages, news, faqs, products, subs, rmas, apps, postings, assets, compat, serials] = await Promise.all([
       db.select({ id: article.id, title: article.title, status: article.status, locale: article.locale })
         .from(article).where(and(ilike(article.title, like), sql`${article.deletedAt} ${live}`))
         .orderBy(desc(article.updatedAt)).limit(CAP),
@@ -726,6 +726,9 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       db.select({ id: compatibilityRule.id, brand: compatibilityRule.deviceBrand, model: compatibilityRule.deviceModel, gen: compatibilityRule.memoryGen, ff: compatibilityRule.formFactor })
         .from(compatibilityRule).where(or(ilike(compatibilityRule.deviceBrand, like), ilike(compatibilityRule.deviceModel, like)))
         .orderBy(asc(compatibilityRule.deviceBrand)).limit(CAP),
+      db.select({ serial: serialRegistry.serial, sku: serialRegistry.sku })
+        .from(serialRegistry).where(or(ilike(serialRegistry.serial, like), ilike(serialRegistry.sku, like)))
+        .orderBy(desc(serialRegistry.serial)).limit(CAP),
     ]);
     type Hit = { id: number; title: string; sub?: string; module: string; kind: string };
     const groups: Array<{ type: string; items: Hit[] }> = [];
@@ -745,6 +748,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     push('Careers', [...apps.map((x) => ({ id: x.id, title: x.title, sub: x.email, module: 'jobs', kind: 'application' })), ...postings.map((x) => ({ id: x.id, title: x.title, sub: `posting · ${x.status}`, module: 'jobs', kind: 'posting' }))].slice(0, CAP));
     push('Media', assets.map((x) => ({ id: x.id, title: x.title, sub: x.alt ?? 'no alt text', module: 'media', kind: 'media' })));
     push('Compatibility', compat.map((x) => ({ id: x.id, title: `${x.brand} ${x.model}`, sub: `QVL · ${x.gen ?? '—'} · ${x.ff ?? '—'}`, module: 'compatibility', kind: 'compat' })));
+    push('Serials', serials.map((x) => ({ id: 1, title: x.serial, sub: `registry · ${x.sku ?? 'no SKU'}`, module: 'partners', kind: 'serial' })));
     return c.json({ q, groups });
   });
 
