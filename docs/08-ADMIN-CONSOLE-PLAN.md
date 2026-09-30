@@ -665,3 +665,31 @@ across 15 files**; typecheck 0 across all four projects; build green;
 dev DB migrated to 0012. Live-verified: QA posting + live serial batch
 created via API render in the new UI (studio coverage tiles, Postings
 tab, registry panel).
+
+## Evidence — Phase 5 iteration pass (commit d4330ad)
+
+Fine-print audit of §5 against the plan text found four gaps, all fixed:
+
+1. **XLIFF 2.0** — the plan says "XLIFF 1.2 / 2.0"; import only read 1.2.
+   The parser now version-dispatches (1.2 <trans-unit> vs 2.0
+   <unit>/<segment>); a test round-trips a v2 document. Export stays 1.2
+   (the dialect both Crowdin and Trados ingest natively — documented
+   choice, both vendors accept 1.2 handoffs).
+2. **Noto Sans Arabic** (§5.1 exact wording) — font linked in
+   index.html (preconnect + display=swap) and applied to the RTL
+   textarea/target column with Segoe UI/Tahoma fallbacks for offline.
+3. **Progress "per namespace and per locale"** — the locale tiles were
+   per-locale only; the studio now renders clickable per-namespace chips
+   (e.g. home 50% · common 100%) that drive the ns filter. (Aggregate
+   per-locale coverage is string-count-based, capped at 100 — the
+   per-namespace chips are the key-exact actionable view.)
+4. **Delete affordance** — the studio rewrite dropped the string-delete
+   control; super_admin now gets Delete in the edit row (API was already
+   super_admin-only; test-asserted).
+
+Gates: p13 → 13 tests; suite **202/202** across 15 files; typecheck ×4
+clean; build green. Live-verified with seeded EN+AR data: coverage tiles,
+per-ns chips, split grid with the RTL column and Noto link rendering.
+Ops note: dev API now runs WITHOUT --watch (node src/index.ts directly)
+— the watcher's restart raced the port twice; the stable invocation
+ends that class of failure.
