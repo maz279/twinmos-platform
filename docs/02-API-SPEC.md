@@ -27,7 +27,7 @@ CRUD pattern for each entity E ∈ {products, categories, brands, articles, news
 Specialist: /admin/submissions (**P6 lead board**: filter by type/status/priority/sla, detail incl. notes + assignee email; PATCH enforces the lead state machine `new→assigned→in_progress→resolved→closed` + `spam` side-track — assigning a NEW lead auto-advances it; POST :id/notes = internal note), /admin/submissions.csv (filtered CSV export, editor+, formula-injection-neutralised), /admin/rma (board + state transitions + notes), /admin/audit (read-only query), /admin/stats (dashboard KPIs incl. submissions.open + submissions.overdue).
 Intake (P6): every form family returns a type-aware ticket reference (`QT-…`/`DS-…`/`TS-…`, `FRM-` fallback) and triggers a ticketed auto-reply to the submitter; quote/distributor/partner leads arrive with priority=high and an SLA dueAt.
 
-**P3 media:** /admin/media (multipart upload, size cap `MEDIA_MAX_BYTES`, extension allow-list + magic-byte sniffing, SVG-sanitised, alt-text required) · GET /media/:key (serving).
+**P3 media:** /admin/media (multipart upload, size cap `MEDIA_MAX_BYTES`, extension allow-list + magic-byte sniffing, SVG-sanitised, alt-text required) · GET /media/:id/file (public serving, P8 imagery bridge — raster images only; SVG/non-image kinds stay admin-only via /admin/media/:id/file; variant files supported).
 
 **P4 translations (writes super_admin):** GET /admin/translations?locale&ns (export) · PUT /admin/translations (upsert single) · POST /admin/translations/import (≤5000 strings, UTF-8 JSON) · DELETE /admin/translations (bulk) — all audited; public read via /i18n/:locale.
 

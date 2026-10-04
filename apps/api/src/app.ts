@@ -12,7 +12,7 @@ import { adminRoute } from './routes/admin.ts';
 import { analyticsRoute } from './routes/analytics.ts';
 import { usersRoute } from './routes/users.ts';
 import { contentRoute, previewRoute, promoteScheduled } from './routes/content.ts';
-import { mediaRoute } from './routes/media.ts';
+import { mediaRoute, publicMediaRoute } from './routes/media.ts';
 import { settingsRoute } from './routes/settings.ts';
 import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
 import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
@@ -192,6 +192,7 @@ export function buildApp(db: DB) {
   app.route('/api/v1/admin', settingsRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', translationsRoute(db, { requireRole, sessionFromRequest })); // P4
   app.route('/api/v1', i18nPublicRoute(db)); // public i18n bundles (P4)
+  app.route('/api/v1', publicMediaRoute(db)); // P8 imagery bridge — public read-only product imagery
   app.route('/api/v1', partnerRoute(db, { requireRole, sessionFromRequest })); // P5 portal (member)
   app.route('/api/v1/admin', partnerAdminRoute(db, { requireRole, sessionFromRequest })); // P5 portal (admin)
   app.route('/api/v1', snCheckRoute(db)); // P5 public anti-counterfeit check

@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node --watch --experimental-strip-types --no-warnings src/index.ts",
-    "start": "node --experimental-strip-types --no-warnings src/index.ts",
+    "dev": "node --env-file-if-exists=../../.env --watch --experimental-strip-types --no-warnings src/index.ts",
+    "start": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings src/index.ts",
     "test": "vitest run",
-    "db:migrate": "node --experimental-strip-types --no-warnings scripts/migrate.ts",
-    "db:seed": "node --experimental-strip-types --no-warnings scripts/seed.ts",
-    "db:reset": "node --experimental-strip-types --no-warnings scripts/reset.ts"
+    "db:migrate": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/migrate.ts",
+    "db:seed": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/seed.ts",
+    "db:reset": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/reset.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",

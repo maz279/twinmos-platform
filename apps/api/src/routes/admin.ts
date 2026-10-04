@@ -10,11 +10,12 @@ import {
   rmaTransitionSchema, submissionUpdateSchema, formNoteCreateSchema,
   RMA_TRANSITIONS, SUBMISSION_STATUS, SUBMISSION_TRANSITIONS, SUBMISSION_PRIORITY, RMA_STATUS,
   variantCreateSchema, variantUpdateSchema, compatibilityCreateSchema, compatibilityUpdateSchema,
+  COMPAT_DEVICE_TYPES, COMPAT_MEMORY_GENS, COMPAT_FORM_FACTORS,
   productImportSchema, PRODUCT_IMPORT_COLUMNS, AUTHORIZED_CURRENCIES, CONTENT_STATUS, sameInstant,
   jobPostingCreateSchema, jobPostingUpdateSchema, JOB_POSTING_STATUSES,
 } from '@twinmos/shared';
-import { auditLog, brand, category, compatibilityRule, formNote, formSubmission, jobApplication, jobPosting, product, productVariant, rmaEvent, rmaRequest, serialRegistry, user, article, page, newsPost, faq, mediaAsset } from '@twinmos/db';
-import { sendRmaStatusMail } from '../mailer.ts';
+import { auditLog, brand, category, compatibilityRule, formNote, formSubmission, jobApplication, jobPosting, product, productVariant, rmaEvent, rmaRequest, serialRegistry, snCheck, user, article, page, newsPost, faq, mediaAsset } from '@twinmos/db';
+import { sendRmaStatusMail, sendCustomerConfirmation } from '../mailer.ts';
 import { IdempotencyStore } from '../idem.ts';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
@@ -284,12 +285,16 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     if (a instanceof Response) return a;
     const q = (c.req.query('q') ?? '').trim();
     const gen = c.req.query('memoryGen');
+    const type = c.req.query('deviceType');
     const filters = [];
     if (q) filters.push(or(ilike(compatibilityRule.deviceBrand, `%${q}%`), ilike(compatibilityRule.deviceModel, `%${q}%`))!);
     if (gen === 'DDR4' || gen === 'DDR5') filters.push(eq(compatibilityRule.memoryGen, gen));
+    if ((COMPAT_DEVICE_TYPES as readonly string[]).includes(type ?? '')) {
+      filters.push(eq(compatibilityRule.deviceType, type as (typeof COMPAT_DEVICE_TYPES)[number]));
+    }
     const rows = await db.select().from(compatibilityRule)
       .where(filters.length ? and(...filters) : undefined)
-      .orderBy(asc(compatibilityRule.deviceBrand), asc(compatibilityRule.deviceModel)).limit(200);
+      .orderBy(asc(compatibilityRule.deviceType), asc(compatibilityRule.deviceBrand), asc(compatibilityRule.deviceModel)).limit(500);
     return c.json({ items: rows });
   });
 
@@ -323,6 +328,94 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     if (!rows[0]) return c.json(problem(404, 'Compatibility rule not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'compatibility.delete', 'compatibility_rule', String(id), rows[0].deviceBrand + ' ' + rows[0].deviceModel);
     return c.json({ ok: true });
+  });
+
+  // ---- 0017: QVL batch CSV import (dry-run first, upsert by natural key) ----
+  // Columns: deviceType,deviceBrand,deviceModel,memoryGen,formFactor,maxGb,slots,speed,cats,ssdNote,ssdCats,notes
+  // cats / ssdCats are ';'-separated inside the cell (CSV commas are delimiters).
+  const COMPAT_IMPORT_COLUMNS = ['devicetype', 'devicebrand', 'devicemodel', 'memorygen', 'formfactor', 'maxgb', 'slots', 'speed', 'cats', 'ssdnote', 'ssdcats', 'notes'] as const;
+
+  r.post('/compatibility/import', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const body = await c.req.json().catch(() => ({}));
+    const csv = String((body as any).csv ?? '');
+    const dryRun = (body as any).dryRun !== false;
+    const lines = csv.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    if (lines.length < 2) return c.json(problem(422, 'Validation Failed', 'CSV needs a header and at least one row.'), 422, { 'Content-Type': P });
+    const header = parseCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
+    if (header.join(',') !== COMPAT_IMPORT_COLUMNS.join(',')) {
+      return c.json(problem(422, 'Validation Failed', 'Header must be exactly: ' + COMPAT_IMPORT_COLUMNS.join(',')), 422, { 'Content-Type': P });
+    }
+
+    const existing = await db.select().from(compatibilityRule);
+    const keyOf = (r: { deviceType: string; deviceBrand: string; deviceModel: string; memoryGen: string | null; formFactor: string | null }) =>
+      `${r.deviceType}|${r.deviceBrand.toLowerCase()}|${r.deviceModel.toLowerCase()}|${r.memoryGen ?? ''}|${r.formFactor ?? ''}`;
+    const existingByKey = new Map(existing.map((r) => [keyOf(r), r]));
+    const seen = new Set<string>();
+
+    type Parsed = {
+      key: string; action: 'create' | 'update'; id?: number;
+      values: Record<string, unknown>;
+    };
+    const valid: Parsed[] = [];
+    const errors: Array<{ line: number; message: string }> = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const lineNo = i + 1;
+      const cols = parseCsvLine(lines[i]);
+      const [deviceType, deviceBrand, deviceModel, memoryGen, formFactor, maxGb, slots, speed, cats, ssdNote, ssdCats, notes] = cols;
+      const fail = (message: string) => errors.push({ line: lineNo, message });
+      if (!(COMPAT_DEVICE_TYPES as readonly string[]).includes(deviceType)) { fail(`deviceType must be one of ${COMPAT_DEVICE_TYPES.join(', ')}.`); continue; }
+      if (!deviceBrand || deviceBrand.length > 40) { fail('deviceBrand is required (max 40 chars).'); continue; }
+      if (!deviceModel || deviceModel.length > 80) { fail('deviceModel is required (max 80 chars).'); continue; }
+      if (memoryGen && !(COMPAT_MEMORY_GENS as readonly string[]).includes(memoryGen)) { fail(`memoryGen must be ${COMPAT_MEMORY_GENS.join(' or ')} (or empty).`); continue; }
+      if (formFactor && !(COMPAT_FORM_FACTORS as readonly string[]).includes(formFactor)) { fail(`formFactor must be one of ${COMPAT_FORM_FACTORS.join(', ')} (or empty).`); continue; }
+      const gb = maxGb ? Number(maxGb) : null;
+      if (gb != null && (!Number.isInteger(gb) || gb < 1 || gb > 1024)) { fail('maxGb must be a whole number 1-1024 (or empty).'); continue; }
+      const slotCount = slots ? Number(slots) : null;
+      if (slotCount != null && (!Number.isInteger(slotCount) || slotCount < 1 || slotCount > 16)) { fail('slots must be a whole number 1-16 (or empty).'); continue; }
+      const splitCats = (s: string) => s ? s.split(';').map((x) => x.trim()).filter(Boolean).slice(0, 8) : [];
+
+      const values = {
+        deviceType, deviceBrand, deviceModel,
+        memoryGen: memoryGen || null, formFactor: formFactor || null,
+        maxGb: gb, slots: slotCount,
+        speed: speed || null,
+        cats: splitCats(cats),
+        ssdNote: ssdNote || null,
+        ssdCats: splitCats(ssdCats),
+        notes: notes || null,
+      };
+      const key = keyOf(values as any);
+      if (seen.has(key)) { fail('Duplicate row (same type/brand/model/gen/form) earlier in this file.'); continue; }
+      seen.add(key);
+      const match = existingByKey.get(key);
+      valid.push({ key, action: match ? 'update' : 'create', id: match?.id, values });
+    }
+
+    if (dryRun) {
+      return c.json({
+        dryRun: true,
+        wouldCreate: valid.filter((v) => v.action === 'create').length,
+        wouldUpdate: valid.filter((v) => v.action === 'update').length,
+        errors,
+      });
+    }
+    if (errors.length) return c.json(problem(422, 'Validation Failed', errors.length + ' row(s) failed — fix and re-run.', errors), 422, { 'Content-Type': P });
+    for (const v of valid) {
+      if (v.id != null) await db.update(compatibilityRule).set(v.values).where(eq(compatibilityRule.id, v.id));
+      else await db.insert(compatibilityRule).values(v.values as any);
+    }
+    await auditRow(c, guard.user.id, 'compatibility.import', 'compatibility_rule', 'batch', {
+      created: valid.filter((v) => v.action === 'create').length,
+      updated: valid.filter((v) => v.action === 'update').length,
+    });
+    return c.json({
+      dryRun: false,
+      imported: valid.filter((v) => v.action === 'create').length,
+      updated: valid.filter((v) => v.action === 'update').length,
+    });
   });
 
   // ==================== Phase 3.3: bulk CSV import (export/template live above
@@ -764,6 +857,8 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const limit = Math.min(Number(c.req.query('limit') ?? 25) || 25, 100);
     const cursor = Number(c.req.query('cursor') ?? 0) || 0;
     const type = c.req.query('type');
+    const q = (c.req.query('q') ?? '').trim();
+    const assignee = c.req.query('assignee') ?? '';
     const status = submissionStatusQ.safeParse(c.req.query('status') ?? undefined);
     const priority = submissionPriorityQ.safeParse(c.req.query('priority') ?? undefined);
     const sla = z.enum(['overdue', 'due_soon']).safeParse(c.req.query('sla') ?? undefined);
@@ -771,6 +866,15 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       type ? eq(formSubmission.type, type) : undefined,
       status.success ? eq(formSubmission.status, status.data) : undefined,
       priority.success ? eq(formSubmission.priority, priority.data) : undefined,
+      // 0018: ownership routing — "mine", the unassigned queue, or a specific owner
+      assignee === 'unassigned' ? isNull(formSubmission.assigneeId) : undefined,
+      assignee && assignee !== 'unassigned' ? eq(formSubmission.assigneeId, assignee) : undefined,
+      // 0018: free-text search across email, refCode and the payload body
+      q ? or(
+        ilike(formSubmission.email, `%${q}%`),
+        ilike(formSubmission.refCode, `%${q}%`),
+        sql`${formSubmission.payload}::text ilike ${'%' + q + '%'}`,
+      )! : undefined,
       sla.success
         ? and(
             isNotNull(formSubmission.dueAt),
@@ -780,18 +884,31 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
               : lte(formSubmission.dueAt, new Date(Date.now() + 4 * 3600_000)),
           )
         : undefined,
-      cursor ? lt(formSubmission.id, cursor) : undefined,
     ].filter((f) => f !== undefined);
+    const where = filters.length ? and(...filters) : undefined;
     const rows = await db.select({
       sub: formSubmission, assigneeEmail: user.email,
     }).from(formSubmission)
       .leftJoin(user, eq(formSubmission.assigneeId, user.id))
-      .where(filters.length ? and(...filters) : undefined)
+      .where(cursor ? and(...filters, lt(formSubmission.id, cursor)) : where)
       .orderBy(desc(formSubmission.id)).limit(limit + 1);
     const hasMore = rows.length > limit;
     const items = (hasMore ? rows.slice(0, limit) : rows)
       .map(({ sub, assigneeEmail }) => ({ ...sub, assigneeEmail: assigneeEmail ?? null, slaState: slaState(sub) }));
-    return c.json({ items, nextCursor: hasMore ? items[items.length - 1].id : null });
+    // 0018: total for the active filter set (paging cursor excluded by construction)
+    const [{ n: total }] = await db.select({ n: count() }).from(formSubmission).where(where);
+    return c.json({ items, nextCursor: hasMore ? items[items.length - 1].id : null, total: Number(total) });
+  });
+
+  /** 0018: minimal staff options for the assignment dropdown — id/email/role for
+   * editor-and-above roles only (the full /users directory stays super_admin). */
+  r.get('/staff-options', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const rows = await db.select({ id: user.id, email: user.email, role: user.role })
+      .from(user).where(inArray(user.role, ['editor', 'admin', 'super_admin']))
+      .orderBy(asc(user.email)).limit(200);
+    return c.json({ items: rows });
   });
 
   /** P6: CSV export of the filtered lead set (editor+; ops/CRM handoff). */
@@ -907,17 +1024,69 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     return c.json(rows[0], 201);
   });
 
+  /** 0018: staff reply to the lead — speed-to-lead in one click. Sends the
+   * customer email via the mailer (dev driver → outbox JSON), stamps
+   * first_responded_at on the first reply, logs an internal note so the trail
+   * shows what the customer was told, and audits. Editor+ only. */
+  r.post('/submissions/:id/reply', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const body = await c.req.json().catch(() => ({}));
+    const text = String((body as any).text ?? '').trim();
+    if (!text || text.length > 8000) {
+      return c.json(problem(422, 'Validation Failed', 'Reply text is required (max 8000 chars).'), 422, { 'Content-Type': P });
+    }
+    const rows = await db.select().from(formSubmission).where(eq(formSubmission.id, id)).limit(1);
+    const lead = rows[0];
+    if (!lead) return c.json(problem(404, 'Submission not found'), 404, { 'Content-Type': P });
+
+    const sent = await sendCustomerConfirmation(
+      lead.email,
+      `Re: TwinMOS request ${lead.refCode} — ${lead.type.replace(/-/g, ' ')}`,
+      `${text}\n\n— TwinMOS team\nReference: ${lead.refCode}`,
+      { kind: 'staff-reply', refCode: lead.refCode, leadId: id, by: guard.user.email },
+    );
+
+    const stamp = lead.firstRespondedAt ? {} : { firstRespondedAt: new Date() };
+    if (Object.keys(stamp).length || !lead.assigneeId) {
+      await db.update(formSubmission).set({
+        ...stamp,
+        // replying claims an unowned lead (workflow intent, same rule as assignment)
+        ...(!lead.assigneeId ? { assigneeId: guard.user.id, ...(lead.status === 'new' ? { status: 'assigned' as const } : {}) } : {}),
+      }).where(eq(formSubmission.id, id));
+    }
+    await db.insert(formNote).values({
+      submissionId: id, authorId: guard.user.id,
+      body: `↩ Reply sent to ${lead.email}${sent ? '' : ' (mail delivery failed — check mailer logs)'}:\n${text.slice(0, 4000)}`,
+    });
+    await auditRow(c, guard.user.id, 'submission.reply', 'form_submission', String(id), { sent, chars: text.length });
+    const fresh = (await db.select().from(formSubmission).where(eq(formSubmission.id, id)).limit(1))[0];
+    return c.json({ sent, firstRespondedAt: fresh.firstRespondedAt, status: fresh.status, assigneeId: fresh.assigneeId }, 201);
+  });
+
   // ==================== P2: RMA board ====================
   r.get('/rma', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
     const limit = Math.min(Number(c.req.query('limit') ?? 50) || 50, 100);
     const status = rmaStatusQ.safeParse(c.req.query('status') ?? undefined);
-    const q = c.req.query('q');
+    const q = (c.req.query('q') ?? '').trim();
+    const assignee = c.req.query('assignee') ?? '';
     const filters = [
       status.success ? eq(rmaRequest.status, status.data) : undefined,
-      q ? ilike(rmaRequest.number, `%${q.replace(/[%_]/g, '')}%`) : undefined,
+      // 0019: search across the whole case identity, not just the RMA number
+      q ? or(
+        ilike(rmaRequest.number, `%${q.replace(/[%_]/g, '')}%`),
+        ilike(rmaRequest.productSku, `%${q}%`),
+        ilike(rmaRequest.serial, `%${q}%`),
+        sql`${rmaRequest.customer}::text ilike ${'%' + q + '%'}`,
+      )! : undefined,
+      // 0019: technician routing — my cases / unassigned queue / specific owner
+      assignee === 'unassigned' ? isNull(rmaRequest.assigneeId) : undefined,
+      assignee && assignee !== 'unassigned' ? eq(rmaRequest.assigneeId, assignee) : undefined,
     ].filter((f) => f !== undefined);
+    const where = filters.length ? and(...filters) : undefined;
     // §6.6 completion: the card's assigned-technician chip — join the staff
     // account so the board renders a name, not a raw user id.
     const rows = await db.select({
@@ -928,9 +1097,10 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       createdAt: rmaRequest.createdAt, updatedAt: rmaRequest.updatedAt,
     }).from(rmaRequest)
       .leftJoin(user, eq(rmaRequest.assigneeId, user.id))
-      .where(filters.length ? and(...filters) : undefined)
+      .where(where)
       .orderBy(desc(rmaRequest.id)).limit(limit);
-    return c.json({ items: rows });
+    const [{ n: total }] = await db.select({ n: count() }).from(rmaRequest).where(where);
+    return c.json({ items: rows, total: Number(total) });
   });
 
   r.get('/rma/:id', async (c) => {
@@ -944,6 +1114,82 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       ? (await db.select({ email: user.email }).from(user).where(eq(user.id, rows[0].assigneeId)).limit(1))[0]
       : null;
     return c.json({ ...rows[0], assigneeEmail: assignee?.email ?? null, timeline: events });
+  });
+
+  /** 0019: serial authenticity check for a case — verify the claimed serial
+   * against the anti-counterfeit registry and the last 24h of public SN-checks
+   * (the same >5-distinct-sources anomaly rule as the counterfeit scan) BEFORE
+   * warranty service is approved. Read-only; authed. */
+  r.get('/rma/:id/serial-check', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const id = Number(c.req.param('id'));
+    const rows = await db.select().from(rmaRequest).where(eq(rmaRequest.id, id)).limit(1);
+    const rma = rows[0];
+    if (!rma) return c.json(problem(404, 'RMA not found'), 404, { 'Content-Type': P });
+    const serial = (rma.serial ?? '').trim().toUpperCase();
+    if (!serial) return c.json({ serial: null, verdict: 'no_serial' });
+
+    const reg = (await db.select().from(serialRegistry).where(eq(serialRegistry.serial, serial)).limit(1))[0] ?? null;
+    const since = new Date(Date.now() - 24 * 3600_000);
+    const [activity] = await db.select({
+      checks: count(),
+      distinctIps: sql<number>`count(distinct ${snCheck.ip})`,
+      distinctCountries: sql<number>`count(distinct ${snCheck.country})`,
+    }).from(snCheck).where(and(eq(snCheck.serial, serial), gte(snCheck.checkedAt, since)));
+    const ips = Number(activity?.distinctIps ?? 0);
+    const countries = Number(activity?.distinctCountries ?? 0);
+
+    const verdict = !reg
+      ? 'unknown' // not in the factory registry — needs manual confirmation
+      : ips > 5 || countries > 5
+        ? 'suspicious' // registry hit but the distribution pattern of a leaked/counterfeit serial
+        : 'verified';
+    // the case SKU may live on the column or in the intake payload (customer.product)
+    const caseSku = (rma.productSku ?? String(((rma.customer ?? {}) as Record<string, unknown>).product ?? '')).trim().toUpperCase();
+    return c.json({
+      serial,
+      verdict,
+      registry: reg ? { sku: reg.sku, batch: reg.batch, manufacturedAt: reg.manufacturedAt, priorChecks: reg.verifiedCount } : null,
+      last24h: { checks: Number(activity?.checks ?? 0), distinctIps: ips, distinctCountries: countries },
+      skuMatch: reg?.sku && caseSku ? reg.sku.trim().toUpperCase() === caseSku : null,
+    });
+  });
+
+  /** 0019: free-form staff reply to the RMA customer — the missing
+   * communication piece next to status-transition emails. Sends via the
+   * mailer, logs a same-state timeline event (rendered as the reply text) and
+   * audits. Editor+. */
+  r.post('/rma/:id/reply', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const body = await c.req.json().catch(() => ({}));
+    const text = String((body as any).text ?? '').trim();
+    if (!text || text.length > 8000) {
+      return c.json(problem(422, 'Validation Failed', 'Reply text is required (max 8000 chars).'), 422, { 'Content-Type': P });
+    }
+    const rows = await db.select().from(rmaRequest).where(eq(rmaRequest.id, id)).limit(1);
+    const rma = rows[0];
+    if (!rma) return c.json(problem(404, 'RMA not found'), 404, { 'Content-Type': P });
+    const customer = (rma.customer ?? {}) as Record<string, unknown>;
+    const to = String(customer.email ?? '').trim();
+    if (!to) return c.json(problem(422, 'Validation Failed', 'This case has no customer email on file.'), 422, { 'Content-Type': P });
+
+    const sent = await sendCustomerConfirmation(
+      to,
+      `Re: TwinMOS RMA ${rma.number} — status ${rma.status.replace(/_/g, ' ')}`,
+      `${text}\n\n— TwinMOS service team\nRMA reference: ${rma.number} (track anytime: /rma.html with this number)`,
+      { kind: 'rma-staff-reply', rma: rma.number, by: guard.user.email },
+    );
+    // same-state event = timeline annotation (the panel renders from==to rows
+    // as notes; ↩-prefixed notes render as replies)
+    await db.insert(rmaEvent).values({
+      rmaId: id, fromStatus: rma.status, toStatus: rma.status, actorId: guard.user.id,
+      note: `↩ Reply sent to ${to}${sent ? '' : ' (mail delivery failed — check mailer logs)'}:\n${text.slice(0, 3500)}`,
+    });
+    await auditRow(c, guard.user.id, 'rma.reply', 'rma_request', String(id), { sent, chars: text.length });
+    return c.json({ sent }, 201);
   });
 
   /** §6.6 completion: assign/reassign the technician on a case (editor+,
@@ -1010,6 +1256,15 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const a = await authed(c);
     if (a instanceof Response) return a;
     const status = c.req.query('status');
+    const dept = (c.req.query('dept') ?? '').trim();
+    const q = (c.req.query('q') ?? '').trim();
+    const where = and(
+      isNull(jobPosting.deletedAt),
+      status && (JOB_POSTING_STATUSES as readonly string[]).includes(status) ? eq(jobPosting.status, status as 'draft') : undefined,
+      dept ? eq(jobPosting.dept, dept) : undefined,
+      // 0022: free-text across title/location/body
+      q ? or(ilike(jobPosting.title, `%${q}%`), ilike(jobPosting.location, `%${q}%`), ilike(jobPosting.body, `%${q}%`))! : undefined,
+    );
     const rows = await db.select({
       id: jobPosting.id, title: jobPosting.title, dept: jobPosting.dept, location: jobPosting.location,
       type: jobPosting.type, level: jobPosting.level, status: jobPosting.status,
@@ -1017,12 +1272,39 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       equalOpportunity: jobPosting.equalOpportunity, createdAt: jobPosting.createdAt,
       applicationCount: sql<number>`(select count(*) from ${jobApplication} where ${jobApplication.postingId} = ${jobPosting.id})`,
     }).from(jobPosting)
-      .where(and(
-        isNull(jobPosting.deletedAt),
-        status && (JOB_POSTING_STATUSES as readonly string[]).includes(status) ? eq(jobPosting.status, status as 'draft') : undefined,
-      ))
+      .where(where)
       .orderBy(desc(jobPosting.id)).limit(200);
     return c.json({ items: rows.map((r2) => ({ ...r2, applicationCount: Number(r2.applicationCount) })) });
+  });
+
+  /** 0022: careers analytics — postings by status, applications by status,
+   *  top postings by application count, 14-day arrival trend. */
+  r.get('/job-analytics', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const now = Date.now();
+    const [byStatus, appsByStatus, topPostings, arrivals] = await Promise.all([
+      db.select({ status: jobPosting.status, n: count() }).from(jobPosting).where(isNull(jobPosting.deletedAt)).groupBy(jobPosting.status),
+      db.select({ status: jobApplication.status, n: count() }).from(jobApplication).groupBy(jobApplication.status),
+      db.select({ id: jobPosting.id, title: jobPosting.title, n: sql<number>`count(${jobApplication.id})` })
+        .from(jobPosting).leftJoin(jobApplication, eq(jobApplication.postingId, jobPosting.id))
+        .where(and(isNull(jobPosting.deletedAt), eq(jobPosting.status, 'published')))
+        .groupBy(jobPosting.id, jobPosting.title).orderBy(desc(sql`count(${jobApplication.id})`)).limit(5),
+      db.select({ d: sql<string>`to_char(${jobApplication.createdAt}, 'YYYY-MM-DD')`, n: count() })
+        .from(jobApplication).where(gte(jobApplication.createdAt, new Date(now - 13 * 86400_000)))
+        .groupBy(sql`to_char(${jobApplication.createdAt}, 'YYYY-MM-DD')`),
+    ]);
+    const series: Array<{ d: string; n: number }> = [];
+    for (let i = 13; i >= 0; i--) {
+      const key = new Date(now - i * 86400_000).toISOString().slice(0, 10);
+      series.push({ d: key, n: Number(arrivals.find((x: any) => x.d === key)?.n ?? 0) });
+    }
+    return c.json({
+      postings: byStatus.map((x: any) => ({ status: x.status, n: Number(x.n) })),
+      applications: appsByStatus.map((x: any) => ({ status: x.status, n: Number(x.n) })),
+      topPostings: topPostings.map((x: any) => ({ id: x.id, title: x.title, n: Number(x.n) })),
+      series,
+    });
   });
 
   r.post('/job-postings', async (c) => {
@@ -1078,15 +1360,25 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     if (a instanceof Response) return a;
     const limit = Math.min(Number(c.req.query('limit') ?? 50) || 50, 100);
     const status = submissionStatusQ.safeParse(c.req.query('status') ?? undefined);
+    const postingId = Number(c.req.query('postingId') ?? 0) || 0;
+    const q = (c.req.query('q') ?? '').trim();
+    const where = and(
+      status.success ? eq(jobApplication.status, status.data) : undefined,
+      // 0022: filter by posting + free-text across email/refCode/payload
+      postingId ? eq(jobApplication.postingId, postingId) : undefined,
+      q ? or(ilike(jobApplication.email, `%${q}%`), ilike(jobApplication.refCode, `%${q}%`), sql`${jobApplication.payload}::text ilike ${'%' + q + '%'}`)! : undefined,
+    );
     const rows = await db.select({
       id: jobApplication.id, postingId: jobApplication.postingId, postingTitle: jobPosting.title,
       email: jobApplication.email, payload: jobApplication.payload, status: jobApplication.status,
       refCode: jobApplication.refCode, createdAt: jobApplication.createdAt,
     }).from(jobApplication)
       .leftJoin(jobPosting, eq(jobApplication.postingId, jobPosting.id))
-      .where(status.success ? eq(jobApplication.status, status.data) : undefined)
+      .where(where)
       .orderBy(desc(jobApplication.id)).limit(limit);
-    return c.json({ items: rows });
+    const [{ n: total }] = await db.select({ n: count() }).from(jobApplication)
+      .leftJoin(jobPosting, eq(jobApplication.postingId, jobPosting.id)).where(where);
+    return c.json({ items: rows, total: Number(total) });
   });
 
   r.patch('/job-applications/:id', async (c) => {
@@ -1099,6 +1391,37 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     if (!rows[0]) return c.json(problem(404, 'Application not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'job_application.update', 'job_application', String(id), parsed.data);
     return c.json(rows[0]);
+  });
+
+  /** 0022: reply to a candidate — the missing communication piece (ATS
+   *  candidate-experience practice). Sends via the mailer, sets the
+   *  application in progress when it is still new, and audits. Editor+. */
+  r.post('/job-applications/:id/reply', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const body = await c.req.json().catch(() => ({}));
+    const text = String((body as any).text ?? '').trim();
+    if (!text || text.length > 8000) {
+      return c.json(problem(422, 'Validation Failed', 'Reply text is required (max 8000 chars).'), 422, { 'Content-Type': P });
+    }
+    const rows = await db.select().from(jobApplication).where(eq(jobApplication.id, id)).limit(1);
+    const app = rows[0];
+    if (!app) return c.json(problem(404, 'Application not found'), 404, { 'Content-Type': P });
+    const name = String((app.payload as Record<string, unknown>)?.name ?? 'candidate');
+    const sent = await sendCustomerConfirmation(
+      app.email,
+      `Re: TwinMOS application ${app.refCode} — ${name}`,
+      `${text}\n\n— TwinMOS Careers\nReference: ${app.refCode}`,
+      { kind: 'job-reply', refCode: app.refCode, by: guard.user.email },
+    );
+    // a reply means the pipeline is moving: new → assigned (in review)
+    if (app.status === 'new') {
+      await db.update(jobApplication).set({ status: 'assigned' }).where(eq(jobApplication.id, id));
+    }
+    await auditRow(c, guard.user.id, 'job_application.reply', 'job_application', String(id), { sent, chars: text.length });
+    const fresh = (await db.select().from(jobApplication).where(eq(jobApplication.id, id)).limit(1))[0];
+    return c.json({ sent, status: fresh.status }, 201);
   });
 
   return r;

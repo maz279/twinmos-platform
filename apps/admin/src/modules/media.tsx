@@ -1,12 +1,15 @@
-// Media library (Phase 4 DAM) — folder hierarchy sidebar with counts and
+// Media library (Phase 4 DAM + 0023) — folder hierarchy sidebar with counts and
 // create/rename/delete, upload into a chosen folder (alt text required),
 // grid/table views with thumbnails served from the responsive variants when
 // available, inline alt editing + compliance filter, low-resolution flag
 // (BR-1.2 wants ≥1200px masters), copy URL, move-to-folder, and an admin
 // delete that surfaces the API's in-use referential guard as a dialog.
+// 0023 upgrades: library analytics strip, search across key+alt, kind filter,
+// bulk upload with filename-derived alt, and a per-asset usage drawer (where
+// the file is referenced + admin/public URLs).
 import React, { useRef, useState } from 'react';
 import { API, apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, Empty, Err, input, useAsync } from '../ui';
+import { Badge, btn, btnGhost, Empty, Err, input, useAsync, usePanelScroll } from '../ui';
 
 type Asset = {
   id: number; key: string; kind: string; alt: string | null; width: number | null; height: number | null;
@@ -20,9 +23,20 @@ type Asset = {
   uploadedBy: string | null; createdAt: string;
 };
 type Folder = { id: number; name: string; parentId: number | null; assetCount: number };
+type MediaAnalytics = {
+  total: number; byKind: Array<{ kind: string; n: number; bytes: number }>;
+  withAlt: number; altCompliance: number; lowRes: number; variantCoverage: number;
+  storageBytes: number; series: Array<{ d: string; n: number }>;
+};
+type Usage = {
+  id: number;
+  usage: Array<{ entity: string; id: number; label: string }>;
+  urls: { admin: string; public: string; variants: string[] };
+};
 
 export default function Media({ isAdmin }: { isAdmin: boolean }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const bulkRef = useRef<HTMLInputElement>(null);
   const [alt, setAlt] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -31,6 +45,11 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
   const [missingOnly, setMissingOnly] = useState(false);
   const [view, setView] = useState<'grid' | 'table'>('grid');
   const [copied, setCopied] = useState<number | null>(null);
+  // 0023: search + kind filter + usage drawer + bulk upload progress
+  const [q, setQ] = useState('');
+  const [kind, setKind] = useState('');
+  const [usageFor, setUsageFor] = useState<number | null>(null);
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
 
   // Phase 4.3 — folder state
   const [folder, setFolder] = useState<'all' | 'none' | number>('all');
@@ -40,19 +59,45 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
   const [moveFor, setMoveFor] = useState<number | null>(null);
   const [inUse, setInUse] = useState<string | null>(null);
 
-  const folderQuery = folder === 'all' ? '' : `?folder=${folder}`;
-  const { data, error: loadError, loading, reload } = useAsync<{ items: Asset[] }>(() => apiGet('/admin/media' + folderQuery), [folder]);
+  const listQs = new URLSearchParams();
+  if (q.trim()) listQs.set('q', q.trim());
+  if (kind) listQs.set('kind', kind);
+  if (missingOnly) listQs.set('missingAlt', '1');
+  if (folder !== 'all') listQs.set('folder', String(folder));
+  const { data, error: loadError, loading, reload } = useAsync<{ items: Asset[]; total?: number }>(
+    () => apiGet('/admin/media' + (listQs.toString() ? '?' + listQs.toString() : '')), [q, kind, folder, missingOnly]);
   const folders = useAsync<{ items: Folder[]; unfiledCount: number }>(() => apiGet('/admin/media-folders'), []);
   const reloadAll = () => { reload(); folders.reload(); };
 
-  const items = (data?.items ?? []).filter((m) => (missingOnly ? !m.alt : true));
-  const missing = (data?.items ?? []).filter((m) => !m.alt).length;
-  const total = data?.items?.length ?? 0;
+  const items = data?.items ?? [];
+  const missing = items.filter((m) => !m.alt).length;
+  const total = data?.total ?? items.length;
   const fileUrl = (id: number) => API + '/admin/media/' + id + '/file';
+  const publicUrl = (id: number) => {
+    const base = (import.meta.env.VITE_API_URL ?? '/api/v1').replace(/\/api\/v1$/, '');
+    return base + '/api/v1/media/' + id + '/file';
+  };
   // grid thumbnails prefer the derived card variant (400×300 WebP) when present
   const thumbUrl = (m: Asset) => (m.meta?.variants?.card ? fileUrl(m.id) + '?variant=card' : fileUrl(m.id));
-  async function copyUrl(id: number) {
-    try { await navigator.clipboard.writeText(fileUrl(id)); setCopied(id); setTimeout(() => setCopied(null), 1500); } catch { /* clipboard unavailable */ }
+  async function copyUrl(text: string, id: number) {
+    try { await navigator.clipboard.writeText(text); setCopied(id); setTimeout(() => setCopied(null), 1500); } catch { /* clipboard unavailable */ }
+  }
+  /** Filename → human alt ("brand-campaign-hero.png" → "brand campaign hero"). */
+  const altFromName = (name: string) => name.replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+  async function uploadOne(file: File, altText: string): Promise<boolean> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('alt', altText);
+    if (typeof folder === 'number') form.append('folderId', String(folder));
+    const res = await fetch((import.meta.env.VITE_API_URL ?? '/api/v1') + '/admin/media', {
+      method: 'POST', credentials: 'include', body: form,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(`${file.name}: ${body.detail || body.title || 'HTTP ' + res.status}`);
+    }
+    return true;
   }
 
   async function upload() {
@@ -61,21 +106,29 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
     if (!alt.trim()) { setError('Alt text is required (accessibility).'); return; }
     setBusy(true); setError(null);
     try {
-      const form = new FormData();
-      form.append('file', file);
-      form.append('alt', alt.trim());
-      if (typeof folder === 'number') form.append('folderId', String(folder));
-      const res = await fetch((import.meta.env.VITE_API_URL ?? '/api/v1') + '/admin/media', {
-        method: 'POST', credentials: 'include', body: form,
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.detail || body.title || ('HTTP ' + res.status));
-      }
+      await uploadOne(file, alt.trim());
       setAlt('');
       if (fileRef.current) fileRef.current.value = '';
       reloadAll();
     } catch (e) { setError(e); } finally { setBusy(false); }
+  }
+
+  /** Bulk upload — one request per file (per-file validation + variants),
+   *  alt derived from the filename, editable after. */
+  async function bulkUpload() {
+    const files = Array.from(bulkRef.current?.files ?? []);
+    if (!files.length) { setError('Choose one or more files first.'); return; }
+    setBusy(true); setError(null); setBulkMsg(null);
+    let ok = 0;
+    const failures: string[] = [];
+    for (const f of files) {
+      try { await uploadOne(f, altFromName(f.name) || f.name); ok++; }
+      catch (e) { failures.push(e instanceof Error ? e.message : String(e)); }
+    }
+    if (bulkRef.current) bulkRef.current.value = '';
+    setBulkMsg(`Uploaded ${ok}/${files.length}${failures.length ? ' — failures: ' + failures.slice(0, 3).join('; ') : ''}. Alt text was derived from filenames — review with the missing/alt filter.`);
+    reloadAll();
+    setBusy(false);
   }
 
   async function saveAlt(id: number) {
@@ -133,14 +186,22 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
   return (
     <div>
       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Media library</h1>
+      <AnalyticsStrip />
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
+        <input style={{ ...input, width: 220 }} placeholder="Search key or alt text…" value={q}
+          onChange={(e) => setQ(e.target.value)} />
+        <select style={input} value={kind} onChange={(e) => setKind(e.target.value)} title="Kind">
+          <option value="">All kinds</option>
+          <option value="image">image</option><option value="video">video</option><option value="document">document</option>
+        </select>
         <span style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: missing ? '#FCECEB' : '#E7F6EE', color: missing ? '#C2453C' : '#1F9D62' }}>
           {total - missing}/{total} alt-text compliant
         </span>
         <button style={{ ...btnGhost, fontWeight: missingOnly ? 800 : 400, borderColor: missingOnly ? '#1DBF9F' : undefined, color: missingOnly ? '#0E9F7E' : undefined }}
           onClick={() => setMissingOnly((v) => !v)}>
-          {missingOnly ? `Showing ${missing} missing alt only` : `Show missing alt (${missing})`}
+          {missingOnly ? `Showing missing alt only` : `Show missing alt`}
         </button>
+        {(q || kind || missingOnly) && <button style={btnGhost} onClick={() => { setQ(''); setKind(''); setMissingOnly(false); }}>Reset</button>}
         <span style={{ flex: 1 }} />
         <button style={{ ...btnGhost, fontWeight: view === 'grid' ? 800 : 400 }} onClick={() => setView(view === 'grid' ? 'table' : 'grid')}>
           {view === 'grid' ? '▦ Grid' : '☰ Table'}
@@ -148,9 +209,14 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
       </div>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap' }}>
         <input ref={fileRef} type="file" style={input} accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.avif,.pdf,.webm,.mp4" />
-        <input style={{ ...input, flex: '1 1 240px' }} placeholder="Alt text (required)" value={alt} onChange={(e) => setAlt(e.target.value)} />
+        <input style={{ ...input, flex: '1 1 200px' }} placeholder="Alt text (required)" value={alt} onChange={(e) => setAlt(e.target.value)} />
         <button style={btn} disabled={busy} onClick={upload}>Upload{typeof folder === 'number' ? ` → ${folderName(folder)}` : ''}</button>
+        <span style={{ borderLeft: '1px solid #E6EBF1', paddingLeft: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input ref={bulkRef} type="file" multiple style={{ ...input, maxWidth: 240 }} accept=".png,.jpg,.jpeg,.webp,.gif,.avif,.pdf" title="Bulk upload — alt is derived from each filename" />
+          <button style={btnGhost} disabled={busy} onClick={bulkUpload} title="Uploads each file with alt text derived from its filename">Bulk ↑</button>
+        </span>
       </div>
+      {bulkMsg && <div role="status" style={{ margin: '0 0 10px', padding: '8px 12px', borderRadius: 8, background: '#EDFAF6', border: '1px solid #BFE8DC', color: '#0F6B54', fontSize: 13 }}>{bulkMsg}</div>}
       {error ? <Err error={error} /> : null}
       {inUse && (
         <div role="alert" style={{ display: 'flex', gap: 10, alignItems: 'flex-start', margin: '10px 0', color: '#8A5A00', background: '#FBF3E2', border: '1px solid #E8CE9A', borderRadius: 8, padding: '10px 12px' }}>
@@ -232,7 +298,9 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                           <span style={{ display: 'flex', gap: 6 }}>
                             <span style={{ flex: 1, fontSize: 11, color: m.alt ? '#66748A' : '#C2453C', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.alt ?? ''}>{m.alt ?? '⚠ no alt'}</span>
                             <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} onClick={() => { setEditing(m.id); setEditAlt(m.alt ?? ''); }}>Alt</button>
-                            <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} onClick={() => copyUrl(m.id)}>{copied === m.id ? '✓' : 'URL'}</button>
+                            <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} onClick={() => copyUrl(fileUrl(m.id), m.id)}>{copied === m.id ? '✓' : 'URL'}</button>
+                            <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} title="Public URL (usable on the site)" onClick={() => copyUrl(publicUrl(m.id), m.id)}>Pub</button>
+                            <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} title="Usage & references" onClick={() => setUsageFor(usageFor === m.id ? null : m.id)}>ⓘ</button>
                           </span>
                         )}
                         <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
@@ -282,7 +350,9 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                       <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{m.meta?.bytes ? Math.round(m.meta.bytes / 1024) + ' KB' : '—'}</td>
                       <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{fmtDate(m.createdAt)}</td>
                       <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
-                        <button style={{ ...btnGhost, marginRight: 6 }} onClick={() => copyUrl(m.id)}>{copied === m.id ? 'Copied ✓' : 'Copy URL'}</button>
+                        <button style={{ ...btnGhost, marginRight: 6 }} onClick={() => copyUrl(fileUrl(m.id), m.id)}>{copied === m.id ? 'Copied ✓' : 'Copy URL'}</button>
+                        <button style={{ ...btnGhost, marginRight: 6 }} title="Public URL" onClick={() => copyUrl(publicUrl(m.id), m.id)}>Pub</button>
+                        <button style={{ ...btnGhost, marginRight: 6 }} title="Usage & references" onClick={() => setUsageFor(usageFor === m.id ? null : m.id)}>ⓘ</button>
                         {isAdmin && <button style={btnGhost} disabled={busy} onClick={() => remove(m.id)}>Delete</button>}
                       </td>
                     </tr>
@@ -293,8 +363,114 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
           ) : null}
           {data && total === 0 && <Empty text={folder === 'none' ? 'No unfiled assets — everything is filed away. 🎉' : 'No media in this view yet.'} />}
           {data && total > 0 && items.length === 0 && <Empty text="Every asset here has alt text. 🎉" />}
+          {usageFor != null && <UsageDrawer id={usageFor} onClose={() => setUsageFor(null)} />}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ---- 0023: library analytics strip ------------------------------------------
+
+function AnalyticsStrip() {
+  const { data, error, loading } = useAsync<MediaAnalytics>(() => apiGet('/admin/media-analytics'), []);
+  if (loading) return null;
+  if (error || !data) return null;
+  const fmtBytes = (b: number) => b > 1e9 ? (b / 1e9).toFixed(1) + ' GB' : b > 1e6 ? (b / 1e6).toFixed(1) + ' MB' : Math.round(b / 1e3) + ' KB';
+  const maxArrivals = Math.max(1, ...data.series.map((x) => x.n));
+  const kpi = (label: string, value: string, sub: string, tone = '#1F2A37') => (
+    <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, background: '#fff', padding: '10px 14px' }}>
+      <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4' }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: tone, marginTop: 2 }}>{value}</div>
+      <div style={{ fontSize: 11.5, color: '#66748A' }}>{sub}</div>
+    </div>
+  );
+  return (
+    <details style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#1F2A37', userSelect: 'none' }}>
+        Analytics — <span style={{ color: '#66748A', fontWeight: 400 }}>
+          {data.total} assets · {data.altCompliance}% alt compliance · {fmtBytes(data.storageBytes)} storage{data.lowRes ? ` · ${data.lowRes} low-res` : ''}
+        </span>
+      </summary>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10, marginTop: 12 }}>
+        {kpi('Assets', String(data.total), data.byKind.map((k) => `${k.n} ${k.kind}`).join(' · '))}
+        {kpi('Alt compliance', data.altCompliance + '%', `${data.withAlt}/${data.total} with alt`, data.altCompliance === 100 ? '#1F9D62' : '#B45309')}
+        {kpi('Variant coverage', data.variantCoverage + '%', 'responsive derivatives')}
+        {kpi('Storage', fmtBytes(data.storageBytes), 'originals + variants')}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 16, marginTop: 14 }}>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>Uploads — last 14 days</div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60, borderBottom: '1px solid #E6EBF1' }}>
+            {data.series.map((x) => (
+              <div key={x.d} title={x.d + ': ' + x.n} style={{ flex: 1, display: 'flex', alignItems: 'flex-end', height: '100%' }}>
+                <span style={{ width: '70%', borderRadius: '3px 3px 0 0', background: '#1DBF9F', height: Math.max((x.n / maxArrivals) * 100, x.n ? 6 : 0) + '%', display: 'block', margin: '0 auto' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>By kind</div>
+          {data.byKind.map((k) => (
+            <div key={k.kind} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: '#66748A', padding: '3px 0' }}>
+              <span>{k.kind}</span>
+              <span><b style={{ color: '#1F2A37' }}>{k.n}</b> · {fmtBytes(k.bytes)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </details>
+  );
+}
+
+// ---- 0023: per-asset usage drawer -------------------------------------------
+
+function UsageDrawer({ id, onClose }: { id: number; onClose: () => void }) {
+  const panelRef = usePanelScroll<HTMLDivElement>();
+  const { data, error, loading } = useAsync<Usage>(() => apiGet('/admin/media/' + id + '/usage'), [id]);
+  const [copied, setCopied] = useState<string | null>(null);
+  async function copy(text: string, tag: string) {
+    try { await navigator.clipboard.writeText(text); setCopied(tag); setTimeout(() => setCopied(null), 1500); } catch { /* unavailable */ }
+  }
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return (
+    <div ref={panelRef} style={{ marginTop: 12, border: '1px solid #E6EBF1', borderRadius: 12, background: '#F8FAFC', padding: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <b style={{ color: '#1F2A37' }}>Asset #{id} — usage &amp; URLs</b>
+        <span style={{ flex: 1 }} />
+        <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={onClose}>Close</button>
+      </div>
+      {error ? <div style={{ marginTop: 8 }}><Err error={error} /></div> : loading ? <p style={{ marginTop: 8 }}>Loading…</p> : data ? (
+        <>
+          <div style={{ display: 'flex', gap: 8, margin: '10px 0', flexWrap: 'wrap' }}>
+            <button style={{ ...btnGhost, padding: '4px 10px', fontSize: 12 }} onClick={() => copy(origin + data.urls.admin, 'admin')}>
+              {copied === 'admin' ? 'Copied ✓' : 'Copy admin URL'}
+            </button>
+            <button style={{ ...btnGhost, padding: '4px 10px', fontSize: 12 }} onClick={() => copy(origin + data.urls.public, 'pub')}>
+              {copied === 'pub' ? 'Copied ✓' : 'Copy public URL'}
+            </button>
+            {data.urls.variants.length > 0 && (
+              <span style={{ fontSize: 11.5, color: '#93A0B4', alignSelf: 'center' }}>
+                variants: {data.urls.variants.join(', ')}
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', margin: '8px 0 6px' }}>
+            Referenced by ({data.usage.length})
+          </div>
+          {data.usage.length === 0 ? (
+            <span style={{ fontSize: 12.5, color: '#66748A' }}>Not referenced — safe to delete (subject to role).</span>
+          ) : (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {data.usage.map((u) => (
+                <span key={u.entity + u.id} style={{ fontSize: 12, background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+                  <Badge value={u.entity} /> {u.label}
+                </span>
+              ))}
+            </div>
+          )}
+        </>
+      ) : null}
     </div>
   );
 }

@@ -130,6 +130,65 @@ export function usersRoute(db: DB, deps: {
     return c.json({ items: rows, total, page, limit, offset });
   });
 
+  /** 0024: directory analytics — IAM visibility dashboard: role distribution,
+   *  MFA coverage, active sessions, suspended count, 14-day join trend. */
+  r.get('/users/analytics', async (c) => {
+    const s = await superAdminGuard(c);
+    if (s instanceof Response) return s;
+    const [byRole, mfa, suspended, activeSessions] = await Promise.all([
+      db.select({ role: user.role, n: count() }).from(user).groupBy(user.role),
+      db.select({
+        total: count(),
+        withMfa: sql<number>`count(*) filter (where ${user.twoFactorEnabled})`,
+        verified: sql<number>`count(*) filter (where ${user.emailVerified})`,
+      }).from(user),
+      db.select({ n: count() }).from(user).where(eq(user.banned, true)),
+      db.select({ n: count() }).from(session).where(sql`${session.expiresAt} > now()`),
+    ]);
+    const joins = await db.select({ d: sql<string>`to_char(${user.createdAt}, 'YYYY-MM-DD')`, n: count() })
+      .from(user).where(sql`${user.createdAt} > now() - interval '13 days'`)
+      .groupBy(sql`to_char(${user.createdAt}, 'YYYY-MM-DD')`);
+    const series: Array<{ d: string; n: number }> = [];
+    for (let i = 13; i >= 0; i--) {
+      const key = new Date(Date.now() - i * 86400_000).toISOString().slice(0, 10);
+      series.push({ d: key, n: Number(joins.find((x) => x.d === key)?.n ?? 0) });
+    }
+    const total = Number(mfa[0]?.total ?? 0) || 1;
+    return c.json({
+      total: Number(mfa[0]?.total ?? 0),
+      byRole: byRole.map((x) => ({ role: x.role, n: Number(x.n) })),
+      mfaCoverage: Math.round((Number(mfa[0]?.withMfa ?? 0) / total) * 100),
+      emailVerified: Number(mfa[0]?.verified ?? 0),
+      suspended: Number(suspended[0]?.n ?? 0),
+      activeSessions: Number(activeSessions[0]?.n ?? 0),
+      series,
+    });
+  });
+
+  /** 0024: per-user security profile — active session count + the user's
+   *  recent audited actions (access-review visibility). super_admin only. */
+  r.get('/users/:id/activity', async (c) => {
+    const s = await superAdminGuard(c);
+    if (s instanceof Response) return s;
+    const id = c.req.param('id');
+    const row = (await db.select().from(user).where(eq(user.id, id)).limit(1))[0];
+    if (!row) return c.json({ error: 'Not Found', title: 'User not found', status: 404 }, 404, { 'Content-Type': P });
+    const [sess] = await db.select({ n: count() }).from(session)
+      .where(and(eq(session.userId, id), sql`${session.expiresAt} > now()`));
+    const activity = await db.select({
+      id: auditLog.id, action: auditLog.action, entity: auditLog.entity, entityId: auditLog.entityId,
+      ip: auditLog.ip, at: auditLog.at,
+    }).from(auditLog).where(eq(auditLog.actorId, id)).orderBy(desc(auditLog.id)).limit(20);
+    return c.json({
+      id,
+      email: row.email, name: row.name, role: row.role,
+      twoFactorEnabled: row.twoFactorEnabled, banned: row.banned, banReason: row.banReason,
+      emailVerified: row.emailVerified, createdAt: row.createdAt, updatedAt: row.updatedAt,
+      activeSessions: Number(sess?.n ?? 0),
+      activity,
+    });
+  });
+
   // POST /api/v1/admin/users/invite
   r.post('/users/invite', async (c) => {
     const s = await superAdminGuard(c);

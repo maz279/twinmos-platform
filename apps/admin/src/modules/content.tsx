@@ -9,7 +9,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { marked } from 'marked';
 import { ApiError, apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, CommandBar, Empty, Err, input, PageHeader, Table, td, Toolbar, useAsync, FAINT, INK, LINE, MUTED, TEAL } from '../ui';
+import { Badge, btn, btnGhost, CommandBar, Empty, Err, input, PageHeader, Table, td, Toolbar, useAsync, usePanelScroll, FAINT, INK, LINE, MUTED, TEAL } from '../ui';
 import { Heatmap, WeeklyBars } from '../charts';
 import { CONTENT_STATUS, LOCALES } from '@twinmos/shared';
 import PageBuilder from './page-builder/PageBuilder';
@@ -44,16 +44,37 @@ function legalNext(status: string): string[] {
   return M[status] ?? [];
 }
 
+const PAGE_SIZE = 25;
+
+/** Items whose workflow allows a direct jump to published (bulk-publish scope). */
+function canDirectPublish(status: string): boolean {
+  return legalNext(status).includes('published');
+}
+
 export default function Content({ canPublish, canWrite }: { canPublish: boolean; canWrite?: boolean }) {
   const [entity, setEntity] = useState<string>('article');
   const [status, setStatus] = useState('');
   const [view, setView] = useState<'library' | 'review'>('library');
   const [editing, setEditing] = useState<Row | 'new' | null>(null);
+  // Library ergonomics for large draft backlogs (the corpus import leaves ~400 drafts):
+  // title search (server-side ilike), pagination (server offset + total), bulk publish.
+  const [qInput, setQInput] = useState('');
+  const [q, setQ] = useState('');
+  const [page, setPage] = useState(0);
+  const [sel, setSel] = useState<Set<number>>(new Set());
+  const [confirmBulk, setConfirmBulk] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
 
   const qs = new URLSearchParams();
   if (status) qs.set('status', qs_status(view));
-  const { data, error, loading, reload } = useAsync<{ items: Row[] }>(
-    () => apiGet(`/admin/content/${entity}?` + qs.toString()), [entity, status, view]);
+  if (view === 'library') {
+    qs.set('limit', String(PAGE_SIZE));
+    qs.set('offset', String(page * PAGE_SIZE));
+    if (q) qs.set('q', q);
+  }
+  const { data, error, loading, reload } = useAsync<{ items: Row[]; total?: number }>(
+    () => apiGet(`/admin/content/${entity}?` + qs.toString()), [entity, status, view, q, page]);
   // Review queue spans every content entity
   const queue = useAsync<{ items: Row[] }[]>(
     async () => Promise.all(['article', 'news', 'page'].map((e) => apiGet<{ items: Row[] }>(`/admin/content/${e}?status=in_review`))), [view]);
@@ -61,6 +82,28 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
   function qs_status(v: string): string {
     if (v === 'review') return 'in_review';
     return status;
+  }
+
+  function switchEntity(e: string) {
+    setEntity(e); setEditing(null); setPage(0); setQ(''); setQInput(''); setSel(new Set()); setBulkMsg(null);
+  }
+
+  const total: number = data?.total ?? data?.items.length ?? 0;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const publishable = (data?.items ?? []).filter((r) => canDirectPublish(r.status));
+  const selPublishable = publishable.filter((r) => sel.has(r.id));
+
+  async function bulkPublish() {
+    if (!confirmBulk) { setConfirmBulk(true); return; } // two-step inline confirm
+    setBulkBusy(true); setBulkMsg(null);
+    let ok = 0; const failed: string[] = [];
+    for (const row of selPublishable) {
+      try { await apiSend('POST', `/admin/content/${entity}/${row.id}/transition`, { to: 'published' }); ok++; }
+      catch { failed.push(row.title ?? row.question ?? String(row.id)); }
+    }
+    setBulkBusy(false); setConfirmBulk(false); setSel(new Set());
+    setBulkMsg(failed.length ? `Published ${ok}; ${failed.length} failed (in-review/editor permission or transition rules): ${failed.slice(0, 3).join(', ')}${failed.length > 3 ? '…' : ''}` : `Published ${ok} item(s).`);
+    reload();
   }
 
   function openFromQueue(row: Row, rowEntity: string) {
@@ -87,9 +130,9 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
         <span style={{ flex: 1 }} />
         {view === 'library' && <>
           {ENTITIES.map((e) => (
-            <button key={e.key} style={entity === e.key ? btn : btnGhost} onClick={() => { setEntity(e.key); setEditing(null); }}>{e.label}</button>
+            <button key={e.key} style={entity === e.key ? btn : btnGhost} onClick={() => switchEntity(e.key)}>{e.label}</button>
           ))}
-          <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>
+          <select style={input} value={status} onChange={(e) => { setStatus(e.target.value); setPage(0); }}>
             <option value="">All statuses</option>
             {CONTENT_STATUS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
           </select>
@@ -116,20 +159,67 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
         )
       ) : (
         <>
+          <Toolbar style={{ margin: '0 0 10px' }}>
+            <input style={{ ...input, width: 280 }} placeholder={`Search ${entity} title…`}
+              value={qInput} onChange={(e) => setQInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { setQ(qInput.trim()); setPage(0); setSel(new Set()); } }} />
+            <button style={btnGhost} onClick={() => { setQ(qInput.trim()); setPage(0); setSel(new Set()); }}>Search</button>
+            {(q || qInput) && <button style={btnGhost} onClick={() => { setQ(''); setQInput(''); setPage(0); setSel(new Set()); }}>Clear</button>}
+            <span style={{ flex: 1 }} />
+            {canPublish && publishable.length > 0 && (
+              <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <label style={{ fontSize: 12.5, color: '#66748A', display: 'flex', gap: 4, alignItems: 'center', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={selPublishable.length === publishable.length && publishable.length > 0}
+                    onChange={(e) => setSel(e.target.checked ? new Set(publishable.map((r) => r.id)) : new Set())} />
+                  Select page ({publishable.length} publishable)
+                </label>
+                {selPublishable.length > 0 && (
+                  <button style={confirmBulk ? btn : btnGhost} disabled={bulkBusy} onClick={bulkPublish}
+                    title="Publishes each selected draft straight to the live site (audited per item)">
+                    {bulkBusy ? 'Publishing…' : confirmBulk ? `Confirm — publish ${selPublishable.length}` : `Publish ${selPublishable.length} selected`}
+                  </button>
+                )}
+                {confirmBulk && !bulkBusy && <button style={btnGhost} onClick={() => setConfirmBulk(false)}>Cancel</button>}
+              </span>
+            )}
+          </Toolbar>
+          {bulkMsg && (
+            <div role="status" style={{ margin: '0 0 10px', padding: '8px 12px', borderRadius: 8, background: '#EDFAF6', border: '1px solid #BFE8DC', color: '#0F6B54', fontSize: 13 }}>
+              {bulkMsg}
+            </div>
+          )}
           {error ? <Err error={error} /> : loading ? <p>Loading…</p> : data ? (
-            <Table head={['Title', 'Slug / Group', 'Status', 'Updated', '']}>
-              {data.items.map((row) => (
-                <tr key={row.id}>
-                  <td style={td}><b>{row.title ?? row.question}</b></td>
-                  <td style={{ ...td, color: '#66748A' }}>{row.slug ?? row.groupKey}</td>
-                  <td style={td}><Badge value={row.status} /></td>
-                  <td style={td}>{fmtDate(row.updatedAt ?? row.publishAt)}</td>
-                  <td style={td}><button style={btnGhost} onClick={() => setEditing(row)}>Edit</button></td>
-                </tr>
-              ))}
+            <Table head={[...(canPublish ? [''] : []), 'Title', 'Slug / Group', 'Status', 'Updated', '']}>
+              {data.items.map((row) => {
+                const selectable = canPublish && canDirectPublish(row.status);
+                return (
+                  <tr key={row.id}>
+                    {canPublish && (
+                      <td style={{ ...td, width: 30 }}>
+                        {selectable && (
+                          <input type="checkbox" checked={sel.has(row.id)}
+                            onChange={(e) => setSel((prev) => { const next = new Set(prev); e.target.checked ? next.add(row.id) : next.delete(row.id); return next; })} />
+                        )}
+                      </td>
+                    )}
+                    <td style={td}><b>{row.title ?? row.question}</b></td>
+                    <td style={{ ...td, color: '#66748A' }}>{row.slug ?? row.groupKey}</td>
+                    <td style={td}><Badge value={row.status} /></td>
+                    <td style={td}>{fmtDate(row.updatedAt ?? row.publishAt)}</td>
+                    <td style={td}><button style={btnGhost} onClick={() => setEditing(row)}>Edit</button></td>
+                  </tr>
+                );
+              })}
             </Table>
           ) : null}
-          {data && data.items.length === 0 && <Empty text="No content — create the first item." />}
+          {data && data.items.length === 0 && <Empty text={q ? `No ${entity} matches “${q}”.` : 'No content — create the first item.'} />}
+          {view === 'library' && total != null && total > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, fontSize: 12.5, color: '#66748A' }}>
+              <button style={{ ...btnGhost, padding: '4px 10px' }} disabled={page === 0} onClick={() => { setPage((p) => Math.max(0, p - 1)); setSel(new Set()); }}>← Prev</button>
+              <span>Page {page + 1} of {pages} · {total} item{total === 1 ? '' : 's'}{q ? ` matching “${q}”` : ''}</span>
+              <button style={{ ...btnGhost, padding: '4px 10px' }} disabled={page + 1 >= pages} onClick={() => { setPage((p) => p + 1); setSel(new Set()); }}>Next →</button>
+            </div>
+          )}
         </>
       )}
 
@@ -184,6 +274,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
   const answerRef = useRef<HTMLTextAreaElement | null>(null);
   const [tab, setTab] = useState<'edit' | 'preview' | 'revisions' | 'comments'>(isNew ? 'edit' : 'edit');
+  const panelRef = usePanelScroll<HTMLDivElement>();
 
   useEffect(() => {
     if (!isNew && row) {
@@ -292,7 +383,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
   };
 
   return (
-    <div style={{ marginTop: 16, border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#fff' }}>
+    <div ref={panelRef} style={{ marginTop: 16, border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#fff' }}>
       {/* §6.4 command bar — workflow transitions (Publish / Submit for review)
           stay pinned under the tab strip while the long editor body scrolls */}
       <CommandBar style={{ justifyContent: 'space-between', marginBottom: 10 }}>
@@ -352,6 +443,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
               <input style={input} placeholder="Question" value={question} onChange={(e) => { setQuestion(e.target.value); setTitle(e.target.value); }} />
               <MarkdownToolbar value={answer} onChange={setAnswer} textareaRef={answerRef} />
               <textarea ref={answerRef} style={{ ...input, minHeight: 120, borderRadius: '0 6px 6px 6px' }} placeholder="Answer (markdown)" value={answer} onChange={(e) => setAnswer(e.target.value)} />
+              <WordCount text={answer} />
             </>
           ) : (
             <>
@@ -392,6 +484,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
                 <div>
                   <MarkdownToolbar value={body} onChange={setBody} textareaRef={bodyRef} />
                   <textarea ref={bodyRef} style={{ ...input, minHeight: 260, borderRadius: '0 6px 6px 6px', fontFamily: 'ui-monospace, monospace', fontSize: 13 }} placeholder="Body (markdown)" value={body} onChange={(e) => setBody(e.target.value)} />
+                  <WordCount text={body} />
                 </div>
               )}
             </>
@@ -472,6 +565,17 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
 
 function scheduling(status: string): boolean {
   return status === 'in_review'; // offer publishAt when moving toward scheduled
+}
+
+/** Live editorial metrics under the body — word count + ~220 wpm reading time. */
+function WordCount({ text }: { text: string }) {
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  if (!words) return null;
+  return (
+    <div style={{ marginTop: 4, fontSize: 11.5, color: '#93A0B4' }}>
+      {words.toLocaleString()} words · ~{Math.max(1, Math.round(words / 220))} min read
+    </div>
+  );
 }
 
 /** Client-side markdown preview (same marked pipeline as the server render). */

@@ -90,11 +90,26 @@ export function analyticsRoute(db: DB, deps: { requireRole: (r: any) => Guard; s
       series.push({ d: key, n: Number(arrivals.find((x: any) => x.d === key)?.n ?? 0) });
     }
 
+    // 0018: speed-to-lead — time to first staff reply vs intake (the 5-minute
+    // rule KPI). avg over replied leads; waiting = open leads with no reply yet.
+    const replyRows = await db.select({ createdAt: formSubmission.createdAt, firstRespondedAt: formSubmission.firstRespondedAt, status: formSubmission.status })
+      .from(formSubmission).limit(2000);
+    const replied = replyRows.filter((r) => r.firstRespondedAt);
+    const openNotReplied = replyRows.filter((r) => !r.firstRespondedAt && (OPEN_LEAD_STATES as readonly string[]).includes(r.status)).length;
+    const hours = replied.map((r) => (new Date(r.firstRespondedAt as Date).getTime() - new Date(r.createdAt).getTime()) / 3600_000).filter((h) => h >= 0);
+    const response = {
+      replied: replied.length,
+      openNotReplied,
+      avgFirstResponseHours: hours.length ? Math.round((hours.reduce((a, b) => a + b, 0) / hours.length) * 10) / 10 : null,
+      withinOneHour: hours.length ? Math.round((hours.filter((h) => h <= 1).length / hours.length) * 100) : null,
+    };
+
     return c.json({
       total: byStatus.reduce((s: number, x: any) => s + Number(x.n), 0),
       spam: statusCount.spam ?? 0,
       funnel,
       sla,
+      response,
       byType: byType.map((x: any) => ({ type: x.type, n: Number(x.n) })),
       byPriority: byPriority.map((x: any) => ({ priority: x.priority, n: Number(x.n) })),
       series,

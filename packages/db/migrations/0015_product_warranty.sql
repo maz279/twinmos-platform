@@ -1,0 +1,1 @@
+ALTER TABLE "product" ADD COLUMN IF NOT EXISTS "warranty" varchar(80);

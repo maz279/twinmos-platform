@@ -149,6 +149,13 @@ export const product = pgTable('product', {
   // 0007: rich product management — marketing copy + list pricing
   description: text('description').notNull().default(''),
   priceUsd: numeric('price_usd', { precision: 10, scale: 2 }), currency: varchar('currency', { length: 3 }).notNull().default('USD'),
+  // 0015: public warranty terms (mirrors the prototype catalog's "warranty" string,
+  // e.g. "3 Years" / "Lifetime") — surfaced on the PDP via the CMS merge layer.
+  warranty: varchar('warranty', { length: 80 }),
+  // 0016: storefront card line + shop facets — the fields the public grid/filter
+  // UI renders (TM.products: shortSpec, gen, cap, interface, form). Facets use a
+  // jsonb bag so the vocabulary can grow without migrations.
+  shortSpec: text('short_spec'), facets: jsonb('facets').notNull().default({}),
   heroMediaId: integer('hero_media_id').references(() => mediaAsset.id, { onDelete: 'set null' }),
   gallery: integer('gallery').array().default([]), datasheets: jsonb('datasheets').default([]), badges: text('badges').array().default([]),
   releasedAt: timestamp('released_at', { withTimezone: true }), createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -157,6 +164,12 @@ export const product = pgTable('product', {
 export const compatibilityRule = pgTable('compatibility_rule', {
   id: serial('id').primaryKey(), deviceBrand: text('device_brand').notNull(), deviceModel: text('device_model').notNull(),
   memoryGen: varchar('memory_gen', { length: 12 }), formFactor: varchar('form_factor', { length: 24 }), maxGb: integer('max_gb'), notes: text('notes'),
+  // 0017: full finder contract — the public compatibility page renders
+  // {type → brand → model{slots, speed, recommended cats, SSD upgrade}}.
+  deviceType: varchar('device_type', { length: 20 }).notNull().default('laptop'),
+  slots: integer('slots'), speed: varchar('speed', { length: 30 }),
+  cats: text('cats').array().notNull().default([]),
+  ssdNote: varchar('ssd_note', { length: 120 }), ssdCats: text('ssd_cats').array().notNull().default([]),
 }, (t) => [index('compat_device_idx').on(t.deviceBrand, t.deviceModel)]);
 export const productVariant = pgTable('product_variant', {
   id: serial('id').primaryKey(), productId: integer('product_id').notNull().references(() => product.id, { onDelete: 'cascade' }),
@@ -183,6 +196,8 @@ export const formSubmission = pgTable('form_submission', {
   // P6 (ADR-009): lead-handling — intake priority + first-response SLA deadline
   priority: varchar('priority', { length: 12 }).notNull().default('normal'),
   dueAt: timestamp('due_at', { withTimezone: true }),
+  // 0018: speed-to-lead KPI — when a staff reply first went out to the lead
+  firstRespondedAt: timestamp('first_responded_at', { withTimezone: true }),
 }, (t) => [index('submission_type_status_idx').on(t.type, t.status)]);
 
 /** P6: internal collaboration notes on a lead/submission (audited). */

@@ -104,6 +104,12 @@ export const productBaseSchema = z.object({
   description: z.string().trim().max(8000),
   priceUsd: z.number().nonnegative().max(9_999_999).nullable(),
   currency: currencySchema,
+  // 0015: public warranty terms ("3 Years" / "Lifetime" …), rendered on the PDP
+  warranty: z.string().trim().max(80).nullable(),
+  // 0016: storefront card line + shop facet values (gen/cap/interface/form —
+  // controlled vocabularies rendered by the public grid + filters)
+  shortSpec: z.string().trim().max(200).nullable(),
+  facets: z.record(z.string(), z.string().trim().max(60)),
   heroMediaId: z.number().int().positive().nullable(),
   gallery: z.array(z.number().int().positive()).max(12),
   datasheets: z.array(z.object({ label: z.string().trim().min(1).max(80), url: z.url().max(500) })).max(6),
@@ -116,6 +122,9 @@ export const productCreateSchema = productBaseSchema.extend({
   description: z.string().trim().max(8000).default(''),
   priceUsd: z.number().nonnegative().max(9_999_999).nullable().default(null),
   currency: currencySchema.default('USD'),
+  warranty: z.string().trim().max(80).nullable().default(null),
+  shortSpec: z.string().trim().max(200).nullable().default(null),
+  facets: z.record(z.string(), z.string().trim().max(60)).default({}),
   heroMediaId: z.number().int().positive().nullable().default(null),
   gallery: z.array(z.number().int().positive()).max(12).default([]),
   datasheets: z.array(z.object({ label: z.string().trim().min(1).max(80), url: z.url().max(500) })).max(6).default([]),
@@ -153,6 +162,8 @@ export type VariantInput = z.infer<typeof variantCreateSchema>;
 // NB: memory_gen and form_factor are varchar(12) columns — keep enum labels short.
 export const COMPAT_MEMORY_GENS = ['DDR4', 'DDR5'] as const;
 export const COMPAT_FORM_FACTORS = ['U-DIMM', 'SO-DIMM', 'M.2 2280 NVMe'] as const;
+// 0017: finder hierarchy groups — the public compatibility page's type tabs.
+export const COMPAT_DEVICE_TYPES = ['laptop', 'desktop', 'diy', 'minipc'] as const;
 export const compatibilityCreateSchema = z.object({
   deviceBrand: z.string().trim().min(1).max(40),
   deviceModel: z.string().trim().min(1).max(80),
@@ -160,16 +171,50 @@ export const compatibilityCreateSchema = z.object({
   formFactor: z.enum(COMPAT_FORM_FACTORS).nullable().default(null),
   maxGb: z.number().int().positive().max(1024).nullable().default(null),
   notes: z.string().trim().max(500).nullable().default(null),
+  // 0017 finder contract — slots/speed/SSD upgrade + recommendation categories
+  deviceType: z.enum(COMPAT_DEVICE_TYPES).default('laptop'),
+  slots: z.number().int().positive().max(16).nullable().default(null),
+  speed: z.string().trim().max(30).nullable().default(null),
+  cats: z.array(z.string().trim().min(1).max(40)).max(8).default([]),
+  ssdNote: z.string().trim().max(120).nullable().default(null),
+  ssdCats: z.array(z.string().trim().min(1).max(40)).max(8).default([]),
 });
 export const compatibilityUpdateSchema = compatibilityCreateSchema.partial();
 export type CompatibilityInput = z.infer<typeof compatibilityCreateSchema>;
+
+// ---- 0020: where-to-buy directory (public locator) ----
+// Region/status vocabularies mirror the public where-to-buy page's filter
+// chips and card attributes (data-region / data-status).
+export const DISTRIBUTOR_REGIONS = ['me', 'af', 'as', 'eu', 'cis', 'am'] as const;
+export const DISTRIBUTOR_REGION_LABELS = {
+  me: 'Middle East & GCC', af: 'Africa', as: 'Asia', eu: 'Europe', cis: 'CIS', am: 'Americas',
+} as const;
+export const DISTRIBUTOR_STATUSES = ['hub', 'authorized', 'expanding', 'seeking'] as const;
+export const DISTRIBUTOR_STATUS_LABELS = {
+  hub: 'TwinMOS hub', authorized: 'Authorized distribution', expanding: 'Expanding coverage', seeking: 'Seeking distributors',
+} as const;
+export const distributorCreateSchema = z.object({
+  name: z.string().trim().min(2).max(120),            // country card title (e.g. "United Arab Emirates")
+  country: z.string().trim().min(2).max(60),
+  region: z.enum(DISTRIBUTOR_REGIONS),
+  status: z.enum(DISTRIBUTOR_STATUSES).default('authorized'),
+  cities: z.array(z.string().trim().min(1).max(60)).max(20).default([]),
+  contact: z.record(z.string(), z.string().max(300)).default({}), // {email, phone, website, tag}
+  note: z.string().trim().max(1000).nullable().default(null),
+});
+export const distributorUpdateSchema = distributorCreateSchema.partial();
+export const marketplaceListingCreateSchema = z.object({
+  platform: z.string().trim().min(2).max(40),
+  url: z.url().max(500),
+  country: z.string().trim().max(60).nullable().default(null),
+});
+export const marketplaceListingUpdateSchema = marketplaceListingCreateSchema.partial();
 
 // 3.3 bulk import envelope — the CSV text is parsed/validated server-side.
 export const productImportSchema = z.object({
   csv: z.string().min(1).max(2_000_000),
   dryRun: z.boolean().default(true),
-});
-/** Canonical import column order (also the export order + template header). */
+});/** Canonical import column order (also the export order + template header). */
 export const PRODUCT_IMPORT_COLUMNS = ['sku', 'slug', 'name', 'brand', 'category', 'status', 'currency', 'priceUsd', 'description'] as const;
 
 // 3.4 optimistic locking — compare an If-Match header (optionally quoted ISO

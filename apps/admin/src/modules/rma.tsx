@@ -11,7 +11,7 @@
 // table is retained behind a Board | Table toggle for administrative export.
 import React, { useMemo, useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, card, Empty, Err, input, Table, td, useAsync, useOptimisticUpdate, FAINT, GOLD, INK, LINE, MUTED, PAGE, PURPLE, TEAL, TEAL_DK } from '../ui';
+import { Badge, btn, btnGhost, card, Empty, Err, input, Table, td, useAsync, useOptimisticUpdate, usePanelScroll, FAINT, GOLD, INK, LINE, MUTED, PAGE, PURPLE, TEAL, TEAL_DK } from '../ui';
 import { useToast } from '../toast';
 import { RMA_TRANSITIONS, RMA_STATUS } from '@twinmos/shared';
 
@@ -52,35 +52,41 @@ function ageChip(iso: string): { label: string; tone: string } {
 const btnSm: React.CSSProperties = { ...btn, padding: '5px 9px', fontSize: 11.5, borderRadius: 7 };
 const btnSmGhost: React.CSSProperties = { ...btnGhost, padding: '5px 9px', fontSize: 11.5, borderRadius: 7 };
 
-export default function RmaBoard({ canWrite }: { canWrite: boolean }) {
+export default function RmaBoard({ canWrite, me }: { canWrite: boolean; me?: { user?: { id?: string } } }) {
   const toast = useToast();
   const [view, setView] = useState<'board' | 'table'>('board');
   const [status, setStatus] = useState('');
   const [q, setQ] = useState('');
+  const [assignee, setAssignee] = useState('');
   const [openId, setOpenId] = useState<number | null>(null);
   const [pending, setPending] = useState<string | null>(null); // `${id}:${to}` while a card transition is in flight
+  // 0019: technician routing — Mine / unassigned queue / specific owner
+  // (staff-options: minimal editor+ directory, no full users-module access)
+  const staff = useAsync<{ items: Array<{ id: string; email: string; role: string }> }>(
+    () => apiGet<{ items: Array<{ id: string; email: string; role: string }> }>('/admin/staff-options').catch(() => ({ items: [] as Array<{ id: string; email: string; role: string }> })), []);
   const qs = new URLSearchParams();
   // limit=100 (the API cap, apps/api/src/routes/admin.ts) so the later
   // pipeline columns are not starved by the newest-first default of 50.
   qs.set('limit', '100');
   if (status) qs.set('status', status);
   if (q) qs.set('q', q);
+  if (assignee) qs.set('assignee', assignee);
   // One shared fetcher OBJECT feeds both useAsync and the optimistic mover —
   // the cache key is derived from the fn's source hash (ui.tsx fnKeyOf), so
   // passing the same reference guarantees the optimistic write lands in the
   // exact cache entry this view reads.
   const listUrl = '/admin/rma?' + qs.toString();
-  const fetchList = () => apiGet<{ items: RmaRow[] }>(listUrl);
-  const { data, error, loading, reload } = useAsync(fetchList, [status, q]);
+  const fetchList = () => apiGet<{ items: RmaRow[]; total?: number }>(listUrl);
+  const { data, error, loading, reload } = useAsync(fetchList, [status, q, assignee]);
 
   // §6.1 optimistic transitions: apply() regroups the card into its target
   // column immediately; failure restores the pre-click snapshot (rollback
   // inside the hook); success invalidates so the server truth refetches.
-  const mover = useOptimisticUpdate<{ items: RmaRow[] }, { id: number; to: RmaStatus }>({
+  const mover = useOptimisticUpdate<{ items: RmaRow[]; total?: number }, { id: number; to: RmaStatus }>({
     fn: fetchList,
-    deps: [status, q],
+    deps: [status, q, assignee],
     mutationFn: ({ id, to }) => apiSend('POST', `/admin/rma/${id}/transition`, { to }),
-    apply: (cached, { id, to }) => ({ items: cached.items.map((r) => (r.id === id ? { ...r, status: to } : r)) }),
+    apply: (cached, { id, to }) => ({ ...cached, items: cached.items.map((r) => (r.id === id ? { ...r, status: to } : r)) }),
   });
 
   // Columns are exactly RMA_STATUS (pipeline order) — every status always has
@@ -122,7 +128,16 @@ export default function RmaBoard({ canWrite }: { canWrite: boolean }) {
           <option value="">All states</option>
           {RMA_STATUS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
         </select>
-        <input style={input} placeholder="Search RMA number" value={q} onChange={(e) => setQ(e.target.value.trim())} />
+        <input style={{ ...input, width: 230 }} placeholder="Search number, SKU, serial, customer…" value={q} onChange={(e) => setQ(e.target.value.trim())} />
+        <select style={input} value={assignee} onChange={(e) => setAssignee(e.target.value)} title="Technician">
+          <option value="">Any technician</option>
+          <option value="unassigned">Unassigned queue</option>
+          {me?.user?.id && <option value={me.user.id}>Mine</option>}
+          {(staff.data?.items ?? []).filter((s) => s.id !== me?.user?.id).map((s) => (
+            <option key={s.id} value={s.id}>{s.email}</option>
+          ))}
+        </select>
+        {data?.total != null && <span style={{ fontSize: 12.5, color: MUTED, alignSelf: 'center' }}>{data.total} case{data.total === 1 ? '' : 's'}</span>}
         <div role="group" aria-label="View" style={{ marginLeft: 'auto', display: 'inline-flex', border: `1px solid ${LINE}`, borderRadius: 8, background: '#fff', overflow: 'hidden' }}>
           {(['board', 'table'] as const).map((v) => (
             <button key={v} aria-pressed={view === v} onClick={() => setView(v)}
@@ -252,14 +267,65 @@ function RmaCard({ rma, canWrite, pending, onMove, onOpen }: {
 /** Staff picker option — same shape /admin/audit/actors returns (editor+). */
 type StaffOpt = { id: string; name: string; email: string };
 
+/** 0019 serial-verification payload (GET /admin/rma/:id/serial-check). */
+type SerialCheck = {
+  serial: string | null;
+  verdict: 'verified' | 'unknown' | 'suspicious' | 'no_serial';
+  registry: { sku: string | null; batch: string | null; manufacturedAt: string | null; priorChecks: number } | null;
+  last24h: { checks: number; distinctIps: number; distinctCountries: number };
+  skuMatch: boolean | null;
+};
+
+/** Serial authenticity card — the verify-before-service gate. Verdict chips:
+ * ✓ verified (registry hit, SKU match, no anomaly) · ⚠ unknown (not in the
+ * factory registry) · ✗ suspicious (registry hit but >5 distinct sources in
+ * 24h — the leaked/counterfeit distribution pattern). */
+const VERDICT: Record<SerialCheck['verdict'], { label: string; color: string; bg: string; hint: string }> = {
+  verified: { label: '✓ Serial verified', color: '#0F6B54', bg: '#E4F8F2', hint: 'Authentic unit — safe to approve warranty service.' },
+  unknown: { label: '⚠ Serial not in registry', color: '#8A5A00', bg: '#FBF3E2', hint: 'No factory record — confirm the serial transcription and purchase proof before approving.' },
+  suspicious: { label: '✗ Suspicious activity', color: '#C2453C', bg: '#FDECEA', hint: 'This serial was verified from many distinct sources in 24h — pattern of a leaked or counterfeit serial. Escalate before any service.' },
+  no_serial: { label: '— No serial on file', color: '#66748A', bg: '#F1F4F8', hint: 'Ask the customer for the module serial.' },
+};
+
+function SerialCheckCard({ sc, onRecheck }: { sc: SerialCheck; onRecheck: () => void }) {
+  const v = VERDICT[sc.verdict];
+  return (
+    <div style={{ border: `1px solid ${LINE}`, borderRadius: 10, background: '#fff', padding: '10px 14px', margin: '10px 0', display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <span style={{ fontSize: 12.5, fontWeight: 800, color: v.color, background: v.bg, border: `1px solid ${v.color}33`, borderRadius: 8, padding: '4px 10px', whiteSpace: 'nowrap' }}>{v.label}</span>
+      <div style={{ flex: 1, minWidth: 220, fontSize: 12.5, color: MUTED }}>
+        <div>{v.hint}</div>
+        <div style={{ marginTop: 4, display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12 }}>
+          {sc.registry && <span>Registry SKU <b style={{ color: INK }}>{sc.registry.sku ?? '—'}</b>{sc.skuMatch != null && (sc.skuMatch
+            ? <span style={{ color: '#0F6B54' }}> ✓ matches case</span>
+            : <span style={{ color: '#C2453C' }}> ✗ differs from case SKU</span>)}</span>}
+          {sc.registry?.batch && <span>Batch <b style={{ color: INK }}>{sc.registry.batch}</b></span>}
+          <span>Last 24h: {sc.last24h.checks} public check{sc.last24h.checks === 1 ? '' : 's'} · {sc.last24h.distinctIps} IPs · {sc.last24h.distinctCountries} countries</span>
+        </div>
+      </div>
+      <button style={{ ...btnGhost, padding: '4px 10px', fontSize: 12 }} onClick={onRecheck}>Re-check</button>
+    </div>
+  );
+}
+
 function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boolean; onChanged: () => void }) {
   const toast = useToast();
   const [note, setNote] = useState('');
   const [notify, setNotify] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const [reply, setReply] = useState('');
+  const [replyMsg, setReplyMsg] = useState<string | null>(null);
+  const panelRef = usePanelScroll<HTMLDivElement>();
   const fetchDetail = () => apiGet<RmaDetail>(`/admin/rma/${id}`);
   const { data, error: loadError, loading, reload } = useAsync(fetchDetail, [id]);
+
+  // 0019: serial authenticity — verify the claimed serial against the
+  // anti-counterfeit registry + 24h SN-check activity BEFORE approving
+  // warranty service. Auto-fetches when the case carries a serial.
+  const serialCheck = useAsync<SerialCheck | null>(
+    () => apiGet<SerialCheck | null>(`/admin/rma/${id}/serial-check`).catch(() => null),
+    [id],
+  );
 
   // Assignee source: distinct audit actors (editor+ route, same as the audit
   // module's picker). Graceful empty fallback so the picker never breaks the
@@ -320,12 +386,26 @@ function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boo
       toast.error(`${number ?? `RMA #${id}`}: ${errText(e)}`);
     } finally { setBusy(false); }
   }
+
+  /** 0019: free-form customer reply — mailer + same-state timeline event. */
+  async function sendReply() {
+    if (!reply.trim()) return;
+    setBusy(true); setError(null); setReplyMsg(null);
+    try {
+      const res = await apiSend<{ sent: boolean }>('POST', `/admin/rma/${id}/reply`, { text: reply.trim() });
+      setReply('');
+      setReplyMsg(res.sent ? 'Reply sent to the customer and logged on the timeline.' : 'Reply recorded, but mail delivery failed — check mailer logs.');
+      reload(); onChanged();
+    } catch (e) {
+      setError(e);
+    } finally { setBusy(false); }
+  }
   if (loading) return <p style={{ marginTop: 14 }}>Loading case…</p>;
   if (loadError) return <div style={{ marginTop: 14 }}><Err error={loadError} /></div>;
   if (!data) return null;
   const legal = RMA_TRANSITIONS[data.status] ?? [];
   return (
-    <div style={{ marginTop: 16, border: `1px solid ${LINE}`, borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
+    <div ref={panelRef} style={{ marginTop: 16, border: `1px solid ${LINE}`, borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <b>{data.number}</b>
         <Badge value={data.status} />
@@ -340,14 +420,36 @@ function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boo
         <span><b>Created:</b> {fmtDate(data.createdAt)}</span>
       </div>
       <p style={{ fontSize: 13.5 }}><b>Reported issue:</b> {data.issue}</p>
+
+      {/* 0019: serial authenticity — verify before approving warranty service */}
+      {data.serial && serialCheck.data && (
+        <SerialCheckCard sc={serialCheck.data} onRecheck={() => serialCheck.reload()} />
+      )}
+
+      <h4>Reply to customer</h4>
+      {canWrite ? (
+        <div>
+          <textarea style={{ ...input, width: '100%', minHeight: 84, fontFamily: 'inherit' }}
+            placeholder={`Service update for ${data.number} — arrived at the lab / repair estimate / shipping tracking…`}
+            value={reply} onChange={(e) => setReply(e.target.value)} />
+          <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
+            <button style={btn} disabled={busy || !reply.trim()} onClick={sendReply}>Send reply</button>
+            {replyMsg && <span style={{ color: '#0F6B54', fontSize: 12.5 }}>{replyMsg}</span>}
+            <span style={{ color: FAINT, fontSize: 11.5 }}>Emailed to {String(data.customer?.email ?? '—')} · logged on the timeline</span>
+          </div>
+        </div>
+      ) : <p style={{ color: MUTED, fontSize: 13 }}>Editor role required to reply.</p>}
+
       <h4>Timeline</h4>
       <ol style={{ margin: '6px 0 12px', paddingLeft: 18, fontSize: 13.5 }}>
         {data.timeline.map((ev) => (
-          <li key={ev.id} style={{ marginBottom: 4 }}>
-            {ev.fromStatus === ev.toStatus
-              ? <span>Case created — <b>{ev.toStatus.replace(/_/g, ' ')}</b></span>
-              : <span><b>{ev.fromStatus.replace(/_/g, ' ')}</b> → <b>{ev.toStatus.replace(/_/g, ' ')}</b></span>}
-            <span style={{ color: MUTED }}> · {fmtDate(ev.at)}{ev.note ? ` · ${ev.note}` : ''}</span>
+          <li key={ev.id} style={{ marginBottom: 4, whiteSpace: 'pre-wrap' }}>
+            {(ev.note ?? '').startsWith('↩')
+              ? <span style={{ color: TEAL_DK }}>{ev.note}</span>
+              : ev.fromStatus === ev.toStatus
+                ? <span>Case created — <b>{ev.toStatus.replace(/_/g, ' ')}</b></span>
+                : <span><b>{ev.fromStatus.replace(/_/g, ' ')}</b> → <b>{ev.toStatus.replace(/_/g, ' ')}</b>{ev.note ? ` · ${ev.note}` : ''}</span>}
+            <span style={{ color: MUTED }}> · {fmtDate(ev.at)}</span>
           </li>
         ))}
       </ol>

@@ -1,7 +1,7 @@
 // P5 anti-counterfeit — public SN-check endpoint (rate-limited, registry
 // lookup, verification log, verifiedCount increment) + admin reporting.
 import { Hono } from 'hono';
-import { and, count, desc, eq, gte, lte, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gte, isNotNull, lte, sql } from 'drizzle-orm';
 import { snCheckSchema, problem } from '@twinmos/shared';
 import { serialRegistry, snCheck } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
@@ -118,15 +118,75 @@ export function serialAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard;
     });
   }
 
-  /** Registry search — serial prefix / exact SKU, newest batches first. */
+  /** Registry search — serial prefix / exact SKU / batch, newest first, with total. */
   r.get('/serials', async (c) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const q = (c.req.query('q') ?? '').trim().toUpperCase();
+    const batch = (c.req.query('batch') ?? '').trim();
+    const limit = Math.min(Number(c.req.query('limit') ?? 100) || 100, 200);
+    const offset = Math.max(Number(c.req.query('offset') ?? 0) || 0, 0);
+    const filter = and(
+      q ? sql`upper(${serialRegistry.serial}) like ${'%' + q + '%'} or upper(coalesce(${serialRegistry.sku}, '')) like ${'%' + q + '%'}` : undefined,
+      batch ? eq(serialRegistry.batch, batch) : undefined,
+    );
     const rows = await db.select().from(serialRegistry)
-      .where(q ? sql`upper(${serialRegistry.serial}) like ${'%' + q + '%'} or upper(coalesce(${serialRegistry.sku}, '')) like ${'%' + q + '%'}` : undefined)
-      .orderBy(desc(serialRegistry.serial)).limit(200);
-    return c.json({ items: rows });
+      .where(filter ?? undefined)
+      .orderBy(desc(serialRegistry.serial)).limit(limit).offset(offset);
+    const [{ n: total }] = await db.select({ n: count() }).from(serialRegistry).where(filter ?? undefined);
+    return c.json({ items: rows, total: Number(total) });
+  });
+
+  /** 0021: registry analytics — registry size, verification volume and validity
+   *  split (24h + 7d), top SKUs and countries by verification activity. */
+  r.get('/serials/analytics', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const now = Date.now();
+    const [registryCount] = await db.select({ n: count() }).from(serialRegistry);
+    const [c24] = await db.select({ n: count() }).from(snCheck).where(gte(snCheck.checkedAt, new Date(now - 24 * 3600_000)));
+    const [c7] = await db.select({ n: count() }).from(snCheck).where(gte(snCheck.checkedAt, new Date(now - 7 * 86400_000)));
+    const byResult = await db.select({ result: snCheck.result, n: count() }).from(snCheck)
+      .where(gte(snCheck.checkedAt, new Date(now - 7 * 86400_000))).groupBy(snCheck.result);
+    const topSkus = await db.select({ sku: snCheck.sku, n: count() }).from(snCheck)
+      .where(and(gte(snCheck.checkedAt, new Date(now - 7 * 86400_000)), isNotNull(snCheck.sku)))
+      .groupBy(snCheck.sku).orderBy(desc(count())).limit(6);
+    const countries = await db.select({ country: snCheck.country, n: count() }).from(snCheck)
+      .where(and(gte(snCheck.checkedAt, new Date(now - 7 * 86400_000)), isNotNull(snCheck.country)))
+      .groupBy(snCheck.country).orderBy(desc(count())).limit(6);
+    const total7 = Number(c7.n) || 1;
+    const valid7 = Number(byResult.find((x: any) => x.result === 'valid')?.n ?? 0);
+    return c.json({
+      registry: Number(registryCount.n),
+      checks24h: Number(c24.n),
+      checks7d: Number(c7.n),
+      validRate7d: Math.round((valid7 / total7) * 100),
+      topSkus: topSkus.map((x: any) => ({ sku: x.sku, n: Number(x.n) })),
+      countries: countries.map((x: any) => ({ country: x.country, n: Number(x.n) })),
+    });
+  });
+
+  /** 0021: registry export — the filtered set as CSV (ops handoff). */
+  r.get('/serials/export.csv', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const q = (c.req.query('q') ?? '').trim().toUpperCase();
+    const batch = (c.req.query('batch') ?? '').trim();
+    const filter = and(
+      q ? sql`upper(${serialRegistry.serial}) like ${'%' + q + '%'} or upper(coalesce(${serialRegistry.sku}, '')) like ${'%' + q + '%'}` : undefined,
+      batch ? eq(serialRegistry.batch, batch) : undefined,
+    );
+    const rows = await db.select().from(serialRegistry).where(filter ?? undefined)
+      .orderBy(desc(serialRegistry.serial)).limit(5000);
+    const lines = [SERIAL_CSV_COLUMNS.join(',')];
+    for (const row of rows) {
+      lines.push([row.serial, row.sku ?? '', row.manufacturedAt ? new Date(row.manufacturedAt).toISOString().slice(0, 10) : '', row.batch ?? ''].join(','));
+    }
+    await auditRow(c, guard.user.id, 'serial.export', 'batch', { rows: rows.length });
+    return c.body(lines.join('\r\n') + '\r\n', 200, {
+      'content-type': 'text/csv; charset=utf-8',
+      'content-disposition': 'attachment; filename="twinmos-serial-registry.csv"',
+    });
   });
 
   /** Batch CSV import — columns: serial,sku,manufacturedAt,batch. Upsert by
@@ -207,6 +267,52 @@ export function serialAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard;
       await auditRow(c, guard.user.id, 'serial.anomaly.alert', 'batch', { flagged: flagged.length, notified });
     }
     return c.json({ windowHours: 24, threshold, flagged, notified });
+  });
+
+  // ---- 0021: parametric routes LAST — /serials/:serial must not capture the
+  // literal segments above (analytics, export.csv, import, anomalies).
+
+  /** Single-serial drill-down — registry row + recent verification log +
+   *  24h activity summary (the same distinct-source rule as the anomaly scan). */
+  r.get('/serials/:serial', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const serial = (c.req.param('serial') ?? '').trim().toUpperCase();
+    if (!/^[A-Z0-9-]{4,60}$/.test(serial)) {
+      return c.json(problem(422, 'Validation Failed', 'Serial must be 4-60 chars of A-Z, 0-9, dashes.'), 422, { 'Content-Type': P });
+    }
+    const row = (await db.select().from(serialRegistry).where(eq(serialRegistry.serial, serial)).limit(1))[0] ?? null;
+    const since = new Date(Date.now() - 24 * 3600_000);
+    const [activity] = await db.select({
+      checks: count(),
+      distinctIps: sql<number>`count(distinct ${snCheck.ip})`,
+      distinctCountries: sql<number>`count(distinct ${snCheck.country})`,
+    }).from(snCheck).where(and(eq(snCheck.serial, serial), gte(snCheck.checkedAt, since)));
+    const recent = await db.select().from(snCheck).where(eq(snCheck.serial, serial))
+      .orderBy(desc(snCheck.checkedAt)).limit(50);
+    const ips = Number(activity?.distinctIps ?? 0);
+    const countries = Number(activity?.distinctCountries ?? 0);
+    return c.json({
+      serial,
+      registry: row,
+      last24h: { checks: Number(activity?.checks ?? 0), distinctIps: ips, distinctCountries: countries },
+      verdict: !row ? 'unknown' : ips > 5 || countries > 5 ? 'suspicious' : 'verified',
+      history: recent.map((h: any) => ({
+        result: h.result, ip: h.ip, country: h.country, ua: h.ua ? String(h.ua).slice(0, 90) : null, checkedAt: h.checkedAt,
+      })),
+    });
+  });
+
+  /** Delete a registry entry — editor+, audited. The verification log
+   *  (sn_check rows) is history and stays; the serial simply stops verifying. */
+  r.delete('/serials/:serial', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const serial = (c.req.param('serial') ?? '').trim().toUpperCase();
+    const rows = await db.delete(serialRegistry).where(eq(serialRegistry.serial, serial)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Serial not found in registry'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'serial.delete', serial, { sku: rows[0].sku, batch: rows[0].batch });
+    return c.json({ deleted: true, serial });
   });
 
   return r;

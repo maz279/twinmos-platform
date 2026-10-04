@@ -106,6 +106,34 @@
       "when": 1791110000000,
       "tag": "0014_rma_assignee",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790848485122,
+      "tag": "0015_product_warranty",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790853480923,
+      "tag": "0016_product_storefront_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790855285811,
+      "tag": "0017_compat_finder_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790885614721,
+      "tag": "0018_lead_first_response",
+      "breakpoints": true
     }
   ]
 }

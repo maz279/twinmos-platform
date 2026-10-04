@@ -8,7 +8,7 @@
 // Upload guards unchanged from P3: size cap, extension allow-list, magic-byte
 // sniffing, SVG active-content rejection, mandatory alt text (docs/04 §Media).
 import { Hono } from 'hono';
-import { and, desc, eq, isNull, like, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 import { problem } from '@twinmos/shared';
 import { article, auditLog, mediaAsset, mediaFolder, newsPost, product } from '@twinmos/db';
 import { getStorage } from '../storage.ts';
@@ -264,14 +264,60 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     if (a instanceof Response) return a;
     const q = c.req.query('q');
     const folder = c.req.query('folder');
+    const kind = (c.req.query('kind') ?? '').trim();
+    const missingAlt = c.req.query('missingAlt') === '1';
     const filters = [];
-    if (q) filters.push(like(mediaAsset.key, `%${q.replace(/[%_]/g, '')}%`));
+    // 0023: search across key AND alt text (metadata searchability, DAM §search)
+    if (q) filters.push(or(
+      ilike(mediaAsset.key, `%${q.replace(/[%_]/g, '')}%`),
+      ilike(mediaAsset.alt, `%${q.replace(/[%_]/g, '')}%`),
+    ));
     if (folder === 'none') filters.push(isNull(mediaAsset.folderId));
     else if (folder && Number.isInteger(Number(folder))) filters.push(eq(mediaAsset.folderId, Number(folder)));
+    if (['image', 'video', 'document'].includes(kind)) filters.push(eq(mediaAsset.kind, kind));
+    if (missingAlt) filters.push(isNull(mediaAsset.alt));
+    const where = filters.length ? and(...filters) : undefined;
     const rows = await db.select().from(mediaAsset)
-      .where(filters.length ? and(...filters) : undefined)
+      .where(where)
       .orderBy(desc(mediaAsset.id)).limit(200);
-    return c.json({ items: rows });
+    const [{ n: total }] = await db.select({ n: sql<number>`count(*)` }).from(mediaAsset).where(where);
+    return c.json({ items: rows, total: Number(total) });
+  });
+
+  /** 0023: library analytics — DAM health dashboard: totals by kind, alt-text
+   *  compliance, storage footprint, responsive-variant coverage, 14d uploads. */
+  r.get('/media-analytics', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const byKind = await db.select({
+      kind: mediaAsset.kind, n: sql<number>`count(*)`, bytes: sql<number>`coalesce(sum((meta->>'bytes')::bigint),0)`,
+    }).from(mediaAsset).groupBy(mediaAsset.kind);
+    const [alt] = await db.select({
+      total: sql<number>`count(*)`,
+      withAlt: sql<number>`count(${mediaAsset.alt})`,
+      lowRes: sql<number>`count(*) filter (where width is not null and width < 1200)`,
+      withVariants: sql<number>`count(*) filter (where meta ? 'variants')`,
+    }).from(mediaAsset);
+    const arrivals = await db.select({ d: sql<string>`to_char(${mediaAsset.createdAt}, 'YYYY-MM-DD')`, n: sql<number>`count(*)` })
+      .from(mediaAsset)
+      .where(sql`${mediaAsset.createdAt} > now() - interval '13 days'`)
+      .groupBy(sql`to_char(${mediaAsset.createdAt}, 'YYYY-MM-DD')`);
+    const series: Array<{ d: string; n: number }> = [];
+    for (let i = 13; i >= 0; i--) {
+      const key = new Date(Date.now() - i * 86400_000).toISOString().slice(0, 10);
+      series.push({ d: key, n: Number(arrivals.find((x) => x.d === key)?.n ?? 0) });
+    }
+    const total = Number(alt?.total ?? 0) || 1;
+    return c.json({
+      total: Number(alt?.total ?? 0),
+      byKind: byKind.map((x) => ({ kind: x.kind, n: Number(x.n), bytes: Number(x.bytes) })),
+      withAlt: Number(alt?.withAlt ?? 0),
+      altCompliance: Math.round((Number(alt?.withAlt ?? 0) / total) * 100),
+      lowRes: Number(alt?.lowRes ?? 0),
+      variantCoverage: Math.round((Number(alt?.withVariants ?? 0) / total) * 100),
+      storageBytes: byKind.reduce((s, x) => s + Number(x.bytes), 0),
+      series,
+    });
   });
 
   r.post('/media', async (c) => {
@@ -405,6 +451,26 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     });
   });
 
+  /** 0023: per-asset usage — where this file is referenced (products/articles/
+   *  news), plus its admin and public URLs. The same in-use guard data the
+   *  delete route checks, surfaced proactively (DAM usage-tracking practice). */
+  r.get('/media/:id/usage', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const id = Number(c.req.param('id'));
+    const row = (await db.select().from(mediaAsset).where(eq(mediaAsset.id, id)).limit(1))[0];
+    if (!row) return c.json(problem(404, 'Media not found'), 404, { 'Content-Type': P });
+    return c.json({
+      id,
+      usage: await usageOf(id),
+      urls: {
+        admin: '/api/v1/admin/media/' + id + '/file',
+        public: '/api/v1/media/' + id + '/file',
+        variants: Object.keys((row.meta as any)?.variants ?? {}),
+      },
+    });
+  });
+
   r.patch('/media/:id', async (c) => {
     const s = await authorGuard(c);
     if (s instanceof Response) return s;
@@ -457,6 +523,48 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessi
     await db.delete(mediaAsset).where(eq(mediaAsset.id, id));
     await auditRow(c, s.user.id, 'media.delete', String(id), { key: asset.key, variants: Object.keys(variants) });
     return c.json({ deleted: true });
+  });
+
+  return r;
+}
+
+// ---- P8 imagery bridge: public, read-only image serving ---------------------
+// The storefront catalog bridge (export-content → cms-merge) references media
+// by URL so admin-managed product imagery renders on the public site. Same
+// lookup discipline as the admin route (DB id → storage key → driver; a client
+// can never pass a path), restricted to raster images — SVG and non-image
+// kinds stay admin-only. Unauthenticated by design; global rate limiting and
+// the RFC 9457 envelope still apply.
+export function publicMediaRoute(db: DB) {
+  const r = new Hono();
+
+  r.get('/media/:id/file', async (c) => {
+    const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(404, 'Media not found'), 404, { 'Content-Type': P });
+    const rows = await db.select().from(mediaAsset).where(eq(mediaAsset.id, id)).limit(1);
+    const asset = rows[0];
+    if (!asset || asset.kind !== 'image') return c.json(problem(404, 'Media not found'), 404, { 'Content-Type': P });
+
+    let key = asset.key;
+    let mime = String((asset.meta as any)?.mime ?? 'application/octet-stream');
+    let immutable = false;
+    const variant = c.req.query('variant');
+    if (variant) {
+      if (!VARIANT_SPECS.some((v) => v.name === variant)) return c.json(problem(404, 'Unknown variant'), 404, { 'Content-Type': P });
+      const target = (((asset.meta as any)?.variants ?? {}) as Record<string, { key: string; mime: string }>)[variant];
+      if (target) { key = target.key; mime = target.mime; immutable = true; }
+      // no manifest entry (legacy asset, animated GIF) → serve the original
+    }
+    // SVG never renders on the public surface (stored-script risk) — admin-only.
+    if (mime === 'image/svg+xml') return c.json(problem(404, 'Media not found'), 404, { 'Content-Type': P });
+
+    const obj = await getStorage().get(key);
+    if (!obj) return c.json(problem(404, 'Media file missing in storage'), 404, { 'Content-Type': P });
+    const serveMime = obj.mime && obj.mime !== 'application/octet-stream' ? obj.mime : mime;
+    return c.body(obj.bytes as any, 200, {
+      'Content-Type': serveMime,
+      'Cache-Control': immutable ? 'public, max-age=31536000, immutable' : 'public, max-age=300',
+    });
   });
 
   return r;

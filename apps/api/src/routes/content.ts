@@ -4,7 +4,7 @@
 // scheduled promoter. RBAC per docs/04: authors edit but cannot publish;
 // editors publish; deletion is admin+; all mutations audited.
 import { Hono } from 'hono';
-import { and, desc, eq, isNull, lte, sql } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, isNull, lte, sql } from 'drizzle-orm';
 import { marked } from 'marked';
 import { z } from 'zod';
 import {
@@ -108,14 +108,22 @@ export function contentRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
     const entity = resolveEntity(c);
     if (entity instanceof Response) return entity;
     const limit = Math.min(Number(c.req.query('limit') ?? 25) || 25, 100);
+    const offset = Math.max(Number(c.req.query('offset') ?? 0) || 0, 0);
+    const q = (c.req.query('q') ?? '').trim();
     const statusQ = z.enum(CONTENT_STATUS).safeParse(c.req.query('status') ?? undefined);
+    const t = tableOf(entity);
+    // Library search: substring match on the display title (FAQ → question)
     const filters = [
-      statusQ.success ? eq(tableOf(entity).status, statusQ.data) : undefined,
-      entity !== 'faq' ? isNull(tableOf(entity).deletedAt) : undefined,
+      statusQ.success ? eq(t.status, statusQ.data) : undefined,
+      entity !== 'faq' ? isNull(t.deletedAt) : undefined,
+      q ? ilike(entity === 'faq' ? t.question : t.title, `%${q}%`) : undefined,
     ].filter((f) => f !== undefined);
-    const rows = await (db.select().from(tableOf(entity)) as any)
-      .where(filters.length ? and(...filters) : undefined).orderBy(desc(tableOf(entity).id)).limit(limit);
-    return c.json({ items: rows });
+    const where = filters.length ? and(...filters) : undefined;
+    const rows = await (db.select().from(t) as any)
+      .where(where).orderBy(desc(t.id)).limit(limit).offset(offset);
+    // Total for pagination — the studio library pages through large draft backlogs
+    const [{ n }] = await (db.select({ n: count() }).from(t) as any).where(where);
+    return c.json({ items: rows, total: Number(n) });
   });
 
   r.get('/content/:entity/:id', async (c) => {

@@ -5,7 +5,7 @@
 // via tab ctx { kind:'product', id }.
 import React, { useEffect, useMemo, useState } from 'react';
 import { API, ApiError, apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, CommandBar, Empty, Err, Field, formGrid, input, SectionCard, Table, td, Toolbar, useAsync } from '../ui';
+import { Badge, btn, btnGhost, CommandBar, Empty, Err, Field, formGrid, input, SectionCard, Table, td, Toolbar, useAsync, usePanelScroll } from '../ui';
 import { MediaPicker } from '../media-picker';
 import { AUTHORIZED_CURRENCIES } from '@twinmos/shared';
 import type { ModProps, TabCtx } from '../nav';
@@ -15,7 +15,8 @@ const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
 type Product = {
   id: number; sku: string; slug: string; name: string; brandId: number; categoryId: number;
   status: string; specs: Record<string, unknown>; description: string;
-  priceUsd: string | null; currency: string;
+  priceUsd: string | null; currency: string; warranty: string | null;
+  shortSpec: string | null; facets: Record<string, string> | null;
   heroMediaId: number | null; gallery: number[] | null; datasheets: Array<{ label: string; url: string }> | null;
   badges: string[] | null; releasedAt: string | null; createdAt: string; updatedAt: string;
 };
@@ -109,8 +110,10 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
   const [conflict, setConflict] = useState(false);
   const [form, setForm] = useState({
     sku: '', slug: '', name: '', brandId: 0, categoryId: 0, status: 'draft',
-    description: '', price: '', currency: 'USD', badges: '',
+    description: '', price: '', currency: 'USD', badges: '', warranty: '', shortSpec: '',
   });
+  // 0016 storefront facets — controlled vocabularies that drive the public shop filters
+  const [facets, setFacets] = useState({ gen: '', cap: '', interface: '', form: '' });
   const [specs, setSpecs] = useState<Array<[string, string]>>([]);
   const [hero, setHero] = useState<number | null>(null);
   const [gallery, setGallery] = useState<number[]>([]);
@@ -130,6 +133,11 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
       brandId: existing.brandId ?? 0, categoryId: existing.categoryId ?? 0, status: existing.status,
       description: existing.description ?? '', price: existing.priceUsd != null ? String(Number(existing.priceUsd)) : '',
       currency: existing.currency ?? 'USD', badges: (existing.badges ?? []).join(', '),
+      warranty: existing.warranty ?? '', shortSpec: existing.shortSpec ?? '',
+    });
+    setFacets({
+      gen: existing.facets?.gen ?? '', cap: existing.facets?.cap ?? '',
+      interface: existing.facets?.interface ?? '', form: existing.facets?.form ?? '',
     });
     setSpecs(Object.entries(existing.specs ?? {}).map(([k, v]) => [k, String(v)]));
     setHero(existing.heroMediaId ?? null);
@@ -154,6 +162,9 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
       status: publish ? 'published' : form.status,
       description: form.description, priceUsd: price, currency: form.currency.toUpperCase(),
       badges: form.badges.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 8),
+      warranty: form.warranty.trim() || null,
+      shortSpec: form.shortSpec.trim() || null,
+      facets: Object.fromEntries(Object.entries(facets).filter(([, v]) => v.trim()).map(([k, v]) => [k, v.trim()])),
       specs: Object.fromEntries(specs.filter(([k]) => k.trim()).map(([k, v]) => [k.trim(), v])),
       heroMediaId: hero, gallery, datasheets: datasheets.filter((d) => d.label && d.url),
     };
@@ -176,9 +187,10 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
   }
 
   const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 700, color: NAVY, display: 'block', margin: '12px 0 4px' };
+  const panelRef = usePanelScroll<HTMLDivElement>();
 
   return (
-    <div>
+    <div ref={panelRef}>
       {/* §6.4 command bar — pins under the tab strip while the long editor
           scrolls, so Save/Publish never scroll out of reach */}
       <CommandBar style={{ gap: 10, marginBottom: 14 }}>
@@ -211,7 +223,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
       ) : (
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, alignItems: 'start' }}>
         <div style={{ display: 'grid', gap: 12 }}>
-          <SectionCard title="Basics">
+          <SectionCard title="Identity">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <span><label style={labelStyle}>Name *</label><input style={{ ...input, width: '100%' }} value={form.name} onChange={(e) => set('name', e.target.value)} /></span>
               <span><label style={labelStyle}>SKU * <span style={{ color: '#93A0B4', fontWeight: 400 }}>(A-Z 0-9 -)</span></label><input style={{ ...input, width: '100%' }} value={form.sku} onChange={(e) => set('sku', e.target.value)} disabled={!isNew} /></span>
@@ -231,9 +243,44 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
                   {(taxonomy?.categories ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select></span>
             </div>
-            <label style={labelStyle}>Description</label>
-            <textarea style={{ ...input, width: '100%', minHeight: 120, fontFamily: 'inherit' }} placeholder="Marketing copy shown on the product page…"
+          </SectionCard>
+
+          <SectionCard title="Storefront card — what shoppers see">
+            <label style={labelStyle}>Catalog card line <span style={{ color: '#93A0B4', fontWeight: 400 }}>(one line under the product name — e.g. “USB 3.0 · 1TB”)</span></label>
+            <input style={{ ...input, width: '100%' }} placeholder="e.g. DDR5 · 32GB · 6000 MT/s" value={form.shortSpec} onChange={(e) => set('shortSpec', e.target.value)} />
+            <label style={labelStyle}>Description <span style={{ color: '#93A0B4', fontWeight: 400 }}>(marketing copy shown on the product page)</span></label>
+            <textarea style={{ ...input, width: '100%', minHeight: 120, fontFamily: 'inherit' }} placeholder="Flagship DDR5 U-DIMM for gaming builds…"
               value={form.description} onChange={(e) => set('description', e.target.value)} />
+            <label style={labelStyle}>Badges <span style={{ color: '#93A0B4', fontWeight: 400 }}>(comma separated, max 8 — shown as a pill on the card)</span></label>
+            <input style={{ ...input, width: '100%' }} placeholder="New, Best seller,…" value={form.badges} onChange={(e) => set('badges', e.target.value)} />
+            {form.badges.split(',').map((s) => s.trim()).filter(Boolean).length > 0 && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                {form.badges.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 8).map((b) => (
+                  <span key={b} style={{ fontSize: 11.5, fontWeight: 700, color: '#0F6B54', background: '#E4F8F2', border: '1px solid #BFE8DC', borderRadius: 999, padding: '2px 10px' }}>{b}</span>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+
+          <SectionCard title="Shop facets — drive the public filters">
+            <p style={{ color: '#66748A', fontSize: 12, margin: '0 0 8px' }}>
+              These power the generation / capacity / interface / form-factor filters in the shop. Empty = the product
+              only appears when that filter is unset.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <span><label style={labelStyle}>Generation</label>
+                <input style={{ ...input, width: '100%' }} list="tm-facet-gen" placeholder="DDR4 / DDR5…" value={facets.gen} onChange={(e) => setFacets((f) => ({ ...f, gen: e.target.value }))} /></span>
+              <span><label style={labelStyle}>Capacity</label>
+                <input style={{ ...input, width: '100%' }} list="tm-facet-cap" placeholder="16GB / 1TB…" value={facets.cap} onChange={(e) => setFacets((f) => ({ ...f, cap: e.target.value }))} /></span>
+              <span><label style={labelStyle}>Interface</label>
+                <input style={{ ...input, width: '100%' }} list="tm-facet-iface" placeholder="USB 3.0 / NVMe…" value={facets.interface} onChange={(e) => setFacets((f) => ({ ...f, interface: e.target.value }))} /></span>
+              <span><label style={labelStyle}>Form factor</label>
+                <input style={{ ...input, width: '100%' }} list="tm-facet-form" placeholder="External / M.2 2280…" value={facets.form} onChange={(e) => setFacets((f) => ({ ...f, form: e.target.value }))} /></span>
+            </div>
+            <datalist id="tm-facet-gen">{['DDR3', 'DDR4', 'DDR5', 'LPDDR4', 'LPDDR5'].map((v) => <option key={v} value={v} />)}</datalist>
+            <datalist id="tm-facet-cap">{['8GB', '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB', '4TB'].map((v) => <option key={v} value={v} />)}</datalist>
+            <datalist id="tm-facet-iface">{['USB 3.0', 'USB 3.1', 'USB-C', 'NVMe PCIe 3.0', 'NVMe PCIe 4.0', 'NVMe PCIe 5.0', 'SATA III', 'SATA', 'UHS-I'].map((v) => <option key={v} value={v} />)}</datalist>
+            <datalist id="tm-facet-form">{['External', 'Internal', 'Desktop', 'SO-DIMM', 'U-DIMM', 'M.2 2280', 'mSATA', 'Portable', 'Flash drive'].map((v) => <option key={v} value={v} />)}</datalist>
           </SectionCard>
 
           <SectionCard title="Specifications">
@@ -260,7 +307,19 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
         </div>
 
         <div style={{ display: 'grid', gap: 12 }}>
-          <SectionCard title="Pricing">
+          <StorefrontPreview
+            name={form.name || 'Product name'}
+            catLabel={(taxonomy?.categories ?? []).find((c) => c.id === form.categoryId)?.name ?? 'Category'}
+            shortSpec={form.shortSpec}
+            warranty={form.warranty}
+            badge={form.badges.split(',').map((s) => s.trim()).filter(Boolean)[0] ?? ''}
+            price={form.price}
+            currency={form.currency}
+            heroId={hero}
+            published={form.status === 'published'}
+          />
+
+          <SectionCard title="Pricing & warranty">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: 8 }}>
               <span><label style={labelStyle}>List price</label><input style={{ ...input, width: '100%' }} placeholder="e.g. 129.99" inputMode="decimal" value={form.price} onChange={(e) => set('price', e.target.value)} /></span>
               <span><label style={labelStyle}>Cur.</label>
@@ -268,6 +327,8 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
                   {AUTHORIZED_CURRENCIES.map((c) => <option key={c}>{c}</option>)}
                 </select></span>
             </div>
+            <label style={labelStyle}>Warranty <span style={{ color: '#93A0B4', fontWeight: 400 }}>(shown on the product page, e.g. “Lifetime” / “3 Years”)</span></label>
+            <input style={{ ...input, width: '100%' }} placeholder="e.g. 5 Years" value={form.warranty} onChange={(e) => set('warranty', e.target.value)} />
             <label style={labelStyle}>Badges <span style={{ color: '#93A0B4', fontWeight: 400 }}>(comma separated, max 8)</span></label>
             <input style={{ ...input, width: '100%' }} placeholder="New, Best seller,…" value={form.badges} onChange={(e) => set('badges', e.target.value)} />
           </SectionCard>
@@ -281,13 +342,20 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
               <button style={btnGhost} onClick={() => setPicker('hero')}>{hero ? 'Change' : 'Choose'}</button>
               {hero && <button style={{ ...btnGhost, padding: '4px 8px' }} onClick={() => setHero(null)}>✕</button>}
             </div>
-            <label style={labelStyle}>Gallery ({gallery.length}/12)</label>
+            <label style={labelStyle}>Gallery ({gallery.length}/12) <span style={{ color: '#93A0B4', fontWeight: 400 }}>(first image follows the hero on the product page — ‹ › to reorder)</span></label>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
-              {gallery.map((g) => (
+              {gallery.map((g, i) => (
                 <span key={g} style={{ position: 'relative', width: 64, height: 48, borderRadius: 6, background: '#EEF1F5', overflow: 'hidden' }}>
                   <img src={API + '/admin/media/' + g + '/file?variant=thumb'} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   <button title="Remove" onClick={() => setGallery((s) => s.filter((x) => x !== g))}
                     style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, border: 0, borderRadius: 4, background: 'rgba(10,37,64,.75)', color: '#fff', fontSize: 10, cursor: 'pointer', lineHeight: 1 }}>✕</button>
+                  {i === 0 && gallery.length > 1 && <span title="Lead gallery image" style={{ position: 'absolute', bottom: 2, left: 2, fontSize: 9, background: 'rgba(29,191,159,.9)', color: '#fff', borderRadius: 4, padding: '0 4px', fontWeight: 700 }}>1st</span>}
+                  <span style={{ position: 'absolute', bottom: 2, right: 2, display: 'flex', gap: 1 }}>
+                    <button title="Move earlier" disabled={i === 0} onClick={() => setGallery((s) => { const n = [...s]; [n[i - 1], n[i]] = [n[i], n[i - 1]]; return n; })}
+                      style={{ width: 14, height: 14, border: 0, borderRadius: 3, background: 'rgba(10,37,64,.65)', color: '#fff', fontSize: 9, cursor: i === 0 ? 'default' : 'pointer', lineHeight: 1, opacity: i === 0 ? 0.4 : 1 }}>‹</button>
+                    <button title="Move later" disabled={i === gallery.length - 1} onClick={() => setGallery((s) => { const n = [...s]; [n[i + 1], n[i]] = [n[i], n[i + 1]]; return n; })}
+                      style={{ width: 14, height: 14, border: 0, borderRadius: 3, background: 'rgba(10,37,64,.65)', color: '#fff', fontSize: 9, cursor: i === gallery.length - 1 ? 'default' : 'pointer', lineHeight: 1, opacity: i === gallery.length - 1 ? 0.4 : 1 }}>›</button>
+                  </span>
                 </span>
               ))}
             </div>
@@ -311,6 +379,50 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
           onClose={() => setPicker(null)}
         />
       )}
+    </div>
+  );
+}
+
+// ---- Storefront preview — mirrors the public shop grid card -----------------// Field-for-field replica of how the site renders a product card (category chip,
+// image, name, card line, warranty chip, badge pill, price), so the editor sees
+// the customer-facing result while typing. Values flow to the site through the
+// content export + cms-merge bridge once the product is published.
+function StorefrontPreview({ name, catLabel, shortSpec, warranty, badge, price, currency, heroId, published }: {
+  name: string; catLabel: string; shortSpec: string; warranty: string; badge: string;
+  price: string; currency: string; heroId: number | null; published: boolean;
+}) {
+  const INK = '#1F2A37'; const MUTED = '#66748A';
+  return (
+    <div style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: 14 }}>
+      <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>Storefront preview</span>
+        <span style={{ fontWeight: 700, letterSpacing: 0.2, textTransform: 'none', fontSize: 10.5, color: published ? '#0F6B54' : '#8A5A00', background: published ? '#E4F8F2' : '#FBF3E2', border: `1px solid ${published ? '#BFE8DC' : '#E8CE9A'}`, borderRadius: 999, padding: '1px 8px' }}>
+          {published ? '● live on next export' : '● draft — not on site'}
+        </span>
+      </div>
+      {/* the card itself — same visual rhythm as the public shop grid */}
+      <div style={{ border: '1px solid #EDF1F5', borderRadius: 10, padding: 12, background: '#FFFFFF', boxShadow: '0 1px 2px rgba(31,42,55,.04)' }}>
+        <span style={{ display: 'inline-block', fontSize: 11, fontWeight: 700, color: '#0F6B54', border: '1px solid #BFE8DC', background: '#F2FBF8', borderRadius: 999, padding: '2px 10px', marginBottom: 8 }}>{catLabel}</span>
+        <div style={{ width: '100%', aspectRatio: '4 / 3', borderRadius: 8, background: 'linear-gradient(135deg,#F4F7FA,#E9EEF4)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, position: 'relative' }}>
+          {heroId
+            ? <img src={API + '/admin/media/' + heroId + '/file?variant=card'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            : <span style={{ color: '#B7C2CF', fontSize: 12.5 }}>no hero image</span>}
+          {badge && (
+            <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10.5, fontWeight: 800, color: '#fff', background: '#1DBF9F', borderRadius: 999, padding: '2px 9px' }}>{badge}</span>
+          )}
+        </div>
+        <div style={{ fontWeight: 800, color: INK, fontSize: 14.5, lineHeight: 1.3 }}>{name}</div>
+        {shortSpec && <div style={{ color: MUTED, fontSize: 12.5, marginTop: 3 }}>{shortSpec}</div>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+          {warranty && <span style={{ fontSize: 11, fontWeight: 700, color: INK, border: '1px solid #DCE3EB', borderRadius: 6, padding: '2px 8px' }}>🛡 {warranty}</span>}
+          {price.trim() !== '' && Number.isFinite(Number(price)) && (
+            <span style={{ fontSize: 13, fontWeight: 800, color: INK, marginLeft: 'auto' }}>{currency} {Number(price).toFixed(2)}</span>
+          )}
+        </div>
+      </div>
+      <div style={{ color: '#93A0B4', fontSize: 11, marginTop: 8, lineHeight: 1.5 }}>
+        Mirrors the public shop card. Published products reach the site on the next content export (build prebuild, or the manual export tool).
+      </div>
     </div>
   );
 }

@@ -6,12 +6,15 @@
 // Gating rules: org must be 'active'; the member's org type must appear in the
 // asset's visibleToTypes; org-scoped assets only for that org.
 import { Hono } from 'hono';
-import { and, desc, eq, or, isNull, sql } from 'drizzle-orm';
+import { and, count, desc, eq, or, isNull, sql } from 'drizzle-orm';
 import {
   partnerOrgCreateSchema, partnerOrgUpdateSchema, partnerMemberAddSchema,
   PARTNER_ASSET_CATEGORY_SCHEMA, problem,
+  distributorCreateSchema, distributorUpdateSchema,
+  marketplaceListingCreateSchema, marketplaceListingUpdateSchema,
+  DISTRIBUTOR_REGIONS, DISTRIBUTOR_STATUSES,
 } from '@twinmos/shared';
-import { partnerOrg, partnerMember, partnerAsset, auditLog } from '@twinmos/db';
+import { partnerOrg, partnerMember, partnerAsset, auditLog, distributor, marketplaceListing } from '@twinmos/db';
 import { mkdirSync, writeFileSync, readFileSync, statSync, unlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, resolve, sep } from 'node:path';
@@ -152,6 +155,12 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard
     if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
     return (await deps.requireRole('admin')(c.req.raw)) ? s : c.json(problem(403, 'Requires admin role or above'), 403, { 'Content-Type': P });
   }
+  /** 0020: directory CRUD is editor+ (channel data maintenance, not governance). */
+  async function editorGuard(c: any): Promise<Exclude<AuthSession, null> | Response> {
+    const s = await deps.sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+    return (await deps.requireRole('editor')(c.req.raw)) ? s : c.json(problem(403, 'Requires editor role or above'), 403, { 'Content-Type': P });
+  }
   async function auditRow(c: any, actorId: string | undefined, action: string, entityId: string, diff: unknown) {
     await db.insert(auditLog).values({
       actorId: actorId ?? null, action, entity: 'partner', entityId, diff: diff ?? null,
@@ -167,10 +176,13 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard
     if (guard instanceof Response) return guard;
     const typeQ = c.req.query('type');
     const statusQ = c.req.query('status');
+    const q = (c.req.query('q') ?? '').trim();
     const rows = await db.select().from(partnerOrg)
       .where(and(
         typeQ ? eq(partnerOrg.type, typeQ) : undefined,
         statusQ ? eq(partnerOrg.status, statusQ) : undefined,
+        // 0020: org search — name, country or contact email
+        q ? or(sql`${partnerOrg.name} ilike ${'%' + q + '%'}`, sql`coalesce(${partnerOrg.country}, '') ilike ${'%' + q + '%'}`, sql`coalesce(${partnerOrg.contactEmail}, '') ilike ${'%' + q + '%'}`)! : undefined,
       ) ?? undefined)
       .orderBy(desc(partnerOrg.id)).limit(200);
     const counts = await db.select({ orgId: partnerMember.orgId, id: partnerMember.id }).from(partnerMember);
@@ -199,6 +211,22 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard
     if (!rows[0]) return c.json(problem(404, 'Organization not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'partnerOrg.update', String(id), parsed.data);
     return c.json(rows[0]);
+  });
+
+  /** 0020: org deletion — admin+, refused while members exist (empty-delete
+   *  guard, same discipline as media folders). Assets cascade via FK. */
+  r.delete('/partner-orgs/:id', async (c) => {
+    const guard = await adminGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const members = await db.select({ id: partnerMember.id }).from(partnerMember).where(eq(partnerMember.orgId, id)).limit(1);
+    if (members.length) {
+      return c.json(problem(409, 'Organization still has members', 'Remove all member accounts before deleting the organization.'), 409, { 'Content-Type': P });
+    }
+    const rows = await db.delete(partnerOrg).where(eq(partnerOrg.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Organization not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'partnerOrg.delete', String(id), { name: rows[0].name });
+    return c.json({ deleted: true });
   });
 
   // ---------- admin: members ----------
@@ -316,6 +344,163 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard
     if (!rows[0]) return c.json(problem(404, 'Asset not found'), 404, { 'Content-Type': P });
     try { unlinkSync(join(FILES_DIR, rows[0].fileKey)); } catch { /* file already gone — row removal is the source of truth */ }
     await auditRow(c, guard.user.id, 'partnerAsset.delete', String(id), {});
+    return c.json({ deleted: true });
+  });
+
+  // ---------- 0020: where-to-buy directory (public locator source) ----------
+  // CRUD + batch CSV import over the distributor directory that feeds the
+  // public where-to-buy page through the export/merge bridge. editor+.
+
+  r.get('/distributors', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const q = (c.req.query('q') ?? '').trim();
+    const region = c.req.query('region') ?? '';
+    const status = c.req.query('status') ?? '';
+    const filters = [
+      q ? or(sql`${distributor.name} ilike ${'%' + q + '%'}`, sql`${distributor.country} ilike ${'%' + q + '%'}`, sql`array_to_string(${distributor.cities}, ' ') ilike ${'%' + q + '%'}`)! : undefined,
+      (DISTRIBUTOR_REGIONS as readonly string[]).includes(region) ? eq(distributor.region, region as (typeof DISTRIBUTOR_REGIONS)[number]) : undefined,
+      (DISTRIBUTOR_STATUSES as readonly string[]).includes(status) ? eq(distributor.status, status as (typeof DISTRIBUTOR_STATUSES)[number]) : undefined,
+    ].filter((f) => f !== undefined);
+    const where = filters.length ? and(...filters) : undefined;
+    const rows = await db.select().from(distributor)
+      .where(where).orderBy(desc(distributor.id)).limit(300);
+    const [{ n }] = await db.select({ n: count() }).from(distributor).where(where);
+    return c.json({ items: rows, total: Number(n) });
+  });
+
+  r.post('/distributors', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const parsed = distributorCreateSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const rows = await db.insert(distributor).values(parsed.data as any).returning();
+    await auditRow(c, guard.user.id, 'distributor.create', String(rows[0].id), parsed.data);
+    return c.json(rows[0], 201);
+  });
+
+  r.patch('/distributors/:id', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const parsed = distributorUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const rows = await db.update(distributor).set(parsed.data as any).where(eq(distributor.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Distributor not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'distributor.update', String(id), parsed.data);
+    return c.json(rows[0]);
+  });
+
+  r.delete('/distributors/:id', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const rows = await db.delete(distributor).where(eq(distributor.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Distributor not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'distributor.delete', String(id), { name: rows[0].name, country: rows[0].country });
+    return c.json({ deleted: true });
+  });
+
+  /** Batch CSV import — columns: name,country,region,status,cities,contactEmail,website,note
+   *  (cities are ';'-separated). Upsert by (name, country). */
+  r.post('/distributors/import', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const body = await c.req.json().catch(() => ({}));
+    const csv = String((body as any).csv ?? '');
+    const dryRun = (body as any).dryRun !== false;
+    const lines = csv.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    if (lines.length < 2) return c.json(problem(422, 'Validation Failed', 'CSV needs a header and at least one row.'), 422, { 'Content-Type': P });
+    const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
+    const COLS = ['name', 'country', 'region', 'status', 'cities', 'contactemail', 'website', 'note'];
+    if (header.join(',') !== COLS.join(',')) {
+      return c.json(problem(422, 'Validation Failed', 'Header must be exactly: ' + COLS.join(',')), 422, { 'Content-Type': P });
+    }
+    const existing = await db.select().from(distributor);
+    const keyOf = (x: any) => `${x.name.toLowerCase()}|${x.country.toLowerCase()}`;
+    const byKey = new Map(existing.map((x: any) => [keyOf(x), x]));
+    const seen = new Set<string>();
+    const valid: Array<{ key: string; id?: number; values: Record<string, unknown> }> = [];
+    const errors: Array<{ line: number; message: string }> = [];
+    for (let i = 1; i < lines.length; i++) {
+      const lineNo = i + 1;
+      // quoted-field aware split (cities/note can carry commas)
+      const cols: string[] = []; let cur = ''; let inQ = false;
+      for (const ch of lines[i]) {
+        if (inQ) { if (ch === '"') inQ = false; else cur += ch; }
+        else if (ch === '"') inQ = true;
+        else if (ch === ',') { cols.push(cur); cur = ''; }
+        else cur += ch;
+      }
+      cols.push(cur);
+      const [name, country, region, status, cities, contactEmail, website, note] = cols.map((s) => s.trim());
+      const fail = (message: string) => errors.push({ line: lineNo, message });
+      if (!name || !country) { fail('name and country are required.'); continue; }
+      if (!(DISTRIBUTOR_REGIONS as readonly string[]).includes(region)) { fail(`region must be one of ${DISTRIBUTOR_REGIONS.join(', ')}.`); continue; }
+      if (!(DISTRIBUTOR_STATUSES as readonly string[]).includes(status)) { fail(`status must be one of ${DISTRIBUTOR_STATUSES.join(', ')}.`); continue; }
+      const key = keyOf({ name, country });
+      if (seen.has(key)) { fail('Duplicate name+country earlier in this file.'); continue; }
+      seen.add(key);
+      const contact: Record<string, string> = {};
+      if (contactEmail) contact.email = contactEmail;
+      if (website) contact.website = website;
+      const values = {
+        name, country, region, status,
+        cities: cities ? cities.split(';').map((s) => s.trim()).filter(Boolean).slice(0, 20) : [],
+        contact, note: note || null,
+      };
+      const match = byKey.get(key);
+      valid.push({ key, id: match?.id, values });
+    }
+    if (dryRun) {
+      return c.json({
+        dryRun: true,
+        wouldCreate: valid.filter((v) => !v.id).length,
+        wouldUpdate: valid.filter((v) => v.id).length,
+        errors,
+      });
+    }
+    if (errors.length) return c.json(problem(422, 'Validation Failed', errors.length + ' row(s) failed — fix and re-run.', errors), 422, { 'Content-Type': P });
+    for (const v of valid) {
+      if (v.id != null) await db.update(distributor).set(v.values as any).where(eq(distributor.id, v.id));
+      else await db.insert(distributor).values(v.values as any);
+    }
+    await auditRow(c, guard.user.id, 'distributor.import', 'batch', {
+      created: valid.filter((v) => v.id == null).length,
+      updated: valid.filter((v) => v.id != null).length,
+    });
+    return c.json({
+      dryRun: false,
+      imported: valid.filter((v) => v.id == null).length,
+      updated: valid.filter((v) => v.id != null).length,
+    });
+  });
+
+  // ---------- 0020: verified marketplace listings ----------
+  r.get('/marketplace-listings', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const rows = await db.select().from(marketplaceListing).orderBy(desc(marketplaceListing.id)).limit(200);
+    return c.json({ items: rows });
+  });
+
+  r.post('/marketplace-listings', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const parsed = marketplaceListingCreateSchema.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const rows = await db.insert(marketplaceListing).values({ ...parsed.data, verifiedAt: new Date() }).returning();
+    await auditRow(c, guard.user.id, 'marketplace.create', String(rows[0].id), parsed.data);
+    return c.json(rows[0], 201);
+  });
+
+  r.delete('/marketplace-listings/:id', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const rows = await db.delete(marketplaceListing).where(eq(marketplaceListing.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Listing not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'marketplace.delete', String(id), { platform: rows[0].platform });
     return c.json({ deleted: true });
   });
 

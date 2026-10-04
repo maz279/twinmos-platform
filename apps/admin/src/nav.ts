@@ -21,6 +21,7 @@ const Compatibility = lazy(() => import('./modules/compatibility'));
 const Submissions = lazy(() => import('./modules/submissions'));
 const RmaBoard = lazy(() => import('./modules/rma'));
 const Partners = lazy(() => import('./modules/partners'));
+const Serials = lazy(() => import('./modules/serials'));
 const Jobs = lazy(() => import('./modules/jobs'));
 const Media = lazy(() => import('./modules/media'));
 const Translations = lazy(() => import('./modules/translations'));
@@ -78,6 +79,7 @@ export const MODULES: ModuleDef[] = [
   { id: 'submissions', label: 'Leads & quotes', group: 'Support & Leads', icon: 'inbox', minRole: 'viewer', badge: 'newLeads', desc: 'Lead inbox — SLA-tracked workflow, notes, CSV export.', comp: (p) => h(Submissions, { canWrite: p.canWrite, myId: p.me.user?.id, ctx: p.ctx }) },
   { id: 'rma', label: 'RMA board', group: 'Support & Leads', icon: 'tool', minRole: 'viewer', badge: 'openRma', desc: 'Returns board — 7-state pipeline with audited transitions.', comp: RmaBoard },
   { id: 'partners', label: 'Partners & channel', group: 'Channel & Partners', icon: 'share', minRole: 'viewer', desc: 'Distributors, marketplace listings and partner assets.', comp: (p) => h(Partners, { canManage: isAdminRole(p.me.user?.role) }) },
+  { id: 'serials', label: 'SN-check & serials', group: 'Channel & Partners', icon: 'shield', minRole: 'viewer', desc: 'Anti-counterfeit serial registry, batch CSV import and counterfeit anomaly scans.', comp: (p) => h(Serials, { canWrite: p.canWrite }) },
   { id: 'jobs', label: 'Careers', group: 'Careers', icon: 'briefcase', minRole: 'viewer', badge: 'pendingApps', desc: 'Job postings editor and applications inbox.', comp: Jobs },
   { id: 'media', label: 'Media library', group: 'Media Library', icon: 'image', minRole: 'viewer', desc: 'Uploads, alt-text compliance and usage references.', comp: (p) => h(Media, { isAdmin: isAdminRole(p.me.user?.role) }) },
   { id: 'translations', label: 'Translations', group: 'Localization', icon: 'translate', minRole: 'viewer', desc: '9-locale translation strings with import/export.', comp: (p) => h(Translations, { isSuperAdmin: p.me.user?.role === 'super_admin' }) },

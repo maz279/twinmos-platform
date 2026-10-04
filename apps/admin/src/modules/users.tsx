@@ -1,8 +1,11 @@
 // Users & Roles Management — super_admin only (docs/04-ADMIN-CMS-SPEC.md §RBAC)
 // Endpoints: list users, invite staff, change roles, revoke sessions, ban/unban.
+// 0024: security analytics strip (role distribution, MFA coverage, active
+// sessions, join trend) + per-user security drawer (sessions, MFA, recent
+// audited actions — the IAM access-review visibility loop).
 import React, { useMemo, useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
-import { btn, btnGhost, card, Empty, Err, input, Table, td, useAsync } from '../ui';
+import { btn, btnGhost, card, Empty, Err, input, Table, td, useAsync, usePanelScroll } from '../ui';
 import type { ModProps } from '../nav';
 
 type UserRole = 'super_admin' | 'admin' | 'editor' | 'author' | 'viewer';
@@ -23,6 +26,24 @@ type UserAccount = {
   lastActiveAt?: string | null;
 };
 
+type DirectoryAnalytics = {
+  total: number;
+  byRole: Array<{ role: string; n: number }>;
+  mfaCoverage: number;
+  emailVerified: number;
+  suspended: number;
+  activeSessions: number;
+  series: Array<{ d: string; n: number }>;
+};
+
+type UserActivity = {
+  id: string; email: string; name: string; role: string;
+  twoFactorEnabled: boolean; banned: boolean; banReason: string | null;
+  emailVerified: boolean; createdAt: string; updatedAt: string;
+  activeSessions: number;
+  activity: Array<{ id: number; action: string; entity: string; entityId: string | null; ip: string | null; at: string }>;
+};
+
 const ROLE_COLORS: Record<UserRole, { bg: string; text: string; border: string }> = {
   super_admin: { bg: '#F3E8FF', text: '#7E22CE', border: '#D8B4FE' },
   admin: { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' },
@@ -40,6 +61,7 @@ export default function UsersModule({ me }: ModProps) {
   const [banModalUser, setBanModalUser] = useState<UserAccount | null>(null);
   const [actionError, setActionError] = useState<unknown>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [profileFor, setProfileFor] = useState<string | null>(null);
 
   const query = useMemo(() => {
     const p = new URLSearchParams();
@@ -94,6 +116,7 @@ export default function UsersModule({ me }: ModProps) {
 
   return (
     <div>
+      <SecurityAnalyticsStrip />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Users & Roles</h1>
@@ -152,7 +175,7 @@ export default function UsersModule({ me }: ModProps) {
             const roleStyle = ROLE_COLORS[u.role] ?? ROLE_COLORS.viewer;
             const isMe = me?.user?.id === u.id;
             return (
-              <tr key={u.id} style={{ background: u.banned ? '#FEF2F2' : undefined }}>
+              <tr key={u.id} onClick={() => setProfileFor(profileFor === u.id ? null : u.id)} style={{ background: profileFor === u.id ? '#F0F9FF' : (u.banned ? '#FEF2F2' : undefined), cursor: 'pointer' }}>
                 <td style={td}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#E6EBF1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#475569', fontSize: 13 }}>
@@ -314,6 +337,7 @@ export default function UsersModule({ me }: ModProps) {
       {data && data.items.length === 0 && <Empty text="No staff accounts found." />}
 
       {/* Invite Modal */}
+      {profileFor != null && <UserProfileDrawer id={profileFor} onClose={() => setProfileFor(null)} />}
       {inviteOpen && (
         <InviteModal
           onClose={() => setInviteOpen(false)}
@@ -571,6 +595,115 @@ function BanModal({ user, onClose, onSuccess }: { user: UserAccount; onClose: ()
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+// ---- 0024: security analytics strip ------------------------------------------
+
+function SecurityAnalyticsStrip() {
+  const { data, error, loading } = useAsync<DirectoryAnalytics>(() => apiGet('/admin/users/analytics'), []);
+  if (loading) return null;
+  if (error || !data) return null;
+  const kpi = (label: string, value: string, sub: string, tone = '#1F2A37') => (
+    <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, background: '#fff', padding: '10px 14px' }}>
+      <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4' }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: tone, marginTop: 2 }}>{value}</div>
+      <div style={{ fontSize: 11.5, color: '#66748A' }}>{sub}</div>
+    </div>
+  );
+  const maxJoins = Math.max(1, ...data.series.map((x) => x.n));
+  return (
+    <details style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#1F2A37', userSelect: 'none' }}>
+        Security — <span style={{ color: '#66748A', fontWeight: 400 }}>
+          {data.total} staff · {data.mfaCoverage}% MFA · {data.activeSessions} active session{data.activeSessions === 1 ? '' : 's'}{data.suspended ? ` · ${data.suspended} suspended` : ''}
+        </span>
+      </summary>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10, marginTop: 12 }}>
+        {kpi('Staff', String(data.total), data.byRole.map((r) => r.n + ' ' + r.role).join(' · '))}
+        {kpi('MFA coverage', data.mfaCoverage + '%', Math.round(data.total * (1 - data.mfaCoverage / 100)) + ' without MFA', data.mfaCoverage === 100 ? '#1F9D62' : '#B45309')}
+        {kpi('Active sessions', String(data.activeSessions), 'live login sessions')}
+        {kpi('Suspended', String(data.suspended), data.suspended ? 'accounts blocked' : 'none')}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 16, marginTop: 14 }}>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>Role distribution</div>
+          {data.byRole.map((r) => (
+            <div key={r.role} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 30px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
+              <span style={{ fontSize: 12, color: '#66748A' }}>{r.role}</span>
+              <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+                <span style={{ display: 'block', width: (r.n / Math.max(1, data.total)) * 100 + '%', height: '100%', background: '#1DBF9F', borderRadius: 999 }} />
+              </span>
+              <b style={{ fontSize: 12.5, color: '#1F2A37', textAlign: 'right' }}>{r.n}</b>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>New staff — last 14 days</div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60, borderBottom: '1px solid #E6EBF1' }}>
+            {data.series.map((x) => (
+              <div key={x.d} title={x.d + ': ' + x.n} style={{ flex: 1, display: 'flex', alignItems: 'flex-end', height: '100%' }}>
+                <span style={{ width: '70%', borderRadius: '3px 3px 0 0', background: '#7C5CDB', height: Math.max((x.n / maxJoins) * 100, x.n ? 6 : 0) + '%', display: 'block', margin: '0 auto' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </details>
+  );
+}
+
+// ---- 0024: per-user security drawer ------------------------------------------
+
+function UserProfileDrawer({ id, onClose }: { id: string; onClose: () => void }) {
+  const panelRef = usePanelScroll<HTMLDivElement>();
+  const { data, error, loading } = useAsync<UserActivity>(() => apiGet('/admin/users/' + encodeURIComponent(id) + '/activity'), [id]);
+  return (
+    <div ref={panelRef} style={{ marginTop: 14, border: '1px solid #E6EBF1', borderRadius: 12, background: '#F8FAFC', padding: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <b style={{ fontSize: 15, color: '#1F2A37' }}>Security profile</b>
+        <span style={{ flex: 1 }} />
+        <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={onClose}>Close</button>
+      </div>
+      {error ? <div style={{ marginTop: 10 }}><Err error={error} /></div> : loading ? <p style={{ marginTop: 10 }}>Loading…</p> : data ? (
+        <>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '10px 0' }}>
+            <span style={{ fontSize: 12, color: '#66748A', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+              {data.name || data.email} · <b>{data.role}</b>
+            </span>
+            <span style={{ fontSize: 12, color: data.twoFactorEnabled ? '#047857' : '#B45309', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+              MFA {data.twoFactorEnabled ? '✓ enabled' : '✗ disabled'}
+            </span>
+            <span style={{ fontSize: 12, color: data.banned ? '#9C3230' : '#047857', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+              {data.banned ? 'Suspended' + (data.banReason ? ' — ' + data.banReason : '') : 'Active'}
+            </span>
+            <span style={{ fontSize: 12, color: '#66748A', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+              <b>{data.activeSessions}</b> active session{data.activeSessions === 1 ? '' : 's'}
+            </span>
+            <span style={{ fontSize: 12, color: '#66748A', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+              joined {fmtDate(data.createdAt)}
+            </span>
+          </div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', margin: '12px 0 6px' }}>
+            Recent audited actions ({data.activity.length})
+          </div>
+          {data.activity.length === 0 ? (
+            <span style={{ fontSize: 12.5, color: '#66748A' }}>No audited activity recorded for this account.</span>
+          ) : (
+            <Table head={['Action', 'Entity', 'IP', 'When']}>
+              {data.activity.map((a) => (
+                <tr key={a.id}>
+                  <td style={td}><b style={{ color: '#1F2A37' }}>{a.action}</b></td>
+                  <td style={{ ...td, color: '#66748A', fontSize: 12 }}>{a.entity}{a.entityId ? ' #' + a.entityId : ''}</td>
+                  <td style={{ ...td, fontFamily: 'ui-monospace, monospace', fontSize: 12 }}>{a.ip ?? '—'}</td>
+                  <td style={td}>{fmtDate(a.at)}</td>
+                </tr>
+              ))}
+            </Table>
+          )}
+        </>
+      ) : null}
     </div>
   );
 }

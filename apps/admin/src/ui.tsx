@@ -1,8 +1,22 @@
 // Shared UI atoms + the console design tokens (2026 reference restyle).
 // Palette extracted from the approved design boards in admin_panel/design_sample:
 // deep-navy sidebar, teal accent, light-gray canvas, white soft-shadow cards.
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+/** Panels that open BELOW a long list (editors, detail drawers) can render
+ *  far off-screen — the click that opened them looks dead. Attach the returned
+ *  ref to the panel root; on mount it scrolls the panel into view only when
+ *  needed (block:'nearest' = no jump when already visible). NB behavior:'auto'
+ *  deliberately — smooth scrolling no-ops in the embedded admin webview. */
+export function usePanelScroll<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null);
+  useEffect(() => {
+    const t = setTimeout(() => ref.current?.scrollIntoView({ behavior: 'auto', block: 'nearest' }), 60);
+    return () => clearTimeout(t);
+  }, []);
+  return ref;
+}
 
 // ---- design tokens -------------------------------------------------------
 export const NAVY = '#16222F';   // sidebar / brand rail
