@@ -1,0 +1,65 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0D0D0D" media="(prefers-color-scheme:dark)"><meta name="theme-color" content="#0A2540"><link rel="manifest" href="../assets/manifest.webmanifest"><title>TwinMOS — CMS Admin</title>
+<link rel="stylesheet" href="../assets/design-system.css"></head>
+<body style="background:#F4F7FA">
+<div class="app">
+  <aside class="side">
+    <div style="display:flex;align-items:center;gap:9px;padding:6px 12px 14px"><img src="../assets/img/logo.webp" alt="TwinMOS" style="height:20px;filter:brightness(0) invert(1)"><b style="color:#fff;font-size:15px">CMS</b></div>
+    <div class="sgroup">Content</div>
+    <a>📝 Pages &amp; Blocks</a><a>📰 News &amp; Events</a><a>📄 Legal Pages <span class="bdg">34</span></a>
+    <div class="sgroup">Catalog</div>
+    <a class="on">◈ Products <span class="bdg">102</span></a><a>🗂 Categories</a><a>🏷 Brands</a><a>🧩 Compatibility DB <span class="bdg">5.1K</span></a>
+    <div class="sgroup">Commerce &amp; Ops</div>
+    <a>🧾 Inquiries</a><a>📦 RMA Queue <span class="bdg">7</span></a><a>🏬 Retailers</a>
+    <div class="sgroup">System</div>
+    <a>👥 Users &amp; Roles</a><a>🌲 Audit Log</a><a>📈 Analytics</a><a>⚙ Settings</a>
+  </aside>
+
+  <main class="main">
+    <div class="crumb">Catalog / Products</div>
+    <div class="admin-top"><b style="font-size:18px;color:var(--primary)">Products</b>
+      <div class="sel" style="margin-left:0"><select><option>All statuses</option><option>Published</option><option>Draft</option><option>Scheduled</option></select><input placeholder="Search SKU or name…" style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12.5px;width:200px"/></div>
+      <div style="margin-left:auto;display:flex;gap:8px"><a class="btn btn-outline btn-sm">⬆ Bulk import CSV</a><a class="btn btn-outline btn-sm">⬇ Export</a><a class="btn btn-primary btn-sm">+ New Product</a></div></div>
+
+    <div class="stat-grid">
+      <div class="stat"><span>Published</span><b>88</b><span class="delta up">+4 this month</span></div>
+      <div class="stat"><span>Drafts</span><b>9</b><span class="delta">2 awaiting review</span></div>
+      <div class="stat"><span>Scheduled</span><b>3</b><span class="delta">Next: 01 Oct</span></div>
+      <div class="stat"><span>Discontinued</span><b>2</b><span class="delta down">−1 (EOL notice sent)</span></div>
+    </div>
+
+    <table class="table">
+      <tr><th><span class="cbx"></span></th><th>Product</th><th>SKU</th><th>Category</th><th>Status</th><th>Warranty</th><th>SEO</th><th>Updated</th></tr>
+      <tr><td><span class="cbx"></span></td><td><b>CoreX Pro Gen 5 · 2TB</b></td><td class="mono">NVCXP2TBG52280</td><td>SSD / NVMe Gen 5</td><td><span class="status st-live">Published</span></td><td>60 mo</td><td><span class="status st-ok">100</span></td><td class="mono">2h ago</td></tr>
+      <tr><td><span class="cbx"></span></td><td><b>VOLTX RGB DDR5 6000 · 32GB</b></td><td class="mono">TMD532G60UX42</td><td>Memory / DDR5</td><td><span class="status st-live">Published</span></td><td>Lifetime</td><td><span class="status st-ok">100</span></td><td class="mono">1d ago</td></tr>
+      <tr><td><span class="cbx"></span></td><td><b>Encrypted Portable SSD (rugged)</b></td><td class="mono">—</td><td>Portable</td><td><span class="status st-draft">Draft</span> <span class="tiny muted">awaiting legal review</span></td><td>—</td><td><span class="status st-draft">62</span></td><td class="mono">3h ago</td></tr>
+      <tr><td><span class="cbx"></span></td><td><b>Mobile Disk X3 · 128GB</b></td><td class="mono">MDX3128G</td><td>USB Flash</td><td><span class="status st-sched">Scheduled</span></td><td>60 mo</td><td><span class="status st-ok">96</span></td><td class="mono">1d ago</td></tr>
+      <tr><td><span class="cbx"></span></td><td><b>DDR3 1600 · 8GB (legacy)</b></td><td class="mono">TMD38G16</td><td>Memory / DDR3</td><td><span class="status st-draft">EOL → Discontinued</span></td><td>Lifetime</td><td><span class="status st-ok">88</span></td><td class="mono">5d ago</td></tr>
+    </table>
+    <div style="display:flex;gap:8px;margin-top:12px"><a class="btn btn-outline btn-sm">Preview public view</a><a class="btn btn-outline btn-sm">Duplicate</a><a class="btn btn-outline btn-sm">Publish changes</a><span class="tiny muted" style="margin-left:auto;align-self:center">Draft-first publishing (BR-10.3) · spec edits require Editor review (BR-10.2) · soft-delete 30 days</span></div>
+
+    <!-- Editor panel -->
+    <div class="admin-top" style="margin:24px 0 10px"><b style="color:var(--primary);font-size:15px">Edit — CoreX Pro Gen 5 · 2TB</b><span class="status st-live">Published</span><div style="margin-left:auto;display:flex;gap:8px"><a class="btn btn-outline btn-sm">View revision history</a><a class="btn btn-dark btn-sm">Save Draft</a></div></div>
+    <div class="grid g2" style="gap:16px">
+      <div class="card card-pad">
+        <div class="field" style="margin-bottom:12px"><label>Product Name (EN)</label><input value="CoreX Pro M.2 PCIe Gen 5 NVMe SSD — 2TB"/></div>
+        <div class="field" style="margin-bottom:12px"><label>Gallery (auto-resized: thumb / gallery / hero)</label>
+          <div style="display:flex;gap:8px"><div class="thumb on"><img class="pimg" src="../assets/img/corex-pro.webp" alt="TwinMOS product"></div><div class="thumb"><img class="pimg" src="../assets/img/corex-heatsink.webp" alt="TwinMOS product"></div><div class="thumb" style="border-style:dashed">+ DROP</div></div></div>
+        <div class="field" style="margin-bottom:12px"><label>Specs (structured JSON)</label><textarea style="min-height:90px;font-family:Consolas,monospace;font-size:12px">{ "read_mbps": 14000, "write_mbps": 13000, "capacity_gb": 2048, "form_factor": "M.2 2280", "heatsink": "graphene", "warranty_months": 60 }</textarea></div>
+        <div class="field"><label>Datasheet PDF (auto-generated, 1.4MB)</label><input value="corex-pro-2tb-en-v6.pdf"/></div>
+      </div>
+      <div>
+        <div class="card card-pad" style="margin-bottom:14px"><b class="small" style="color:var(--primary)">SEO &amp; Sharing</b>
+          <div class="field" style="margin:10px 0"><label>Meta Title <span class="tiny muted">(58/60)</span></label><input value="CoreX Pro Gen 5 2TB — 14,000 MB/s | TwinMOS"/></div>
+          <div class="field" style="margin-bottom:10px"><label>Meta Description <span class="tiny muted">(147/160)</span></label><input value="Flagship PCIe Gen 5 NVMe SSD with graphene heatsink, DRAM cache and 5-year warranty."/></div>
+          <div style="display:flex;gap:8px;align-items:center"><div class="thumb" style="width:64px;height:44px">OG</div><span class="tiny muted">og:image 1200×630 · Product schema valid ✓</span></div>
+        </div>
+        <div class="card card-pad"><b class="small" style="color:var(--primary)">Publishing Workflow</b>
+          <div class="rma-track" style="margin:16px 0 4px"><div class="rma-step done">Draft</div><div class="rma-step done">PM Review</div><div class="rma-step now">Marketing</div><div class="rma-step">Legal*</div><div class="rma-step">Published</div></div>
+          <p class="tiny muted">Two-person rule (BR-5.1) · emergency admin override logged · scheduled publishing supported.</p></div>
+      </div>
+    </div>
+    <p class="tiny muted" style="margin-top:14px">UX notes: admin load &lt;1s · geo-blocked to office IPs/VPN · MFA mandatory · optimistic locking (409 + diff on conflict) · audit log on every change.</p>
+  </main>
+</div>
+<div class="mocknote">TWINMOS UX CONCEPT · 16 CMS ADMIN — PRODUCT MANAGEMENT</div>
+</body></html>

@@ -1,0 +1,21 @@
+{
+  "name": "TwinMOS — Memory & Storage",
+  "short_name": "TwinMOS",
+  "description": "DDR5 memory, NVMe SSDs and portable storage from TwinMOS Technologies. Catalog, compatibility finder, warranty tools — works offline.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0A2540",
+  "theme_color": "#0A2540",
+  "categories": ["shopping", "productivity", "utilities"],
+  "icons": [
+    { "src": "img/logo.webp", "sizes": "any", "type": "image/webp", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Compatibility Finder", "url": "/compatibility-finder" },
+    { "name": "Where to Buy", "url": "/where-to-buy" },
+    { "name": "Warranty Registration", "url": "/support/warranty" }
+  ]
+}

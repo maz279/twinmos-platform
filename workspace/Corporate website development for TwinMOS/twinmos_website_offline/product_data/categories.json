@@ -1,0 +1,218 @@
+[
+  {
+    "path": "dram-module/desktop-dram-dram-module",
+    "name": "Desktop DRAM",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/dram-module/desktop-dram-dram-module/",
+    "product_slugs": [
+      "twinmos-tornadox7-pro-ddr4-3200mhz-cl16-gaming-ram",
+      "twinmos-tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop",
+      "twinmos-voltx-rgb-ddr5-u-dimm-for-desktop",
+      "twinmos-voltx-ddr5-u-dimm-for-desktop",
+      "twinmos-thunder-gx-ddr4-u-dimm-for-desktop",
+      "twinmos-ddr4-concord-rgb-gaming-dram-for-desktop",
+      "twinmos-tornadox6-ddr4-3200mhz-u-dimm-for-desktop",
+      "twinmos-ddr4-2133mhz-u-dimm-for-desktop",
+      "twinmos-ddr3-1333mhz-u-dimm",
+      "twinmos-ddr3-1600mhz-u-dimm-for-desktop",
+      "twinmos-3200mhz-ddr4-u-dimm-for-desktop",
+      "twinmos-ddr4-2666mhz-u-dimm-for-desktop"
+    ]
+  },
+  {
+    "path": "dram-module/gaming-dram-dram-module",
+    "name": "Gaming DRAM",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/dram-module/gaming-dram-dram-module/",
+    "product_slugs": [
+      "twinmos-tornadox7-pro-ddr4-3200mhz-cl16-gaming-ram",
+      "twinmos-tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop",
+      "twinmos-voltx-rgb-ddr5-u-dimm-for-desktop",
+      "twinmos-voltx-ddr5-u-dimm-for-desktop",
+      "twinmos-thunder-gx-ddr4-u-dimm-for-desktop",
+      "twinmos-ddr4-concord-rgb-gaming-dram-for-desktop",
+      "twinmos-tornadox6-ddr4-3200mhz-u-dimm-for-desktop"
+    ]
+  },
+  {
+    "path": "dram-module",
+    "name": "DRAM Module",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/dram-module/",
+    "product_slugs": [
+      "twinmos-tornadox7-pro-ddr4-3200mhz-cl16-gaming-ram",
+      "twinmos-tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop",
+      "twinmos-voltx-ddr5-so-dimm-for-laptop",
+      "twinmos-voltx-rgb-ddr5-u-dimm-for-desktop",
+      "twinmos-voltx-ddr5-u-dimm-for-desktop",
+      "twinmos-thunder-gx-ddr4-u-dimm-for-desktop",
+      "twinmos-ddr4-concord-rgb-gaming-dram-for-desktop",
+      "twinmos-tornadox6-ddr4-3200mhz-u-dimm-for-desktop",
+      "twinmos-ddr4-2133mhz-u-dimm-for-desktop",
+      "twinmos-ddr3-1333mhz-u-dimm",
+      "twinmos-ddr3-1600mhz-u-dimm-for-desktop",
+      "twinmos-2666mhz-ddr4-so-dimm-for-laptop"
+    ]
+  },
+  {
+    "path": "dram-module/notebook-dram-dram-module",
+    "name": "Notebook DRAM",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/dram-module/notebook-dram-dram-module/",
+    "product_slugs": [
+      "twinmos-voltx-ddr5-so-dimm-for-laptop",
+      "twinmos-2666mhz-ddr4-so-dimm-for-laptop",
+      "twinmos-3200mhz-ddr4-ram-for-laptop",
+      "twinmos-ddr3-1333mhz-so-dimm-for-notebook",
+      "twinmos-ddr3-1600mhz-so-dimm-for-notebook"
+    ]
+  },
+  {
+    "path": "dram-module/page/1",
+    "name": "DRAM Module",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/dram-module/page/1/",
+    "product_slugs": [
+      "twinmos-tornadox7-pro-ddr4-3200mhz-cl16-gaming-ram",
+      "twinmos-tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop",
+      "twinmos-voltx-ddr5-so-dimm-for-laptop",
+      "twinmos-voltx-rgb-ddr5-u-dimm-for-desktop",
+      "twinmos-voltx-ddr5-u-dimm-for-desktop",
+      "twinmos-thunder-gx-ddr4-u-dimm-for-desktop",
+      "twinmos-ddr4-concord-rgb-gaming-dram-for-desktop",
+      "twinmos-tornadox6-ddr4-3200mhz-u-dimm-for-desktop",
+      "twinmos-ddr4-2133mhz-u-dimm-for-desktop",
+      "twinmos-ddr3-1333mhz-u-dimm",
+      "twinmos-ddr3-1600mhz-u-dimm-for-desktop",
+      "twinmos-2666mhz-ddr4-so-dimm-for-laptop"
+    ]
+  },
+  {
+    "path": "dram-module/page/2",
+    "name": "DRAM Module - Page 2 of 2",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/dram-module/page/2/",
+    "product_slugs": [
+      "twinmos-3200mhz-ddr4-ram-for-laptop",
+      "twinmos-3200mhz-ddr4-u-dimm-for-desktop",
+      "twinmos-ddr3-1333mhz-so-dimm-for-notebook",
+      "twinmos-ddr4-2666mhz-u-dimm-for-desktop",
+      "twinmos-ddr4-2400mhz-u-dimm-for-desktop",
+      "twinmos-ddr3-1600mhz-so-dimm-for-notebook"
+    ]
+  },
+  {
+    "path": "flash-drive",
+    "name": "Flash Drive",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/flash-drive/",
+    "product_slugs": [
+      "twinmos-x3-ultra-usb-3-2-flash-drive",
+      "twinmos-m16-usb-3-2-flash-drive"
+    ]
+  },
+  {
+    "path": "microsd-card",
+    "name": "MicroSD Card",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/microsd-card/",
+    "product_slugs": [
+      "twinmos-64gb-microsdxc-class-10-uhs-1"
+    ]
+  },
+  {
+    "path": "portable-drives",
+    "name": "Portable Drives",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/portable-drives/",
+    "product_slugs": [
+      "twinmos-portable-ssd-elite-drive-pro-usb-type-c",
+      "twinmos-portable-hdd-prodrive-ultra-usb-3-0",
+      "twinmos-portable-hdd-prodrive-usb-3-0",
+      "twinmos-portable-external-ssd-elitedrive-usb-3-0-type-c"
+    ]
+  },
+  {
+    "path": "portable-drives/portable-hdd-portable-drives",
+    "name": "Portable HDD",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/portable-drives/portable-hdd-portable-drives/",
+    "product_slugs": [
+      "twinmos-portable-hdd-prodrive-ultra-usb-3-0",
+      "twinmos-portable-hdd-prodrive-usb-3-0"
+    ]
+  },
+  {
+    "path": "portable-drives/portable-ssd-portable-drives",
+    "name": "Portable SSD",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/portable-drives/portable-ssd-portable-drives/",
+    "product_slugs": [
+      "twinmos-portable-ssd-elite-drive-pro-usb-type-c",
+      "twinmos-portable-external-ssd-elitedrive-usb-3-0-type-c"
+    ]
+  },
+  {
+    "path": "power-supply",
+    "name": "Power Supply",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/power-supply/",
+    "product_slugs": [
+      "twinmos-smartx-rgb-80-plus-bronze-power-supply-550w",
+      "twinmos-smartx-rgb-80-plus-bronze-power-supply-450w",
+      "twinmos-xpower-80-plus-bronze-550w",
+      "twinmos-xpower-80-plus-bronze-450w"
+    ]
+  },
+  {
+    "path": "solid-state-drive",
+    "name": "Solid State Drive (SSD)",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/solid-state-drive/",
+    "product_slugs": [
+      "twinmos-portable-ssd-elite-drive-pro-usb-type-c",
+      "twinmos-corex-pro-m-2-pcie-gen-5-0-nvme-ssd",
+      "twinmos-corex-m-2-pcie-gen-4-0-nvme-ssd",
+      "twinmos-alphapro-nvme-m-2-2280-new-ssd",
+      "twinmos-xtreme-gen4-x4-nvme-pro-m-2-2280-ssd",
+      "twinmos-portable-external-ssd-elitedrive-usb-3-0-type-c",
+      "twinmos-m-2-2280-ssd-sataiii",
+      "twinmos-nvme-m-2-2280-ssd",
+      "twinmos-hyper-ssd-h2-ultra"
+    ]
+  },
+  {
+    "path": "solid-state-drive/nvme-ssd-solid-state-drive",
+    "name": "NVMe SSD",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/solid-state-drive/nvme-ssd-solid-state-drive/",
+    "product_slugs": [
+      "twinmos-corex-pro-m-2-pcie-gen-5-0-nvme-ssd",
+      "twinmos-corex-m-2-pcie-gen-4-0-nvme-ssd",
+      "twinmos-alphapro-nvme-m-2-2280-new-ssd",
+      "twinmos-xtreme-gen4-x4-nvme-pro-m-2-2280-ssd",
+      "twinmos-nvme-m-2-2280-ssd"
+    ]
+  },
+  {
+    "path": "solid-state-drive/sata-ssd",
+    "name": "SATA SSD",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/solid-state-drive/sata-ssd/",
+    "product_slugs": [
+      "twinmos-m-2-2280-ssd-sataiii",
+      "twinmos-hyper-ssd-h2-ultra"
+    ]
+  },
+  {
+    "path": "usb-hub",
+    "name": "USB HUB",
+    "description": "",
+    "source_url": "https://www.twinmos.com/product-category/usb-hub/",
+    "product_slugs": [
+      "twinmos-4-port-usb3-0-hub-ezeehub-34l-m",
+      "twinmos-3-ports-usb-2-0-and-1-port-usb-3-0-hub-ezeehub-23l",
+      "twinmos-3-ports-usb-2-0-and-1-port-usb-3-0-hub-ezeehub23p"
+    ]
+  }
+]

@@ -1,0 +1,140 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>TwinMOS UX Concepts — Design Gallery</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--primary:#0A2540;--accent:#00A3E0;--surface:#F6F9FC;--border:#E3E8EE;--text:#1A1A2E;--muted:#5B6B7E}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;background:var(--surface);color:var(--text)}
+.top{background:var(--primary);color:#fff;padding:34px 6vw}
+.top .brand{display:flex;align-items:center;gap:12px;font-size:22px;font-weight:800;letter-spacing:.01em;margin-bottom:14px}
+.mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#0E3A66);display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#fff}
+.top h1{font-size:32px;line-height:1.2;margin-bottom:10px}
+.top p{color:#B9C9DA;font-size:14.5px;line-height:1.6;max-width:820px}
+.meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:12.5px;color:#8FA6BC}
+.meta span{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);padding:5px 12px;border-radius:999px}
+.wrap{max-width:1280px;margin:0 auto;padding:34px 4vw 70px}
+.legend{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:30px;font-size:13.5px;color:var(--muted);line-height:1.6}
+.legend b{color:var(--text)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(560px,1fr));gap:26px}
+.card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(10,37,64,.05)}
+.shot{position:relative;background:linear-gradient(160deg,#0E2A47,#0A2540)}
+.shot img{display:block;width:100%;height:340px;object-fit:cover;object-position:top;border-radius:0}
+.dark-tag{position:absolute;top:10px;right:10px;background:#000;color:#00F0FF;font-size:10px;font-weight:800;letter-spacing:.12em;padding:4px 9px;border-radius:6px}
+.num{position:absolute;top:10px;left:10px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:4px 9px;border-radius:6px}
+.body{padding:16px 20px 18px}
+.body h2{font-size:16.5px;color:var(--primary);margin-bottom:6px}
+.body p{font-size:13px;color:var(--muted);line-height:1.55}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.t{font-size:10.5px;font-weight:700;letter-spacing:.04em;color:#0E6E8C;background:rgba(0,163,224,.10);border:1px solid rgba(0,163,224,.25);padding:3px 8px;border-radius:999px}
+.rsec{margin-top:46px}
+.rsec h2{font-size:20px;color:var(--primary);margin-bottom:6px}
+.rsec .sub{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:20px;max-width:900px}
+.dev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px}
+.dev{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(10,37,64,.05)}
+.dev .frame{background:linear-gradient(160deg,#0E2A47,#0A2540);display:flex;align-items:flex-start;justify-content:center;padding:16px 0}
+.dev img{display:block;height:420px;width:auto;max-width:96%;object-fit:cover;object-position:top;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.dev .cap{padding:12px 16px 14px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.dev .cap b{display:block;color:var(--primary);font-size:13.5px;margin-bottom:3px}
+@media (max-width:700px){.dev img{height:300px}.grid{grid-template-columns:1fr}}
+footer{background:var(--primary);color:#7E93A8;text-align:center;padding:22px;font-size:12px}
+footer b{color:#B9C9DA}
+a{color:var(--accent);text-decoration:none;font-weight:600}
+</style></head><body>
+
+<div class="top">
+  <div class="brand"><img src="assets/img/logo.webp" alt="TwinMOS" style="height:26px;filter:brightness(0) invert(1);margin-right:2px"> <span style="opacity:.55">·</span> Front-End Design Concepts</div>
+  <h1>17-Page UX &amp; Visual Design Package — v2</h1>
+  <p>Design concepts for the TwinMOS corporate website rebuild — now with <b style="color:#fff">real TwinMOS product photography and logo</b>, vibrant bento grids, performance meters, an installable-app (PWA) layer, and a fully responsive layout verified from 390 px phones to 1600 px+ desktops. Public site, gaming hub, regional page, partner channel and admin CMS.</p>
+  <div class="meta"><span>Version 2.0 · 24 Sep 2026</span><span>38 renders: desktop ×17 · mobile ×17 · tablet ×4</span><span>Real product imagery · 38 assets</span><span>Responsive 390 → 1600+ px</span><span>PWA-ready patterns</span><span>Fact-safe content rules</span></div>
+</div>
+
+<div class="wrap">
+  <div class="legend"><b>How to browse:</b> each card shows the top of the concept; click any image to view it full-size (files live in <b>images/</b>). Editable sources are in <b>pages/</b>, tokens in <b>assets/design-system.css</b>. See <b>TwinMOS_Frontend_Design_Reference_Guide.md</b> for design rationale and the live reference-site directory (Kingston, Crucial, Corsair, ADATA/XPG …).</div>
+
+  <div class="grid">
+
+    <div class="card"><div class="shot"><span class="num">01</span><a href="images/01-homepage.png"><img src="images/01-homepage.png" alt="Homepage concept"></a></div>
+      <div class="body"><h2>Homepage — Public Gateway</h2><p>Hero with capability chips, trust band (27 yrs · 93+ countries · ISO/CE/FCC/RoHS/JEDEC), 5 product categories, featured products, VOLTX dark band, 5-office global map, newsroom teaser.</p>
+      <div class="tags"><span class="t">Light theme</span><span class="t">Trust band</span><span class="t">Category grid</span><span class="t">Dark band accent</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">02</span><a href="images/02-products-catalog.png"><img src="images/02-products-catalog.png" alt="Products catalog concept"></a></div>
+      <div class="body"><h2>Products Catalog</h2><p>Open mega-menu with visual category cards, faceted filter sidebar (type · capacity · interface · speed), spec-tag product cards, sort bar and pagination across the 38-SKU authoritative catalogue.</p>
+      <div class="tags"><span class="t">Mega-menu</span><span class="t">Faceted filters</span><span class="t">Light theme</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">03</span><a href="images/03-product-detail.png"><img src="images/03-product-detail.png" alt="Product detail concept"></a></div>
+      <div class="body"><h2>Product Detail — CoreX Pro Gen 5</h2><p>Gallery with thumbnails, key-spec strip, sticky buy-box routing to verified marketplaces, warranty tier stated plainly (5-yr NVMe), full spec table, related products.</p>
+      <div class="tags"><span class="t">Buy-box</span><span class="t">Spec table</span><span class="t">Verified channels only</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">04</span><a href="images/04-compatibility-finder.png"><img src="images/04-compatibility-finder.png" alt="Compatibility finder concept"></a></div>
+      <div class="body"><h2>Compatibility Finder</h2><p>The Kingston-benchmark pattern: pick laptop / desktop / motherboard, autosuggest the model, get grouped verified upgrades — answers “will it work with MY machine?” before price.</p>
+      <div class="tags"><span class="t">Configurator</span><span class="t">Autosuggest</span><span class="t">Conversion driver</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">05</span><a href="images/05-product-comparison.png"><img src="images/05-product-comparison.png" alt="Product comparison concept"></a></div>
+      <div class="body"><h2>Product Comparison</h2><p>Compare tray (up to 4), full spec matrix with row-level difference highlighting, winner chips, share/print — for shortlist-stage buyers and procurement.</p>
+      <div class="tags"><span class="t">Diff highlighting</span><span class="t">Compare tray</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">06</span><a href="images/06-where-to-buy.png"><img src="images/06-where-to-buy.png" alt="Where to buy concept"></a></div>
+      <div class="body"><h2>Where to Buy</h2><p>Geo-detect bar, world map with channel pins, verified retailer &amp; marketplace cards (Amazon.ae · Newegg verified 2026-09), unauthorized-seller reporting link.</p>
+      <div class="tags"><span class="t">Geo routing</span><span class="t">Channel map</span><span class="t">Fact-safe listings</span></div></div></div>
+
+    <div class="card"><div class="shot dark"><span class="num">07</span><span class="dark-tag">DARK · VOLTX</span><a href="images/07-gaming-hub.png"><img src="images/07-gaming-hub.png" alt="Gaming hub concept"></a></div>
+      <div class="body"><h2>VOLTX Gaming Hub</h2><p>Emotional brand home: neon hero, RGB ecosystem showcase (Aura Sync · Mystic Light · RGB Fusion · Polychrome), Spec Battle table, moderated build gallery, OC guides &amp; wallpapers.</p>
+      <div class="tags"><span class="t">Dark theme</span><span class="t">Neon accents</span><span class="t">Community</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">08</span><a href="images/08-solutions.png"><img src="images/08-solutions.png" alt="Solutions concept"></a></div>
+      <div class="body"><h2>Solutions — B2B Verticals</h2><p>Seven industry tiles (enterprise, OEM/ODM, education, government, healthcare, industrial, channel), featured enterprise split with SLA points, gated case-study downloads.</p>
+      <div class="tags"><span class="t">B2B</span><span class="t">Lead gen</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">09</span><a href="images/09-support-center.png"><img src="images/09-support-center.png" alt="Support center concept"></a></div>
+      <div class="body"><h2>Support Center</h2><p>Search-first hero, 6 support categories, live RMA tracker with 7-state stepper, warranty registration form, serial-number check — self-serve before ticket.</p>
+      <div class="tags"><span class="t">7-state RMA</span><span class="t">Self-serve</span><span class="t">Stepper</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">10</span><a href="images/10-news-pressroom.png"><img src="images/10-news-pressroom.png" alt="News pressroom concept"></a></div>
+      <div class="body"><h2>News &amp; Pressroom</h2><p>Featured article, category filtering, events strip, media-kit block with logo &amp; boilerplate downloads — SEO authority plus journalist convenience.</p>
+      <div class="tags"><span class="t">Editorial</span><span class="t">Media kit</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">11</span><a href="images/11-regional-india.png"><img src="images/11-regional-india.png" alt="Regional India page concept"></a></div>
+      <div class="body"><h2>Regional Landing — India</h2><p>Region-aware template (27 regional pages): locale detect, INR indicative pricing, India channel structure, BIS compliance chip, localized support hours — no invented distributor names.</p>
+      <div class="tags"><span class="t">INR indicative</span><span class="t">Compliance chips</span><span class="t">Template ×27</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">12</span><a href="images/12-contact-quote.png"><img src="images/12-contact-quote.png" alt="Contact and quote concept"></a></div>
+      <div class="body"><h2>Contact &amp; Bulk Quote</h2><p>Enterprise quote form with product/quantity matrix, response-SLA badges, 5 real office cards (Taipei · Dubai DAFZA · Dongguan · Cologne · San Jose), live-chat card.</p>
+      <div class="tags"><span class="t">Lead capture</span><span class="t">SLA</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">13</span><a href="images/13-careers.png"><img src="images/13-careers.png" alt="Careers concept"></a></div>
+      <div class="body"><h2>Careers</h2><p>Culture hero, open-role listings with salary bands and office locations, 4-step application journey — no fabricated executive content.</p>
+      <div class="tags"><span class="t">Recruiting</span><span class="t">Salary bands</span></div></div></div>
+
+    <div class="card"><div class="shot dark"><span class="num">14</span><span class="dark-tag">DARK · AUTH</span><a href="images/14-partner-login.png"><img src="images/14-partner-login.png" alt="Partner login concept"></a></div>
+      <div class="body"><h2>Partner Login — Secure Entry</h2><p>Split-screen auth: brand narrative beside the form, MFA 6-digit code boxes, SSO options, partner-program benefits strip for the distributor channel.</p>
+      <div class="tags"><span class="t">MFA</span><span class="t">Channel auth</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">15</span><a href="images/15-partner-portal.png"><img src="images/15-partner-portal.png" alt="Partner portal concept"></a></div>
+      <div class="body"><h2>Partner Portal — Channel Self-Service</h2><p>Sidebar app for distributors: order &amp; credit stats, watermark-protected price lists, co-branded asset library, account team contacts.</p>
+      <div class="tags"><span class="t">Portal</span><span class="t">Watermarked pricing</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">16</span><a href="images/16-admin-cms.png"><img src="images/16-admin-cms.png" alt="Admin CMS concept"></a></div>
+      <div class="body"><h2>Admin CMS — Content Operations</h2><p>Staff-only back office: product table with lifecycle statuses, KPI cards, product editor with SEO panel, locale toggles and a publishing workflow stepper (draft → review → scheduled → live).</p>
+      <div class="tags"><span class="t">Admin</span><span class="t">Workflow stepper</span><span class="t">SEO panel</span></div></div></div>
+
+    <div class="card"><div class="shot"><span class="num">17</span><a href="images/17-learn-hub.png"><img src="images/17-learn-hub.png" alt="Learn hub concept"></a></div>
+      <div class="body"><h2>Learn Hub — Education &amp; SEO</h2><p>Featured buying guide, guides grid, “Memory Explained” series and glossary — the content engine that captures top-of-funnel searches like “DDR4 vs DDR5”.</p>
+      <div class="tags"><span class="t">SEO</span><span class="t">Nurture</span></div></div></div>
+
+  </div>
+
+  <div class="rsec">
+    <h2>Responsive &amp; PWA Layer — every screen, installable</h2>
+    <div class="sub">The same editable sources adapt from a 390 px phone (burger nav, single-column stacking, scrollable spec tables) through 834 px tablets (two-up grids) to 1440 px desktops and 1600 px+ large monitors (wider wrap, 5-column bento). An installable-app banner, offline badge and app shortcuts follow PWA best practice — install prompt is dismissible and appears only after the visitor has seen value. Full-size shots: <b>images/mobile/</b> and <b>images/tablet/</b>.</div>
+    <div class="dev-grid">
+      <div class="dev"><div class="frame"><img src="images/mobile/01-homepage.png" alt="Homepage on 390px mobile"></div><div class="cap"><b>Homepage · 390 px mobile</b>Burger nav, hero photo, bento stacks to 2-up then 1-up, install banner stays dismissible.</div></div>
+      <div class="dev"><div class="frame"><img src="images/mobile/03-product-detail.png" alt="Product detail on mobile"></div><div class="cap"><b>Product Detail · 390 px</b>Gallery, buy-box and performance meters stack; spec table scrolls horizontally.</div></div>
+      <div class="dev"><div class="frame"><img src="images/mobile/07-gaming-hub.png" alt="Gaming hub on mobile"></div><div class="cap"><b>VOLTX Gaming Hub · 390 px</b>Neon dark theme intact, comparison table becomes a swipeable card list.</div></div>
+      <div class="dev"><div class="frame"><img src="images/tablet/01-homepage.png" alt="Homepage on 834px tablet"></div><div class="cap"><b>Homepage · 834 px tablet</b>Two-column product grids, compact nav, hero keeps side-by-side layout.</div></div>
+      <div class="dev"><div class="frame"><img src="images/tablet/03-product-detail.png" alt="Product detail on tablet"></div><div class="cap"><b>Product Detail · 834 px</b>Gallery + buy-box share the row; thumbs wrap under the main shot.</div></div>
+      <div class="dev"><div class="frame"><img src="images/tablet/07-gaming-hub.png" alt="Gaming hub on tablet"></div><div class="cap"><b>Gaming Hub · 834 px</b>Spec battle and community wall re-flow to 2-up neon cards.</div></div>
+    </div>
+  </div>
+</div>
+
+<footer><b>TwinMOS UX Concept Package v2.0</b> · 17 concepts × 3 viewports · real product photography · editable HTML in <b>pages/</b> · tokens in <b>assets/design-system.css</b> · PWA manifest in <b>assets/</b> · rationale &amp; live references in the Reference Guide</footer>
+</body></html>

@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0D0D0D" media="(prefers-color-scheme:dark)"><meta name="theme-color" content="#0A2540"><link rel="manifest" href="../assets/manifest.webmanifest"><title>TwinMOS — Compare Products</title>
+<link rel="stylesheet" href="../assets/design-system.css"></head>
+<body>
+<header class="hdr"><div class="wrap hdr-in">
+  <a class="logo"><img src="../assets/img/logo.webp" alt="TwinMOS"></a>
+  <nav class="nav"><a class="on" href="#">Products</a><a href="#">Solutions</a><a href="#">Where to Buy</a><a href="#">Support</a><a href="#">About</a><a href="#">News</a><a href="#">Contact</a></nav>
+  <div class="hdr-tools"><button class="icon-btn">🔍</button><a class="lang">🌐 EN</a><a class="btn btn-primary btn-sm">Where to Buy</a></div>
+</div></header>
+
+<div class="wrap"><div class="crumbs">Home / Products / <b>Comparison</b></div>
+<div class="page-head"><h1>Compare Products</h1><p class="lead">Up to 4 products side-by-side. Differences are highlighted — share or print when done.</p></div>
+
+<div class="toolbar" style="margin-top:20px">
+  <span class="count"><b>3 of 4</b> products · saved in this session</span>
+  <div class="sel" style="margin-left:auto"><a class="btn btn-outline btn-sm">⧉ Copy share link</a><a class="btn btn-outline btn-sm">🖨 Print</a><a class="btn btn-outline btn-sm">+ Add product</a><a class="btn btn-ghost">Clear all</a></div>
+</div>
+
+<table class="cmp-table">
+  <tr>
+    <th></th>
+    <th><span class="flag flag-new">NEW</span><div style="display:flex;justify-content:center;margin:10px 0"><img class="pimg" src="../assets/img/corex-pro.webp" alt="TwinMOS product"></div><b style="font-size:15px;color:var(--primary)">CoreX Pro Gen 5</b><div class="tiny muted">NVCXP2TBG52280</div><a class="link" style="display:block;margin-top:6px">View product ✕</a></th>
+    <th><div style="display:flex;justify-content:center;margin:10px 0"><img class="pimg" src="../assets/img/xtreme.webp" alt="TwinMOS product"></div><b style="font-size:15px;color:var(--primary)">Xtreme Gen4X4</b><div class="tiny muted">TMNVME2TBX4</div><a class="link" style="display:block;margin-top:6px">View product ✕</a></th>
+    <th><div style="display:flex;justify-content:center;margin:10px 0"><img class="pimg" src="../assets/img/h2ultra.webp" alt="TwinMOS product"></div><b style="font-size:15px;color:var(--primary)">Hyper H2 Ultra SATA</b><div class="tiny muted">TM2TBH2U</div><a class="link" style="display:block;margin-top:6px">View product ✕</a></th>
+  </tr>
+  <tr><td>Interface</td><td class="diff">PCIe Gen 5 x4 · NVMe 2.0</td><td>PCIe Gen 4 x4 · NVMe 1.4</td><td class="diff">SATA III 6Gb/s</td></tr>
+  <tr><td>Sequential Read</td><td class="diff">14,000 MB/s</td><td class="diff">7,500 MB/s</td><td>580 MB/s</td></tr>
+  <tr><td>Sequential Write</td><td class="diff">13,000 MB/s</td><td class="diff">6,800 MB/s</td><td>550 MB/s</td></tr>
+  <tr><td>Capacities</td><td>1 / 2 / 4 TB</td><td>1 / 2 TB</td><td class="diff">128 GB – 2 TB (2.5")</td></tr>
+  <tr><td>Form Factor</td><td>M.2 2280</td><td>M.2 2280</td><td class="diff">2.5-inch + M.2 2280</td></tr>
+  <tr><td>Heatsink</td><td class="diff">Graphene (8.2 mm)</td><td>Graphene sheet</td><td>—</td></tr>
+  <tr><td>DRAM Cache</td><td class="diff">Yes (DDR4)</td><td>Yes (2GB @2TB)</td><td>No (HMB n/a)</td></tr>
+  <tr><td>Endurance (TBW)</td><td class="diff">2,000 TBW</td><td>1,200 TBW</td><td>640 TBW</td></tr>
+  <tr><td>Power Loss Protection</td><td>—</td><td class="diff">Yes</td><td>—</td></tr>
+  <tr><td>Best for</td><td class="diff">Flagship builds · creators</td><td>Gaming · pro workloads</td><td class="diff">Desktop upgrades on SATA</td></tr>
+  <tr><td>Warranty</td><td>5 years</td><td>5 years</td><td class="diff">3 years</td></tr>
+  <tr><td>Where to Buy</td><td><a class="btn btn-primary btn-sm">Find stores →</a></td><td><a class="btn btn-primary btn-sm">Find stores →</a></td><td><a class="btn btn-primary btn-sm">Find stores →</a></td></tr>
+</table>
+
+<div class="cmp-bar"><b style="font-size:14px">🛒 Compare tray — 3 products</b><span class="small" style="color:#9FC9E2">Add one more (max 4)</span><span style="margin-left:auto"><a class="btn btn-primary btn-sm">Copy share link</a>&nbsp;<a class="btn btn-sm" style="background:rgba(255,255,255,.12);color:#fff">Clear all</a></span></div>
+
+<div class="callout" style="margin-top:26px"><b>How to read this table:</b> highlighted cells differ across products. “—” means the feature is not present; “0” would be an actual zero value. Discontinued products show replacement suggestions automatically.</div>
+<p class="breadcrumb-note">UX notes: compare tray persists (localStorage) · shareable URL /compare/?products=… · print stylesheet · keyboard accessible table with sticky first column.</p>
+</div>
+<footer class="ftr" style="margin-top:36px"><div class="wrap"><div class="ftr-bot" style="border:none"><span>© 2026 TwinMOS Technologies</span><span>Product Comparison Tool</span></div></div></footer>
+<div class="mocknote">TWINMOS UX CONCEPT · 05 PRODUCT COMPARISON</div>
+</body></html>

@@ -1,0 +1,267 @@
+---
+title: "Where to Buy Sticky CTA"
+slug: "cta-where-to-buy"
+url: "/components/cta-where-to-buy"
+template: "component"
+description: "Persistent conversion-focused CTA component with multiple variants (floating pill, sticky bar, inline banner) driving users to distributor locator, online retailers, and purchase channels across 93+ countries."
+keywords: ["CTA", "where to buy", "distributor locator", "purchase", "find a retailer", "buy TwinMOS"]
+persona: ["buyer", "distributor", "visitor"]
+phase: P1
+priority: P0
+owner: "web-team"
+status: draft
+last_reviewed: "2026-04-29"
+locale: en
+hreflang: []
+schema: ""
+ctas: ["where-to-buy", "find-distributor", "online-stores"]
+cross_links: ["/where-to-buy", "/where-to-buy/distributors", "/where-to-buy/online"]
+sources: ["CP", "BRD"]
+---
+
+# Where to Buy Sticky CTA
+
+## Overview
+The "Where to Buy" CTA is the primary conversion mechanism across the TwinMOS website. It appears persistently on product pages, category pages, and key landing pages to guide purchase-ready visitors toward authorized distributors and online retailers. Given that TwinMOS sells primarily through channel partners (not direct e-commerce in Phase 1), this component is critical for lead generation and sales conversion.
+
+**Business Impact**: Per BRD §10, the Where to Buy feature is a P0 requirement with direct impact on lead generation KPIs.
+
+---
+
+## Component Variants
+
+### Variant 1: Floating Pill (Mobile-First)
+**Primary use case**: Mobile devices, product detail pages
+
+- **Position**: Fixed, bottom-right corner
+- **Offset**: 16px from right edge, 16px from bottom edge
+- **Size**: Auto-width, 48px height
+- **Shape**: Fully rounded pill (border-radius: 24px)
+- **Background**: Brand primary color (#0056D2) with subtle shadow
+- **Text**: White, 14px, font-weight 600
+- **Icon**: Map pin (📍) or shopping bag, 20px, left of text
+- **Label**: "Where to Buy"
+- **Z-Index**: 100 (above content, below modals)
+- **Animation**: Slide up on page load (300ms), subtle pulse every 10 seconds
+
+**Tap Behavior**: Opens bottom sheet modal with distributor options:
+1. "Find Nearby Distributors" (geolocation-based)
+2. "Browse Online Stores"
+3. "Contact Sales Directly"
+
+---
+
+### Variant 2: Sticky Bar (Desktop)
+**Primary use case**: Desktop, appears after scrolling past hero section
+
+- **Position**: Fixed, top of viewport (below main header)
+- **Height**: 56px
+- **Background**: Brand primary color (#0056D2) or gradient
+- **Text**: White
+- **Layout**: Flexbox — message left, CTAs right
+- **Trigger**: Appears when user scrolls past 60% of viewport height
+- **Animation**: Slide down from top (200ms ease-out)
+- **Close Button**: Optional X to dismiss (persists per session)
+
+**Content Layout**:
+```
+[Left Side]                    [Right Side]
+"Find TwinMOS Near You"        [Find a Distributor] [Buy Online]
+"93+ countries, local support"
+```
+
+**Dismissal**: User can click X to close; reappears on next page load
+
+---
+
+### Variant 3: Inline Banner (Product Pages)
+**Primary use case**: Above-the-fold on product detail pages
+
+- **Position**: Below product title, above specifications
+- **Background**: Light blue tint (#E8F0FE) with left border accent
+- **Padding**: 20px
+- **Border-Radius**: 8px
+- **Layout**: Horizontal on desktop, stacked on mobile
+
+**Content**:
+```
+🛒 Ready to upgrade? TwinMOS products are available through authorized 
+   distributors worldwide.
+   [Find a Distributor]  [Buy Online]
+```
+
+---
+
+### Variant 4: Card CTA (Category Pages)
+**Primary use case**: Product category and hub pages
+
+- **Position**: Below category description, above product grid
+- **Background**: White card with subtle shadow
+- **Border**: 1px solid #E5E7EB
+- **Padding**: 24px
+- **Border-Radius**: 12px
+
+**Content**:
+```
+[Map Icon]  Find TwinMOS in Your Region
+            Browse authorized distributors and online retailers 
+            in {detected_country} or select your location.
+            [Find Distributors]  [View Online Stores]
+```
+
+---
+
+## Primary Copy
+
+### Default Message
+**"Find TwinMOS Near You"**
+
+**Sub-message**: "Available through authorized distributors across 93+ countries."
+
+### Regional Variant (Auto-Detected)
+**"Find TwinMOS in {Country}"**
+
+**Sub-message**: "Browse authorized distributors and online retailers near you."
+
+**Detection Method**: IP geolocation (primary), browser language (fallback), manual selection (override)
+
+---
+
+## CTA Buttons
+
+### Primary: Find a Distributor
+- **Label**: "Find a Distributor"
+- **Icon**: Map pin
+- **Link**: [/where-to-buy](/where-to-buy)
+- **Style**: Primary button (filled, high contrast)
+- **Tracking Event**: `cta_click`, `location: sticky_bar`, `type: distributor_locator`
+
+### Secondary: Buy Online
+- **Label**: "Buy Online"
+- **Icon**: Shopping cart
+- **Link**: [/where-to-buy/online](/where-to-buy/online)
+- **Style**: Secondary button (outlined or ghost)
+- **Tracking Event**: `cta_click`, `location: sticky_bar`, `type: online_retailers`
+
+### Tertiary: Contact Sales (B2B)
+- **Label**: "Contact Sales"
+- **Icon**: Phone or message
+- **Link**: [/contact/sales](/contact/sales)
+- **Style**: Text link
+- **Visibility**: Shown only on product pages and B2B sections
+
+---
+
+## Supporting Information
+
+### Contact Teaser
+- **Phone**: [+971-4-2996421](tel:+97142996421)
+- **Availability**: "Sunday – Thursday, 9:00 AM – 6:00 PM GST"
+
+### Market Coverage
+"Serving: Middle East, Africa, South Asia, CIS, Europe, Southeast Asia, and North America"
+
+---
+
+## Featured Distributor Quick Links
+
+### Bangladesh
+- [Smart Technologies (BD) Ltd.](https://smarttechnologies.com.bd) — Dhaka, nationwide distribution
+- [Tech Valley Distribution](https://techvalleybd.com) — Dhaka
+- [Ryans IT Limited](https://ryanscomputers.com) — Dhaka, retail + online
+- [Star Tech](https://startech.com.bd) — Dhaka, retail + online
+- [EERNA](https://eerna.com.bd) — Dhaka, system integrator
+
+### United Arab Emirates
+- [Achiever Computers (ACL)](https://achievercomputers.ae) — Dubai, UAE distributor
+
+### India (Proposed — Phase 2)
+- [Supertron Electronics](https://supertron.in) — Proposed exclusive distribution partner
+
+**Note**: Distributor links open in new tab. All distributors are verified authorized partners.
+
+---
+
+## Promotional Variants
+
+### Urgency Variant — New Product Launch
+**Headline**: "Upgrade to DDR5 Today"  
+**Subheadline**: "Limited stock on VOLTX RGB DDR5. Find your nearest retailer now."  
+**CTA**: "Find VOLTX Near Me" → `/where-to-buy?product=voltx-rgb`
+
+### Seasonal Variant — Holiday Promotion
+**Headline**: "Holiday Deals on TwinMOS Storage"  
+**Subheadline**: "Special pricing on CoreX Pro and ELITE Drive Pro through December."  
+**CTA**: "Find Holiday Deals" → `/where-to-buy?promo=holiday2026`
+
+### B2B Variant — Enterprise Procurement
+**Headline**: "Enterprise Volume Pricing Available"  
+**Subheadline**: "Contact our B2B team for bulk orders, OEM pricing, and system integrator programs."  
+**CTA**: "Request a Quote" → `/contact/sales?type=enterprise`
+
+### Gaming Variant — VOLTX Launch
+**Headline**: "Level Up with VOLTX RGB"  
+**Subheadline**: "The ultimate DDR5 gaming memory is here. Find it at your favorite retailer."  
+**CTA**: "Find Gaming Retailers" → `/gaming/where-to-buy`
+
+---
+
+## Geolocation Behavior
+
+### Auto-Detection Flow
+1. **IP Geolocation**: Detect user's country via IP address
+2. **Browser Language**: Use `Accept-Language` header as fallback
+3. **Previous Selection**: Check `twinmos_region` cookie
+4. **Manual Override**: User can select different country
+
+### Display Logic
+- **Known Country**: Show "Find TwinMOS in {Country}" + local distributors
+- **Unknown Country**: Show "Find TwinMOS Near You" + global distributor list
+- **Unsupported Country**: Show "Contact Us for Availability" + contact form
+
+---
+
+## Analytics & Tracking
+
+### Events to Track
+| Event | Parameters | Purpose |
+|-------|-----------|---------|
+| `cta_impression` | `variant`, `page`, `position` | Measure CTA visibility |
+| `cta_click` | `variant`, `button`, `destination` | Measure click-through |
+| `distributor_search` | `country`, `product`, `source` | Track locator usage |
+| `online_store_click` | `retailer`, `product`, `source` | Track e-commerce referrals |
+
+### A/B Testing Candidates
+- Button color (brand blue vs. green)
+- Button text ("Find a Distributor" vs. "Buy Now" vs. "Where to Buy")
+- Position (top sticky vs. bottom floating)
+- Urgency messaging (with/without promotional copy)
+
+---
+
+## Accessibility
+
+- **Color Contrast**: All text meets WCAG AA (4.5:1 minimum)
+- **Focus State**: Visible focus ring on all interactive elements
+- **Screen Reader**: Announces "Where to buy navigation" for sticky bar
+- **Mobile**: Minimum touch target 48x48px for pill button
+- **Reduced Motion**: Disable pulse animation when `prefers-reduced-motion: reduce`
+
+---
+
+## Implementation Notes
+
+### Performance
+- Component is lazy-loaded (appears only when needed)
+- Geolocation API call is deferred until component is visible
+- Distributor data cached for 1 hour
+
+### Cookie Consent
+- Geolocation requires user consent for "Functional Cookies"
+- If consent denied, show generic "Find TwinMOS Near You" without auto-detection
+- Manual country selector always available
+
+### Regional Compliance
+- EU: GDPR-compliant geolocation (consent required)
+- UAE: PDPL-compliant data processing
+- India: Data localization considerations for Phase 2

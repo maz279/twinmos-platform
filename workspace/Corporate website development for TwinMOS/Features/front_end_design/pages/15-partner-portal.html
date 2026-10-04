@@ -1,0 +1,57 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0D0D0D" media="(prefers-color-scheme:dark)"><meta name="theme-color" content="#0A2540"><link rel="manifest" href="../assets/manifest.webmanifest"><title>TwinMOS — Partner Portal Dashboard</title>
+<link rel="stylesheet" href="../assets/design-system.css"></head>
+<body style="background:#F4F7FA">
+<div class="app">
+  <aside class="side">
+    <div style="display:flex;align-items:center;gap:9px;padding:6px 12px 14px"><img src="../assets/img/logo.webp" alt="TwinMOS" style="height:28px;filter:brightness(0) invert(1)"><b style="color:#fff;font-size:13.5px"> <span style="color:#5E7691;font-weight:600">Partner</span></b></div>
+    <div class="sgroup">Overview</div>
+    <a class="on">▦ Dashboard</a><a>📊 Order History</a><a>⬇ Price Lists</a>
+    <div class="sgroup">Marketing</div>
+    <a>🗂 Asset Library</a><a>🎓 Training &amp; Certification <span class="bdg">2 due</span></a><a>📅 Partner Events</a>
+    <div class="sgroup">Programs</div>
+    <a>💰 MDF Claims</a><a>🏆 Tier &amp; Points</a>
+    <div class="sgroup">Account</div>
+    <a>🏢 Company Profile</a><a>👥 Team Members</a><a>↩ Back to twinmos.com</a>
+    <div style="margin-top:26px;padding:12px;border:1px solid #1D3651;border-radius:10px"><span class="tiny" style="color:#5E7691">Signed in as</span><div class="small" style="color:#CFE2F1;margin-top:3px">K. Patel · MEA Distribution</div><div class="tiny" style="color:var(--accent-2);margin-top:2px">Platinum Partner</div></div>
+  </aside>
+
+  <main class="main">
+    <div class="crumb">Partner Portal / Dashboard</div>
+    <div class="admin-top"><b style="font-size:18px;color:var(--primary)">Welcome back, Kiran</b><span class="small muted">MEA Distribution LLC · UAE · Platinum tier since 2023</span>
+      <div style="margin-left:auto;display:flex;gap:10px"><span class="status st-ok">Session 29:41 remaining</span><div class="avatar">KP</div></div></div>
+
+    <div class="stat-grid">
+      <div class="stat"><span>Active Price Lists</span><b>3</b><span class="delta up">Effective 01 Sep 2026</span></div>
+      <div class="stat"><span>Downloads This Month</span><b>47</b><span class="delta up">+12 vs Aug</span></div>
+      <div class="stat"><span>Training Certifications</span><b>6 / 8</b><span class="delta down">2 expiring in 30 days</span></div>
+      <div class="stat"><span>Open MDF Claims</span><b>1</b><span class="delta">AED 12,400 under review</span></div>
+    </div>
+
+    <!-- Price list -->
+    <div class="admin-top" style="margin-bottom:10px"><b style="color:var(--primary);font-size:15px">Price List — SSD Line (AED) · Effective 01 Sep 2026</b>
+      <div style="margin-left:auto;display:flex;gap:8px"><a class="btn btn-outline btn-sm">⬇ Excel</a><a class="btn btn-primary btn-sm">⬇ Watermarked PDF</a></div></div>
+    <table class="table">
+      <tr><th>SKU</th><th>Product</th><th>Unit Price</th><th>MOQ</th><th>Vol. 50+</th><th>Vol. 200+</th><th>Status</th></tr>
+      <tr><td class="mono">NVCXP1TBG52280</td><td>CoreX Pro Gen 5 · 1TB</td><td>AED 1,145</td><td>10</td><td>−4%</td><td>−8%</td><td><span class="status st-live">Active</span></td></tr>
+      <tr><td class="mono">NVCXP2TBG52280</td><td>CoreX Pro Gen 5 · 2TB</td><td>AED 2,190</td><td>10</td><td>−4%</td><td>−8%</td><td><span class="status st-live">Active</span></td></tr>
+      <tr><td class="mono">TMNVME1TBX4</td><td>Xtreme Gen4 · 1TB</td><td>AED 489</td><td>25</td><td>−6%</td><td>−11%</td><td><span class="status st-live">Active</span></td></tr>
+      <tr><td class="mono">TM1TBH2U</td><td>Hyper H2 Ultra SATA · 1TB</td><td>AED 299</td><td>25</td><td>−6%</td><td>−10%</td><td><span class="status st-sched">Revised 01 Oct</span></td></tr>
+      <tr><td class="mono">PSSD1TBDP</td><td>ELITE Drive Pro · 1TB</td><td>AED 545</td><td>15</td><td>−5%</td><td>−9%</td><td><span class="status st-live">Active</span></td></tr>
+    </table>
+    <p class="tiny muted" style="margin-top:8px">🔒 Every PDF is watermarked with your company name, date and session ID (BR-7.2) · distribution outside your territory breaches partner terms.</p>
+
+    <!-- Assets -->
+    <div class="admin-top" style="margin:24px 0 10px"><b style="color:var(--primary);font-size:15px">Marketing Asset Library</b>
+      <div class="sel" style="margin-left:0">Filter: <select><option>All products</option><option>VOLTX</option></select><select><option>All formats</option><option>Print</option><option>Video</option></select><a class="btn btn-outline btn-sm" style="margin-left:8px">⬇ Download all (ZIP)</a></div></div>
+    <div class="grid g4" style="gap:14px">
+      <div class="asset"><div class="aimg" style="height:110px">A3 Poster — CoreX Pro</div><div class="abar"><span>PDF · 24MB</span><a class="link">Preview</a></div></div>
+      <div class="asset"><div class="aimg" style="height:110px">Shelf Talker — VOLTX</div><div class="abar"><span>PDF · 4MB</span><a class="link">Preview</a></div></div>
+      <div class="asset"><div class="aimg" style="height:110px">Product Video — Gen 5</div><div class="abar"><span>MP4 · 180MB</span><a class="link">Preview</a></div></div>
+      <div class="asset"><div class="aimg" style="height:110px">Logo Pack 2026</div><div class="abar"><span>ZIP · 12MB</span><a class="link">Preview</a></div></div>
+    </div>
+    <div class="callout" style="margin-top:16px"><b>🎓 Certification due:</b> “Gen 5 SSD Selling Guide” and “Anti-Counterfeit Awareness” expire in 30 days — 10 minutes each. <a class="link">Resume training →</a></div>
+    <p class="tiny muted" style="margin-top:14px">UX notes: invitation-only access · read-only order view (Phase 3) · download audit log · English fallback for non-localized assets · distinct portal chrome vs public site.</p>
+  </main>
+</div>
+<div class="mocknote">TWINMOS UX CONCEPT · 15 PARTNER PORTAL DASHBOARD</div>
+</body></html>

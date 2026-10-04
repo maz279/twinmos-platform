@@ -1,0 +1,992 @@
+# TwinMOS Product Catalog (extracted from www.twinmos.com)
+
+Extracted: 2026-09-23 | Products: 40 | Categories: 16
+
+## Categories
+
+- **Desktop DRAM** (`dram-module/desktop-dram-dram-module`) — 12 products
+- **Gaming DRAM** (`dram-module/gaming-dram-dram-module`) — 7 products
+- **DRAM Module** (`dram-module`) — 12 products
+- **Notebook DRAM** (`dram-module/notebook-dram-dram-module`) — 5 products
+- **DRAM Module** (`dram-module/page/1`) — 12 products
+- **DRAM Module - Page 2 of 2** (`dram-module/page/2`) — 6 products
+- **Flash Drive** (`flash-drive`) — 2 products
+- **MicroSD Card** (`microsd-card`) — 1 products
+- **Portable Drives** (`portable-drives`) — 4 products
+- **Portable HDD** (`portable-drives/portable-hdd-portable-drives`) — 2 products
+- **Portable SSD** (`portable-drives/portable-ssd-portable-drives`) — 2 products
+- **Power Supply** (`power-supply`) — 4 products
+- **Solid State Drive (SSD)** (`solid-state-drive`) — 9 products
+- **NVMe SSD** (`solid-state-drive/nvme-ssd-solid-state-drive`) — 5 products
+- **SATA SSD** (`solid-state-drive/sata-ssd`) — 2 products
+- **USB HUB** (`usb-hub`) — 3 products
+
+---
+
+## TwinMOS 2666MHz DDR4 SO-DIMM for Notebook - 32GB
+- Slug: `twinmos-2666mhz-ddr4-so-dimm-for-laptop`
+- Source: https://www.twinmos.com/product/twinmos-2666mhz-ddr4-so-dimm-for-laptop/
+- SKU: MDD432GB2666N
+- Price: 0 USD
+- Availability: InStock
+- Categories: DRAM Module, Notebook DRAM
+- Summary: Type: Single Channel Capacity: 4, 8, 16, 32 GB Frequency: Up to 2666HMz Operating voltage: 1.2V Latency CL 19 Product Lifetime Warranty Download Datasheet
+- Images (6 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2016/10/16GB-DDR4-2666MHz-SODIMM-1.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2016/10/32GB-DDR4-2666MHz-SODIMM-2.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2016/10/8GB-DDR4-2666MHz-SODIMM-1.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Laptop-DDR4-16GB-2666.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/SO-DIMM-for-Laptop-3200Mhz-8-GB-2.jpg` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Capacity: 4GB, 8GB, 16GB, 32GB
+  - Speed: 2666MHz
+  - Form Factor: DDR4
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-DDR4-DRAM-Laptop-Datasheet.pdf`
+- Description: TwinMOS 2666MHz DDR4 SO-DIMM for Laptop 32GB
+
+## TwinMOS 3 Ports USB 2.0 and 1 Port USB 3.0 HUB - 23L
+- Slug: `twinmos-3-ports-usb-2-0-and-1-port-usb-3-0-hub-ezeehub-23l`
+- Source: https://www.twinmos.com/product/twinmos-3-ports-usb-2-0-and-1-port-usb-3-0-hub-ezeehub-23l/
+- SKU: EzeeHUB-23L
+- Price: 0 USD
+- Availability: InStock
+- Categories: USB HUB
+- Summary: 3 USB 2.0 ports and 1 USB 3.0 for easy expansion Supports a data transfer rate of up to 5 Gbps 10 times faster than USB 2.0 products Plug-n-Play, hot-swappable Backward compatible with USB 1.1 and USB 2.0 Overcurrent Protection Self Powered In build USB cable for convenient use.
+- Images (6 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/EzeeHUB-23L-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/EzeeHUB-23L-Back.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/EzeeHUB-23L.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2022/09/EzeeHub-23L.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2022/09/TwinMOS-EzeeHub-23L-in-Blister-Package.png` [OK, 9 size variants]
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`
+- Description: The EzeeHUB-23L is a versatile USB hub featuring three USB 2.0 ports and one USB 3.0 port for fast data transfer up to 5Gbps. Compatible with Windows and Mac OS, it supports backward compatibility and plug-and-play operation.
+
+## TwinMOS 3 Ports USB 2.0 and 1 Port USB 3.0 HUB - EzeeHUB23P
+- Slug: `twinmos-3-ports-usb-2-0-and-1-port-usb-3-0-hub-ezeehub23p`
+- Source: https://www.twinmos.com/product/twinmos-3-ports-usb-2-0-and-1-port-usb-3-0-hub-ezeehub23p/
+- SKU: EzeeHUB-23P
+- Price: 0 USD
+- Availability: InStock
+- Categories: USB HUB
+- Summary: 3 USB 2.0 ports and 1 USB 3.0 for easy expansion Supports a data transfer rate of up to 5 Gbps 10 times faster than USB 2.0 products Plug-n-Play, hot-swappable Backward compatible with USB 1.1 and USB 2.0 Overcurrent Protection Self Powered In build USB cable for convenient use.
+- Images (5 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/EzeeHUB-23P-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/EzeeHUB-23P-Back.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/EzeeHUB-23P.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2021/09/TwinMOS-EzeeHub-23P-in-Blister-Package.png` [OK, 9 size variants]
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`
+- Description: The EzeeHUB23P offers versatile connectivity with three USB 2.0 ports and one high-speed USB 3.0 port, supporting up to 5Gbps data transfer. Compatible with Windows and Mac OS, plug-and-play design ensures easy use.
+
+## TwinMOS 3200MHz DDR4 SO-DIMM for Laptop - 32GB
+- Slug: `twinmos-3200mhz-ddr4-ram-for-laptop`
+- Source: https://www.twinmos.com/product/twinmos-3200mhz-ddr4-ram-for-laptop/
+- SKU: MDD432GB3200N
+- Price: 0 USD
+- Availability: InStock
+- Categories: DRAM Module, Notebook DRAM
+- Summary: Boost your laptop’s performance with TwinMOS DDR4-3200 SODIMM. Featuring 3200 MHz speed and low 1.2V power consumption, it ensures efficient multitasking and faster data processing. Perfect for upgrading laptops high-performance memory. Download Datasheet
+- Images (7 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2016/10/16GB-DDR4-3200MHz-SODIMM-1.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2016/10/32GB-DDR4-3200MHz-SODIMM-1.png` [OK, 13 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2016/10/8GB-DDR4-3200MHz-SODIMM-1.png` [OK, 13 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2016/10/DDR4-Laptop-3200MHz-32GB.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Laptop-DDR4-32GB-3200-1-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Laptop-DDR4-32GB-3200-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-DDR4-DRAM-Laptop-Datasheet.pdf`
+- Description: TwinMOS 3200MHz DDR4 SO-DIMM for Laptop 32GB
+
+## TwinMOS 3200MHz DDR4 U-DIMM for Desktop
+- Slug: `twinmos-3200mhz-ddr4-u-dimm-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-3200mhz-ddr4-u-dimm-for-desktop/
+- SKU: MDD432GB3200DRR
+- Price: 0 USD
+- Availability: InStock
+- Categories: Desktop DRAM, DRAM Module
+- Summary: Type: Single Channel Capacity: 4, 8, 16, 32 GB With Heat Shrinks and Without Heat Shrinks option available Frequency: Up to 3200HMz Operating voltage: 1.2V Latency CL15, CL16, CL19, CL 22 Heat Sink Color Red Product Lifetime Warranty Download Datasheet
+- Images (7 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/32GB-3200Mhz-Desktop-2-8.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/32GB-3200Mhz-Desktop-2-9-2-150x150.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-32GB_3200-5-1.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-32GB_3200-Black-5-1.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-32GB_3200-Blue-5-2.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-8GB_3200-Desktop-5.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-desktop-3200MHz-32GB-5.png` [OK, 11 size variants]
+- Specifications:
+  - Capacity: Choose an option 4GB 8GB 16GB 32GB 4GB 8GB 16GB 32GB
+  - Heat Sink: Choose an option Blue Heat Sink Dark Maroon Heat Sink No Heat Sink Silver Heat Sink
+  - Warranty: Choose an option Product Lifetime Product Lifetime Clear
+  - Capacity: 4GB, 8GB, 16GB, 32GB
+  - Latency CAS: CL15 , CL16 , CL19 , CL22
+  - Voltage: 1.2V
+  - Heat Sink: Blue Heat Sink , Dark Maroon Heat Sink , No Heat Sink , Silver Heat Sink
+  - Warranty: Product Lifetime
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-DDR4-Memory-Module-Datasheet.pdf`
+- Description: TwinMOS 3200MHz DDR4 U-DIMM for Desktop 32 GB with Red Heat Sink
+
+## TwinMOS 4 Port USB3.0 Hub - EzeeHUB 34L-M
+- Slug: `twinmos-4-port-usb3-0-hub-ezeehub-34l-m`
+- Source: https://www.twinmos.com/product/twinmos-4-port-usb3-0-hub-ezeehub-34l-m/
+- SKU: EzeeHUB 34L-M
+- Price: 0 USD
+- Availability: InStock
+- Categories: USB HUB
+- Summary: 4 USB3.0 ports for easy expansion
+- Images (4 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/EzeeHUB-34L-M-Back.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/EzeeHUB-34L-M.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/EzeeHUB-34L-M2.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2022/12/TwinMOS-EzeeHub-34L-M-in-Blister-Package-1.png` [OK, 9 size variants]
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`
+- Description: The EzeeHUB 34L-M offers four SuperSpeed USB 3.0 ports with data transfer rates up to 5Gbps. Compatible with Windows and Mac OS, it supports USB 2.0 and 1.1 devices and features plug-and-play, hot-swappable functionality for maximum convenience.
+
+## TwinMOS microSDXC Class 10 V30 UHS-3 - 256GB
+- Slug: `twinmos-64gb-microsdxc-class-10-uhs-1`
+- Source: https://www.twinmos.com/product/twinmos-64gb-microsdxc-class-10-uhs-1/
+- SKU: TM256MSDXC10V30U3
+- Price: 0 USD
+- Availability: InStock
+- Categories: MicroSD Card
+- Summary: Support for UHS-3 ultrahigh-speed bus interface Extreme speeds of 100MB/s reading and 30MB/s writing IOPS reaches 500 reading and 150 writing, surpassing the same class 10 fold. Support CPRM Compatible with SD slots by the adapter Low power consumption; support 3.3V Single/Dual Channel with high performance Support SDHC Host specification Enough to satisfy the high-speed access requirement of smartphones, tablets, and vehicle recorders.
+- Images (5 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/MicroSD-Card-128GB-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/MicroSD-Card-128GB.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/MicroSD-Card-256GB.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/MicroSD-Card-Back-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Capacity: Choose an option 32GB 64GB 128GB 256GB 32GB 64GB 128GB 256GB Clear
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`
+- Description: TwinMOS microSDXC Class 10 V30 UHS-3 256GB
+
+## TwinMOS AlphaPro NVMe M.2 2280 New SSD - 2TB
+- Slug: `twinmos-alphapro-nvme-m-2-2280-new-ssd`
+- Source: https://www.twinmos.com/product/twinmos-alphapro-nvme-m-2-2280-new-ssd/
+- SKU: NVMe2TB2280AP
+- Price: 0 USD
+- Availability: InStock
+- Categories: Solid State Drive, NVMe SSD
+- Summary: Genuine PCIe NVMe Gen3x4 speed (128GB – 2 TB) Max sequential speed is up to 3600 MB/s Read and 3250 MB/s Write. Space-saving and compact M.2 2280 form factor, S.M.A.R.T Command/NCQ/Trim Support, Dura Write/RAISE Support, RoHS compliant 5 Years Warranty Download Datasheet
+- Images (3 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/NVMe-AlphaPro-1TB_With-Product.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/NVMe-AlphaPro-Only-Product-1TB-Corrected-01-2.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Capacity: 128GB, 256GB, 512GB, 1TB, 2TB
+  - Compatible-OS: Windows
+  - Form Factor: M.2 2280
+  - Interface: PCIe Gen 3.0×4
+  - Sequential Read Speed: Up to 3500 MB/s
+  - Sequential Write Speed: Up to 3250 MB/s
+  - Random Read Speed 4k Files: Up to 260 MB/s
+  - Random Write Speed 4K Files: Up to 270 MB/s
+  - Cache Size: 2 GB (only in 2 TB Varient)
+  - Color: Black
+  - NAND Flash Brand: Micron/ Hynix
+  - NAND Type: TLC 3D NAND
+  - SSD Controller Brand: SMI
+  - Endurance: 1000 TB or 900 GB/Day
+  - Bridge Controller MTBF: >1,000,000 hours
+  - Power Loose Protection: Yes
+  - S.M.A.R.T: Yes
+  - Bad Block Management: Failed Blocks of Flash will be replaced with new ones by the SSD
+  - Wear Leveling: Static and dynamic wear-leveling algorithm
+  - Low Density Parity Check: Yes
+  - Warranty: 5 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/07/TwinMOS-AlphaPro-NVMe-Datasheet.pdf`
+- Description: TwinMOS AlphaPro NVMe M.2 2280 SSD 2TB
+
+## TwinMOS CoreX M.2 PCIe Gen 4.0 NVMe SSD - 1TB
+- Slug: `twinmos-corex-m-2-pcie-gen-4-0-nvme-ssd`
+- Source: https://www.twinmos.com/product/twinmos-corex-m-2-pcie-gen-4-0-nvme-ssd/
+- SKU: NVCX1TBG42280
+- Price: 0 USD
+- Availability: InStock
+- Categories: NVMe SSD, Solid State Drive
+- Summary: Genuine PCIe CoreX NVMe PCIe Gen4 Max Sequential Speed up to 5000MB/s Read and 4800MB/s Write. Space-saving and compact M.2 2280 form factor with graphene heatsink for better thermal performance, SMART Command/NCQ/Trim Support, Dura Write/RISE Support, RoHS compliant 5 Years Warranty Download Datasheet
+- Images (2 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2025/01/CoreX-Mockup.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/01/Enlarged-CoreX-1.png` [OK, 11 size variants]
+- Specifications:
+  - Capacity: 512GB, 1TB
+  - Compatible-OS: Windows , Linux , Mac OS
+  - Form Factor: M.2 2280
+  - Interface: PCIe Gen4 X4
+  - Sequential Read Speed: Up to 5000 Mb/s
+  - Sequential Write Speed: Up to 4800 Mb/s
+  - Color: Black
+  - NAND Flash Brand: Micron/ Hynix
+  - NAND Type: TLC 3D NAND
+  - SSD Controller Brand: Innogrit/ RealTek
+  - Endurance: 1000 TB or 900 GB/Day
+  - Power Loose Protection: Yes
+  - S.M.A.R.T: Yes
+  - Bad Block Management: Failed Blocks of Flash will be replaced with new ones by the SSD
+  - Wear Leveling: Static and dynamic wear-leveling algorithm
+  - Low Density Parity Check: Yes
+  - Warranty: 5 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/04/CoreX-Data-Sheet.pdf`
+- Description: TwinMOS CoreX PCIe Gen 4.0 NVMe SSD 1TB
+
+## TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD - 1TB
+- Slug: `twinmos-corex-pro-m-2-pcie-gen-5-0-nvme-ssd`
+- Source: https://www.twinmos.com/product/twinmos-corex-pro-m-2-pcie-gen-5-0-nvme-ssd/
+- SKU: NVCXP1TBG52280
+- Price: 0 USD
+- Availability: InStock
+- Categories: NVMe SSD, Solid State Drive
+- Summary: TwinMOS CoreX Pro is a high-performance PCIe Gen5 NVMe SSD designed for gamers, creators, and professionals. With blazing-fast read speeds up to 14,000 MB/s and write speeds up to 10,000 MB/s, it features DRAM cache, advanced thermal management, and cutting-edge 3D NAND—delivering next-gen speed, reliability, and efficiency for demanding workloads. 5 Years Warranty Download Datasheet
+- Images (3 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2025/05/CoreX-Pro-Product-Image.png` [OK, 9 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/05/Corex-Pro-GEN5-Graphene-Heatsink-1.png` [OK, 9 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/05/Corex-Pro-Gen5-Final.png` [OK, 1 size variants]
+- Specifications:
+  - Capacity: Choose an option 1TB 2TB 1TB 2TB Clear
+  - Capacity: 1TB, 2TB
+  - Compatible-OS: Windows , Linux , Mac OS
+  - Form Factor: M.2 2280
+  - Interface: PCIe® Gen5X4, NVMe™ 2.0
+  - Sequential Read Speed: Up to 14000 MB/s
+  - Sequential Write Speed: Up to 10000 MB/s
+  - Color: Black
+  - NAND Flash Brand: Micron/ Intel
+  - NAND Type: TLC 3D NAND
+  - SSD Controller Brand: Phison/ SMI
+  - Endurance: 1400 TBW for 2TB , 700 TBW for 1TB
+  - Power Loose Protection: Yes
+  - S.M.A.R.T: Yes
+  - Bad Block Management: Failed Blocks of Flash will be replaced with new ones by the SSD
+  - Wear Leveling: Static and dynamic wear-leveling algorithm
+  - Low Density Parity Check: Yes
+  - Warranty: 5 Years
+  - Heat Sink Type: Graphene Sticker
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/07/CoreX-Pro-Datasheet.pdf`
+- Description: TwinMOS CoreX Pro PCIe Gen 5.0 NVMe SSD 1TB
+
+## TwinMOS DDR3 1333MHz SO-DIMM for Notebook - 8GB
+- Slug: `twinmos-ddr3-1333mhz-so-dimm-for-notebook`
+- Source: https://www.twinmos.com/product/twinmos-ddr3-1333mhz-so-dimm-for-notebook/
+- SKU: MDD38GB1333N
+- Price: 0 USD
+- Availability: InStock
+- Categories: DRAM Module, Notebook DRAM
+- Summary: TwinMOS DDR3 SO-DIMM operates with a voltage of 1.35 and 1.5 volts to achieve both energy and electricity saving and meet environmental protection regulations. Moreover, TwinMOS DDR3 SO-DIMM provides various frequency and capacity selections to meet different levels of requirements of consumers in use. DDR3 from TwinMOS is characterized by its high speed, low power consumption, and high-efficiency features. More importantly, it is compatible with various motherboards using various Notebooks on the market. Download Datasheet
+- Images (2 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR3-1333-8GB-4-2.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR3-1600-8GB.png` [OK, 7 size variants]
+- Specifications:
+  - Speed: Choose an option 1333MHz 1333MHz
+  - Capacity: Choose an option 2GB 4GB 8GB 2GB 4GB 8GB Clear
+  - Speed: 1333MHz
+  - Capacity: 2GB, 4GB, 8GB
+  - Latency CAS: CL9
+  - Voltage: 1.5V
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-DDR3-DRAM-Laptop-Datasheet.pdf`
+- Description: TwinMOS DDR3 1333MHz SO-DIMM 8 GB
+
+## TwinMOS DDR3 1333MHz U-DIMM for Desktop - 8GB
+- Slug: `twinmos-ddr3-1333mhz-u-dimm`
+- Source: https://www.twinmos.com/product/twinmos-ddr3-1333mhz-u-dimm/
+- SKU: MDD38GB1333D
+- Price: 0 USD
+- Availability: InStock
+- Categories: Desktop DRAM, DRAM Module
+- Summary: TwinMOS DDR3 UDIMM Supreme is a 240-pin standard design, operating with a voltage of 1.5 volts to achieve both energy and electricity saving and meet environmental protection regulations. Moreover, TwinMOS DDR3 U-DIMM provides various frequency and capacity selections to meet different levels of requirements of consumers in use. Download Datasheet
+- Images (3 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR3-1333-2GB.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR3-1333-8GB-3.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Speed: 1333MHz
+  - Capacity: 2GB, 4GB, 8GB
+  - Latency CAS: CL9
+  - Voltage: 1.5V
+  - Heat Sink: No Heat Sink
+  - Warranty: Product Lifetime
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-DDR3-DIMM-for-Desktop-Datasheet.pdf`
+- Description: TwinMOS DDR3 1333MHz U-DIMM 8 GB
+
+## TwinMOS DDR3 1600MHz SO-DIMM for Notebook - 8GB
+- Slug: `twinmos-ddr3-1600mhz-so-dimm-for-notebook`
+- Source: https://www.twinmos.com/product/twinmos-ddr3-1600mhz-so-dimm-for-notebook/
+- SKU: MDD38GB1600N
+- Price: 0 USD
+- Availability: InStock
+- Categories: DRAM Module, Notebook DRAM
+- Summary: TwinMOS DDR3 SO-DIMM operates with a voltage of 1.35 and 1.5 volts to achieve both energy and electricity saving and meet environmental protection regulations. Moreover, TwinMOS DDR3 SO-DIMM provides various frequency and capacity selections to meet different levels of requirements of consumers in use. DDR3 from TwinMOS is characterized by its high speed, low power consumption, and high-efficiency features. More importantly, it is compatible with various motherboards using various Notebooks on the market. Download Datasheet
+- Images (4 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR3-1600-8GB-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR3-1600-8GB-Back.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR3-1600-8GB.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Brands: TwinMOS
+  - Form Factor: DDR3
+  - Speed: 1600MHz
+  - Capacity: 2GB, 4GB, 8GB
+  - Latency CAS: CL9 , CL11
+  - Voltage: 1.35V, 1.5V
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-DDR3-DRAM-Laptop-Datasheet.pdf`
+- Description: TwinMOS DDR3 1600MHz SO-DIMM 8 GB (CL11-11-11-28 1.35V)
+
+## TwinMOS DDR3 1600MHz U-DIMM for Desktop - 8GB
+- Slug: `twinmos-ddr3-1600mhz-u-dimm-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-ddr3-1600mhz-u-dimm-for-desktop/
+- SKU: MDD38GB1600D
+- Price: 0 USD
+- Availability: InStock
+- Categories: Desktop DRAM, DRAM Module
+- Summary: TwinMOS DDR3 UDIMM Supreme is a 240-pin standard design, operating with a voltage of 1.5 and 1.35 volts to achieve both energy and electricity saving and meet environmental protection regulations. Moreover, TwinMOS DDR3 U-DIMM provides various frequency and capacity selections to meet different levels of requirements of consumers in use. Download Datasheet
+- Images (4 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR3-1600-2GB-5.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR3-1600-8GB-P-5-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR3-1600-8GB-P-5.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Form Factor: DDR3
+  - Speed: 1600MHz
+  - Capacity: 2GB, 4GB, 8GB
+  - Latency CAS: CL9 , CL11
+  - Voltage: 1.35V, 1.5V
+  - Heat Sink: No Heat Sink
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-DDR3-DIMM-for-Desktop-Datasheet.pdf`
+- Description: TwinMOS DDR3 1600MHz U-DIMM 8 GB (CL11-11-11-28 1.35V)
+
+## TwinMOS DDR4 2133MHz U-DIMM for Desktop - 16GB
+- Slug: `twinmos-ddr4-2133mhz-u-dimm-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-ddr4-2133mhz-u-dimm-for-desktop/
+- SKU: MDD416GB2133D
+- Price: 0 USD
+- Availability: InStock
+- Categories: Desktop DRAM, DRAM Module
+- Summary: DDR4 2133 MHz DIMM with a data transfer speed of 17,000 MB/s operating voltage of 1.2 for power efficiency fully compliant with JEDEC standards and is guaranteed to be 100% compatible with all major platforms on the market. available up to 16GB temporary storage space Download Datasheet
+- Images (4 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR4-2133-4GB-P-2.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR4-2133-4GB-P.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR4-2133-4GB.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Capacity: 4GB, 8GB, 16GB
+  - Form Factor: DDR4
+  - Voltage: 1.2V
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-DDR3-DRAM-Laptop-Datasheet.pdf`
+- Description: TwinMOS DDR4 2133MHz U-DIMM 16 GB
+
+## TwinMOS DDR4 2400MHz U-DIMM for Desktop
+- Slug: `twinmos-ddr4-2400mhz-u-dimm-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-ddr4-2400mhz-u-dimm-for-desktop/
+- SKU: MDD416GB2400DSB
+- Price: 0 USD
+- Availability: InStock
+- Categories: Desktop DRAM, DRAM Module
+- Summary: DDR4 2400MHz DIMM with a data transfer speed of 19,200 MB/s operating voltage of 1.2 for power efficiency fully compliant with JEDEC standards and is guaranteed to be 100% compatible with all major platforms on the market. available up to 16GB of temporary storage space Download Datasheet
+- Images (4 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-16GB_2400-Blue.png` [OK, 15 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-16GB_2400-Silver.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-2400-8GB-P.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-2400-8GB.png` [OK, 11 size variants]
+- Specifications:
+  - Heat Sink: Choose an option Blue Heat Sink No Heat Sink Silver Heat Sink
+  - Capacity: Choose an option 4GB 8GB 16GB 32GB 4GB 8GB 16GB 32GB Clear
+  - Form Factor: DDR4
+  - Speed: 2400MHz
+  - Capacity: 4GB, 8GB, 16GB, 32GB
+  - Latency CAS: CL17
+  - Voltage: 1.2V
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-DDR4-Memory-Module-Datasheet.pdf`
+- Description: TwinMOS DDR4 2400MHz DIMM 16 GB Silver Heatsink
+
+## TwinMOS DDR4 2666MHz U-DIMM for Desktop
+- Slug: `twinmos-ddr4-2666mhz-u-dimm-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-ddr4-2666mhz-u-dimm-for-desktop/
+- SKU: MDD416GB2666DSB
+- Price: 0 USD
+- Availability: InStock
+- Categories: Desktop DRAM, DRAM Module
+- Summary: DDR4 2666MHz DIMM with a data transfer speed of 21,300 MB/s operating voltage of 1.2 for power efficiency fully compliant with JEDEC standards and is guaranteed to be 100% compatible with all major platforms on the market. available up to 16GB temporary storage space Download Datasheet
+- Images (6 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-16GB_2666-Silver-1.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-16GB_2666-Silver-2-150x150.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-2666-16GB-P-5.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-32GB_2666-Blue-1.png` [OK, 15 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/DDR4-8GB_2666-Desktop-5.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/Desktop-DDR4-16GB-2666-1.png` [OK, 12 size variants]
+- Specifications:
+  - Heat Sink: Choose an option Blue Heat Sink Dark Maroon Heat Sink No Heat Sink Silver Heat Sink
+  - Capacity: Choose an option 4GB 8GB 16GB 32GB 4GB 8GB 16GB 32GB Clear
+  - Capacity: 4GB, 8GB, 16GB, 32GB
+  - Speed: 2666MHz
+  - Form Factor: DDR4
+  - Latency CAS: CL19
+  - Voltage: 1.2V
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-DDR4-Memory-Module-Datasheet.pdf`
+- Description: TwinMOS DDR4 2666MHz U-DIMM 16 GB Silver Heatsink
+
+## TwinMOS DDR4 Concord CL16 RGB Gaming For Desktop
+- Slug: `twinmos-ddr4-concord-rgb-gaming-dram-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-ddr4-concord-rgb-gaming-dram-for-desktop/
+- SKU: MDD432GB3200D-RGB
+- Price: 0 USD
+- Availability: InStock
+- Categories: Desktop DRAM, DRAM Module, Gaming DRAM
+- Summary: TwinMOS launches “CONCORD”, DDR4 Gaming Memory adopts special design to offer a flawless Dark finish. It uses a premium overclocking 10-layer PCB board and high-quality IC, and provides up to 32 GB of large single stick capacity and 3200 MHz of high frequency and Cache Latency as low as 16 for gamers to choose from. TwinMOS CONCORD DDR4 RGB memory module supports ASUS Aura Sync / GIGABYTE RGB Fusion 2.0 / MSI Mystic Light Sync software. These lightning controlled software allows gamers to control lighting effects and lighting synchronization with TwinMOS CONCORD RGB memory module. It creates a unique, dazzling color aesthetics and offers a brilliant RGB system. Download Datasheet
+- Images (2 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/Product-image.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/RGB-memory-3.png` [OK, 11 size variants]
+- Specifications:
+  - Capacity: Choose an option 8GB 16GB 32GB 8GB 16GB 32GB
+  - Speed: Choose an option 2666MHz 3200MHz 2666MHz 3200MHz
+  - Latency CAS: Choose an option CL16 CL19 CL22 CL16 CL19 CL22 Clear
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-DDR-4-CONCORD-RGB-DRAM-Desktops-Memory-Datasheet.pdf`
+- Description: TwinMOS DDR4 Concord RGB Gaming DRAM 3200MHz CL22 32GB
+
+## TwinMOS H2 Ultra Hyper SATA SSD - 2TB, Dark Grey
+- Slug: `twinmos-hyper-ssd-h2-ultra`
+- Source: https://www.twinmos.com/product/twinmos-hyper-ssd-h2-ultra/
+- SKU: TM2000GH2UG
+- Price: 0 USD
+- Availability: InStock
+- Categories: SATA SSD, Solid State Drive
+- Summary: A SATA-based 2.5-inch solid-state drive (SSD) in an existing PC or MAC desktop or laptop computer. Up to 580 Mb/s sequential read and 550 Mb/s sequential write speed. Space-saving and compact 2.5-inch form factor, Smart Command/NCQ/Trim Support, Dura Write/RAID Support, RoHS compliant 3 Years Warranty Download Datasheet
+- Images (8 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/2.5-SSD-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/2.5-SSD-2-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/2.5-SSD-2.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/2.5-SSD-2G.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/2.5-SSD-Black-min.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2010/09/H2-Ultra-Retail-pack-1.png` [OK, 13 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Hyper-SSD-H2-Ultra-1TB-Blue-3-5.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Capacity: Choose an option 128GB 256GB 512GB 1TB 2TB 4TB 128GB 256GB 512GB 1TB 2TB 4TB
+  - Color: Choose an option Dark Grey Laser Engraved Rose Gold Clear
+  - Capacity: 128GB, 256GB, 512GB, 1TB, 2TB, 4TB
+  - Compatible-OS: Windows , Linux , Mac OS
+  - Form Factor: 2.5-inch SSD
+  - Interface: SATAIII
+  - Sequential Read Speed: Up to 580 MB/s
+  - Sequential Write Speed: Up to 550 MB/s
+  - Random Read Speed 4k Files: Up to 120 MB/s
+  - Random Write Speed 4K Files: Up to 155 MB/S
+  - Color: Dark Grey, Laser Engraved, Rose Gold
+  - NAND Flash Brand: Micron/ Hynix
+  - NAND Type: TLC 3D NAND
+  - SSD Controller Brand: SMI
+  - Endurance: 2000 TBW
+  - Power Loose Protection: Yes
+  - S.M.A.R.T: Yes
+  - Bad Block Management: Failed Blocks of Flash will be replaced with new ones by the SSD
+  - Wear Leveling: Static and dynamic wear-leveling algorithm
+  - Low Density Parity Check: Yes
+  - Warranty: 3 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-2.5-SSD-SATA-Datasheet.pdf`
+- Description: TwinMOS Hyper SSD H2 Ultra 2 TB (Dark Grey)
+
+## TwinMOS M.2 2280 SSD SATAIII - 1TB
+- Slug: `twinmos-m-2-2280-ssd-sataiii`
+- Source: https://www.twinmos.com/product/twinmos-m-2-2280-ssd-sataiii/
+- SKU: NGFFGGBM2280
+- Price: 0 USD
+- Availability: InStock
+- Categories: SATA SSD, Solid State Drive
+- Summary: SATA3 Interface (6Gb/s) M.2 2280 Form Factor Max Sequential Speed 580Mb/s read; 550Mb/s write speed 3D NAND TLC Flash DC 3.3V Low power consumption Quiet operation Operating temperature: 0-70°C Dimensions: 80 (L) x 22 (W) x 3.5 (H) mm Weight: 10g MTBF: 1,500,000 hours Warranty: 3 years Download Datasheet
+- Images (4 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/1TB-M2-SATA-SSD-3-5.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/M.2-Internal-SSD-512GB-Back-5.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/M.2-SATA-SSD.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/M.2-Sata.png` [OK, 10 size variants]
+- Specifications:
+  - Compatible-OS: Windows , Linux , Mac OS
+  - Form Factor: M.2 2280
+  - Interface: SATAIII
+  - Sequential Read Speed: Up to 580 MB/s
+  - Sequential Write Speed: Up to 550 MB/s
+  - Random Read Speed 4k Files: 90K
+  - Random Write Speed 4K Files: 90K
+  - Color: Black
+  - NAND Flash Brand: Micron/ Hynix
+  - NAND Type: TLC 3D NAND
+  - SSD Controller Brand: SMI
+  - Endurance: 2000 TBW
+  - Bridge Controller MTBF: >1,000,000 hours
+  - Power Loose Protection: Yes
+  - S.M.A.R.T: Yes
+  - Bad Block Management: Failed Blocks of Flash will be replaced with new ones by the SSD
+  - Wear Leveling: Static and dynamic wear-leveling algorithm
+  - Low Density Parity Check: Yes
+  - Warranty: 3 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-M.2-INTERNAL-SSD-Datasheet.pdf`
+- Description: TwinMOS M.2 2280 SSD SATAIII 1 TB
+
+## TwinMOS M16 USB 3.2 Flash Drive - 256GB
+- Slug: `twinmos-m16-usb-3-2-flash-drive`
+- Source: https://www.twinmos.com/product/twinmos-m16-usb-3-2-flash-drive/
+- SKU: TMU256GBM16
+- Price: 0 USD
+- Availability: InStock
+- Categories: Flash Drive
+- Summary: Equipped with the new generation USB 3.2 Gen 1 transfer interface Bandwidth: 5Gbps Sequential Read Speed (MB/s) : Up to 120 MB/s Sequential Write Speed (MB/s) : Up to 60 MB/s Supports hot swapping and plug & play Downward compatible with USB3.0 /USB 2.0/USB 1.1 transfer interfaces Does not require an external power source Supports power-saving mode Download Datasheet
+- Images (3 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/M16-pendrive-front-256-GB-Metalic-Custom.png` [OK, 9 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Product-IMage.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Capacity: Choose an option 32GB 64GB 128GB 256GB 32GB 64GB 128GB 256GB
+  - Warranty: Choose an option 5 Years 5 Years Clear
+  - Weight: 6 g
+  - Dimensions: 39 × 12,2 × 4,5 mm
+  - Brands: TwinMOS
+  - Material: Metal
+  - Capacity: 32GB, 64GB, 128GB, 256GB
+  - Warranty: 5 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/09/M16-Pendrive-Datahsheet.pdf`
+- Description: TwinMOS M16 USB 3.2 Flash Drive 256 GB
+
+## TwinMOS NVMe M.2 2280 SSD - 1TB
+- Slug: `twinmos-nvme-m-2-2280-ssd`
+- Source: https://www.twinmos.com/product/twinmos-nvme-m-2-2280-ssd/
+- SKU: NVMeGGBM280
+- Price: 0 USD
+- Availability: InStock
+- Categories: NVMe SSD, Solid State Drive
+- Summary: Genuine PCIe NVMe Gen3 x4 speed (128GB – 1 TB) Max Sequential Speed up to 3600 MB/s Read and 3080 MB/s Write. Space-saving and compact M.2 2280 form factor, Smart Command/NCQ/Trim Support, Dura Write/RAID Support, RoHS compliant 3 Years Warranty Download Datasheet
+- Images (3 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/NVMe-M.2-SSD-1TB-5.png` [OK, 10 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/NVMe-M.2-SSD-1TB-Packet-3-2-150x150.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/12/Nvme-Banner-5.jpg` [OK, 14 size variants]
+- Specifications:
+  - Capacity: Choose an option 128GB 256GB 512GB 1TB 128GB 256GB 512GB 1TB Clear
+  - Capacity: 128GB, 256GB, 512GB, 1TB, 2TB
+  - Compatible-OS: Windows , Linux , Mac OS
+  - Form Factor: M.2 2280
+  - Interface: PCIe Gen 3.0×4
+  - Sequential Read Speed: Up to 3550 MB/s
+  - Sequential Write Speed: Up to 3225 MB/s
+  - Random Read Speed 4k Files: Up to 260 MB/s
+  - Random Write Speed 4K Files: Up to 270 MB/s
+  - Color: Black
+  - NAND Flash Brand: Micron/ Hynix
+  - NAND Type: TLC 3D NAND
+  - Endurance: 1000 TB or 900 GB/Day
+  - Bridge Controller MTBF: >1,000,000 hours
+  - Power Loose Protection: Yes
+  - S.M.A.R.T: Yes
+  - Bad Block Management: Failed Blocks of Flash will be replaced with new ones by the SSD
+  - Wear Leveling: Static and dynamic wear-leveling algorithm
+  - Low Density Parity Check: Yes
+  - Warranty: 3 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2026/04/TwinMOS-Nvme-SSDs-Datasheet-Xtreme.pdf`
+- Description: TwinMOS NVMe AlphaPro M.2 2280 SSD 1 TB
+
+## TwinMOS Portable SSD EliteDrive USB 3.0/Type-C - 2TB, Rose Gold
+- Slug: `twinmos-portable-external-ssd-elitedrive-usb-3-0-type-c`
+- Source: https://www.twinmos.com/product/twinmos-portable-external-ssd-elitedrive-usb-3-0-type-c/
+- SKU: PSSD2TBMEDG
+- Price: 0 USD
+- Availability: InStock
+- Categories: Portable Drives, Portable SSD, Solid State Drive
+- Summary: Lightning-fast Sequential read/write speeds of 450/410 MB/s & Max Random read/write speeds up to 120MB/s/155MB/s .USB 3.0/Type-C delivers 10Gb/s for blazing-fast data transfer The most ideal portable solution for high-speed data transfer needs Download Datasheet
+- Images (6 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/1TB-Portable-External-SSD-Dark-1-1-5.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/1TB-Portable-External-SSD-Dark-2-5.jpeg` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/1TB-Portable-External-SSD-Dark-2-5.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/1TB-Portable-External-SSD-Dark-3-5.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/EliteDrive-gold-1TB.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Capacity: Choose an option 128GB 256GB 512GB 1TB 2TB 128GB 256GB 512GB 1TB 2TB
+  - Color: Choose an option Dark Grey Rose Gold Clear
+  - Capacity: 128GB, 256GB, 512GB, 1TB, 2TB
+  - Color: Dark Grey, Rose Gold
+  - Compatible-OS: Windows
+  - Form Factor: 80 mm Portable SSD
+  - Interface: USB 3.0 / Type C
+  - Sequential Read Speed: Up to 450 MB/s
+  - Sequential Write Speed: Up to 410 MB/s
+  - Random Read Speed 4k Files: Up to 120 MB/s
+  - Random Write Speed 4K Files: Up to 155 MB/S
+  - NAND Flash Brand: Micron/ Hynix
+  - NAND Type: TLC 3D NAND
+  - SSD Controller Brand: SMI
+  - Endurance: 1000 TB or 900 GB/Day
+  - Bridge Controller MTBF: >1,000,000 hours
+  - Power Loose Protection: Yes
+  - S.M.A.R.T: Yes
+  - Bad Block Management: Failed Blocks of Flash will be replaced with new ones by the SSD
+  - Low Density Parity Check: Yes
+  - Warranty: 3 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-EliteDrive-Datasheet.pdf`
+- Description: TwinMOS Portable External SSD EliteDrive USB 3.2/Type-C- 2 TB (Rose Gold)
+
+## TwinMOS Portable HDD ProDrive Ultra USB 3.0 - 1TB
+- Slug: `twinmos-portable-hdd-prodrive-ultra-usb-3-0`
+- Source: https://www.twinmos.com/product/twinmos-portable-hdd-prodrive-ultra-usb-3-0/
+- SKU: TM1000GPDU
+- Price: 0 USD
+- Availability: InStock
+- Categories: Portable Drives, Portable HDD
+- Summary: Experience the perfect blend of performance and portability with the TwinMOS ProDrive Ultra Portable Hard Drive . Available in 1TB storage capacity, this sleek and durable hard drive is designed to meet your storage needs, whether for work, travel, or entertainment. With USB 3.0 interface and backward compatibility with USB 2.0 , the ProDrive Ultra delivers fast transfer speeds, ensuring quick access to your files. Download Datasheet
+- Images (3 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/Prodrive-Ultra-Product-Image-01-3.png` [OK, 13 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/Prodrive-Ultra-Product-Image-01.png` [OK, 6 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/Prodrive-Ultra-Product-Image-02.png` [OK, 10 size variants]
+- Specifications:
+  - Dimensions: 114 × 79 × 14,8 mm
+  - Capacity: 1TB
+  - Case Material: ABS plastic
+  - Color: Dark Grey
+  - RPM (Revolutions Per Minute):: 5400, 7200
+  - Compatible-OS: Windows , Linux , Mac OS , Android
+  - Interface: USB 3.0
+  - Warranty: 3 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/04/TwinMOS-ProDrive-Ultra-Datasheet-Compressed.pdf`
+- Description: TwinMOS Portable HDD ProDrive Ultra USB
+
+## TwinMOS Portable HDD ProDrive USB 3.0 - 2TB
+- Slug: `twinmos-portable-hdd-prodrive-usb-3-0`
+- Source: https://www.twinmos.com/product/twinmos-portable-hdd-prodrive-usb-3-0/
+- SKU: TM2000GPD
+- Price: 0 USD
+- Availability: InStock
+- Categories: Portable Drives, Portable HDD
+- Summary: Ultra-Fast USB 3.0 Interface : High-speed data transfer rates up to 5Gbps. Large Storage Capacity : Available in 1TB, and 2TB variants. Plug-and-Play : Ready to use without the need for additional drivers or software. Multi-OS Compatibility : Works with Windows, macOS, and Linux operating systems. Compact and Lightweight Design : Easy to carry for on-the-go storage needs. Durable Build : Shock-resistant casing to protect against everyday wear and tear. USB-Powered : Operates directly from the USB port, no external power required. LED Indicator : Displays activity status for power and data transfer. Backward Compatibility : Supports USB 2.0 connections for older devices. Reliable Performance : Ensures data security and consistent operation. Download Datasheet
+- Images (4 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/1TB.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/2TB-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/2TB.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Weight: 135 g
+  - Brands: TwinMOS
+  - Capacity: 1TB, 2TB
+  - Color: Dark Grey
+  - Compatible-OS: Windows
+  - Interface: USB 3.0
+  - Sequential Read Speed: Up to 125MB/s
+  - Random Read Speed 4k Files: Up to 32K
+  - Random Write Speed 4K Files: Up to 32K
+  - Bridge Controller MTBF: >1,000,000 hours
+  - Power Loose Protection: Yes
+  - S.M.A.R.T: Yes
+  - Bad Block Management: Failed Blocks of Flash will be replaced with new ones by the SSD
+  - Low Density Parity Check: Yes
+  - Warranty: 3 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-ProDrive-Datasheet-compressed.pdf`
+- Description: TwinMOS Portable HDD ProDrive USB 3.0 - 1TB
+
+## TwinMOS Portable SSD ELITE Drive Pro USB Type-C - 2TB
+- Slug: `twinmos-portable-ssd-elite-drive-pro-usb-type-c`
+- Source: https://www.twinmos.com/product/twinmos-portable-ssd-elite-drive-pro-usb-type-c/
+- SKU: PSSD2TBEDP
+- Price: 0 USD
+- Availability: InStock
+- Categories: Portable Drives, Portable SSD, Solid State Drive
+- Summary: Experience ultra-fast data transfer with the ELITE DRIVE Pro Portable SSD, engineered for performance and versatility. Featuring a USB Type-C interface for seamless compatibility with all types of devices. Lightning-fast Sequential read/write speeds of 1100/1050 MB/s. USB Type-C delivers 10Gb/s for blazing-fast data transfer The most ideal portable solution for high-speed data transfer needs Download Datasheet
+- Images (3 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2025/08/TwinMOS-Elite-drive-pro-USB-Type-C-Portable-SSD-1TB.png` [OK, 9 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/08/TwinMOS-Elite-drive-pro-USB-Type-C-Portable-SSD-2TB.png` [OK, 9 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/08/TwinMOS-Elite-drive-pro-USB-Type-C-Portable-SSD.png` [OK, 9 size variants]
+- Specifications:
+  - Capacity: Choose an option 1TB 2TB 1TB 2TB Clear
+  - Capacity: 1TB, 2TB
+  - Color: Dark Grey
+  - Compatible-OS: Windows , Linux , Mac OS , Android , IOS
+  - Form Factor: 80 mm Portable SSD
+  - Interface: USB Type-C
+  - Sequential Read Speed: Up to 1100 MB/s
+  - Sequential Write Speed: Up to 1050 MB/s
+  - NAND Flash Brand: Micron/ Hynix
+  - NAND Type: TLC 3D NAND
+  - SSD Controller Brand: Maxiotek
+  - Endurance: 1000 TB or 900 GB/Day
+  - Voltage: 5V
+  - Bridge Controller MTBF: >1,000,000 hours
+  - Power Loose Protection: Yes
+  - S.M.A.R.T: Yes
+  - Bad Block Management: Failed Blocks of Flash will be replaced with new ones by the SSD
+  - Low Density Parity Check: Yes
+  - Warranty: 3 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/08/TwinMOS-ELITE-DRIVE-Pro-Datasheet.pdf`
+- Description: TwinMOS Portable SSD ELITE Drive Pro USB Type-C- 2 TB
+
+## TwinMOS SmartX RGB 80 PLUS Bronze Power Supply- 450W
+- Slug: `twinmos-smartx-rgb-80-plus-bronze-power-supply-450w`
+- Source: https://www.twinmos.com/product/twinmos-smartx-rgb-80-plus-bronze-power-supply-450w/
+- SKU: ATX-450WRB80
+- Price: 0 USD
+- Availability: InStock
+- Categories: Power Supply
+- Summary: Complies with ATX12V & 20/24 pin 4 SATA power connector for convenient Proprietary IC & unique design Multiple protection : OCP, SCP, OVP, OPP, UVP Low ripple and noise 12cm RGB High-Flow fan provides efficient cooling High efficiency & Stability : 82% and above Supports Intel & AMD Dual Core CPUs Magnetic amplifier technique 100% Hi-pot test 100% Burn-in test MTBF≥10,000 hours at 25℃ With CE Approval 1 Year Warranty Download Datasheet
+- Images (2 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-SmartX-RGB-80-PLUS-Bronze-450w.png` [OK, 1 size variants]
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-SmartX-80-Plus-Bronze-Datasheet.pdf`
+- Description: The TwinMOS SmartX RGB 450W power supply combines efficient 80 PLUS Bronze certification with customizable RGB lighting, offering reliable power and stylish aesthetics for gaming and workstation PCs.
+
+## TwinMOS SmartX RGB 80 PLUS Bronze Power Supply- 550W
+- Slug: `twinmos-smartx-rgb-80-plus-bronze-power-supply-550w`
+- Source: https://www.twinmos.com/product/twinmos-smartx-rgb-80-plus-bronze-power-supply-550w/
+- SKU: ATX-550WRB80
+- Price: 0 USD
+- Availability: InStock
+- Categories: Power Supply
+- Summary: Complies with ATX12V & 20/24 pin 5 SATA power connector for convenient Proprietary IC & unique design Multiple protection : OCP, SCP, OVP, OPP, UVP Low ripple and noise 12cm RGB High-Flow fan provides efficient cooling High efficiency & Stability : 82% and above Supports Intel & AMD Dual Core CPUs Magnetic amplifier technique 100% Hi-pot test 100% Burn-in test MTBF≥10,000 hours at 25℃ With CE Approval 1 Year Warranty Download Datasheet
+- Images (2 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-SmartX-RGB-80-PLUS-Bronze-550w.png` [OK, 1 size variants]
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-SmartX-80-Plus-Bronze-Datasheet.pdf`
+- Description: TwinMOS SmartX RGB 550W power supply delivers efficient power with 80 PLUS Bronze certification and dynamic RGB lighting, perfect for high-performance gaming setups requiring both style and reliability.
+
+## TwinMOS Thunder GX DDR4 U-DIMM for Desktop
+- Slug: `twinmos-thunder-gx-ddr4-u-dimm-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-thunder-gx-ddr4-u-dimm-for-desktop/
+- SKU: TMD432GB3200D16BKGX
+- Price: 0 USD
+- Availability: InStock
+- Categories: Desktop DRAM, DRAM Module, Gaming DRAM
+- Summary: TwinMOS Thunder GX DDR4 3200MHz DIMM with a data transfer speed of 25,600 MB/s, Heat spreader with the best technology for cooling efficiency, operating voltage of 1.35V for power efficiency fully compliant with JEDEC standards, and is guaranteed to be 100% compatible with all major platforms on the market. available up to 32GB temporary storage space Download Datasheet
+- Images (7 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR4-ThunderGX-Perspective-With-Box-without-reflection.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR4-ThunderGX-Perspective-without-reflection.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2023/03/DDR4-ThunderGZ-04.jpg` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Thunder-Gx-DDR4-16GB-3200MHz-2.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Thunder-Gx-DDR4-16GB-3200MHz_back.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2023/03/ThunderGX-Image-Box.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Capacity: Choose an option 8GB 16GB 32GB 8GB 16GB 32GB
+  - Heat Sink: Choose an option Black Heat Sink & Black Bar Black Heat sink & Golden Bar Clear
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-ThunderGX-DDR4-for-Desktop-UDIMM-Datasheet-Compressed.pdf`
+- Description: TwinMOS Thunder GX DDR4 U-DIMM for Desktop 3200MHz 32GB with Black Heat Sink & Black Bar
+
+## TwinMOS TornadoX6 DDR4 3200MHz U-DIMM for Desktop
+- Slug: `twinmos-tornadox6-ddr4-3200mhz-u-dimm-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-tornadox6-ddr4-3200mhz-u-dimm-for-desktop/
+- SKU: TMMDD416GB3200DKBX6
+- Price: 0 USD
+- Availability: InStock
+- Categories: Desktop DRAM, DRAM Module, Gaming DRAM
+- Summary: TwinMOS Tornado X6 DDR4 3200MHz DIMM with a data transfer speed of 25,600 MB/s, Heat spreader with the best technology for cooling efficiency, operating voltage of 1.2 for power efficiency fully compliant with JEDEC standards, and is guaranteed to be 100% compatible with all major platforms on the market. available up to 32GB temporary storage space Download Datasheet
+- Images (5 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Tornado-16GB-DDR4-3200MHz-B-W.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Tornado-Back-Black.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Tornado-Back-Blue.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Tornado-Red-Back.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2022/02/TornadoX6-Dark.png` [OK, 11 size variants]
+- Specifications:
+  - Capacity: Choose an option 8GB 16GB 32GB 8GB 16GB 32GB
+  - Heat Sink: Choose an option Black Heat Sink Blue Heat Sink Dark Maroon Heat Sink Clear
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-TornadoX6-DDR4-3200MHz-U-DIMM-for-Desktop.pdf`
+- Description: TwinMOS TornadoX6 DDR4 3200MHz U-DIMM for Desktop 16 GB Black
+
+## TwinMOS TornadoX7 DDR4 3200MHz CL22 U-DIMM for Desktop - 32GB
+- Slug: `twinmos-tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop/
+- SKU: TMD432GB3200D22BKX7
+- Price: 0 USD
+- Availability: InStock
+- Categories: DRAM Module, Desktop DRAM, Gaming DRAM
+- Summary: TwinMOS TornadoX7 DDR4 3200MHz CL22 U-DIMM for Desktop with a data transfer speed of 25,600 MB/s, Heat spreader with the best technology for cooling efficiency, operating voltage of 1.2V for power efficiency fully compliant with JEDEC standards, and is guaranteed to be 100% compatible with all major platforms on the market. available up to 32GB temporary storage space Download Datasheet
+- Images (2 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-X7-UDIMM.png` [OK, 9 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/X7-Product-Image.png` [OK, 11 size variants]
+- Specifications:
+  - Capacity: Choose an option 8GB 16GB 32GB 8GB 16GB 32GB Clear
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-RDDR4-TornadoX7-DIMM-for-Desktop-Datasheet-Optimized.pdf`
+- Description: TwinMOS TornadoX7 Pro DDR4 3200MHz CL16 U-DIMM for Desktop 32GB with Black Heat Sink
+
+## TwinMOS TornadoX7 Pro DDR4 3200MHz CL16 U-DIMM for Desktop
+- Slug: `twinmos-tornadox7-pro-ddr4-3200mhz-cl16-gaming-ram`
+- Source: https://www.twinmos.com/product/twinmos-tornadox7-pro-ddr4-3200mhz-cl16-gaming-ram/
+- SKU: TMD432GB3200D18BKX7P
+- Price: 0 USD
+- Availability: InStock
+- Categories: DRAM Module, Desktop DRAM, Gaming DRAM
+- Summary: TwinMOS TornadoX7 Pro DDR4 3200MHz CL16 U-DIMM for Desktop with a data transfer speed of 25,600 MB/s, Heat spreader with the best technology for cooling efficiency, operating voltage of 1.35V for power efficiency fully compliant with JEDEC standards, and is guaranteed to be 100% compatible with all major platforms on the market. available up to 32GB temporary storage space Download Datasheet
+- Images (4 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2025/03/Duel-Channel-01.png` [OK, 13 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/Tornado-X7-pro-1.png` [OK, 13 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/X7-Pro-Product-Image-2.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/X7-Pro-Product-Image.png` [OK, 11 size variants]
+- Specifications:
+  - Capacity: Choose an option 8GB 16GB 32GB 8GB X 2 (16GB) 16GB X 2 (32GB) 8GB 16GB 32GB 8GB X 2 (16GB) 16GB X 2 (32GB)
+  - Latency CAS: Choose an option CL16 CL18 CL16 CL18 Clear
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/07/TwinMOS-DDR4-TornadoX7-Pro-DIMM-for-Desktop-Datasheet.pdf`
+- Description: TwinMOS TornadoX7 Pro DDR4 3200MHz CL18 U-DIMM for Desktop 32GB with Black Heat Sink
+
+## TwinMOS TornadoX7 Pro DDR4 3200MHz CL16 U-DIMM for Desktop
+- Slug: `twinmos-tornadox7-pro-ddr4-3200mhz-cl16-u-dimm-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-tornadox7-pro-ddr4-3200mhz-cl16-u-dimm-for-desktop/
+- SKU: TMD432GB3200D18BKX7P
+- Price: 0 USD
+- Availability: InStock
+- Categories: DRAM Module, Desktop DRAM, Gaming DRAM
+- Summary: TwinMOS TornadoX7 Pro DDR4 3200MHz CL16 U-DIMM for Desktop with a data transfer speed of 25,600 MB/s, Heat spreader with the best technology for cooling efficiency, operating voltage of 1.35V for power efficiency fully compliant with JEDEC standards, and is guaranteed to be 100% compatible with all major platforms on the market. available up to 32GB temporary storage space Download Datasheet
+- Images (4 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2025/03/Duel-Channel-01.png` [OK, 13 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/Tornado-X7-pro-1.png` [OK, 13 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/X7-Pro-Product-Image-2.png` [OK, 11 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/02/X7-Pro-Product-Image.png` [OK, 11 size variants]
+- Specifications:
+  - Capacity: Choose an option 8GB 16GB 32GB 8GB X 2 (16GB) 16GB X 2 (32GB) 8GB 16GB 32GB 8GB X 2 (16GB) 16GB X 2 (32GB)
+  - Latency CAS: Choose an option CL16 CL18 CL16 CL18 Clear
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/07/TwinMOS-DDR4-TornadoX7-Pro-DIMM-for-Desktop-Datasheet.pdf`
+- Description: TwinMOS TornadoX7 Pro DDR4 3200MHz CL18 U-DIMM for Desktop 32GB with Black Heat Sink
+
+## TwinMOS VOLTX DDR5 SO-DIMM for Laptop - 32GB, 5600MHz
+- Slug: `twinmos-voltx-ddr5-so-dimm-for-laptop`
+- Source: https://www.twinmos.com/product/twinmos-voltx-ddr5-so-dimm-for-laptop/
+- SKU: TMD532GB5600S46
+- Price: 0 USD
+- Availability: InStock
+- Categories: DRAM Module, Notebook DRAM
+- Summary: Blazing Fast: DDR5 SO-DIMM with speeds up to 5600MHz and 44,800 MB/s. Energy Efficient: 1.2V operation for lower power consumption. Highly Compatible: Works with all major platforms, JEDEC compliant. Ample Storage: Available up to 32GB for smooth multitasking. Top Performance: Perfect for high-speed, demanding applications. Download Datasheet
+- Images (2 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR5-32GB-4800MHz-1500px-SODIMM.png` [OK, 9 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR532GBL-4800MHz-1500px.png` [OK, 1 size variants]
+- Specifications:
+  - Capacity: Choose an option 8GB 16GB 32GB 8GB 16GB 32GB
+  - Speed: Choose an option 4800MHz 5200MHz 5600MHz 4800MHz 5200MHz 5600MHz Clear
+  - Capacity: 8GB, 16GB, 32GB
+  - Speed: 4800MHz , 5200MHz , 5600MHz
+  - Heat Sink: No Heat Sink
+  - Form Factor: DDR5
+  - Latency CAS: CL40 , CL42 , CL46
+  - Voltage: 1.1V
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-VOLTX-DDR5-for-Laptop-SODIMM-Datasheet.pdf`
+- Description: TwinMOS VOLTX DDR5 SO-DIMM for Laptop 5600MHz 32GB
+
+## TwinMOS VOLTX DDR5 U-DIMM for Desktop
+- Slug: `twinmos-voltx-ddr5-u-dimm-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-voltx-ddr5-u-dimm-for-desktop/
+- SKU: TMD532GB6000U36
+- Price: 0 USD
+- Availability: InStock
+- Categories: Desktop DRAM, DRAM Module, Gaming DRAM
+- Summary: TwinMOS VOLTX DDR5 6000MHz DIMM with a data transfer speed of 48,000 MB/s, Heat spreader with the best technology for cooling efficiency, operating voltage of 1.1 for power efficiency, fully compliant with JEDEC standards, and is guaranteed to be 100% compatible with all major platforms on the market. available up to 32GB temporary storage space Download Datasheet
+- Images (7 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR5-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR5-9.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR5-Front-2000px.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR516GB_With-Packet-1500px.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/DDR532GB4800mhz-1500px.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/11/Singlel-Product-VoltX-DDR5-BE-1.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+- Specifications:
+  - Capacity: Choose an option 8GB 16GB 32GB 16GB X 2 (32GB) 32GB X 2 (64GB) 8GB 16GB 32GB 16GB X 2 (32GB) 32GB X 2 (64GB)
+  - Speed: Choose an option 4800MHz 5600MHz 6000MHz 4800MHz 5600MHz 6000MHz
+  - Heat Sink: Choose an option Black Heat Sink & Black Bar Dark Maroon Heat Sink No Heat Sink
+  - Latency CAS: Choose an option CL36 CL40 CL46 CL36 CL40 CL46 Clear
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2026/03/TwinMOS-VOLTX-DDR5-for-Desktop-UDIMM-Datasheet-0326.pdf`
+- Description: TwinMOS VOLTX DDR5 U-DIMM for Desktop 6000MHz CL36 32GB Dark Maroon Heat Sink
+
+## TwinMOS VOLTX RGB DDR5 U-DIMM for Desktop
+- Slug: `twinmos-voltx-rgb-ddr5-u-dimm-for-desktop`
+- Source: https://www.twinmos.com/product/twinmos-voltx-rgb-ddr5-u-dimm-for-desktop/
+- SKU: TMD564GB60DK36VXR
+- Price: 0 USD
+- Availability: InStock
+- Categories: Desktop DRAM, DRAM Module, Gaming DRAM
+- Summary: TwinMOS VOLTX DDR5 Up to 6000MHz DIMM with a data transfer speed of 48,000 MB/s, Heat spreader with the best technology for cooling efficiency, operating voltage of 1.35 for power efficiency, fully compliant with JEDEC standards, and is guaranteed to be 100% compatible with all major platforms on the market. available up to 32GB temporary storage space Download Datasheet
+- Images (3 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2025/04/DDR5-VoltX-RGB-Duel-Channel-Image-1-scaled.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/04/DDR5-VoltX-RGB-Duel-Channel-Image-1-96x96.png` [OK, 12 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2025/12/Product_VoltX-RGB-DDR5-DRAM-Black-Heatsink.png` [OK, 9 size variants]
+- Specifications:
+  - Capacity: Choose an option 16GB 32GB 16GB X 2 (32GB) 32GB X 2 (64GB) 16GB 32GB 16GB X 2 (32GB) 32GB X 2 (64GB)
+  - Heat Sink: Choose an option Black Heat Sink Dark Maroon Heat Sink
+  - Speed: Choose an option 5600MHz 6000MHz 5600MHz 6000MHz Clear
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2026/03/TwinMOS-VOLTX-RGB-DDR5-for-Desktop-UDIMM-Datasheet-0326.pdf`
+- Description: TwinMOS VOLTX RGB DDR5 U-DIMM for Desktop 6000MHz CL36 32GB X2 64GB Kit Dark Maroon Heatsink
+
+## TwinMOS X3 Ultra USB 3.2 Flash Drive - 128GB
+- Slug: `twinmos-x3-ultra-usb-3-2-flash-drive`
+- Source: https://www.twinmos.com/product/twinmos-x3-ultra-usb-3-2-flash-drive/
+- SKU: FX3DGBM
+- Price: 0 USD
+- Availability: InStock
+- Categories: Flash Drive
+- Summary: Equipped with the new generation USB 3.2 Gen 1 transfer interface Bandwidth: 5Gbps Read Speed : Up to 225 MB/s Supports hot swapping and plug & play Downward compatible with USB3.0 /USB 2.0/USB 1.1 transfer interfaces Does not require an external power source Supports power-saving mode Rotational cap design Download Datasheet
+- Images (1 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/10/X3-Ultra-128GB.png` [OK, 10 size variants]
+- Specifications:
+  - Capacity: Choose an option 8GB 16GB 32GB 64GB 128GB 8GB 16GB 32GB 64GB 128GB Clear
+  - Weight: 9 g
+  - Dimensions: 58,2 × 58,2 × 8,2 mm
+  - Brands: TwinMOS
+  - Interface: USB 3.2
+  - Capacity: 8GB, 16GB, 32GB, 64GB, 128GB
+  - Sequential Read Speed: Up to 225MB/s
+  - Voltage: 5V
+  - Warranty: 5 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/08/TwinMOS-X3-Ultra-Flash-Drive-Datasheet.pdf`
+- Description: TwinMOS X3 Ultra USB 3.2 Flash Drive 128 GB
+
+## TwinMOS Xpower 80 PLUS Bronze- 450W
+- Slug: `twinmos-xpower-80-plus-bronze-450w`
+- Source: https://www.twinmos.com/product/twinmos-xpower-80-plus-bronze-450w/
+- SKU: ATX-450WB80
+- Price: 0 USD
+- Availability: InStock
+- Categories: Power Supply
+- Summary: Complies with ATX12V & 20/24 pin 4 SATA power connector for convenient Proprietary IC & unique design Multiple protection : OCP, SCP, OVP, OPP, UVP Low ripple and noise 12cm High-Flow fan provides efficient cooling High efficiency & Stability : 82% and above Supports Intel & AMD Dual Core CPUs Magnetic amplifier technique 100% Hi-pot test 100% Burn-in test MTBF≥10,000 hours at 25℃ With CE Approval 1 Year Warranty Download Datasheet
+- Images (2 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Xpower-450q-01.png` [OK, 1 size variants]
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-XPower-80-Plus-Bronze-Datasheet.pdf`
+- Description: Reliable and efficient, the TwinMOS Xpower 450W power supply offers 80 PLUS Bronze certification for stable power delivery and energy savings in desktop computers.
+
+## TwinMOS Xpower 80 PLUS Bronze- 550W
+- Slug: `twinmos-xpower-80-plus-bronze-550w`
+- Source: https://www.twinmos.com/product/twinmos-xpower-80-plus-bronze-550w/
+- SKU: ATX-550WB80
+- Price: 0 USD
+- Availability: InStock
+- Categories: Power Supply
+- Summary: Complies with ATX12V & 20/24 pin 5 SATA power connector for convenient Proprietary IC & unique design Multiple protection : OCP, SCP, OVP, OPP, UVP Low ripple and noise 12cm High-Flow fan provides efficient cooling High efficiency & Stability : 82% and above Supports Intel & AMD Dual Core CPUs Magnetic amplifier technique 100% Hi-pot test 100% Burn-in test MTBF≥10,000 hours at 25℃ With CE Approval 1 Year Warranty Download Datasheet
+- Images (2 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/TwinMOS-Corporate-Logo-400px-01.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/Xpower-550w-01-01.png` [OK, 1 size variants]
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/02/TwinMOS-XPower-80-Plus-Bronze-Datasheet.pdf`
+- Description: TwinMOS Xpower 550W PSU with 80 PLUS Bronze certification ensures efficient, stable power delivery for desktop PCs, supporting energy-saving operation and reliable performance.
+
+## TwinMOS Xtreme Gen4X4 NVMe Pro M.2 2280 SSD - 2TB
+- Slug: `twinmos-xtreme-gen4-x4-nvme-pro-m-2-2280-ssd`
+- Source: https://www.twinmos.com/product/twinmos-xtreme-gen4-x4-nvme-pro-m-2-2280-ssd/
+- SKU: NV2TBG42280
+- Price: 0 USD
+- Availability: InStock
+- Categories: NVMe SSD, Solid State Drive
+- Summary: Genuine PCIe Xtreme NVMe Gen4 x4 Max Sequential Speed up to 7500 MB/s Read and 6800 MB/s Write. Space-saving and compact M.2 2280 form factor, SMART Command/NCQ/Trim Support, Dura Write/RAID Support, RoHS compliant 5 Years Warranty Download Datasheet
+- Images (4 sets):
+  - `https://www.twinmos.com/wp-content/uploads/2023/02/M.2-NVMe-Extreme-3.png` [OK, 10 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2023/02/M.2-NVMe-Extreme-4.png` [OK, 10 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2024/11/NVMe-Gen4-2TB-Front-150x150.png` [OK, 1 size variants]
+  - `https://www.twinmos.com/wp-content/uploads/2023/02/NVMe-Gen4-Front-2TB.png` [OK, 13 size variants]
+- Specifications:
+  - Capacity: 1TB, 2TB
+  - Compatible-OS: Windows
+  - Form Factor: M.2 2280
+  - Interface: PCIe Gen4 X4
+  - Sequential Read Speed: Up to 7500 MB/s
+  - Sequential Write Speed: Up to 6800 MB/s
+  - Random Read Speed 4k Files: Upto 750K
+  - Random Write Speed 4K Files: Up to 680K
+  - Cache Size: 2 GB (only in 2 TB Varient)
+  - Color: Black
+  - NAND Flash Brand: Micron/ Hynix
+  - NAND Type: TLC 3D NAND
+  - SSD Controller Brand: SMI
+  - Endurance: 1000 TB or 900 GB/Day
+  - Bridge Controller MTBF: >1,000,000 hours
+  - Power Loose Protection: Yes
+  - S.M.A.R.T: Yes
+  - Bad Block Management: Failed Blocks of Flash will be replaced with new ones by the SSD
+  - Wear Leveling: Static and dynamic wear-leveling algorithm
+  - Low Density Parity Check: Yes
+  - Warranty: 5 Years
+- Datasheets: `https://www.twinmos.com/wp-content/uploads/2025/01/TwinMOS-EOL-Details-V23.pdf`, `https://www.twinmos.com/wp-content/uploads/2025/11/TwinMOS-Xteme-NVMe-2-TB-PS5-Rev1.4.pdf`
+- Description: TwinMOS Xtreme Gen4 X4 NVMe Pro M.2 2280 SSD 2TB

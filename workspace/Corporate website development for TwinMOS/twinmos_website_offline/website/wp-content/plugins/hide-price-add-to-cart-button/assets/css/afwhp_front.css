@@ -1,0 +1,31 @@
+.form_popup {
+		box-shadow: 0 0 10px rgba(0,0,0,0.3);
+		display:none;
+		margin:1em;
+		background-color: #FFF;
+		padding: 20px;
+		width: 30%;
+	}
+
+.form_popup label {
+	display: block;
+	font-weight: bold;
+}
+
+.form_popup input[type=text],
+.form_popup select ,
+.form_popup textarea {
+	width: 100%
+}
+
+.form_popup textarea {
+	height: 150px;
+}
+
+.form_close_btn { padding: 0px 8px; float: right; margin-bottom: 10px;} 
+
+.form_title { text-align: center;}
+
+.form_popup66_wrapper { display: none; }
+
+

@@ -1,0 +1,1526 @@
+openapi: 3.1.0
+
+info:
+  title: TwinMOS Website API
+  description: |
+    REST API for the TwinMOS Technologies corporate website, powered by Strapi v5.
+    This specification covers all public and authenticated endpoints across Phase 1 (P1),
+    Phase 2 (P2), and Phase 3 (P3) of the website project.
+
+    **Base URL:** `https://cms.twinmos.com/api`
+    **Authentication:** JWT Bearer tokens issued by Strapi v5 Users-Permissions plugin.
+    **Error Format:** RFC 9457 Problem Details (`application/problem+json`).
+    **API Versioning:** URL-path versioning — current version is v1 (`/api/v1/...`).
+
+    ## Phase Gating
+    Endpoints marked `[P1]` are available at launch.
+    Endpoints marked `[P2]` become available in Phase 2 (months 6-9).
+    Endpoints marked `[P3]` become available in Phase 3 (months 10-15).
+
+  version: 1.0.0
+  contact:
+    name: TwinMOS Technologies — Engineering
+    email: dev@twinmos.com
+  license:
+    name: Proprietary
+    identifier: LicenseRef-TwinMOS-Proprietary
+
+servers:
+  - url: https://cms.twinmos.com/api
+    description: Production
+  - url: https://staging-cms.twinmos.com/api
+    description: Staging
+  - url: http://localhost:1337/api
+    description: Local Development
+
+tags:
+  - name: Products
+    description: Product catalog — SKUs, categories, brands
+  - name: Compatibility
+    description: RAM / SSD compatibility lookup and QVL data
+  - name: Distribution
+    description: Distributors and retailers (where-to-buy)
+  - name: Forms
+    description: Public form submissions (contact, distributor application, newsletter)
+  - name: Support
+    description: Warranty registration, RMA requests, serial number lookup
+  - name: Content
+    description: CMS-driven content pages, news articles, regional pages
+  - name: Search
+    description: Full-text search via MeiliSearch proxy
+  - name: Auth
+    description: Authentication, JWT refresh
+
+# ──────────────────────────────────────────────────────────────────────────────
+# SECURITY SCHEMES
+# ──────────────────────────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from POST /api/auth/local
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Server-to-server API key (CRM webhooks, ERP sync)
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # REUSABLE SCHEMAS
+  # ──────────────────────────────────────────────────────────────────────────
+  schemas:
+
+    # --- Pagination ---
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 25
+        pageCount:
+          type: integer
+          example: 12
+        total:
+          type: integer
+          example: 287
+
+    # --- RFC 9457 Problem Details ---
+    ProblemDetails:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+          example: https://api.twinmos.com/errors/not-found
+        title:
+          type: string
+          example: Resource Not Found
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: Product with id 9999 was not found.
+        instance:
+          type: string
+          format: uri
+          example: /api/products/9999
+        traceId:
+          type: string
+          example: 01HXYZ...
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    # --- Product ---
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 42
+        documentId:
+          type: string
+          example: abc123xyz
+        name:
+          type: string
+          example: VOLTX DDR5 16GB 5600MHz U-DIMM
+        slug:
+          type: string
+          example: voltx-ddr5-16gb-5600mhz-udimm
+        shortDescription:
+          type: string
+          example: High-performance DDR5 gaming memory for desktop PCs.
+        partNumber:
+          type: string
+          example: TMD516GB5600U36
+        ean:
+          type: string
+          example: "6291104608023"
+        status:
+          type: string
+          enum: [draft, published, discontinued]
+          example: published
+        launchDate:
+          type: string
+          format: date
+          example: "2024-09-01"
+        category:
+          $ref: "#/components/schemas/CategoryRef"
+        brand:
+          $ref: "#/components/schemas/BrandRef"
+        specValues:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpecValue"
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaFile"
+        locale:
+          type: string
+          example: en
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        publishedAt:
+          type: string
+          format: date-time
+
+    ProductRef:
+      type: object
+      properties:
+        id:
+          type: integer
+        documentId:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        partNumber:
+          type: string
+
+    # --- Category ---
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        documentId:
+          type: string
+        name:
+          type: string
+          example: DDR5 Memory
+        slug:
+          type: string
+          example: ddr5-memory
+        description:
+          type: string
+        parentCategory:
+          $ref: "#/components/schemas/CategoryRef"
+        displayOrder:
+          type: integer
+
+    CategoryRef:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+
+    # --- Brand ---
+    Brand:
+      type: object
+      properties:
+        id:
+          type: integer
+        documentId:
+          type: string
+        name:
+          type: string
+          example: VOLTX
+        slug:
+          type: string
+          example: voltx
+        tagline:
+          type: string
+          example: Performance Unleashed
+        logo:
+          $ref: "#/components/schemas/MediaFile"
+
+    BrandRef:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+
+    # --- SpecValue ---
+    SpecValue:
+      type: object
+      properties:
+        id:
+          type: integer
+        specGroup:
+          type: string
+          example: Performance
+        specKey:
+          type: string
+          example: maxSpeed
+        specLabel:
+          type: string
+          example: Maximum Speed
+        value:
+          type: string
+          example: "5600 MHz"
+        unit:
+          type: string
+          example: MHz
+        displayOrder:
+          type: integer
+
+    # --- MediaFile ---
+    MediaFile:
+      type: object
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+          format: uri
+          example: https://media.twinmos.com/products/voltx-ddr5-16gb.webp
+        alternativeText:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        size:
+          type: number
+          description: File size in KB
+        mime:
+          type: string
+          example: image/webp
+
+    # --- CompatibilityEntry ---
+    CompatibilityEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        product:
+          $ref: "#/components/schemas/ProductRef"
+        motherboard:
+          $ref: "#/components/schemas/Motherboard"
+        testResult:
+          type: string
+          enum: [confirmed, unconfirmed, failed]
+        xmpProfile:
+          type: string
+          example: XMP 3.0
+        testedSpeed:
+          type: integer
+          example: 5600
+        notes:
+          type: string
+
+    Motherboard:
+      type: object
+      properties:
+        id:
+          type: integer
+        make:
+          type: string
+          example: ASUS
+        model:
+          type: string
+          example: ROG MAXIMUS Z790 APEX
+        socket:
+          type: string
+          example: LGA1700
+        chipset:
+          type: string
+          example: Intel Z790
+        maxCapacity:
+          type: integer
+          example: 128
+
+    # --- Distributor ---
+    Distributor:
+      type: object
+      properties:
+        id:
+          type: integer
+        documentId:
+          type: string
+        name:
+          type: string
+        country:
+          type: string
+          example: United Arab Emirates
+        countryCode:
+          type: string
+          example: BD
+        city:
+          type: string
+          example: Dubai
+        website:
+          type: string
+          format: uri
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        lat:
+          type: number
+          example: 23.7691
+        lng:
+          type: number
+          example: 90.3671
+        tier:
+          type: string
+          enum: [platinum, gold, silver, authorized]
+        productLines:
+          type: array
+          items:
+            type: string
+          example: [memory, ssd, portable]
+
+    # --- Retailer ---
+    Retailer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        country:
+          type: string
+        city:
+          type: string
+        address:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        distributor:
+          $ref: "#/components/schemas/Distributor"
+        website:
+          type: string
+          format: uri
+
+    # --- FormSubmission ---
+    FormSubmission:
+      type: object
+      properties:
+        id:
+          type: integer
+        formType:
+          type: string
+          enum: [contact, distributor_application, newsletter, rma_pre_form, feedback, careers]
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        company:
+          type: string
+        country:
+          type: string
+        message:
+          type: string
+        marketingConsent:
+          type: boolean
+        submittedAt:
+          type: string
+          format: date-time
+        ipAddress:
+          type: string
+        locale:
+          type: string
+
+    FormSubmissionCreate:
+      type: object
+      required: [formType, name, email, turnstileToken]
+      properties:
+        formType:
+          type: string
+          enum: [contact, distributor_application, newsletter, rma_pre_form, feedback, careers]
+        name:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        company:
+          type: string
+        country:
+          type: string
+        message:
+          type: string
+          maxLength: 5000
+        marketingConsent:
+          type: boolean
+          default: false
+        turnstileToken:
+          type: string
+          description: Cloudflare Turnstile challenge response token
+
+    # --- NewsArticle ---
+    NewsArticle:
+      type: object
+      properties:
+        id:
+          type: integer
+        documentId:
+          type: string
+        title:
+          type: string
+        slug:
+          type: string
+        excerpt:
+          type: string
+        content:
+          type: string
+          description: Rich text / Markdown body
+        featuredImage:
+          $ref: "#/components/schemas/MediaFile"
+        publishedAt:
+          type: string
+          format: date-time
+        category:
+          type: string
+          enum: [product_launch, company_news, press_release, event, technology]
+        locale:
+          type: string
+
+    # --- WarrantyRegistration ---
+    WarrantyRegistration:
+      type: object
+      properties:
+        id:
+          type: integer
+        registrationNumber:
+          type: string
+          example: WR-2026-00042
+        product:
+          $ref: "#/components/schemas/ProductRef"
+        serialNumber:
+          type: string
+        purchaseDate:
+          type: string
+          format: date
+        retailerName:
+          type: string
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [pending, active, expired, voided]
+        createdAt:
+          type: string
+          format: date-time
+
+    WarrantyRegistrationCreate:
+      type: object
+      required: [serialNumber, purchaseDate, customerName, customerEmail, turnstileToken]
+      properties:
+        serialNumber:
+          type: string
+        productPartNumber:
+          type: string
+        purchaseDate:
+          type: string
+          format: date
+        retailerName:
+          type: string
+        proofOfPurchase:
+          type: string
+          description: Filename of uploaded file (via presigned URL)
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+          format: email
+        customerPhone:
+          type: string
+        country:
+          type: string
+        turnstileToken:
+          type: string
+
+    # --- RMARequest ---
+    RMARequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        rmaNumber:
+          type: string
+          example: RMA-2026-00123
+        warrantyRegistration:
+          $ref: "#/components/schemas/WarrantyRegistration"
+        issueDescription:
+          type: string
+        issueType:
+          type: string
+          enum: [defective, doa, wrong_item, missing_component, other]
+        status:
+          type: string
+          enum: [submitted, under_review, approved, rejected, in_transit, received, resolved, closed]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # --- SerialCheckResult (P2) ---
+    SerialCheckResult:
+      type: object
+      properties:
+        serial:
+          type: string
+        valid:
+          type: boolean
+        status:
+          type: string
+          enum: [valid, invalid, already_registered, reported_counterfeit]
+        product:
+          $ref: "#/components/schemas/ProductRef"
+        manufacturedAt:
+          type: string
+          format: date
+
+    # --- ContentPage ---
+    ContentPage:
+      type: object
+      properties:
+        id:
+          type: integer
+        documentId:
+          type: string
+        title:
+          type: string
+        slug:
+          type: string
+        content:
+          type: string
+        seoTitle:
+          type: string
+        seoDescription:
+          type: string
+        locale:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+
+    # --- RegionalPage ---
+    RegionalPage:
+      type: object
+      properties:
+        id:
+          type: integer
+        countryCode:
+          type: string
+          example: BD
+        countryName:
+          type: string
+          example: United Arab Emirates
+        headline:
+          type: string
+        intro:
+          type: string
+        distributors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Distributor"
+        locale:
+          type: string
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # REUSABLE RESPONSES
+  # ──────────────────────────────────────────────────────────────────────────
+  responses:
+    Unauthorized:
+      description: Authentication required or token invalid
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://api.twinmos.com/errors/authentication
+            title: Unauthorized
+            status: 401
+            detail: Valid JWT access token required.
+            instance: /api/products
+
+    Forbidden:
+      description: Authenticated but insufficient permissions
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://api.twinmos.com/errors/authorization
+            title: Forbidden
+            status: 403
+            detail: Your role does not have access to this resource.
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://api.twinmos.com/errors/not-found
+            title: Not Found
+            status: 404
+            detail: The requested resource does not exist.
+
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds until rate limit resets
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://api.twinmos.com/errors/rate-limit
+            title: Too Many Requests
+            status: 429
+            detail: Rate limit of 100 requests/minute exceeded. Retry after 42 seconds.
+
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://api.twinmos.com/errors/validation
+            title: Validation Failed
+            status: 400
+            detail: One or more fields failed validation.
+            errors:
+              - field: email
+                message: Must be a valid email address.
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PATHS
+# ──────────────────────────────────────────────────────────────────────────────
+paths:
+
+  # ──── AUTH ──────────────────────────────────────────────────────────────────
+
+  /auth/local:
+    post:
+      tags: [Auth]
+      summary: "[P1] Log in and obtain JWT tokens"
+      operationId: authLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identifier, password]
+              properties:
+                identifier:
+                  type: string
+                  description: Email or username
+                  example: editor@twinmos.com
+                password:
+                  type: string
+                  format: password
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jwt:
+                    type: string
+                    description: Access token (1 hour TTL)
+                  refreshToken:
+                    type: string
+                    description: Rotating refresh token (30 day max)
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      username:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: "[P1] Refresh JWT access token"
+      operationId: authRefresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        "200":
+          description: New token pair issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jwt:
+                    type: string
+                  refreshToken:
+                    type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ──── PRODUCTS ──────────────────────────────────────────────────────────────
+
+  /products:
+    get:
+      tags: [Products]
+      summary: "[P1] List products"
+      operationId: listProducts
+      parameters:
+        - name: filters[category][slug][$eq]
+          in: query
+          schema:
+            type: string
+          example: ddr5-memory
+          description: Filter by category slug
+        - name: filters[brand][slug][$eq]
+          in: query
+          schema:
+            type: string
+          example: voltx
+        - name: filters[status][$eq]
+          in: query
+          schema:
+            type: string
+            enum: [published, discontinued]
+          default: published
+        - name: populate
+          in: query
+          schema:
+            type: string
+          example: "category,brand,images"
+          description: Comma-separated relations to populate
+        - name: sort
+          in: query
+          schema:
+            type: string
+          example: "launchDate:desc"
+        - name: pagination[page]
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pagination[pageSize]
+          in: query
+          schema:
+            type: integer
+            default: 25
+            maximum: 100
+        - name: locale
+          in: query
+          schema:
+            type: string
+            default: en
+          example: ar
+      responses:
+        "200":
+          description: Paginated product list
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                  meta:
+                    type: object
+                    properties:
+                      pagination:
+                        $ref: "#/components/schemas/PaginationMeta"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+
+  /products/{id}:
+    get:
+      tags: [Products]
+      summary: "[P1] Get product by ID"
+      operationId: getProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: populate
+          in: query
+          schema:
+            type: string
+          example: "category,brand,specValues,images,compatibilityEntries"
+        - name: locale
+          in: query
+          schema:
+            type: string
+            default: en
+      responses:
+        "200":
+          description: Product detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Product"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ──── CATEGORIES ────────────────────────────────────────────────────────────
+
+  /categories:
+    get:
+      tags: [Products]
+      summary: "[P1] List product categories"
+      operationId: listCategories
+      parameters:
+        - name: populate
+          in: query
+          schema:
+            type: string
+          example: parentCategory
+        - name: locale
+          in: query
+          schema:
+            type: string
+            default: en
+      responses:
+        "200":
+          description: Category list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Category"
+
+  # ──── BRANDS ────────────────────────────────────────────────────────────────
+
+  /brands:
+    get:
+      tags: [Products]
+      summary: "[P1] List product brands"
+      operationId: listBrands
+      parameters:
+        - name: populate
+          in: query
+          schema:
+            type: string
+          example: logo
+      responses:
+        "200":
+          description: Brand list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Brand"
+
+  # ──── COMPATIBILITY ─────────────────────────────────────────────────────────
+
+  /compatibility/search:
+    get:
+      tags: [Compatibility]
+      summary: "[P1] Search compatibility entries"
+      operationId: searchCompatibility
+      description: Find products compatible with a given motherboard, or find motherboards compatible with a given product.
+      parameters:
+        - name: productSlug
+          in: query
+          schema:
+            type: string
+          example: voltx-ddr5-16gb-5600mhz-udimm
+        - name: motherboardMake
+          in: query
+          schema:
+            type: string
+          example: ASUS
+        - name: motherboardModel
+          in: query
+          schema:
+            type: string
+          example: ROG STRIX Z790-E
+        - name: socket
+          in: query
+          schema:
+            type: string
+          example: LGA1700
+        - name: pagination[page]
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pagination[pageSize]
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Compatibility results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CompatibilityEntry"
+                  meta:
+                    type: object
+                    properties:
+                      pagination:
+                        $ref: "#/components/schemas/PaginationMeta"
+
+  # ──── DISTRIBUTORS ──────────────────────────────────────────────────────────
+
+  /distributors:
+    get:
+      tags: [Distribution]
+      summary: "[P1] List distributors"
+      operationId: listDistributors
+      parameters:
+        - name: filters[country][$eq]
+          in: query
+          schema:
+            type: string
+          example: United Arab Emirates
+        - name: filters[countryCode][$eq]
+          in: query
+          schema:
+            type: string
+          example: BD
+        - name: fields
+          in: query
+          schema:
+            type: string
+          example: "name,lat,lng,country,website"
+          description: Comma-separated field list (sparse fieldsets)
+        - name: populate
+          in: query
+          schema:
+            type: string
+          example: retailers
+      responses:
+        "200":
+          description: Distributor list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Distributor"
+
+  /retailers:
+    get:
+      tags: [Distribution]
+      summary: "[P1] List retailers"
+      operationId: listRetailers
+      parameters:
+        - name: filters[country][$eq]
+          in: query
+          schema:
+            type: string
+        - name: filters[distributor][id][$eq]
+          in: query
+          schema:
+            type: integer
+        - name: pagination[page]
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pagination[pageSize]
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        "200":
+          description: Retailer list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Retailer"
+
+  # ──── FORMS ─────────────────────────────────────────────────────────────────
+
+  /form-submissions:
+    post:
+      tags: [Forms]
+      summary: "[P1] Submit a public form"
+      operationId: createFormSubmission
+      description: |
+        Accepts contact, distributor application, newsletter signup, and other form types.
+        Requires a valid Cloudflare Turnstile token.
+        Rate limited to 10 submissions/minute per IP.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FormSubmissionCreate"
+            examples:
+              contact:
+                summary: Contact form
+                value:
+                  formType: contact
+                  name: Ahmed Al-Rashidi
+                  email: ahmed@example.com
+                  company: Tech Solutions LLC
+                  country: UAE
+                  message: Interested in bulk pricing for DDR5 modules.
+                  marketingConsent: true
+                  turnstileToken: "0.ABC123..."
+      responses:
+        "201":
+          description: Submission accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      submittedAt:
+                        type: string
+                        format: date-time
+                      confirmationId:
+                        type: string
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "403":
+          description: Turnstile verification failed
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+
+  # ──── NEWS ──────────────────────────────────────────────────────────────────
+
+  /news-articles:
+    get:
+      tags: [Content]
+      summary: "[P1] List news articles"
+      operationId: listNews
+      parameters:
+        - name: filters[category][$eq]
+          in: query
+          schema:
+            type: string
+            enum: [product_launch, company_news, press_release, event, technology]
+        - name: sort
+          in: query
+          schema:
+            type: string
+          default: "publishedAt:desc"
+        - name: pagination[page]
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pagination[pageSize]
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: locale
+          in: query
+          schema:
+            type: string
+            default: en
+      responses:
+        "200":
+          description: Paginated news list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NewsArticle"
+                  meta:
+                    type: object
+                    properties:
+                      pagination:
+                        $ref: "#/components/schemas/PaginationMeta"
+
+  /news-articles/{slug}:
+    get:
+      tags: [Content]
+      summary: "[P1] Get news article by slug"
+      operationId: getNewsArticle
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: locale
+          in: query
+          schema:
+            type: string
+            default: en
+      responses:
+        "200":
+          description: News article detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NewsArticle"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ──── CONTENT PAGES ─────────────────────────────────────────────────────────
+
+  /content-pages/{slug}:
+    get:
+      tags: [Content]
+      summary: "[P1] Get CMS content page by slug"
+      operationId: getContentPage
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          example: about-twinmos
+        - name: locale
+          in: query
+          schema:
+            type: string
+            default: en
+      responses:
+        "200":
+          description: Content page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentPage"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /regional-pages/{countryCode}:
+    get:
+      tags: [Content]
+      summary: "[P1] Get regional landing page by country code"
+      operationId: getRegionalPage
+      parameters:
+        - name: countryCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-Z]{2}$"
+          example: BD
+        - name: locale
+          in: query
+          schema:
+            type: string
+            default: en
+      responses:
+        "200":
+          description: Regional page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RegionalPage"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ──── SEARCH ────────────────────────────────────────────────────────────────
+
+  /search:
+    get:
+      tags: [Search]
+      summary: "[P1] Full-text search (MeiliSearch proxy)"
+      operationId: search
+      description: |
+        Proxies queries to MeiliSearch. Returns products, news articles,
+        and content pages matching the query. Rate limited to 60 req/min.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "DDR5 gaming"
+        - name: index
+          in: query
+          schema:
+            type: string
+            enum: [products, news, all]
+            default: all
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 25
+        - name: locale
+          in: query
+          schema:
+            type: string
+            default: en
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hits:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        type:
+                          type: string
+                          enum: [product, news, page]
+                        title:
+                          type: string
+                        slug:
+                          type: string
+                        excerpt:
+                          type: string
+                        _rankingScore:
+                          type: number
+                  estimatedTotalHits:
+                    type: integer
+                  processingTimeMs:
+                    type: integer
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+
+  # ──── SUPPORT — WARRANTY ────────────────────────────────────────────────────
+
+  /warranty-registrations:
+    post:
+      tags: [Support]
+      summary: "[P1] Register product warranty"
+      operationId: createWarrantyRegistration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WarrantyRegistrationCreate"
+      responses:
+        "201":
+          description: Warranty registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WarrantyRegistration"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "403":
+          description: Turnstile failed
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+
+  # ──── SUPPORT — RMA ─────────────────────────────────────────────────────────
+
+  /rma-requests:
+    post:
+      tags: [Support]
+      summary: "[P2] Create RMA request"
+      operationId: createRMARequest
+      description: Requires valid warranty registration number. Phase 2 feature.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [warrantyRegistrationNumber, issueType, issueDescription]
+              properties:
+                warrantyRegistrationNumber:
+                  type: string
+                  example: WR-2026-00042
+                issueType:
+                  type: string
+                  enum: [defective, doa, wrong_item, missing_component, other]
+                issueDescription:
+                  type: string
+                  maxLength: 2000
+      responses:
+        "201":
+          description: RMA request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RMARequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /rma-requests/{rmaNumber}:
+    get:
+      tags: [Support]
+      summary: "[P2] Get RMA status by RMA number"
+      operationId: getRMARequest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rmaNumber
+          in: path
+          required: true
+          schema:
+            type: string
+          example: RMA-2026-00123
+      responses:
+        "200":
+          description: RMA detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RMARequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ──── SUPPORT — SERIAL CHECK ────────────────────────────────────────────────
+
+  /serial-check:
+    post:
+      tags: [Support]
+      summary: "[P2] Anti-counterfeit serial number verification"
+      operationId: checkSerial
+      description: |
+        Verifies a product serial number against TwinMOS manufacturing records.
+        Rate limited to 30 req/min per IP to prevent scraping.
+        Phase 2 feature.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [serial]
+              properties:
+                serial:
+                  type: string
+                  example: TW-DDR5-2024-00123456
+                turnstileToken:
+                  type: string
+      responses:
+        "200":
+          description: Serial check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SerialCheckResult"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"

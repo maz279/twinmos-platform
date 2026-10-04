@@ -1,0 +1,73 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0D0D0D" media="(prefers-color-scheme:dark)"><meta name="theme-color" content="#0A2540"><link rel="manifest" href="../assets/manifest.webmanifest"><title>TwinMOS — Support Center</title>
+<link rel="stylesheet" href="../assets/design-system.css"></head>
+<body>
+<header class="hdr"><div class="wrap hdr-in">
+  <a class="logo"><img src="../assets/img/logo.webp" alt="TwinMOS"></a>
+  <nav class="nav"><a href="#">Products</a><a href="#">Solutions</a><a href="#">Where to Buy</a><a class="on" href="#">Support</a><a href="#">About</a><a href="#">News</a><a href="#">Contact</a></nav>
+  <div class="hdr-tools"><button class="icon-btn">🔍</button><a class="lang">🌐 EN</a><a class="btn btn-primary btn-sm">Contact Support</a></div>
+</div></header>
+
+<section class="sec-tight"><div class="wrap">
+  <div class="support-hero">
+    <span class="eyebrow" style="color:var(--accent-2)">Support Center</span>
+    <h2 style="font-size:30px;margin-bottom:8px">How can we help?</h2>
+    <p style="color:#B9C9DA;font-size:14.5px;margin-bottom:18px">Search 50+ knowledge-base articles, or jump straight to warranty, RMA and downloads.</p>
+    <div class="big-search"><input placeholder="Search help articles — e.g. “enable XMP”"/><button class="btn btn-primary">Search</button></div>
+    <div class="chips" style="margin-top:16px"><span class="chip">Popular: DDR5 installation</span><span class="chip">SSD not detected</span><span class="chip">Check my warranty</span></div>
+  </div>
+</div></section>
+
+<!-- Category cards -->
+<section class="sec-tight"><div class="wrap grid g3">
+  <div class="card scat"><div class="ci">🛡</div><div><b>Warranty</b><span>Register products · look up status · policy by region · lifetime DRAM terms</span></div></div>
+  <div class="card scat"><div class="ci">📦</div><div><b>RMA Portal</b><span>Start a return · track status in real time · out-of-warranty options</span></div></div>
+  <div class="card scat"><div class="ci">⬇</div><div><b>Firmware &amp; Downloads</b><span>Serial-verified firmware · manuals · quick-start guides · datasheets</span></div></div>
+  <div class="card scat"><div class="ci">📚</div><div><b>Knowledge Base</b><span>Install guides · troubleshooting · compatibility explainers with videos</span></div></div>
+  <div class="card scat"><div class="ci">✅</div><div><b>Serial Check</b><span>Verify authenticity in seconds — anti-counterfeit protection</span></div></div>
+  <div class="card scat"><div class="ci">💬</div><div><b>Contact &amp; Live Chat</b><span>Sun–Thu 9:00–18:00 GST · 48-hour ticket SLA · auto-reply in 5 min</span></div></div>
+</div></section>
+
+<!-- RMA tracker -->
+<section class="sec" style="background:var(--surface)"><div class="wrap">
+  <div class="section-head"><div><span class="eyebrow">Self-Service First</span><h2 class="h2">Track an RMA — Live</h2></div><span class="small muted">RMA-2026-001234</span></div>
+  <div class="card card-pad" style="padding:26px">
+    <div class="rma-track">
+      <div class="rma-step done">Submitted</div><div class="rma-step done">Under Review</div><div class="rma-step done">Approved</div><div class="rma-step done">Shipped to Us</div><div class="rma-step done">Received</div><div class="rma-step now">Testing</div><div class="rma-step">Replacement Shipped</div><div class="rma-step">Closed</div>
+    </div>
+    <div class="callout" style="margin-top:18px"><b>Status: Testing</b> — your VOLTX DDR5 kit entered lab diagnostics on 22 Sep. Next update: replacement dispatch (typically 1–2 business days after test). Email notifications are on.</div>
+    <div style="display:flex;gap:10px;margin-top:16px"><input style="flex:1;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:Consolas,monospace" value="RMA-2026-001234"/><a class="btn btn-primary">Track</a><a class="btn btn-outline">Start new RMA</a></div>
+  </div>
+</div></section>
+
+<!-- Warranty tools -->
+<section class="sec"><div class="wrap grid g2">
+  <div class="card card-pad"><span class="eyebrow">Warranty</span><b style="display:block;font-size:17px;color:var(--primary);margin-bottom:10px">Register a Product</b>
+    <div class="form-grid">
+      <div class="field"><label>Product</label><select><option>VOLTX RGB DDR5 6000 32GB</option><option>CoreX Pro Gen 5 2TB</option></select></div>
+      <div class="field"><label>Serial Number <i>*</i></label><input value="TW-VX5-202608-00043821"/></div>
+      <div class="field"><label>Purchase Date <i>*</i></label><input value="2026-08-30"/></div>
+      <div class="field"><label>Retailer</label><select><option>Amazon.ae</option><option>Flipkart</option><option>Local store</option></select></div>
+      <div class="field fw"><label>Receipt (optional — PDF/JPG ≤10MB)</label><input/></div>
+    </div>
+    <div class="consent" style="margin:14px 0"><span class="cbx on" style="margin-top:2px"></span><span>I agree to the processing of my data for warranty administration (Privacy Policy).</span></div>
+    <a class="btn btn-primary">Register Warranty</a>
+    <p class="hint">Confirmation email includes expiry date + lifetime lookup link. Warranty terms: <b>Lifetime</b> memory · <b>5-yr</b> NVMe/USB · <b>3-yr</b> SATA.</p>
+  </div>
+  <div>
+    <div class="card card-pad" style="margin-bottom:16px"><b style="color:var(--primary);font-size:15px">🔍 Serial Check — is my product genuine?</b>
+      <p class="small muted" style="margin:8px 0 12px">Enter the serial from packaging or module label. Three possible results: Verified Genuine · Serial Not Found · Suspected Counterfeit.</p>
+      <div style="display:flex;gap:10px"><input style="flex:1;border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-family:Consolas,monospace" placeholder="TW-XXXXXXXX-YYYYMM-########"/><a class="btn btn-dark">Verify</a></div>
+      <p class="tiny muted" style="margin-top:8px">Masked display · rate-limited to stop serial enumeration · 5-day counterfeit-report SLA.</p>
+    </div>
+    <div class="card card-pad"><b style="color:var(--primary);font-size:15px">Most-viewed articles</b>
+      <div class="store"><b class="small" style="color:#2B3B52">How to enable XMP 3.0 on Intel platforms</b><span class="tiny muted" style="margin-left:auto">👍 96%</span></div>
+      <div class="store"><b class="small" style="color:#2B3B52">SSD not showing in Windows — 6 fixes</b><span class="tiny muted" style="margin-left:auto">👍 94%</span></div>
+      <div class="store"><b class="small" style="color:#2B3B52">DDR5 installation &amp; first boot checklist</b><span class="tiny muted" style="margin-left:auto">👍 98%</span></div>
+    </div>
+  </div>
+</div>
+<p class="breadcrumb-note wrap" style="display:block">UX notes: support-scoped search · RMA 7-state tracker with per-state emails · serial-gated firmware center · “Was this helpful?” ratings feed content gaps · FAQPage schema.</p>
+</section>
+<footer class="ftr" style="margin-top:20px"><div class="wrap"><div class="ftr-bot" style="border:none"><span>© 2026 TwinMOS Technologies</span><span>Support SLA: 48 business hours · auto-reply 5 min</span></div></div></footer>
+<div class="mocknote">TWINMOS UX CONCEPT · 09 SUPPORT CENTER</div>
+</body></html>

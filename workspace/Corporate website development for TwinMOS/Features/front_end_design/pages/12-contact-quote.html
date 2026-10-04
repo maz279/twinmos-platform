@@ -1,0 +1,56 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0D0D0D" media="(prefers-color-scheme:dark)"><meta name="theme-color" content="#0A2540"><link rel="manifest" href="../assets/manifest.webmanifest"><title>TwinMOS — Contact & Quote</title>
+<link rel="stylesheet" href="../assets/design-system.css"></head>
+<body>
+<header class="hdr"><div class="wrap hdr-in">
+  <a class="logo"><img src="../assets/img/logo.webp" alt="TwinMOS"></a>
+  <nav class="nav"><a href="#">Products</a><a href="#">Solutions</a><a href="#">Where to Buy</a><a href="#">Support</a><a href="#">About</a><a href="#">News</a><a class="on" href="#">Contact</a></nav>
+  <div class="hdr-tools"><button class="icon-btn">🔍</button><a class="lang">🌐 EN</a><a class="btn btn-primary btn-sm">Get a Quote</a></div>
+</div></header>
+
+<div class="wrap"><div class="crumbs">Home / <b>Contact</b></div>
+<div class="page-head"><h1>Contact &amp; Quotes</h1><p class="lead">Nine routed inquiry types. Every submission gets a ticket number instantly and a human reply inside our SLA window.</p></div>
+
+<div class="sla" style="margin:16px 0 26px"><b><span class="dotg"></span>Auto-reply ≤ 5 min</b><b><span class="dotg"></span>Sales ≤ 24 business hrs</b><b><span class="dotg"></span>Support ≤ 48 hrs</b><b><span class="dotg"></span>Partnerships ≤ 48 hrs</b></div>
+
+<div style="display:grid;grid-template-columns:1.25fr .75fr;gap:28px;align-items:start">
+  <!-- QUOTE FORM -->
+  <div class="card card-pad" style="padding:26px">
+    <div style="display:flex;gap:8px;margin-bottom:20px"><span class="tab on" style="border:none;padding:8px 14px">Bulk / Enterprise Quote</span><span class="tab" style="border:none">General Inquiry</span><span class="tab" style="border:none">Distributor</span><span class="tab" style="border:none">Media</span></div>
+    <div class="form-grid">
+      <div class="field"><label>Company Name <i>*</i></label><input value="Nimbus Systems Pvt Ltd"/></div>
+      <div class="field"><label>Contact Person <i>*</i></label><input value="Ananya Rao"/></div>
+      <div class="field"><label>Email <i>*</i></label><input value="ananya.rao@nimbus.example"/><span class="emsg" style="display:none"></span></div>
+      <div class="field"><label>Phone</label><input value="+91 98••• ••0 42"/></div>
+      <div class="field"><label>Country <i>*</i></label><select><option>India</option><option>UAE</option><option>Saudi Arabia</option><option>Other</option></select></div>
+      <div class="field"><label>Product Interest <i>*</i></label><select><option>VOLTX DDR5 5600 16GB — 240 units</option><option>CoreX Gen4 1TB</option><option>Mixed fleet bundle</option></select></div>
+      <div class="field"><label>Quantity <i>*</i></label><input value="240"/></div>
+      <div class="field"><label>Target Price (optional)</label><input placeholder="Per unit, INR"/></div>
+      <div class="field"><label>Delivery Timeline</label><select><option>Within 30 days</option><option>This quarter</option><option>Planning ahead</option></select></div>
+      <div class="field"><label>Attach RFP / RFQ (≤10MB)</label><input/></div>
+      <div class="field fw"><label>Message <i>*</i></label><textarea>Staggered rollout across 3 offices; need batch-consistent part numbers and a 3-year warranty lane.</textarea></div>
+    </div>
+    <div class="consent" style="margin:16px 0"><span class="cbx on" style="margin-top:2px"></span><span>I consent to TwinMOS processing this data to respond to my inquiry, per the <a class="link">Privacy Policy</a>. <i style="color:var(--error)">*</i></span></div>
+    <div style="display:flex;gap:12px;align-items:center"><a class="btn btn-primary">Submit Quote Request →</a><span class="tiny muted">Secured by Turnstile · drafts autosave · ticket number emailed in 5 min</span></div>
+  </div>
+
+  <!-- Offices -->
+  <div>
+    <div class="card card-pad" style="margin-bottom:16px"><b style="color:var(--primary);font-size:15px;display:block;margin-bottom:10px">Global Offices</b>
+      <div class="store"><div><b class="small" style="color:var(--primary)">Taipei — Global HQ &amp; R&amp;D</b><div class="tiny muted">Zhongshan Dist., Taipei City · +886 970-368-077</div></div></div>
+      <div class="store"><div><b class="small" style="color:var(--primary)">Dubai — DAFZA C-9 (International)</b><div class="tiny muted">MEA · CIS · South Asia · +971 4 299 6421</div></div></div>
+      <div class="store"><div><b class="small" style="color:var(--primary)">Cologne — TwinMOS Europe GmbH</b><div class="tiny muted">Schanzenstraße 23, 51063</div></div></div>
+      <div class="store"><div><b class="small" style="color:var(--primary)">San Jose — TwinMOS America Inc.</b><div class="tiny muted">Silicon Valley Blvd, CA</div></div></div>
+      <div class="store"><div><b class="small" style="color:var(--primary)">Dongguan — Manufacturing</b><div class="tiny muted">Tech Road, Guangdong</div></div></div>
+    </div>
+    <div class="card card-pad" style="background:linear-gradient(135deg,#0A2540,#0E3A66);color:#fff;border:none">
+      <b style="font-size:15px;display:block;margin-bottom:8px">💬 Prefer to chat?</b>
+      <p class="small" style="color:#B9C9DA;line-height:1.6;margin-bottom:14px">Live chat Sun–Thu 9:00–18:00 GST. Offline? Leave a message — we reply within 24 hours.</p>
+      <a class="btn btn-primary btn-sm">Open Live Chat</a>
+    </div>
+  </div>
+</div>
+<p class="breadcrumb-note">UX notes: 9 typed forms, routed by subject · Zod dual-side validation · inline errors aria-live · 10-min inactivity warning · uploads virus-scanned · every form stores a trackable ticket.</p>
+</div>
+<footer class="ftr" style="margin-top:30px"><div class="wrap"><div class="ftr-bot" style="border:none"><span>© 2026 TwinMOS Technologies</span><span>sales@twinmos.com · support@twinmos.com · press@twinmos.com</span></div></div></footer>
+<div class="mocknote">TWINMOS UX CONCEPT · 12 CONTACT / QUOTE FORMS</div>
+</body></html>

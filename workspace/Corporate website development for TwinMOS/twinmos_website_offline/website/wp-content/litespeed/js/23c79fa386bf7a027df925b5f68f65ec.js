@@ -1,0 +1,2 @@
+(function($){"use strict";$(window).on('elementor/frontend/init',()=>{elementorFrontend.hooks.addAction('frontend/element_ready/razox-post-grid.default',($element)=>{let addHandler=$('.razox-swiper-wrapper',$element);if(addHandler.length>0){elementorFrontend.elementsHandler.addHandler(razoxSwiperBase,{$element,})}})})})(jQuery)
+;

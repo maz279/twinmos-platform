@@ -1,0 +1,351 @@
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\D - Engineering and Architecture\D.5 - Architecture Decision Records (ADRs)\ADR-001-stack-selection-strapi-astro.md:8
+  - | **Deciders** | Engineering Lead, Project Owner (Mohd Mazharul Islam) |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\E - Design and UX\E.1 - Design System\TwinMOSWebsiteBrand_Guideline.md:22
+  - | **Founder** | William Chen |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\F - Content, SEO and Localization\F.2 - Editorial Standards\TwinMOSWebsiteToneofVoice_Guide.md:240
+  - | "TwinMOS products are available in India through various channels." | "TwinMOS memory and SSD products are available across India through Supertron Electronics, our national distribution partner. Find your nearest authorised retailer or order online." |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\F - Content, SEO and Localization\F.3 - SEO\TwinMOSWebsiteKeyword_Research.md:197
+  - | Supertron TwinMOS | Supertron TwinMOS | Navigational | P1 |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\F - Content, SEO and Localization\F.3 - SEO\TwinMOSWebsiteMetaTagTemplates.md:162
+  - - `TwinMOS in India — Memory & SSD | Supertron` (44 chars ✓)
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\F - Content, SEO and Localization\F.3 - SEO\TwinMOSWebsiteMetaTagTemplates.md:243
+  - > `TwinMOS memory and SSD in India through Supertron Electronics. BIS-certified DDR5, DDR4, and NVMe SSD. Find authorised dealers across India.`
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\F - Content, SEO and Localization\F.3 - SEO\TwinMOSWebsiteSchemaOrgJSONLDTemplates.md:133
+  - "name": "William Chen"
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\F - Content, SEO and Localization\F.3 - SEO\TwinMOSWebsiteSchemaOrgJSONLDTemplates.md:483
+  - "name": "Mohd Mazharul Islam",
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\F - Content, SEO and Localization\F.4 - Localization\TwinMOSWebsiteCulturalAdaptationGuideperRegion.md:130
+  - India is one of TwinMOS's fastest-growing markets, with significant B2B and consumer opportunity. TwinMOS has a New Delhi office and works with **Supertron Electronics** as a key national distribution partner. India's technology market is vast, price-sensitive, and highly aspirational. The gaming market is growing rapidly, especially among 18–30 year-old urban males.
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\F - Content, SEO and Localization\F.4 - Localization\TwinMOSWebsiteCulturalAdaptationGuideperRegion.md:161
+  - - **Supertron Electronics** is TwinMOS's principal India distribution partner. Mention Supertron on the India regional page and the Where to Buy section.
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\F - Content, SEO and Localization\F.4 - Localization\TwinMOSWebsiteCulturalAdaptationGuideperRegion.md:188
+  - - Warranty servicing in India: If TwinMOS has an authorised service network in India, mention it. If RMA must go through Supertron, clarify the process.
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\F - Content, SEO and Localization\F.4 - Localization\TwinMOSWebsiteLocalization_Strategy.md:52
+  - 3. **Distributor portal accessibility** — regional distributors and resellers (Supertron in India, local GCC partners) benefit from product documentation in their working language.
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\F - Content, SEO and Localization\F.4 - Localization\TwinMOSWebsiteLocalization_Strategy.md:473
+  - | `hi` | Localization Lead | New Delhi Office Contact (Supertron liaison) | Monthly |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteE2ETestScenarios_Playwright.md:197
+  - test('filters India retailers and shows Supertron on map', async ({ page }) => {
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteE2ETestScenarios_Playwright.md:206
+  - await expect(page.getByText('Supertron Electronics')).toBeVisible();
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteE2ETestScenarios_Playwright.md:209
+  - const mapPin = page.locator('.leaflet-marker-icon').filter({ hasText: /Supertron/ });
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteMobileDeviceTest_Matrix.md:255
+  - | GEST-11 | Swipe up | Where to Buy map | List view expands |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteMobileDeviceTest_Matrix.md:260
+  - | GEST-16 | Swipe left | Comparison table | Horizontal scroll |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteQA_Strategy.md:84
+  - | **TwinMOS Chairman / GM Dubai** | Stakeholder UAT sign-off, go/no-go for public launch | Mohd Mazharul Islam / Robiul Islam |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteTestDataStrategy.md:202
+  - | Distributor | Smart Technologies BD | smartech.partner | Gold |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteTestDataStrategy.md:253
+  - retailer: "Smart Technologies BD",
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteTestDataStrategy.md:330
+  - | Smart Technologies BD | Bangladesh | Dhaka | Distributor | Active |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteTestDataStrategy.md:332
+  - | Supertron Electronics | India | Kolkata | Distributor | Active |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteUATSignOff_Form.md:181
+  - | **Project Sponsor (Chairman)** | Mohd Mazharul Islam | _______________ | | [ ] Go [ ] No-Go |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteUATSignOff_Form.md:182
+  - | **Operational Sponsor (GM Dubai)** | Robiul Islam | _______________ | | [ ] Go [ ] No-Go |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteUATTestScripts.md:461
+  - 6. Verify "Smart Technologies BD" appears
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteUATTestScripts.md:463
+  - 8. Verify "Supertron Electronics" appears
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteUAT_Plan.md:52
+  - | TwinMOS Chairman | Mohd Mazharul Islam | Stakeholder | Final go/no-go |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteUAT_Plan.md:53
+  - | TwinMOS GM Dubai | Robiul Islam | Stakeholder | Operational approval |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\G - Quality Assurance and Testing\TwinMOSWebsiteUAT_Plan.md:214
+  - | TwinMOS Chairman | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\I - Security and Compliance\I.1 - Security Architecture\TwinMOSWebsiteAuthenticationAuthorizationSpec.md:26
+  - | Project Sponsor | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\I - Security and Compliance\I.1 - Security Architecture\TwinMOSWebsiteEncryption_Strategy.md:26
+  - | Project Sponsor | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\I - Security and Compliance\I.1 - Security Architecture\TwinMOSWebsiteHTTPSecurityHeaders_Spec.md:26
+  - | Project Sponsor | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\I - Security and Compliance\I.1 - Security Architecture\TwinMOSWebsiteKeyManagementPlan.md:26
+  - | Project Sponsor | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\I - Security and Compliance\I.1 - Security Architecture\TwinMOSWebsiteSecurityControlsCatalog.md:642
+  - | **TwinMOS Implementation** | Internal reporting: Security incident reported to Security Lead within 1 hour of detection; escalated to TwinMOS Chairman (Mohd Mazharul Islam) within 4 hours for P0/P1. External reporting: (1) GDPR — supervisory authority notification within 72 hours if personal data breach (TWN-OPS-2026-003 §7); (2) UAE PDPL — UAE Data Office notification within 72 hours; (3) PCI DSS (P3) — Stripe notified immediately; card brands within 24 hours. Public disclosure policy: coordinated via Legal Counsel; status page updated for service-impacting incidents. |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\I - Security and Compliance\I.1 - Security Architecture\TwinMOSWebsiteSecurity_Architecture.md:27
+  - | Project Sponsor (Chairman) | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\I - Security and Compliance\I.1 - Security Architecture\TwinMOSWebsiteSecurity_Architecture.md:28
+  - | Operational Sponsor (GM Dubai) | Robiul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\I - Security and Compliance\I.3 - Security Operations\TwinMOSWebsiteDDoSMitigationPlan.md:791
+  - | **TwinMOS GM Dubai** | Robiul Islam | Phone | Business hours (Dubai GMT+4) |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\I - Security and Compliance\I.3 - Security Operations\TwinMOSWebsiteDDoSMitigationPlan.md:792
+  - | **TwinMOS Chairman** | Mohd Mazharul Islam | Email + Phone (urgent only) | Business hours |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteCapacityPlanningGuide.md:46
+  - - **India market entry:** Supertron partnership drives 20–30% of traffic growth in Year 2
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteCapacityPlanningGuide.md:225
+  - | Project Sponsor (Chairman) | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteCapacityPlanningGuide.md:226
+  - | Operational Sponsor (GM Dubai) | Robiul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteEscalation_Matrix.md:196
+  - | Project Sponsor (Chairman) | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteEscalation_Matrix.md:197
+  - | Operational Sponsor (GM Dubai) | Robiul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteMaintenanceWindowProcedure.md:312
+  - | Project Sponsor (Chairman) | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteMaintenanceWindowProcedure.md:313
+  - | Operational Sponsor (GM Dubai) | Robiul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteOnCallProcedure.md:212
+  - | Project Sponsor (Chairman) | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteOnCallProcedure.md:213
+  - | Operational Sponsor (GM Dubai) | Robiul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteOperationsRunbookMaster.md:110
+  - | TwinMOS Operational Sponsor (GM Dubai) | Robiul Islam | Email | Mobile | 5th — business |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteOperationsRunbookMaster.md:111
+  - | TwinMOS Project Sponsor (Chairman) | Mohd Mazharul Islam | Email | Mobile | 6th — executive |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteOperationsRunbookMaster.md:141
+  - | Project Sponsor (Chairman) | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.1 - Operations Runbooks\TwinMOSWebsiteOperationsRunbookMaster.md:142
+  - | Operational Sponsor (GM Dubai) | Robiul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.2 - CMS and Content Operations\TwinMOSWebsiteBulkImportExport_Guide.md:121
+  - | company_name | String | `Smart Technologies (BD) Ltd.` |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.2 - CMS and Content Operations\TwinMOSWebsiteCMSAdminGuide.md:322
+  - | Project Sponsor (Chairman) | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\J - Operations, Maintenance and End-User Guides\J.2 - CMS and Content Operations\TwinMOSWebsiteCMSAdminGuide.md:323
+  - | Operational Sponsor (GM Dubai) | Robiul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\K - Developer Onboarding and Engineering Standards\K.1 - Onboarding\TwinMOSWebsiteDeveloperOnboardingGuide.md:146
+  - | Project Sponsor (Chairman) | Mohd Mazharul Islam | — | Executive decisions |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\K - Developer Onboarding and Engineering Standards\K.1 - Onboarding\TwinMOSWebsiteDeveloperOnboardingGuide.md:147
+  - | Operational Sponsor (GM Dubai) | Robiul Islam | — | Operational decisions |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\L - Performance Engineering\P0\TwinMOSWebsitePerformance_Budget.md:26
+  - | **India market entry (Supertron partnership)** | Indian mobile users often experience 3G/4G variability; performance directly affects conversion |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteGoNoGo_Checklist.md:8
+  - **Owner:** Chairman (Mohd Mazharul Islam) — Final Authority
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteGoNoGo_Checklist.md:27
+  - | **Final Authority** | Mohd Mazharul Islam (Chairman) | Go / No-Go / Go with Conditions |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteGoNoGo_Checklist.md:28
+  - | **Technical Advisor** | Robiul Islam (GM Dubai) | Input on operational readiness |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteGoNoGo_Checklist.md:203
+  - | 9.5 | India market readiness | India page with BIS, Supertron placeholder | Page review | ☐ PASS / ☐ FAIL |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteGoNoGo_Checklist.md:247
+  - | Chairman | Mohd Mazharul Islam | ☐ GO ☐ GO WITH CONDITIONS ☐ NO-GO | | |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteGoNoGo_Checklist.md:248
+  - | GM Dubai | Robiul Islam | ☐ CONCUR ☐ NON-CONCUR | | |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteGoNoGo_Checklist.md:260
+  - | GM Dubai | Robiul Islam | ☐ CONCUR ☐ NON-CONCUR | | |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteHypercare_Plan.md:270
+  - | 19–20 | Direct outreach to Smart Tech BD, Achiever, Supertron for feedback | Sales Director |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteLaunch_Plan.md:64
+  - - **India market entry** via Supertron Electronics partnership activation
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteLaunch_Plan.md:93
+  - | **Chairman (Mohd Mazharul Islam)** | A | I | A | I | A |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteLaunch_Plan.md:94
+  - | **GM Dubai (Robiul Islam)** | C | C | C | C | C |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteLaunch_Plan.md:377
+  - - **Key milestone:** India page prominently features Supertron Electronics (upon partnership activation).
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteSoftLaunchPlan.md:39
+  - | **Smart Technologies (BD) Ltd.** | 3–5 | Key distributor; Bangladesh market validation | Unique preview link + password |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteSoftLaunchPlan.md:41
+  - | **Tech Valley Distribution** — BD | 2–3 | Distributor partner | Unique preview link + password |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteSoftLaunchPlan.md:42
+  - | **Ryans IT / Star Tech** — BD | 2–3 | Retail partner feedback | Unique preview link + password |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteSoftLaunchPlan.md:43
+  - | **Supertron Electronics** — India | 2–3 | Proposed India exclusive distributor | Unique preview link + password |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteSoftLaunchPlan.md:111
+  - | Supertron Electronics | India page, BIS certification display | India-specific content prominence |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\M - Marketing, Launch and Go-Live\M.1 - Pre-Launch\TwinMOSWebsiteSoftLaunchPlan.md:112
+  - | Ryans IT / Star Tech | Product pages, where-to-buy | Deep links to retailer sites |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O1 - Phase Management\TwinMOSWebsitePhase2KickOffDocument.md:10
+  - **Owner:** Project Sponsor (Mohd Mazharul Islam) / IT Technical Lead
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O1 - Phase Management\TwinMOSWebsitePhase2KickOffDocument.md:21
+  - | Project Sponsor (Chairman) | Mohd Mazharul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O1 - Phase Management\TwinMOSWebsitePhase2KickOffDocument.md:22
+  - | Operational Sponsor (GM Dubai) | Robiul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O1 - Phase Management\TwinMOSWebsitePhase2KickOffDocument.md:198
+  - | Executive Sponsor | Mohd Mazharul Islam | TwinMOS |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O1 - Phase Management\TwinMOSWebsitePhase2KickOffDocument.md:199
+  - | Operational Sponsor | Robiul Islam (GM Dubai) | TwinMOS |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O1 - Phase Management\TwinMOSWebsitePhase2KickOffDocument.md:400
+  - - Personalized email from Robiul Islam (GM Dubai) to each distributor
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O1 - Phase Management\TwinMOSWebsitePhase2KickOffDocument.md:604
+  - | Mohd Mazharul Islam | Executive Sponsor | _______ | _____ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O1 - Phase Management\TwinMOSWebsitePhase2KickOffDocument.md:605
+  - | Robiul Islam | Operational Sponsor | _______ | _____ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O1 - Phase Management\TwinMOSWebsitePhase2LaunchReadinessChecklist.md:10
+  - **Owner:** Project Sponsor (Mohd Mazharul Islam)
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O1 - Phase Management\TwinMOSWebsitePhase2LaunchReadinessChecklist.md:429
+  - | Executive Sponsor | Mohd Mazharul Islam | GO / NO-GO | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O1 - Phase Management\TwinMOSWebsitePhase2LaunchReadinessChecklist.md:430
+  - | Operational Sponsor (GM Dubai) | Robiul Islam | GO / NO-GO | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O2 - Partner Portal\TwinMOSWebsitePartnerPortalFunctional_Spec.md:67
+  - | **Distributor** | Master distributor with territory rights; purchases directly from TwinMOS | Supertron (India), Smart Technologies (Bangladesh), MEA distributors |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O6 - Document Services\TwinMOSWebsiteWatermarkedPDFGeneration_Spec.md:146
+  - | `{{Company Name}}` | Partner.company_name from Strapi | "Supertron Electronics Ltd." |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\O - Phase 2 - Localization and Partner Enablement\O6 - Document Services\TwinMOSWebsiteWatermarkedPDFGeneration_Spec.md:467
+  - "filename": "TwinMOS-DistributorPriceList-Supertron-20270215.pdf",
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.1 - Phase 3 Kickoff\TwinMOSWebsitePhase3KickOffDocument.md:188
+  - | **TwinMOS Chairman / Sponsor** | Mohd Mazharul Islam | Executive sponsorship, go/no-go decisions, strategic alignment |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.1 - Phase 3 Kickoff\TwinMOSWebsitePhase3KickOffDocument.md:684
+  - | TwinMOS Chairman / Executive Sponsor | Mohd Mazharul Islam | ___________________ | __________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.3 - Customer Loyalty and Partner Programs\TwinMOSWebsiteMDFProgramFunctional_Spec.md:253
+  - Partner: Smart Technologies BD (Bangladesh)
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.3 - Customer Loyalty and Partner Programs\TwinMOSWebsiteMDFProgramFunctional_Spec.md:288
+  - Partner Level (Smart Technologies BD, Q1):
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.3 - Customer Loyalty and Partner Programs\TwinMOSWebsiteMDFProgramFunctional_Spec.md:1039
+  - MDF-2026-Q2-SMT-001   (Smart Technologies BD, Q2 2026, first claim)
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.3 - Customer Loyalty and Partner Programs\TwinMOSWebsiteMDFProgramFunctional_Spec.md:1041
+  - MDF-2026-Q3-SUP-007   (Supertron Electronics India, Q3 2026, seventh claim)
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.3 - Customer Loyalty and Partner Programs\TwinMOSWebsiteMDFProgramFunctional_Spec.md:1082
+  - │  Marketing Development Funds — Smart Technologies BD            │
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.3 - Customer Loyalty and Partner Programs\TwinMOSWebsiteMDFProgramFunctional_Spec.md:1378
+  - Partner: Smart Technologies BD (Silver)
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.3 - Customer Loyalty and Partner Programs\TwinMOSWebsiteMDFProgramFunctional_Spec.md:1996
+  - | Smart Technologies BD      | Bangladesh  | Silver | USD 2,000          |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.3 - Customer Loyalty and Partner Programs\TwinMOSWebsiteMDFProgramFunctional_Spec.md:1998
+  - | Supertron Electronics India| India       | Gold   | USD 5,000          |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.4 - Analytics and Marketing Automation\TwinMOSWebsiteMarketingAutomationSpec.md:302
+  - | Content | Warm welcome from Chairman Mohd Mazharul Islam; links to: product catalog, compatibility finder, warranty registration; TwinMOS Rewards program introduction with points earning summary; account dashboard link; support contact |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\P - Phase 3 - Commerce and Advanced Features\P.5 - Phase 3 Launch\TwinMOSWebsitePhase3LaunchReadinessChecklist.md:36
+  - | Project Sponsor | Mohd Mazharul Islam (Chairman, TwinMOS) | ___________________ | __________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:8
+  - **Approved by:** Mohd Mazharul Islam, Chairman & Managing Director
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:75
+  - | **Client (Project Sponsor)** | TwinMOS Technologies Middle East FZE | Mohd Mazharul Islam, Chairman & MD |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:76
+  - | **Client (Operational Sponsor)** | TwinMOS Technologies Middle East FZE | Robiul Islam, General Manager, Dubai HQ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:77
+  - | **Client (Bangladesh Stakeholder)** | TwinMOS Technologies | SM Mohibul Hasan, President |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:139
+  - | D2.2 | Bengali Translation — 287 pages | ✅ Accepted | SM Mohibul Hasan | Month 9 |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:141
+  - | D2.4 | Partner Portal (Better Auth + Strapi) | ✅ Accepted | Robiul Islam | Month 6 |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:157
+  - | D3.1 | E-Commerce MVP (Medusa.js + Stripe) | ✅ Accepted | Robiul Islam / Chairman | Month 12 |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:291
+  - - India-specific content (INR pricing, BIS certification, Supertron partnership featured) launched as planned
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:306
+  - - Supertron India partnership benefited immediately from Hindi-language partner portal access
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:337
+  - | Mohd Mazharul Islam | Chairman & Managing Director | Final Acceptance — Full Engagement | October 2027 | Final executive sign-off |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:338
+  - | Robiul Islam | General Manager, Dubai HQ | Phases 1, 2 & 3 Operational Acceptance | October 2027 | |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:339
+  - | SM Mohibul Hasan | President, Bangladesh | Bengali translation, BD regional content | April 2027 | Phase 2 |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:430
+  - | Project Sponsor (Client) | Mohd Mazharul Islam, Chairman & MD | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteEngagementCloseoutReport.md:431
+  - | Operational Sponsor (Client) | Robiul Islam, General Manager | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteFinalAcceptanceDocument.md:101
+  - | D2.2 | Bengali Translation — all published pages | ✅ ACCEPTED | SM Mohibul Hasan (President, Bangladesh) | Month 9 | 12 pages accepted with slight delay |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteFinalAcceptanceDocument.md:103
+  - | D2.4 | Partner Portal (Better Auth + Strapi roles) | ✅ ACCEPTED | Robiul Islam (GM) | Month 6 | |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteFinalAcceptanceDocument.md:143
+  - | D3.1 | E-Commerce MVP (Medusa.js + Stripe Checkout) | ✅ ACCEPTED | Robiul Islam / Chairman | Month 12 | UAE, India, Bangladesh, KSA markets |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteFinalAcceptanceDocument.md:221
+  - | **Name** | Mohd Mazharul Islam |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteFinalAcceptanceDocument.md:234
+  - | **Name** | Robiul Islam |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteFinalIPTransfer_Confirmation.md:242
+  - | **Name** | Mohd Mazharul Islam |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteLessonsLearnedDocument.md:8
+  - **Approved by:** Robiul Islam, General Manager, Dubai HQ
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteLessonsLearnedDocument.md:140
+  - **Incident:** Bengali translation vendor delivered 12 pages (4% of scope) late, after the translation integration sprint had already started. TwinMOS Bangladesh office (SM Mohibul Hasan's team) had to provide emergency review resources to clear the backlog.
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteLessonsLearnedDocument.md:180
+  - **Impact:** India INR checkout showed the highest conversion rate among all currencies at launch, validating the strategic priority of the Supertron India partnership and the Phase 2 Hindi localization investment.
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteLessonsLearnedDocument.md:222
+  - | Bangladesh President (SM Mohibul Hasan) was highly effective as a Bengali quality assurance resource | ✅ Excellent | For Phase 4 Portuguese translation targeting Angola, identify an in-market reviewer similarly embedded. |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteMaintenanceHandoverDocument.md:277
+  - | Uptime alert (site down) | UptimeRobot | it@twinmos.com | Immediately notify Robiul Islam (GM) |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteMaintenanceHandoverDocument.md:367
+  - 8. Notify Robiul Islam (GM) if outage > 15 minutes
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteMaintenanceHandoverDocument.md:384
+  - 7. Notify Robiul Islam (GM) and Finance Director immediately
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteMaintenanceHandoverDocument.md:399
+  - 8. Notify Chairman (Mohd Mazharul Islam) for any data breach incidents
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteMaintenanceHandoverDocument.md:458
+  - | Chairman & Managing Director | Mohd Mazharul Islam | Chairman's office | Major incidents, data breaches, Phase 4 strategic decisions |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteMaintenanceHandoverDocument.md:459
+  - | General Manager (Dubai HQ) | Robiul Islam | GM contact | P1/P2 incidents, operational decisions |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsiteMaintenanceHandoverDocument.md:460
+  - | President (Bangladesh) | SM Mohibul Hasan | BD office | Bangladesh-specific content issues |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePhase4Backlog.md:8
+  - **Approved by:** Mohd Mazharul Islam, Chairman & Managing Director
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePhase4Backlog.md:263
+  - **Description:** Commission and publish 6–10 detailed customer case studies across target verticals: (1) Gaming enthusiast (VoltX build results); (2) Content creator studio (CoreX Pro adoption); (3) System builder (bulk procurement); (4) Education IT fleet upgrade; (5) SME/enterprise server upgrade (ECC memory); (6) Distribution case study (Supertron India partnership). Each case study requires customer approval and follows the published template at `04-solutions/10-case-study-template.md`.
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePhase4Backlog.md:615
+  - **Origin:** Supertron Electronics India partnership — needs digital support for product launches in India
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePhase4Backlog.md:616
+  - **Description:** Build a dedicated India Market Hub within the existing India regional page infrastructure: (a) India-specific product landing pages with BIS certification badge prominently displayed; (b) INR pricing via e-commerce integration; (c) Supertron distributor spotlight section; (d) India-targeted blog content (PUBG Mobile/PC gaming market, IT infrastructure growth); (e) Hindi-language conversion path optimisation based on Phase 2 PostHog data. This is primarily a content and campaign effort with minor engineering changes.
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePhase4Backlog.md:617
+  - **Dependencies:** Supertron partnership content approved; INR e-commerce live (Phase 3 prerequisite met); Hindi translation verified (Phase 2 prerequisite met)
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePhase4Backlog.md:618
+  - **Acceptance Criteria:** India Hub content published and indexed; INR checkout flow end-to-end tested; Supertron featured prominently; Hindi conversion funnel improved vs. Phase 2 baseline
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePhase4Retainer_Scope.md:8
+  - **Approved by:** Mohd Mazharul Islam, Chairman & Managing Director
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePhase4Retainer_Scope.md:256
+  - | Client Operational Sponsor | Robiul Islam, GM Dubai | Final approval for CR, contract matters |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePhase4Retainer_Scope.md:304
+  - | Project Sponsor (Client) | Mohd Mazharul Islam, Chairman & MD | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePhase4Retainer_Scope.md:305
+  - | Operational Sponsor (Client) | Robiul Islam, General Manager | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePostLaunchOptimization_Plan.md:8
+  - **Approved by:** Robiul Islam, General Manager, Dubai HQ
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\Q - Closeout and Phase 4 Handoff\TwinMOSWebsitePostLaunchOptimization_Plan.md:575
+  - | General Manager (Operational Sponsor) | Robiul Islam | _______________ | _________ |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:26
+  - | ST-01 | Mohd Mazharul Islam | Chairman & MD | TwinMOS Technologies | Executive Sponsor | Monthly steering |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:27
+  - | ST-02 | Robiul Islam | General Manager | TwinMOS ME FZE | Operational Sponsor | Bi-weekly |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:28
+  - | ST-03 | SM Mohibul Hasan | President | TwinMOS Technologies | Regional Executive | Monthly |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:36
+  - | ST-11 | TBC | Team Lead / Sr. Developer | Unisoft | Vendor Lead | 100% — 15 months |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:40
+  - | ST-15 | TBC | Partnership Lead | Supertron Electronics | Distribution Partner | Quarterly |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:41
+  - | ST-16 | TBC | Partnership Liaison | Smart Technologies BD | Distribution Partner | Monthly |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:49
+  - ### ST-01: Mohd Mazharul Islam
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:53
+  - | **Full Name** | Mohd Mazharul Islam |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:75
+  - ### ST-02: Robiul Islam
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:79
+  - | **Full Name** | Robiul Islam |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:96
+  - ### ST-03: SM Mohibul Hasan
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:100
+  - | **Full Name** | SM Mohibul Hasan |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:263
+  - ### ST-11: Unisoft Team Lead (TBC)
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:270
+  - | **Stakeholder ID** | ST-11 |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:351
+  - ### ST-15: Supertron Electronics (India Distribution Partner)
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:356
+  - | **Organisation** | Supertron Electronics Pvt. Ltd. |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:361
+  - | **Website** | supertronics.com |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:372
+  - ### ST-16: Smart Technologies BD (Bangladesh Distribution Partner)
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:377
+  - | **Organisation** | Smart Technologies (BD) Ltd. |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:379
+  - | **Stakeholder ID** | ST-16 |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:381
+  - | **Address** | 156 Mirpur Road, Dhaka-1205, Bangladesh |
+REPLACE D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:440
+  - | **Legal Entity** | TwinMOS Technologies (India) Private Limited |
+  + | **Legal Entity** | TwinMOS Technologies |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:442
+  - | **Directors** | Mohammad Zahirul Islam; Mohammed Abdul Mannan |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:449
+  - | **Representative** | TwinMOS Technologies Ltd. (via Smart Technologies BD) |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:450
+  - | **Contact** | SM Mohibul Hasan (President) |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:451
+  - | **Partner Entity** | Smart Technologies (BD) Ltd., 156 Mirpur Road, Dhaka-1205 |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:476
+  - | **P0 — Critical** (site down, security breach) | Unisoft Team Lead (ST-11) | TwinMOS IT Lead (ST-07) | GM Robiul Islam (ST-02) |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteStakeholderContactList.md:477
+  - | **P1 — High** (major feature broken) | Unisoft Team Lead (ST-11) | TwinMOS IT Lead (ST-07) | — |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteVendorContactList.md:63
+  - | **Primary Contact** | TBC — Unisoft Team Lead (ST-11) |
+DROP    D:\software_project_development\software_project\Software_Project_14\TwinMOS_Corporate_Website\Corporate website development for TwinMOS\project documentation\R - Reference Index and Search Aids\TwinMOSWebsiteVendorContactList.md:245
+  - | **Admin Access** | IT/Technical Lead (ST-07); Unisoft Team Lead (ST-11) |
