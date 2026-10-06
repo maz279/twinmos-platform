@@ -1,0 +1,2168 @@
+{
+  "SUMMARY": [
+    [
+      "TwinMOS Web App — Page-by-Page Summary",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "All 28 pages · verified live 2026-10-05 · one row per page · details on each page’s own sheet",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Page",
+      "URL",
+      "Sections",
+      "From DB?",
+      "Admin module",
+      "Key errors found",
+      null
+    ],
+    [
+      1,
+      "Home",
+      "http://localhost:8000/",
+      "12",
+      "PARTIAL (2 of 12 sections)",
+      "Products editor (BROKEN)",
+      "frozen “39 products” count; home news strip ignores CMS; featured set hardcoded",
+      null
+    ],
+    [
+      2,
+      "Shop / catalog",
+      "shop.html",
+      "1",
+      "YES (41 cards ← product)",
+      "Products editor (BROKEN)",
+      "editor won’t open on row click; sidebar facets static; card images not linked to Media; manual export only",
+      null
+    ],
+    [
+      3,
+      "Product detail",
+      "product.html?id=<slug>",
+      "3",
+      "PARTIAL (fields overridden)",
+      "Products editor (BROKEN)",
+      "NO price shown anywhere; placeholder images; gallery/related rails static",
+      null
+    ],
+    [
+      4,
+      "Article reader",
+      "article.html?id=<slug>",
+      "2",
+      "PARTIAL (CMS articles render)",
+      "Content studio (OK)",
+      "prototype articles not editable-to-site; CMS articles get no featured rail",
+      null
+    ],
+    [
+      5,
+      "News & events",
+      "news.html",
+      "2",
+      "NO (0 DB rows; appends possible)",
+      "Content studio (OK)",
+      "66 cards hardcoded; filter chips static",
+      null
+    ],
+    [
+      6,
+      "Gaming hub",
+      "gaming.html",
+      "13",
+      "1 of 13 (arsenal rail)",
+      "Products editor (BROKEN)",
+      "12 static sections; rail membership hardcoded (badge=Gaming)",
+      null
+    ],
+    [
+      7,
+      "Solutions (B2B/OEM)",
+      "solutions.html",
+      "1",
+      "NO",
+      "none",
+      "“Built on the real catalogue” block does NOT read the catalog; fully static",
+      null
+    ],
+    [
+      8,
+      "Where to buy",
+      "where-to-buy.html",
+      "4",
+      "PARTIAL (marketplaces + distributors append)",
+      "Partners module (OK)",
+      "?region=africa silently ignored (chips use af/me/eu); offices static",
+      null
+    ],
+    [
+      9,
+      "Partners",
+      "partners.html",
+      "1",
+      "form writes (partner-inquiry)",
+      "Leads inbox (OK)",
+      "tier cards + onboarding steps static",
+      null
+    ],
+    [
+      10,
+      "Request a quote",
+      "quote.html",
+      "1",
+      "form writes (quote)",
+      "Leads inbox (OK)",
+      "?product= prefill FAILS for DB-only products; product dropdown is 40 hardcoded names",
+      null
+    ],
+    [
+      11,
+      "Contact",
+      "contact.html",
+      "2",
+      "form writes (contact)",
+      "Leads inbox (OK)",
+      "direct lines + offices static (offices hardcoded on 3 pages)",
+      null
+    ],
+    [
+      12,
+      "Support center",
+      "support.html",
+      "7",
+      "NO (widgets are mocks)",
+      "FAQ editor = DEAD END",
+      "RMA tracker shows WRONG status (deterministic demo); /support/sn-check 404; FAQ export excluded by design",
+      null
+    ],
+    [
+      13,
+      "Warranty & RMA",
+      "rma.html",
+      "2",
+      "intake form writes (rma_request)",
+      "RMA board (OK)",
+      "tracker is a mock; explainer + warranty copy static",
+      null
+    ],
+    [
+      14,
+      "Compatibility finder",
+      "compatibility.html",
+      "4",
+      "YES (rules reach the wizard cascade)",
+      "Compatibility module (OK)",
+      "result panel NEVER renders (any platform); page labeled “demo index”",
+      null
+    ],
+    [
+      15,
+      "Compare tray",
+      "compare.html",
+      "1",
+      "PARTIAL (rows use DB data)",
+      "Products editor (BROKEN)",
+      "tray is browser-localStorage only — no shareable URL",
+      null
+    ],
+    [
+      16,
+      "Search results",
+      "search.html?q=",
+      "1",
+      "YES (merged catalog + articles)",
+      "—",
+      "works",
+      null
+    ],
+    [
+      17,
+      "About us",
+      "about.html",
+      "9",
+      "NO",
+      "none",
+      "fully static",
+      null
+    ],
+    [
+      18,
+      "Technology & R&D",
+      "technology.html",
+      "3",
+      "NO",
+      "none",
+      "fully static",
+      null
+    ],
+    [
+      19,
+      "Careers",
+      "careers.html",
+      "11",
+      "PARTIAL (jobs append + apply form writes)",
+      "Careers module (OK)",
+      "apply-form position dropdown not DB-driven; 10 sections static",
+      null
+    ],
+    [
+      20,
+      "Learn hub home",
+      "learn.html",
+      "5",
+      "NO",
+      "none",
+      "CMS articles invisible on listing; static",
+      null
+    ],
+    [
+      21,
+      "Buying guides",
+      "learn-guides.html",
+      "6",
+      "NO",
+      "none",
+      "CMS articles invisible (18 static cards)",
+      null
+    ],
+    [
+      22,
+      "Technology explainers",
+      "learn-explained.html",
+      "5",
+      "NO",
+      "none",
+      "CMS articles invisible (29 static cards)",
+      null
+    ],
+    [
+      23,
+      "Benchmarks",
+      "learn-benchmarks.html",
+      "5",
+      "NO",
+      "none",
+      "CMS articles invisible (4 static cards)",
+      null
+    ],
+    [
+      24,
+      "Glossary A–Z",
+      "learn-glossary.html",
+      "29",
+      "NO",
+      "none",
+      "fully hardcoded — terms can never be added from admin",
+      null
+    ],
+    [
+      25,
+      "Tech insights & blog",
+      "learn-blog.html",
+      "4",
+      "newsletter form writes",
+      "Leads inbox (OK)",
+      "CMS articles AND news invisible; 3 static posts",
+      null
+    ],
+    [
+      26,
+      "Legal (6 tabs)",
+      "legal.html",
+      "1 (+6 tabs)",
+      "NO",
+      "none",
+      "policies hardcoded; source still marked “Production draft”",
+      null
+    ],
+    [
+      27,
+      "Sitemap",
+      "sitemap.html",
+      "1",
+      "NO",
+      "none",
+      "static link list — goes stale",
+      null
+    ],
+    [
+      28,
+      "404",
+      "404.html",
+      "1",
+      "—",
+      "—",
+      "OK — serves HTTP 404 by design",
+      null
+    ],
+    [
+      "TOTALS: 28 pages audited · ~170 sections · 13 pages fully static (about, technology, solutions, legal, sitemap, 404 + learn ×6)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "Admin modules working: Content studio, Partners, RMA board, Compatibility, Careers, Leads, Users, Settings · BROKEN: Products detail editor (“This module could not be loaded”)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "3 confirmed silent param bugs: ?region=africa (never matches) · ?product=<DB slug> prefill collapses · compatibility result panel renders nothing",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "Systemic gaps: manual exporter (no auto/admin-triggered export) · FAQ module never reaches the site · CMS content invisible on all listing pages (news strip, learn ×6) · offices hardcoded on 3 pages",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "Home Page": [
+    [
+      "Home Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/  (no params) · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "Hero slider (5 slides) + stats",
+      "5 slides + 4 stat boxes, all static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      2,
+      "Upgrade Advisor",
+      "1 product card (name + image from catalog, rest static)",
+      "PARTIAL",
+      "product",
+      "http://localhost:8001/#/m/products",
+      "ERROR — NOT WORKING IN ADMIN: product editor does not open (module load fails on row click)",
+      "ISSUE: device tabs, goal pills, descriptions are hardcoded — only the product part is editable"
+    ],
+    [
+      3,
+      "Certifications band",
+      "Static badges/stats",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      4,
+      "Product ecosystem tiles (8) + brand chips",
+      "Static tiles with counts",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR: counts are frozen text (\"39 products\") — catalog now has 42, the site number never changes"
+    ],
+    [
+      5,
+      "Speed visualizer",
+      "Animated bars, static data",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      6,
+      "Featured Flagship grid",
+      "4 product cards (name, price, specs from catalog)",
+      "YES",
+      "product",
+      "http://localhost:8001/#/m/products",
+      "ERROR — NOT WORKING IN ADMIN: product editor does not open (module load fails on row click)",
+      "ISSUE: WHICH 4 products are featured is a hardcoded slug list in app.js — admin cannot choose the featured set"
+    ],
+    [
+      7,
+      "Why Builders Trust (bento)",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      8,
+      "Global reach band",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      9,
+      "Testimonials",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      10,
+      "B2B / Enterprise card",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      11,
+      "Media & Industry Events strip",
+      "3 article cards with static prototype links",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR: news/articles created in admin NEVER appear in this home strip — it does not read the DB"
+    ],
+    [
+      12,
+      "CTA band",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      13,
+      "Footer newsletter form",
+      "Form submits, saves email to DB",
+      "YES (writes)",
+      "form_submission",
+      "http://localhost:8001/#/m/submissions",
+      "Lead inbox list (type = newsletter)",
+      null
+    ]
+  ],
+  "Shop Page": [
+    [
+      "Shop Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "Base URL: http://localhost:8000/shop.html · each param variant = separate row · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "URL: shop.html (no params) — whole grid",
+      "41 product cards (39 base + 2 DB-only SKUs)",
+      "YES",
+      "product",
+      "http://localhost:8001/#/m/products",
+      "ERROR — NOT WORKING IN ADMIN: clicking a product row fails (“This module could not be loaded”) — the EDITOR does not open, so Name / Price / Specs / Badges / Warranty cannot be edited",
+      "ERROR -> FIXED today: until 2026-10-05 the 39 base cards came from the STATIC seed file data.js, NOT the database — not in admin, not editable. Catalog imported today (42 rows) — but the editor is broken (see left)"
+    ],
+    [
+      2,
+      "URL: shop.html?cat=dram-gaming",
+      "8 cards + active filter chip \"Gaming DRAM ✕\"",
+      "YES",
+      "product",
+      "http://localhost:8001/#/m/products",
+      "ERROR — NOT WORKING IN ADMIN: product editor does not open (module load fails on row click)",
+      "ISSUE: sidebar category/facet list is static data.js — DB category table (11 rows) is NOT used for the sidebar, so admin category changes never reach the filters"
+    ],
+    [
+      3,
+      "URL: shop.html?brand=VOLTX",
+      "4 cards, all VOLTX products",
+      "YES",
+      "product",
+      "http://localhost:8001/#/m/products",
+      "ERROR — NOT WORKING IN ADMIN: product editor does not open (module load fails on row click)",
+      "same: brand facet labels are static"
+    ],
+    [
+      4,
+      "URL: shop.html?q=pass-3",
+      "2 products (DB edits visible)",
+      "YES",
+      "product",
+      "http://localhost:8001/#/m/products",
+      "ERROR — NOT WORKING IN ADMIN: product editor does not open (module load fails on row click)",
+      "ERROR -> data fixed today, ROOT CAUSE OPEN: bundle (cms-content.js) only updates when someone manually runs tooling/export-content.mjs — admin edits do NOT reach the site automatically"
+    ],
+    [
+      5,
+      "Filter sidebar labels (any URL)",
+      "Facet labels from static data.js — NOT from database",
+      "NO (supposed to be YES)",
+      "category, brand",
+      "— nothing in admin manages this today",
+      "ERROR — NEEDS FIX: nothing in admin edits the shop filters today (supposed to: Catalog category/brand management)",
+      "ERROR — NOT FIXED YET: DB tables category (11 rows) and brand (9 rows) exist and are SUPPOSED to feed the sidebar, but the sidebar reads static data.js instead. Not showing in admin, not editable"
+    ],
+    [
+      6,
+      "Card images (any URL)",
+      "Images always from the static prototype set",
+      "NO (supposed to be YES)",
+      "media_asset",
+      "http://localhost:8001/#/m/media (Media library exists)",
+      "ERROR — NEEDS FIX: Media library exists but product images are NOT linked to it (supposed to: product editor image field → media picker)",
+      "ERROR — NOT FIXED YET: admin HAS a Media library (media_asset) supposed to serve product images, but card images are hardcoded prototype files — media edits never reach the cards"
+    ]
+  ],
+  "Product Page": [
+    [
+      "Product Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "Base URL: http://localhost:8000/product.html · each ?id= variant = separate row · 3 sections · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "URL: product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd (valid prototype slug)",
+      "Full page: breadcrumb, 3-image gallery, name, shortSpec + warranty line, 1TB/2TB capacity buttons, 20-row specs table, 4 related products, learn links, share",
+      "PARTIAL",
+      "product",
+      "http://localhost:8001/#/m/products",
+      "ERROR — NOT WORKING IN ADMIN: product editor does not open (module load fails on row click)",
+      "PARTIAL: name / specs / warranty / badges / shortSpec overridden per-field from DB — but gallery images, related rail and learn links are STATIC"
+    ],
+    [
+      2,
+      "URL: product.html?id=voltx-ddr5-udimm-16gb (DB-only product)",
+      "Renders from DB: name \"VOLTX DDR5 U-DIMM 16GB [Pass-3 edited]\" (title + H1), shortSpec \"Pass-3 short spec\", placeholder image",
+      "YES",
+      "product",
+      "http://localhost:8001/#/m/products",
+      "ERROR — NOT WORKING IN ADMIN: product editor does not open (module load fails on row click)",
+      "ERROR — NEEDS FIX: DB has price USD 89.95 but the page shows NO price anywhere (no price UI; schema.org metadata hardcodes price 0). Image is a placeholder — Media library not linked"
+    ],
+    [
+      3,
+      "URL: product.html?id=this-slug-does-not-exist (unknown slug)",
+      "\"Product not found\" empty state + Browse-all button — correct fallback",
+      "—",
+      null,
+      null,
+      null,
+      "OK — works as designed"
+    ],
+    [
+      4,
+      "Static parts (any ?id=)",
+      "Gallery images, related-products rail, learn links, share buttons, OEM blurb",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded — no admin screen; new CMS articles never appear in the learn links"
+    ]
+  ],
+  "Article Page": [
+    [
+      "Article Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "Base URL: http://localhost:8000/article.html · each ?id= variant = separate row · 2 sections · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "URL: article.html?id=boost-pc-performance-ram-or-ssd-first (prototype article)",
+      "Full article: title, body, “Featured for this topic” rail, “Related reading” rail",
+      "NO",
+      null,
+      "http://localhost:8001/#/m/content",
+      "ERROR — NEEDS FIX: editing a PROTOTYPE article in admin NEVER shows on the site — merge is append-only, prototype copy always wins. Only articles CREATED in admin render",
+      "ERROR — NOT EDITABLE TO SITE: the whole 54-article prototype corpus is static; admin edits to these titles never reach the page"
+    ],
+    [
+      2,
+      "URL: article.html?id=pass-3-new-article (CMS article from DB)",
+      "Renders fully from DB: title “Pass-3 New Article” + body + Related reading rail",
+      "YES",
+      "article",
+      "http://localhost:8001/#/m/content",
+      "Content studio → Articles tab → click the article row → edit Title / Body → Status = published (verified: studio loads, lists 1 article)",
+      "PARTIAL: CMS articles render but have NO “Featured for this topic” block and use a generic placeholder image"
+    ],
+    [
+      3,
+      "URL: article.html?id=no-such-article (unknown slug)",
+      "“Article not found” empty state + Knowledge-hub button",
+      "—",
+      null,
+      null,
+      null,
+      "OK — works as designed"
+    ],
+    [
+      4,
+      "Static parts (any ?id=)",
+      "“Featured for this topic” rail, “Related reading” rail, product recommendations",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: rails are hardcoded per prototype article — no admin screen; CMS articles get no curated rails"
+    ]
+  ],
+  "News Page": [
+    [
+      "News Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/news.html  (no params) · 2 sections · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "News card grid",
+      "66 news/event cards — all static prototype HTML (DB has 0 news posts today)",
+      "NO (today 0 rows)",
+      "news_post",
+      "http://localhost:8001/#/m/content",
+      "Content studio → News & Events tab → + New → Status = published → card APPENDS to the grid (studio verified loading)",
+      "ERROR — NOT EDITABLE TO SITE: the 66 prototype cards are hardcoded — editing them in admin NEVER shows; CMS news only APPENDS (merge is append-only). Nothing on this page comes from the DB today"
+    ],
+    [
+      2,
+      "Category filter chips",
+      "Client-side filter over the static cards",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: filter chips are hardcoded — categories managed in admin never reach this page"
+    ]
+  ],
+  "Gaming Page": [
+    [
+      "Gaming Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/gaming.html  (no params) · 13 sections · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "Hero / intro section",
+      "Static hero",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      2,
+      "#arsenal — product rail (“VOLTX & gaming-grade gear”)",
+      "4 product cards rendered from the merged catalog (badge = Gaming)",
+      "YES",
+      "product",
+      "http://localhost:8001/#/m/products",
+      "ERROR — NOT WORKING IN ADMIN: product editor does not open (module load fails on row click)",
+      "PARTIAL: card name / price / specs from DB (per-field override) — but WHICH products appear is hardcoded logic in app.js, not an admin choice"
+    ],
+    [
+      3,
+      "#rgb — RGB effects lab (“Pick your glow”)",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      4,
+      "#tuning — XMP 3.0 & EXPO tuning",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      5,
+      "#builds — rigs from the scene",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      6,
+      "#downloads — wallpapers (“Take the vibe with you”)",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      7,
+      "#stories — From the VOLTX desk",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ],
+    [
+      8,
+      "#sync / “VOLTX, explained” + remaining sections",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "static — not editable from admin"
+    ]
+  ],
+  "Solutions Page": [
+    [
+      "Solutions Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/solutions.html  (no params) · 1 section wrapper with anchored blocks · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "Hero + business-line blocks (#dist Regional distribution, #oem OEM manufacturing, #fleet Fleet & workplace, #workloads)",
+      "All render static — copy, icons, stats",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded in solutions.astro — no admin screen exists"
+    ],
+    [
+      2,
+      "“Built on the real catalogue” block",
+      "Static marketing copy — verified 0 product links in the page body (no catalog connection)",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE / NOT DB-DRIVEN: despite the name it does NOT read the product catalogue — hardcoded text"
+    ],
+    [
+      3,
+      "#process — “From requirement to rollout” (4 steps)",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded"
+    ],
+    [
+      4,
+      "#footprint — “Where we operate”",
+      "Static offices/regions list",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded — offices are also hardcoded on contact.html / where-to-buy.html"
+    ],
+    [
+      5,
+      "“Why teams choose” + “Start a conversation” CTA",
+      "Static — 3 CTA links to quote.html",
+      "NO",
+      null,
+      null,
+      null,
+      "ISSUE: CTA target quote.html form DOES write leads to DB (form_submission) — but this page’s own content is not editable"
+    ]
+  ],
+  "Where to Buy Page": [
+    [
+      "Where to Buy Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "Base URL: http://localhost:8000/where-to-buy.html · 4 sections (#marketplaces, #locator, #trust, #offices) · each param variant = separate row · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "URL: where-to-buy.html (no params) — #marketplaces cards",
+      "3 cards: 2 static prototype (Amazon UAE, Newegg) + 1 appended from DB (“pass3-market”)",
+      "PARTIAL",
+      "marketplace_listing",
+      "http://localhost:8001/#/m/partners",
+      "Partners & channel → Where-to-buy directory tab → marketplace listings (module verified loading)",
+      "PARTIAL: CMS marketplaces APPEND only — the prototype cards cannot be edited from admin"
+    ],
+    [
+      2,
+      "URL: where-to-buy.html (no params) — #locator distributor directory",
+      "“Showing 35 markets” — static country cards + 1 distributor appended from DB (“Pass-3 Distributor · Test Country”)",
+      "PARTIAL",
+      "distributor",
+      "http://localhost:8001/#/m/partners",
+      "Partners & channel → Where-to-buy directory tab → distributor list (verified rows show)",
+      "PARTIAL: CMS distributors APPEND to the static 34 — prototype cards not editable"
+    ],
+    [
+      3,
+      "URL: where-to-buy.html?region=af",
+      "“Africa 15” chip pressed, Showing 15 markets — filter works",
+      "—",
+      null,
+      null,
+      null,
+      "OK — works as designed"
+    ],
+    [
+      4,
+      "URL: where-to-buy.html?region=africa",
+      "NO EFFECT — “All regions” stays pressed, still 35 markets",
+      "—",
+      null,
+      null,
+      null,
+      "ERROR — PARAM SILENTLY IGNORED: chips use short codes (af / me / eu / as / am / cis) — the app’s own code comment documents ?region=africa which never matches any chip"
+    ],
+    [
+      5,
+      "URL: where-to-buy.html?country=IN",
+      "“Showing 1 market” — country deep-link works",
+      "—",
+      null,
+      null,
+      null,
+      "OK — works as designed"
+    ],
+    [
+      6,
+      "#trust band + #offices sections",
+      "Static trust badges + offices & hubs list",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded — offices are also hardcoded on contact.html and solutions.html"
+    ]
+  ],
+  "Partners Page": [
+    [
+      "Partners Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/partners.html  (no params) · 1 section wrapper · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "Partner tier cards (Distributors / Resellers & retail / System integrators)",
+      "3 static tier cards with benefits",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded in partners.astro — no admin screen exists"
+    ],
+    [
+      2,
+      "“From application to first container” (onboarding steps)",
+      "Static step timeline",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded"
+    ],
+    [
+      3,
+      "“Inside the portal” demo + Partner sign-in form",
+      "Static portal screenshots/copy + email/password sign-in (partner portal API)",
+      "PARTIAL",
+      "partner_org / partner_member",
+      null,
+      null,
+      "ISSUE: the sign-in hits the partner-portal API (DB-backed accounts) — but the demo content around it is hardcoded; no admin screen for this section"
+    ],
+    [
+      4,
+      "“Apply to the program” form (Company / Country / Business email…)",
+      "Form submits and saves to DB as a partner-inquiry lead",
+      "YES (writes)",
+      "form_submission",
+      "http://localhost:8001/#/m/submissions",
+      "Lead inbox list (type = partner-inquiry) — verified working earlier",
+      null
+    ]
+  ],
+  "Quote Page": [
+    [
+      "Quote Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "Base URL: http://localhost:8000/quote.html · param: ?product=<slug> · 1 section · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "URL: quote.html (no params) — volume-quote form",
+      "Form renders and submits — saves a quote lead to DB",
+      "YES (writes)",
+      "form_submission",
+      "http://localhost:8001/#/m/submissions",
+      "Lead inbox list (type = quote) — verified working earlier",
+      null
+    ],
+    [
+      2,
+      "URL: quote.html?product=corex-pro-m2-pcie-gen-5-0-nvme-ssd (prototype slug, from PDP “Request a quote”)",
+      "Product-interest dropdown prefilled: “TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD” — works",
+      "—",
+      null,
+      null,
+      null,
+      "OK — works as designed"
+    ],
+    [
+      3,
+      "URL: quote.html?product=voltx-ddr5-udimm-16gb (DB-only product slug)",
+      "Prefill FAILS SILENTLY — the dropdown ends with NO option selected at all (value not in the hardcoded list)",
+      "—",
+      null,
+      null,
+      null,
+      "ERROR — PARAM BROKEN FOR DB PRODUCTS: the prefill sets select.value to the DB product name, but the option list is hardcoded prototype names — no match → selection collapses to nothing"
+    ],
+    [
+      4,
+      "“Product interest” dropdown options (any URL)",
+      "40 hardcoded prototype product names",
+      "NO (supposed to be YES)",
+      "product",
+      "http://localhost:8001/#/m/products",
+      "ERROR — NOT WORKING IN ADMIN: product editor does not open (module load fails on row click)",
+      "ERROR — NOT DB-DRIVEN: products created in admin NEVER appear in this list (plus the product editor itself is broken — see left)"
+    ],
+    [
+      5,
+      "Page copy / trust sections",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded"
+    ]
+  ],
+  "Contact Page": [
+    [
+      "Contact Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/contact.html  (no params) · 2 sections · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "“Send a message” form (name / email / company / topic / message)",
+      "Form renders and submits — saves a contact lead to DB",
+      "YES (writes)",
+      "form_submission",
+      "http://localhost:8001/#/m/submissions",
+      "Lead inbox list (type = contact) — verified working earlier",
+      null
+    ],
+    [
+      2,
+      "“Direct lines” (emails / phones)",
+      "Static contact lines",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded in contact.astro — no admin screen (Settings has no contact-info editor)"
+    ],
+    [
+      3,
+      "“Find your region” offices list",
+      "Static offices/hubs (Taipei, Dubai, Cologne, San Jose, Dongguan…)",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded — the same offices are copy-pasted hardcoded on solutions.html and where-to-buy.html (3 places to update, none in admin)"
+    ]
+  ],
+  "Support Page": [
+    [
+      "Support Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/support.html  (no params) · 7 sections · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "Topic card sections (Warranty & RMA, Warranty policy, Compatibility help, Firmware & manuals, Install & how-to, Talk to support)",
+      "All static cards + download links",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded — downloads list is not managed in admin (Media library not linked)"
+    ],
+    [
+      2,
+      "FAQ tabs (DRAM / SSD / Flash & Cards / Accessories / Memory / Portable / USB / Warranty / RMA / Firmware)",
+      "10 tabbed FAQ groups render from the static prototype corpus",
+      "NO (supposed to be YES)",
+      "faq",
+      "http://localhost:8001/#/m/content",
+      "ERROR — NEEDS FIX: admin HAS a FAQ editor (Content → FAQ tab) and the DB has FAQ rows, but the exporter EXCLUDES FAQs by design — verified: export printed faqs=0 while DB has 1. Admin FAQ edits NEVER reach the site",
+      "ERROR — DEAD END: FAQ module edits never reach the site"
+    ],
+    [
+      3,
+      "“Track your RMA” box (badge says “Live in production”)",
+      "Tested with real DB case TM-RMA-2026-634738 (DB status: submitted) → page showed “Approved — ship to service centre” — output itself says “Prototype demo — deterministic state per number”",
+      "NO (supposed to be YES)",
+      "rma_request",
+      "http://localhost:8001/#/m/rma",
+      "ERROR — NOT LIVE: the tracker is a deterministic MOCK, not the DB — showed a wrong status for a real case. Real cases live in Admin → RMA board (module verified loading)",
+      "ERROR — FAKE DATA WIDGET: badge claims “Live in production” but it is a prototype demo computing status from the number string"
+    ],
+    [
+      4,
+      "“Serial check” section",
+      "Static copy + link to /support/sn-check — that URL returns 404 (page does not exist)",
+      "NO",
+      null,
+      "http://localhost:8001/#/m/serials",
+      "Serial registry IS in the DB (2 seeded serials) and Admin → SN-check & serials exists — but the public link is dead",
+      "ERROR — DEAD LINK: /support/sn-check → 404; the promised page does not exist"
+    ]
+  ],
+  "RMA Page": [
+    [
+      "RMA Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/rma.html  (no params) · 2 sections · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "“Four steps, no surprises” + warranty policy info",
+      "Static explainer + warranty tiers copy",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded"
+    ],
+    [
+      2,
+      "“Start an RMA” intake form (name / email / serial / issue)",
+      "Form submits and creates a real RMA case in the DB (verified: DB holds case TM-RMA-2026-634738 with these fields)",
+      "YES (writes)",
+      "rma_request",
+      "http://localhost:8001/#/m/rma",
+      "RMA board → case pipeline (module verified loading)",
+      null
+    ],
+    [
+      3,
+      "“Track an RMA” tracker",
+      "Same deterministic prototype demo as on support.html — not live DB data",
+      "NO (supposed to be YES)",
+      "rma_request",
+      "http://localhost:8001/#/m/rma",
+      "ERROR — NOT LIVE: mock tracker — real status only in Admin → RMA board",
+      "ERROR — FAKE DATA WIDGET: deterministic demo, ignores the DB"
+    ]
+  ],
+  "Compatibility Page": [
+    [
+      "Compatibility Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/compatibility.html  (no params; wizard is interactive) · 4 sections · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "3-step wizard (Device type → Brand → Model)",
+      "Cascade WORKS and the DB rule appears: Laptop → Apple → “Pass-3 MacBook” listed (compatibility_rule table, exported to the bundle)",
+      "YES",
+      "compatibility_rule",
+      "http://localhost:8001/#/m/compatibility",
+      "Compatibility Matrix module → add/edit rules (module verified loading; the Pass-3 rule was created via admin today)",
+      "PARTIAL: DB rules reach the dropdown — but see the result-panel error below"
+    ],
+    [
+      2,
+      "“Find compatible products” result panel",
+      "NO RESULT EVER RENDERS — tested both paths (Find button after selecting Pass-3 MacBook, and a prototype quick-pick “ThinkPad T14”): #compatOut stays EMPTY",
+      "—",
+      null,
+      null,
+      null,
+      "ERROR — BROKEN: the wizard result panel never renders for ANY platform (prototype or DB) — silent failure"
+    ],
+    [
+      3,
+      "“Matching logic” / “Upgrade questions” / “Go deeper” sections",
+      "Static explainers + links",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded"
+    ],
+    [
+      4,
+      "Page labeling",
+      "Page itself says “35 platforms in the demo index” and “Demo database for the prototype”",
+      "—",
+      null,
+      null,
+      null,
+      "ISSUE: page openly labels its own data as a demo index"
+    ]
+  ],
+  "Compare Page": [
+    [
+      "Compare Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/compare.html  (no params — tray comes from browser localStorage) · 1 section · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "Compare table",
+      "Renders the products added via the ⎄ button on any card (persists between visits); row data comes from the merged catalog — DB values override per-field",
+      "PARTIAL",
+      "product",
+      "http://localhost:8001/#/m/products",
+      "ERROR — NOT WORKING IN ADMIN: product editor does not open (module load fails on row click)",
+      "PARTIAL: comparison rows use DB product data — but the tray itself is browser-local (no URL param to share a comparison), and the product editor is broken in admin"
+    ],
+    [
+      2,
+      "Empty-state guidance copy",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded"
+    ]
+  ],
+  "Search Page": [
+    [
+      "Search Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "Base URL: http://localhost:8000/search.html · param: ?q= · 1 section · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "URL: search.html?q=DDR5",
+      "Results render with product cards from the merged catalog (DB products included); title set to “Search: DDR5”",
+      "YES",
+      "product (+ article for article hits)",
+      null,
+      null,
+      "OK — works; searches DB-merged catalog and article list (incl. CMS articles)"
+    ],
+    [
+      2,
+      "URL: search.html (no q)",
+      "“Type a query” empty state",
+      "—",
+      null,
+      null,
+      null,
+      "OK — works as designed"
+    ]
+  ],
+  "About Page": [
+    [
+      "About Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/about.html  (no params) · 9 sections · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "All 9 sections (story, fact file, mission/vision/values, milestones, manufacturing, quality, live metrics, five gates, ESG/offices/press)",
+      "All static — 100% of the page",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: entire page hardcoded — one of the repo’s documented fully-static pages"
+    ]
+  ],
+  "Technology Page": [
+    [
+      "Technology Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/technology.html  (no params) · 3 sections · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "All 3 sections (How the hardware works, engineering QA, Engineering questions)",
+      "All static",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: entire page hardcoded"
+    ]
+  ],
+  "Careers Page": [
+    [
+      "Careers Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/careers.html  (no params) · 11 sections · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "“Representative openings” table",
+      "Prototype rows + CMS jobs APPEND — verified live: DB job “Pass-3 New Role” appears in the table (14 rows rendered)",
+      "PARTIAL",
+      "job_posting",
+      "http://localhost:8001/#/m/jobs",
+      "Careers module → Postings tab → create/publish (module verified loading; the Pass-3 job was created via admin today)",
+      "PARTIAL: CMS jobs append — the 6 prototype rows are hardcoded and not editable to the site"
+    ],
+    [
+      2,
+      "Apply form",
+      "Submits → creates a job application in the DB (dashboard shows 2 applications)",
+      "YES (writes)",
+      "job_application",
+      "http://localhost:8001/#/m/jobs",
+      "Careers module → Applications inbox",
+      null
+    ],
+    [
+      3,
+      "Apply-form “Position” dropdown",
+      "Static options list",
+      "NO (supposed to be YES)",
+      "job_posting",
+      "http://localhost:8001/#/m/jobs",
+      "ERROR — NEEDS FIX: CMS job postings are NOT listed as options (per repo audit — same class of bug as the quote product dropdown)",
+      "ERROR — NOT DB-DRIVEN: new admin jobs never appear in the dropdown"
+    ],
+    [
+      4,
+      "Other 10 sections (reasons, values, departments, benefits, life, locations, internships, FAQ…)",
+      "All static",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded"
+    ]
+  ],
+  "Buying Guides Page": [
+    [
+      "Buying Guides Page Report (learn-guides)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/learn-guides.html  (no params) · 6 sections · checked 2026-10-05 (after stack restore)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "Card grids (Memory RAM Guides / Storage SSD Guides / PC Build Guides / Enterprise & Procurement)",
+      "18 article cards, all static prototype corpus — verified: CMS article “Pass-3 New Article” does NOT appear",
+      "NO (supposed to be YES)",
+      "article",
+      "http://localhost:8001/#/m/content",
+      "ERROR — NEEDS FIX: articles created in admin render at article.html?id=<slug> but NEVER appear on this listing (grid is hardcoded; merge feeds only the reader)",
+      "ERROR — CMS CONTENT INVISIBLE: new admin articles never show on this page"
+    ],
+    [
+      2,
+      "“Narrow it down in seconds” helper + CTA sections",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded"
+    ]
+  ],
+  "Tech Explainers Page": [
+    [
+      "Technology Explainers Page Report (learn-explained)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/learn-explained.html  (no params) · 5 sections · checked 2026-10-05 (after stack restore)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "Card grids (Memory DRAM Technology / Storage SSD Technology / Specialized Topics)",
+      "29 article cards, all static prototype corpus — verified: CMS article does NOT appear",
+      "NO (supposed to be YES)",
+      "article",
+      "http://localhost:8001/#/m/content",
+      "ERROR — NEEDS FIX: same as guides — admin articles never appear on this listing",
+      "ERROR — CMS CONTENT INVISIBLE: new admin articles never show on this page"
+    ],
+    [
+      2,
+      "“Prefer specs to stories?” CTA section",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded"
+    ]
+  ],
+  "Benchmarks Page": [
+    [
+      "Benchmarks Page Report (learn-benchmarks)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/learn-benchmarks.html  (no params) · 5 sections · checked 2026-10-05 (after stack restore)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "“How we test” + “Benchmark library” grids",
+      "4 benchmark articles + methodology copy, all static — verified: CMS articles do NOT appear",
+      "NO (supposed to be YES)",
+      "article",
+      "http://localhost:8001/#/m/content",
+      "ERROR — NEEDS FIX: same listing gap as the other learn pages",
+      "ERROR — CMS CONTENT INVISIBLE + NOT EDITABLE"
+    ],
+    [
+      2,
+      "“Compare the products themselves” CTA",
+      "Static link to compare.html",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded"
+    ]
+  ],
+  "Glossary Page": [
+    [
+      "Glossary Page Report (learn-glossary)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/learn-glossary.html  (no params; ?id=glossary redirects here from article.html) · 29 sections · checked 2026-10-05 (after stack restore)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "A–Z term sections (29 sections)",
+      "Glossary terms render statically with links into the article corpus — verified: CMS content does NOT appear",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: the whole glossary is hardcoded — no admin screen; new terms can never be added from admin"
+    ],
+    [
+      2,
+      "“A term piqued your interest?” CTA",
+      "Static",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: hardcoded"
+    ]
+  ],
+  "Tech Blog Page": [
+    [
+      "Tech Insights & Blog Page Report (learn-blog)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/learn-blog.html  (no params) · 4 sections · checked 2026-10-05 (after stack restore)",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "“Recent posts” grid",
+      "3 blog posts, all static prototype — verified: CMS articles/news do NOT appear",
+      "NO (supposed to be YES)",
+      "article (+ news_post)",
+      "http://localhost:8001/#/m/content",
+      "ERROR — NEEDS FIX: admin articles AND news never appear here — only article.html?id=<slug> renders CMS content",
+      "ERROR — CMS CONTENT INVISIBLE: new admin content never shows on this page"
+    ],
+    [
+      2,
+      "“Never miss a launch” newsletter box",
+      "Newsletter form — submits to DB (same as home footer)",
+      "YES (writes)",
+      "form_submission",
+      "http://localhost:8001/#/m/submissions",
+      "Lead inbox list (type = newsletter)",
+      null
+    ]
+  ],
+  "Legal Page": [
+    [
+      "Legal Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/legal.html  (tab anchors: #warranty #terms #privacy #cookies #policies #eol) · 1 section + 6 tabs · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "6 policy tabs (Warranty / Terms / Privacy / Cookies / Additional / EOL list)",
+      "All static policy text — headings even say “Production draft”",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE: policies hardcoded (and still marked as draft) — no admin screen"
+    ],
+    [
+      2,
+      "Tab deep-links (#terms etc.)",
+      "Tab component switches on hash — works",
+      "—",
+      null,
+      null,
+      null,
+      "OK — works as designed"
+    ]
+  ],
+  "Sitemap Page": [
+    [
+      "Sitemap Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/sitemap.html  (no params) · 1 section · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "Link list",
+      "Static hardcoded links — new pages/content never appear",
+      "NO",
+      null,
+      null,
+      null,
+      "ERROR — NOT EDITABLE / GOES STALE: hardcoded — no admin screen; also no XML sitemap generation for new content"
+    ]
+  ],
+  "404 Page": [
+    [
+      "404 Page Report",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "URL: http://localhost:8000/404.html · 1 section · checked 2026-10-05",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "#",
+      "Section checked",
+      "Result found on web app",
+      "From DB?",
+      "DB table",
+      "Admin page URL",
+      "Where on admin page",
+      "Issue / Error"
+    ],
+    [
+      1,
+      "Not-found page",
+      "Serves with HTTP 404 status (correct) — static content",
+      "—",
+      null,
+      null,
+      null,
+      "OK — works as designed (static by nature)"
+    ]
+  ]
+}
