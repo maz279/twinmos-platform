@@ -6,6 +6,7 @@
 import { Hono } from 'hono';
 import { and, count, desc, eq, ilike, isNull, lte, sql } from 'drizzle-orm';
 import { marked } from 'marked';
+import DOMPurify from 'isomorphic-dompurify';
 import { z } from 'zod';
 import {
   articleCreateSchema, articleUpdateSchema, newsCreateSchema, newsUpdateSchema,
@@ -361,8 +362,13 @@ export function previewRoute(db: DB) {
 }
 
 export async function renderContent(entity: EntityType, row: Record<string, unknown>): Promise<string> {
+  // P1.2 defense-in-depth: marked performs no sanitization, and this HTML is
+  // served to browsers (preview URLs). The API origin's CSP (default-src
+  // 'none') already neutralizes script; DOMPurify makes the markup itself
+  // clean regardless of which origin or header path serves it.
+  const md = (raw: unknown) => DOMPurify.sanitize(String(marked.parse(String(raw ?? ''))));
   if (entity === 'faq') {
-    return `<h1>${esc(String(row.question))}</h1><p>${await marked.parse(String(row.answer))}</p>`;
+    return `<h1>${esc(String(row.question))}</h1><p>${await md(row.answer)}</p>`;
   }
   if (entity === 'page') {
     const blocks = (row.blocks as Array<Record<string, unknown>>) ?? [];
@@ -370,7 +376,7 @@ export async function renderContent(entity: EntityType, row: Record<string, unkn
   }
   const deck = row.deck ? `<p class="deck">${esc(String(row.deck))}</p>` : '';
   const meta = row.eventDate ? `<p class="meta">Event date: ${esc(String(row.eventDate))}</p>` : '';
-  return `<h1>${esc(String(row.title))}</h1>${deck}${meta}${await marked.parse(String(row.body ?? ''))}`;
+  return `<h1>${esc(String(row.title))}</h1>${deck}${meta}${await md(row.body)}`;
 }
 
 function esc(s: string): string {

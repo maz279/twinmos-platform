@@ -8,6 +8,7 @@
 //     revision before approving.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { ApiError, apiGet, apiSend, fmtDate } from '../api';
 import { Badge, btn, btnGhost, CommandBar, Empty, Err, input, PageHeader, Table, td, Toolbar, useAsync, usePanelScroll, FAINT, INK, LINE, MUTED, TEAL } from '../ui';
 import { Heatmap, WeeklyBars } from '../charts';
@@ -578,9 +579,13 @@ function WordCount({ text }: { text: string }) {
   );
 }
 
-/** Client-side markdown preview (same marked pipeline as the server render). */
+/** Client-side markdown preview (same marked pipeline as the server render).
+ * P1.2: marked performs no sanitization — raw output once carried hostile
+ * markdown straight into dangerouslySetInnerHTML (audit finding U-2,
+ * live-proven). DOMPurify strips script/event-handler payloads while
+ * preserving legitimate markdown-generated markup. */
 export function MarkdownPreview({ text }: { text: string }) {
-  const html = useMemo(() => String(marked.parse(text || '', { async: false })), [text]);
+  const html = useMemo(() => DOMPurify.sanitize(String(marked.parse(text || '', { async: false }))), [text]);
   return <div className="md-preview" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
