@@ -84,6 +84,15 @@
 
 **Phase 2 exit gate:** end-to-end content flow demo — create/edit product + compat rule + job in admin → refresh → verify on shop, finder, careers, PDP (prices correct); `npm audit --omit=dev` still 0 high; push `remediation/phase-2`.
 
+**Phase 2 status: ✅ COMPLETE (2026-10-06, PR #5, main=c4b98d7)**
+- 2.1 ✔ dataDir resolves from `import.meta.url` → `apps/api/data/dev.pgdata` regardless of cwd; stale `apps/web/data/dev.pgdata` + root `data/` deleted; exporter prints the data dir. **LIVE-PROVEN**: export from `apps/web` cwd now refuses with the db-lock naming the LIVE dir (correct behavior — proves anchoring).
+- 2.2 ✔ `tooling/content-payload.ts` shared builder (CLI + API); **`POST /admin/content/export`** rebuilds cms-content.js from the API's own DB handle — **LIVE-PROVEN while API running** (40 products / 36 compat rules / 37 distributors / 1 job written); `npm run content:export`; admin Products toolbar "Refresh site content" button (**live-proven in console**: "Bridge refreshed — 40 products, 36 compat rules"). Route registered BEFORE `/content/:entity` (Hono order — first cut was captured as :entity).
+- 2.3 ✔ import-compat reconcile pass (loose-key dupe clusters → fullest row + gen/form/cats/ssdCats backfill from prototype; empty-cats backfill on exact keys). **IdeaPad Slim 3 verified whole** (gen=DDR4, cats=[dram-notebook], ssdCats=[ssd-nvme]; 36 rules after dedupe).
+- 2.4 ✔ PDP renders an MSRP line when priced; JSON-LD offers carry the real price/currency and are OMITTED when priceless. **LIVE-PROVEN**: voltx PDP "USD 89.99 · MSRP" + offers.price=89.99; CoreX Pro JSON-LD has NO offers key.
+- 2.5 ✔ `?region=africa` → Africa chip activates (**live**: chip.on); quote select hydrated from live catalog (**live**: 41 options, DB slug prefills "VOLTX DDR5 U-DIMM 16GB"); careers apply dropdown carries CMS jobs (**live**: "Senior Firmware Engineer NVMe" selectable).
+- 2.6 ✔ boot-time TreeWalker patches the baked "39 products" literal with the live merged count. **LIVE**: mega menu shows 40.
+- 2.7 ✔ `p2-fixpack.e2e.test.ts` (3 tests: bridge export freshness + RBAC, compat cats integrity). **Gates: tsc ×2 · eslint 0 · 265/265 tests / 29 suites · full browser matrix**.
+
 ---
 
 ## Phase 3 — CMS Completeness Bridges (capability parity) · ~280 h (~$35,000) · Weeks 3–6
