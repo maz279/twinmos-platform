@@ -93,6 +93,11 @@
 - 2.6 ✔ boot-time TreeWalker patches the baked "39 products" literal with the live merged count. **LIVE**: mega menu shows 40.
 - 2.7 ✔ `p2-fixpack.e2e.test.ts` (3 tests: bridge export freshness + RBAC, compat cats integrity). **Gates: tsc ×2 · eslint 0 · 265/265 tests / 29 suites · full browser matrix**.
 
+**Phase 2 deep-verification pass (2026-10-06 PM):** two real defects found and fixed (staged on `remediation/phase-2-hardening`; commit blocked by the Mimosa full-project scan flagging 391 false-positive "SSRF" hits on the pre-existing `app.request` in-process test convention in unchanged files — a tooling-policy decision pending):
+- **(A) Dev-topology media URLs**: the API export route defaulted media URLs to same-origin `/api/v1` — correct in production, **404 on the dev stack** (:4321 site ↔ :8787 API). Fixed: dev defaults to the API's own origin (`BETTER_AUTH_URL`+`/api/v1`), production stays same-origin. LIVE-PROVEN: bundle carries absolute `127.0.0.1:8787` URLs and the bridged hero image renders on the dev shop page (was 404).
+- **(B) Test-write isolation leak**: the export route wrote to the repo-anchored `cms-content.js` even under test — **every `npm test` run corrupted the dev bundle with test-db content**. Fixed: `contentOutPath()` honors `CONTENT_OUT`; the p2 suite isolates writes to TMP. VERIFIED: suite 3/3 green AND the repo bundle md5 unchanged across the run.
+- Re-verified and held: full suite 265/265, eslint 0, tsc clean, all browser gates from Phase 2 still green; the one remaining empty-cats rule (ASUS ProArt) is admin-created (absent from the prototype — `grep -c ProArt data.js` = 0), so the importer correctly leaves it for console editors.
+
 ---
 
 ## Phase 3 — CMS Completeness Bridges (capability parity) · ~280 h (~$35,000) · Weeks 3–6
@@ -109,6 +114,14 @@
 | 3.6 | Regression coverage | — | Bridge tests for each new surface (fixture: article per category → assert card on page) | Suite green; push `remediation/phase-3` |
 
 **Phase 3 exit gate:** for every CMS entity (article/news/FAQ/job/product/compat/distributor), a created item is visible on **each** intended public surface (matrix demonstrated in the PR description).
+
+**Phase 3 status: ✅ COMPLETE (2026-10-06, PR #7, main=65a3ca5)**
+- 3.1 ✔ bridge exports published EN FAQs `{group,q,a}` (draft/non-EN excluded — pinned by test); support page's merge layer appends a **"Help center updates"** accordion tab, question-deduped against the static accordion. **LIVE: 9 CMS FAQs render under the new tab.**
+- 3.2 ✔ learn-hub grids route merged CMS articles by signal (guide→guides, benchmark→benchmarks, launch/newest→blog, top-3→learn home), mirroring each page's learn-card markup. **LIVE-verified on all five hubs** (guides 19 cards incl. 1 CMS; benchmark article on benchmarks; launch on blog).
+- 3.3 ✔ home "Latest from TwinMOS" strip prepends ≤3 newest CMS news cards. **LIVE: published fixture renders as the first card** (news creation verified to honor the draft→publish workflow — create-with-status is forced to draft by design).
+- 3.4 ✔ gen_sitemap.py parses the bridge and emits deep URLs (product 0.8/weekly, article 0.6/monthly). **LIVE: 77 urls, 42 deep (40 products + 2 articles);** degrades to page shells when the bridge is absent.
+- 3.5 ✔ `BRIDGE_OFFICES` canonical five-office list ships in the bridge (verified against the authoritative fact base); merge layer syncs entity/title/address on WTB + contact address cards and headline/note on the solutions footprint grid (**sibling-grid selector** — the cards live AFTER `#footprint`, caught by live check). **LIVE: all three pages show canonical entity+address.** `apps/web/src/data/offices.ts` added as the typed compile-time source (force-added past the `data/` ignore rule).
+- 3.6 ✔ `p3-bridges.e2e.test.ts` (3 tests: FAQ export filters, offices shape, news-through-workflow). **Gates: tsc ×2 · eslint 0 · 268/268 tests / 30 suites · full browser matrix.**
 
 ---
 
