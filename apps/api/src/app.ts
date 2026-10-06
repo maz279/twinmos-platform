@@ -18,7 +18,8 @@ import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
 import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
 import { snCheckRoute, snReportRoute, serialAdminRoute } from './routes/sncheck.ts';
 import { sendMail } from './mailer.ts';
-import { auditLog } from '@twinmos/db';
+import { auditLog, user } from '@twinmos/db';
+import { eq } from 'drizzle-orm';
 import type { DB } from '@twinmos/db';
 import type { Context } from 'hono';
 
@@ -197,6 +198,27 @@ export function buildApp(db: DB) {
 
   app.route('/api/v1', formsRoute(db));
   app.route('/api/v1', previewRoute(db)); // public, token-gated draft previews
+  // ---- P1.4: forced password rotation guard ---------------------------------
+  // Accounts invited with a system-generated temporary credential are refused
+  // by every /admin route until they set their own password. Registered BEFORE
+  // any /admin router mounts (Hono runs handlers in registration order) so no
+  // admin handler can respond ahead of the gate. Allowlisted: the two
+  // me/password endpoints that power the rotation screen.
+  app.use('/api/v1/admin/*', async (c, next) => {
+    const p = c.req.path;
+    if (p === '/api/v1/admin/users/me/password-state' || p === '/api/v1/admin/users/me/accept-password') return next();
+    const s = await sessionFromRequest(c.req.raw);
+    if (!s) return next(); // unauthenticated — each router enforces its own 401
+    const row = (await db.select({ f: user.mustChangePassword }).from(user).where(eq(user.id, s.user.id)).limit(1))[0];
+    if (row?.f) {
+      return c.json(
+        problem(403, 'Password change required', 'This account was invited with a temporary password — set a new password before using the console.'),
+        403,
+        { 'Content-Type': 'application/problem+json' },
+      );
+    }
+    return next();
+  });
   app.route('/api/v1/admin', adminRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', analyticsRoute(db, { requireRole, sessionFromRequest })); // Phase 7.1 dashboards
   app.route('/api/v1/admin', usersRoute(db, { requireRole, sessionFromRequest, auth }));

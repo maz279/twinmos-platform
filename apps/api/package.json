@@ -17,6 +17,7 @@
     "better-auth": "^1.7.6",
     "drizzle-orm": "^0.45.3",
     "hono": "^4.13.9",
+    "isomorphic-dompurify": "^4.4.0",
     "marked": "^18.0.14",
     "resend": "^6.30.0",
     "sharp": "^0.35.5"

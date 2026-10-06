@@ -134,6 +134,13 @@
       "when": 1790885614721,
       "tag": "0018_lead_first_response",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791283200000,
+      "tag": "0019_user_must_change_password",
+      "breakpoints": true
     }
   ]
 }

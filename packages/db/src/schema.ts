@@ -20,6 +20,9 @@ export const user = pgTable('user', {
   role: roleEnum('role').notNull().default('viewer'),
   image: text('image'),
   twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false), // P7+ MFA flag (Better Auth twoFactor plugin)
+  // P1.4: invited accounts that received a system-generated temporary password
+  // must rotate it before using the console (server-enforced in app.ts).
+  mustChangePassword: boolean('must_change_password').notNull().default(false),
   banned: boolean('banned').default(false),
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires', { withTimezone: true }),

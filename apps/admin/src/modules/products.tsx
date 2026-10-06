@@ -146,8 +146,14 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing?.id]);
 
-  if (!isNew && loading) return <p>Loading…</p>;
-  if (!isNew && error) return <Err error={error} />;
+  // Rules of Hooks: this hook MUST run before any conditional return below —
+  // an early return on loading/error followed by a full render flips the hook
+  // count and crashes the module ("Rendered more hooks than during the
+  // previous render", audit finding U-1). Keep it above the returns.
+  const panelRef = usePanelScroll<HTMLDivElement>();
+
+  if (!isNew && loading) return <div ref={panelRef}><p>Loading…</p></div>;
+  if (!isNew && error) return <div ref={panelRef}><Err error={error} /></div>;
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) { setForm((f) => ({ ...f, [k]: v })); }
 
@@ -187,7 +193,6 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
   }
 
   const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 700, color: NAVY, display: 'block', margin: '12px 0 4px' };
-  const panelRef = usePanelScroll<HTMLDivElement>();
 
   return (
     <div ref={panelRef}>
