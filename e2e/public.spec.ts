@@ -68,6 +68,10 @@ test.describe('public site', () => {
       return product?.offers ?? 'ABSENT';
     });
     expect(ld).toBe('ABSENT');
+    // warranty phrasing: values like "Lifetime warranty" must never render
+    // with a second appended word ("warranty warranty" — visual-audit fix)
+    const body = await page.textContent('body');
+    expect(body).not.toMatch(/warranty\s+warranty/i);
   });
 
   test('mega menu shows the live catalog count, not the baked 39 (P2.6)', async ({ page }) => {

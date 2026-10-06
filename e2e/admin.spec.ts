@@ -50,17 +50,16 @@ test.describe('admin console', () => {
     await page.waitForTimeout(2200);
     await page.locator('tr').nth(1).click();
     await page.waitForTimeout(1800);
-    // find the warranty input by its label text
-    const warranty = page.locator('input').filter({ hasNot: page.locator('x') }); // placeholder-scoped below
-    const byPlaceholder = page.locator('input[placeholder*="5 Years"], input[placeholder*="Lifetime"]');
-    if (await byPlaceholder.count() > 0) {
-      await byPlaceholder.first().fill('E2E warranty probe');
-      await page.locator('button:has-text("Save changes")').click();
-      await page.waitForTimeout(2000);
-      const body = await page.textContent('body');
-      expect(body).not.toContain('Save failed');
-    }
-    void warranty;
+    // The warranty input is located by its editor placeholder ("e.g. 5 Years",
+    // products.tsx). Presence is REQUIRED — a locator that quietly matches
+    // nothing would turn this test into a vacuous pass.
+    const warranty = page.locator('input[placeholder*="5 Years"]');
+    await expect(warranty.first()).toBeVisible();
+    await warranty.first().fill('E2E warranty probe');
+    await page.locator('button:has-text("Save changes")').click();
+    await page.waitForTimeout(2000);
+    const body = await page.textContent('body');
+    expect(body).not.toContain('Save failed');
   });
 
   const MODULES = ['dashboard', 'content', 'submissions', 'rma', 'partners', 'serials', 'jobs', 'media', 'translations', 'users', 'audit', 'settings'];
