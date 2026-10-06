@@ -380,11 +380,17 @@ var TM = window.TM || {};
     }
     document.title = p.name + ' — TwinMOS';
     var ld = document.createElement('script'); ld.type = 'application/ld+json';
-    ld.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'Product',
+    // P2.4 (audit U-9): honest structured data — offers ONLY when a real list
+    // price exists (never a fabricated price:0), with the product's currency.
+    var ldObj = { '@context': 'https://schema.org', '@type': 'Product',
       name: p.name, image: p.img, sku: p.id, mpn: (p.specs && (p.specs['1 TB'] || p.specs['2 TB'])) || p.id,
       brand: { '@type': 'Brand', name: 'TwinMOS' }, category: p.catLabel,
-      description: p.shortSpec || p.name, offers: { '@type': 'Offer', priceCurrency: 'USD', price: '0',
-      availability: 'https://schema.org/InStock', url: location.href } });
+      description: p.shortSpec || p.name };
+    if (p.priceUsd != null && p.priceUsd > 0) {
+      ldObj.offers = { '@type': 'Offer', priceCurrency: p.currency || 'USD', price: String(p.priceUsd),
+        availability: 'https://schema.org/InStock', url: location.href };
+    }
+    ld.textContent = JSON.stringify(ldObj);
     document.head.appendChild(ld);
     var bld = document.createElement('script'); bld.type = 'application/ld+json';
     bld.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -413,6 +419,11 @@ var TM = window.TM || {};
       '    <span class="pcard-cat">' + esc(p.catLabel) + '</span>' +
       '    <h1>' + esc(p.name) + '</h1>' +
       '    <p class="lede" style="margin-bottom:18px">' + esc(p.shortSpec || '') + (p.warranty ? ' · ' + esc(p.warranty) + ' warranty' : '') + '</p>' +
+      // P2.4 (audit U-9): the DB carries a real list price — show it as an
+      // MSRP line; products without one keep the quote-first flow unchanged.
+      (p.priceUsd != null && p.priceUsd > 0
+        ? '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px"><span style="font-size:26px;font-weight:800;color:var(--ink)">' + esc(p.currency || 'USD') + ' ' + esc(p.priceUsd.toFixed(2)) + '</span><span class="form-note">MSRP — where to buy shows local pricing</span></div>'
+        : '') +
       '    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px">' +
       '      <a class="btn btn-primary btn-lg" href="where-to-buy.html">Where to buy</a>' +
       '      <a class="btn btn-ghost btn-lg" href="quote.html?product=' + encodeURIComponent(p.id) + '">Request a quote</a>' +
@@ -790,8 +801,23 @@ var TM = window.TM || {};
     }
     var pre = param('product');
     if (pre && $('#qProduct')) {
+      // P2.5 (audit U-8): hydrate the select from the LIVE catalog first —
+      // the hardcoded 39 options predate DB products, so a CMS slug used to
+      // collapse the selection to empty instead of prefilling.
+      var sel = $('#qProduct');
+      var have = {};
+      Array.prototype.forEach.call(sel.options, function (o) { have[o.value] = o.textContent || o.value; });
+      (TM.products || []).forEach(function (x) {
+        if (!have[x.id] && !have[x.name]) {
+          var opt = document.createElement('option');
+          opt.value = x.name; // the prototype options carry display names
+          opt.textContent = x.name;
+          sel.appendChild(opt);
+          have[x.name] = x.name;
+        }
+      });
       var p = (TM.products || []).filter(function (x) { return x.id === pre; })[0];
-      $('#qProduct').value = p ? p.name : decodeURIComponent(pre);
+      sel.value = p ? p.name : (have[decodeURIComponent(pre)] ? decodeURIComponent(pre) : '');
     }
   }
 
@@ -1437,8 +1463,14 @@ var TM = window.TM || {};
       if (hit) { focusCountry(qCountry); return; }
     }
     if (qRegion) {
-      var rb = $('[data-rg="' + qRegion + '"]', chipsBar);
+      // P2.5 (audit U-8): accept human region names, not just chip codes —
+      // ?region=africa previously matched nothing and silently no-oped.
+      var REGION_ALIASES = { africa: 'af', 'middle-east': 'me', middle_east: 'me', gcc: 'me',
+        'asia-pacific': 'as', asia: 'as', europe: 'eu', cis: 'cis', americas: 'am', am: 'am' };
+      var code = REGION_ALIASES[qRegion.toLowerCase()] || qRegion.toLowerCase();
+      var rb = $('[data-rg="' + code + '"]', chipsBar);
       if (rb) rb.click();
+      else console.warn('[where-to-buy] unknown ?region=', qRegion, '— expected: af, me, as, eu, cis, am (or a full region name)');
     }
 
     // geo-detect (timezone only — no network, no storage): suggest, never auto-filter
@@ -1479,6 +1511,18 @@ var TM = window.TM || {};
     initHeader(); initCookie(); initTabs(); initSlider(); initShop(); initPDP(); initCompare(); initCompat();
     initRMA(); initForms(); initSearch(); initArticle(); initRails(); initHomeEnhancements(); syncCmpUI();
     initLocator(); initGlossary();
+    // P2.6 (audit U-14): the mega menus and feature bands baked "39 products"
+    // into every page when the prototype shipped — the live catalog has since
+    // grown. cms-merge has already run (script order: data → cms-content →
+    // cms-merge → app), so TM.products is final here. Patch the literal so
+    // every page states the real catalog size.
+    var liveCount = (TM.products || []).length;
+    if (liveCount && liveCount !== 39) {
+      var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+      var nodes = [];
+      while (walker.nextNode()) { if (/39 products/.test(walker.currentNode.nodeValue || '')) nodes.push(walker.currentNode); }
+      nodes.forEach(function (n) { n.nodeValue = String(n.nodeValue || '').replace(/39 products/g, liveCount + ' products'); });
+    }
     // support page: search router + RMA tracker demo
     var supForm = $('#supSearch');
     if (supForm) supForm.addEventListener('submit', function (e) {
