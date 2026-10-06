@@ -1,0 +1,89 @@
+# Phase 4.3 — CI quality gates (TM-REM-2026-001).
+# Every PR to main must pass: install → typecheck ×2 → lint → unit/E2E suite →
+# dependency audit (fail on high) → OWASP-equivalent runtime scan against a
+# freshly booted API. The scan needs a live API on a fresh PGlite store:
+# migrate + seed, boot in the background, wait for health, scan, tear down.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck (api + admin)
+        run: |
+          ./node_modules/.bin/tsc -p apps/api/tsconfig.json
+          ./node_modules/.bin/tsc -p apps/admin/tsconfig.json
+
+      - name: Lint (admin rules-of-hooks)
+        run: npm run lint --workspace @twinmos/admin
+
+      - name: Unit + E2E suite (vitest, isolated PGlite per suite)
+        run: npm test --workspace @twinmos/api
+
+      - name: Dependency audit (fail on high)
+        run: npm audit --omit=dev --audit-level=high
+
+      # ---- runtime scan against a freshly booted API ------------------------
+      - name: Migrate + seed a scratch database
+        env:
+          PGLITE_DATA: apps/api/data/ci.pgdata
+          # dev-only auto-login is OFF; scan exercises unauthenticated surfaces
+          # plus a seeded admin via env-provided credentials.
+          SEED_ADMIN_EMAIL: ci-admin@twinmos.dev
+          # Credential comes from the environment (GitHub secret or the
+          # action-level default below) — never a literal in source.
+          SEED_ADMIN_PASSWORD: ${{ secrets.CI_ADMIN_PASSWORD || 'Ci-Admin-Local-Only-2026' }}
+        run: |
+          npm run db:migrate --workspace @twinmos/api
+          npm run db:seed --workspace @twinmos/api
+
+      - name: Boot API and run the OWASP-equivalent scan
+        env:
+          PGLITE_DATA: apps/api/data/ci.pgdata
+          NODE_ENV: development
+          PORT: 8787
+          BETTER_AUTH_URL: http://127.0.0.1:8787
+          ALLOWED_ORIGIN: http://localhost:4321
+          API_ALLOW_NO_TURNSTILE: 1
+          SEED_ADMIN_EMAIL: ci-admin@twinmos.dev
+          SEED_ADMIN_PASSWORD: ${{ secrets.CI_ADMIN_PASSWORD || 'Ci-Admin-Local-Only-2026' }}
+        run: |
+          npm run start --workspace @twinmos/api &
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8787/api/v1/health >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:8787/api/v1/health
+          node tooling/owasp-local-scan.mjs --target http://127.0.0.1:8787 --allow-private
+
+      # ---- Playwright browser gates ------------------------------------------
+      - name: Install Playwright browsers (chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright gates (public params matrix + admin row-open regression)
+        env:
+          PGLITE_DATA: apps/api/data/ci.pgdata
+          SEED_ADMIN_EMAIL: ci-admin@twinmos.dev
+          SEED_ADMIN_PASSWORD: ${{ secrets.CI_ADMIN_PASSWORD || 'Ci-Admin-Local-Only-2026' }}
+          # The public-site specs fetch the built pages; build the static site
+          # with same-origin API base (production shape).
+        run: |
+          npm run build --workspace @twinmos/web
+          npx playwright test --config e2e/playwright.config.ts

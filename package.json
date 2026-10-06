@@ -25,6 +25,7 @@
     "test:ci": "npm run build -w @twinmos/web && npm run test --workspaces --if-present"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "concurrently": "^9.2.1",
     "typescript": "^5.9.3",
     "vitest": "^5.0.2"
