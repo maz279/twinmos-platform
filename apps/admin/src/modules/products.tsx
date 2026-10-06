@@ -57,6 +57,7 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
         <h1 style={{ margin: 0, fontSize: 22 }}>Products</h1>
         {canWrite && <button style={btn} onClick={() => setEditing('new')}>+ New product</button>}
         <button style={btnGhost} onClick={() => setBulk(true)} title="Bulk CSV import and full-catalog export">Import / Export</button>
+        <RefreshBridgeButton />
         <span style={{ flex: 1 }} />
         <input style={{ ...input, width: 240 }} placeholder="Search name or SKU…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select style={input} value={category} onChange={(e) => setCategory(e.target.value ? Number(e.target.value) : '')}
@@ -579,6 +580,28 @@ type ImportReport = {
   rows: Array<{ line: number; action: 'create' | 'update'; sku: string; name: string }>;
   errors: Array<{ line: number; sku?: string; message: string }>;
 };
+
+/** P2.2: one-click content-bridge refresh — POST /admin/content/export
+ * regenerates cms-content.js from the API's own DB handle (safe while the
+ * API is live; the CLI exporter needs the API stopped). */
+function RefreshBridgeButton() {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  async function refresh() {
+    setBusy(true); setNote(null);
+    try {
+      const r = await apiSend<{ counts: { products: number; compatRules: number; distributors: number; jobs: number } }>('POST', '/admin/content/export', {});
+      setNote(`Bridge refreshed — ${r.counts.products} products, ${r.counts.compatRules} compat rules`);
+    } catch (e) {
+      setNote(e instanceof ApiError ? `Refresh failed — ${e.message}` : 'Refresh failed.');
+    } finally { setBusy(false); }
+  }
+  return (
+    <button style={btnGhost} onClick={refresh} disabled={busy} title="Regenerate the public site's cms-content.js from the live database (editor+)">
+      {busy ? 'Refreshing…' : 'Refresh site content'}{note ? ` · ${note}` : ''}
+    </button>
+  );
+}
 
 function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose: () => void; onDone: () => void }) {
   const [csv, setCsv] = useState('');

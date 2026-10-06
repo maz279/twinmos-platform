@@ -102,6 +102,30 @@ export function contentRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
     return { ...rest, locale: locale ?? 'en', status: 'draft' };
   }
 
+  // ---------- P2.2: server-side content-bridge refresh -----------------------
+  // POST /admin/content/export — regenerates cms-content.js from THIS process's
+  // DB handle (no second PGlite open can ever corrupt the store). This is the
+  // supported refresh while the API is live; the CLI exporter remains for
+  // API-stopped build windows. Editor+ gated, audit-logged.
+  // NOTE: registered BEFORE the generic /content/:entity routes — Hono matches
+  // in registration order, so a later literal would be captured as :entity.
+  r.post('/content/export', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const mod = await import('../../../../tooling/content-payload.ts');
+    // Same-origin /api/v1 base keeps media URLs correct behind the prod proxy;
+    // in dev the operator's PUBLIC_API_URL (if set) wins for cross-origin dev.
+    const apiBase = process.env.PUBLIC_API_URL ?? '';
+    const { counts, payload } = await mod.buildContentPayload(db, { apiBase });
+    const out = mod.contentOutPath();
+    const { mkdirSync, writeFileSync } = await import('node:fs');
+    const { dirname } = await import('node:path');
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, mod.contentScriptText(payload), 'utf8');
+    await auditRow(c, guard.user.id, 'content.export', 'bridge', String(counts.products), { counts, out });
+    return c.json({ ok: true, counts, out, generatedAt: payload.generatedAt });
+  });
+
   // ---------- list / detail ----------
   r.get('/content/:entity', async (c) => {
     const a = await authed(c);
@@ -326,8 +350,7 @@ export function contentRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
   });
 
   // ---------- preview URLs ----------
-  r.post('/content/:entity/:id/preview', async (c) => {
-    const guard = await authorGuard(c);
+  r.post('/content/:entity/:id/preview', async (c) => {    const guard = await authorGuard(c);
     if (guard instanceof Response) return guard;
     const entity = resolveEntity(c);
     if (entity instanceof Response) return entity;
@@ -358,6 +381,7 @@ export function previewRoute(db: DB) {
     const html = await renderContent(entity, row);
     return c.html(wrapPage(html, row, entity));
   });
+
   return r;
 }
 
