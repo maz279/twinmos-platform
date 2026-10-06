@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { article, newsPost, product, productVariant, brand, category, compatibilityRule, distributor, marketplaceListing, jobPosting } from './db-bridge.ts';
+import { article, newsPost, faq, product, productVariant, brand, category, compatibilityRule, distributor, marketplaceListing, jobPosting } from './db-bridge.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url)); // .../twinmso_codebase/tooling
 const DATA_JS = join(HERE, '..', 'apps', 'web', 'public', 'assets', 'js', 'data.js');
@@ -46,9 +46,14 @@ export async function buildContentPayload(db: any, opts: { apiBase?: string } = 
       source: 'cms',
     }));
 
-  // FAQs are admin/support-facing (not consumed by the site merge layer) —
-  // excluded here so the shipped file carries only what the site renders.
-  const faqItems: AnyRow[] = [];
+  // P3.1 (audit U-10): FAQs are now part of the bridge — the support page's
+  // merge layer appends CMS-managed answers under a dedicated tab, deduped
+  // against the static accordion by question text. Published + EN only.
+  const faqRows: AnyRow[] = await db.select().from(faq);
+  const faqItems = faqRows
+    .filter((f: AnyRow) => f.status === 'published' && (f.locale ?? 'en') === 'en' && !f.deletedAt)
+    .sort((a: AnyRow, b: AnyRow) => (a.sort ?? 0) - (b.sort ?? 0))
+    .map((f: AnyRow) => ({ group: f.groupKey, q: f.question, a: f.answer }));
 
   const arts: AnyRow[] = await db.select().from(article);
   const news: AnyRow[] = await db.select().from(newsPost);
@@ -166,6 +171,7 @@ export async function buildContentPayload(db: any, opts: { apiBase?: string } = 
       compat: compatTree,
       directory,
       jobs,
+      offices: BRIDGE_OFFICES,
       generatedAt: now.toISOString(),
     },
   };
@@ -185,3 +191,21 @@ export function contentOutPath(): string {
   if (process.env.CONTENT_OUT) return process.env.CONTENT_OUT;
   return join(HERE, '..', 'apps', 'web', 'public', 'assets', 'js', 'cms-content.js');
 }
+
+// ---- P3.5: offices single source -------------------------------------------
+// The five TwinMOS offices were copy-pasted across three pages (solutions
+// #footprint, contact "Find your region", where-to-buy #offices). The bridge
+// carries this list; the merge layer syncs the pages' cards from it. Verified
+// against twinmos_mirror/authoritative_facts.md (the /contact office table).
+export const BRIDGE_OFFICES = [
+  { role: 'Taiwan', title: 'HQ & R&D Center', entity: 'TwinMOS Technologies Ltd.',
+    address: '5F.-5, No. 29, Sec. 1, Minsheng E. Rd., Zhongshan Dist., Taipei City 104619, Taiwan (R.O.C.)' },
+  { role: 'Dubai', title: 'International Office (MEA/CIS)', entity: 'TwinMOS Technologies',
+    address: 'C-9, DAFZA (Dubai Airport Free Zone), Dubai, UAE' },
+  { role: 'China', title: 'Manufacturing Facility', entity: 'TwinMOS Technologies Co., Ltd.',
+    address: 'No. 5, Tech Road, Dongguan, Guangdong, China' },
+  { role: 'Europe', title: 'European Office', entity: 'TwinMOS Europe GmbH',
+    address: 'Schanzenstra\u00dfe 23, 51063 Cologne, Germany' },
+  { role: 'USA', title: 'American Office', entity: 'TwinMOS America Inc.',
+    address: '12345 Silicon Valley Blvd, Suite 100, San Jose, CA 95123, USA' },
+];

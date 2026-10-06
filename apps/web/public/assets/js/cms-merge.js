@@ -348,4 +348,207 @@
       });
     });
   }
+
+  // ---- P3.1: FAQ bridge (audit U-10) ---------------------------------------
+  // CMS-managed FAQs append to the support page's accordion as a dedicated
+  // "From the help center" tab. Deduped against the static accordion by
+  // question text so an imported corpus never duplicates what's hardcoded.
+  // DOM-built (no HTML injection of CMS data); markdown answers render as
+  // plain paragraphs — headings/bold stripped to match the accordion's voice.
+  var cmsFaqs = CMS.faqs || [];
+  var isSupport = /\/support\.html$/.test(location.pathname);
+  if (cmsFaqs.length && isSupport) {
+    var faqTabs = document.querySelector('.tabs[role="tablist"]');
+    var knownQ = {};
+    if (faqTabs) {
+      Array.prototype.forEach.call(document.querySelectorAll('.tabpane .acc summary'), function (s) {
+        knownQ[String(s.textContent || '').trim().toLowerCase()] = true;
+      });
+    }
+    var fresh = cmsFaqs.filter(function (f) { return f && f.q && !knownQ[String(f.q).trim().toLowerCase()]; });
+    if (faqTabs && fresh.length) {
+      var newId = 'faqcms';
+      while (document.getElementById(newId)) newId += 'x';
+      var tab = document.createElement('button');
+      tab.className = 'tab';
+      tab.setAttribute('data-tab', newId);
+      tab.setAttribute('role', 'tab');
+      tab.textContent = 'Help center updates';
+      faqTabs.appendChild(tab);
+      var pane = document.createElement('div');
+      pane.className = 'tabpane';
+      pane.id = newId;
+      var acc = document.createElement('div');
+      acc.className = 'acc';
+      fresh.forEach(function (f) {
+        var d = document.createElement('details');
+        var s = document.createElement('summary');
+        s.textContent = f.q;
+        d.appendChild(s);
+        var body = document.createElement('div');
+        body.className = 'acc-body';
+        var paras = String(f.a || '').split(/\n{2,}/).map(function (p) { return p.replace(/[#*`>]/g, '').trim(); }).filter(Boolean);
+        if (!paras.length) paras = [''];
+        paras.forEach(function (p) {
+          var pe = document.createElement('p');
+          pe.style.margin = '0 0 8px';
+          pe.textContent = p;
+          body.appendChild(pe);
+        });
+        d.appendChild(body);
+        acc.appendChild(d);
+      });
+      pane.appendChild(acc);
+      var lastPane = document.querySelector('.tabpane:last-of-type');
+      if (lastPane && lastPane.parentNode) lastPane.parentNode.insertBefore(pane, lastPane.nextSibling);
+    }
+  }
+
+  // ---- P3.2: learn-hub grids (audit U-11) ----------------------------------
+  // CMS articles were invisible on the learn pages (only TM.articles grew,
+  // which search + the article reader consume). Route newly merged articles
+  // to each hub by signal, mirroring the page's own card markup:
+  //   learn.html         → featured grid (top 3 newest)
+  //   learn-guides       → "buying guides" grids (all guide-tagged)
+  //   learn-explained    → explainer grids (non-benchmark, non-guide)
+  //   learn-benchmarks   → benchmark grid (title/tags mention benchmark)
+  //   learn-blog         → recent-posts grid (top 3 newest)
+  function learnCard(a) {
+    var el = document.createElement('a');
+    el.className = 'card card-pad learn-card';
+    el.href = 'article.html?id=' + encodeURIComponent(a.id);
+    var b = document.createElement('b');
+    b.textContent = a.title;
+    el.appendChild(b);
+    var d = document.createElement('span');
+    d.className = 'form-note';
+    d.textContent = a.desc || '';
+    el.appendChild(d);
+    var m = document.createElement('span');
+    m.className = 'learn-meta';
+    var when = a.date ? String(a.date).slice(0, 10) : '';
+    m.textContent = (when ? when + ' · ' : '') + (a.mins || 3) + ' min read';
+    el.appendChild(m);
+    return el;
+  }
+  function articleSignal(a) {
+    var t = ((a.title || '') + ' ' + ((a.desc || ''))).toLowerCase();
+    var tags = (a.tag || '').toLowerCase();
+    if (/benchmark|fps|mt\/s|performance test/.test(t + ' ' + tags)) return 'benchmark';
+    if (/guide|how to|choose|vs |versus|upgrade/.test(t + ' ' + tags)) return 'guide';
+    return 'explained';
+  }
+  var newly = addArticles.slice(); // merged, prototype-absent articles only
+  var isLearn = /^\/(learn|learn-guides|learn-explained|learn-benchmarks|learn-blog)\.html$/.test(location.pathname);
+  if (isLearn && newly.length) {
+    var page = location.pathname.replace(/^\//, '').replace(/\.html$/, '');
+    var grids = document.querySelectorAll('#main .grid.g3, #main .grid.g2');
+    var lastGrid = grids.length ? grids[grids.length - 1] : null;
+    var pick;
+    if (page === 'learn-guides') pick = newly.filter(function (a) { return articleSignal(a) === 'guide'; });
+    else if (page === 'learn-benchmarks') pick = newly.filter(function (a) { return articleSignal(a) === 'benchmark'; });
+    else if (page === 'learn-explained') pick = newly.filter(function (a) { return articleSignal(a) === 'explained'; });
+    else if (page === 'learn-blog' || page === 'learn') pick = newly.slice(0, page === 'learn' ? 3 : 3);
+    if (pick && pick.length && lastGrid) {
+      pick.forEach(function (a) { lastGrid.appendChild(learnCard(a)); });
+    }
+  }
+
+  // ---- P3.3: home news strip (audit U-11) ----------------------------------
+  // The homepage's "Latest from TwinMOS" strip was static HTML. CMS news now
+  // prepends up to 3 newest cards, mirroring the article-card markup.
+  var isHome = /^\/(index\.html)?$/.test(location.pathname);
+  if (isHome && addNews.length) {
+    var strip = null;
+    var heads = Array.prototype.slice.call(document.querySelectorAll('#main .section-head h2'));
+    for (var hi = 0; hi < heads.length; hi++) {
+      if (/Latest from|Media &/i.test(heads[hi].textContent || '')) {
+        strip = heads[hi].closest('.section-head').parentNode.querySelector('.grid.g3');
+        break;
+      }
+    }
+    if (strip) {
+      addNews.slice(0, 3).forEach(function (n) {
+        var a = document.createElement('a');
+        a.className = 'card card-pad article-card';
+        a.href = 'article.html?id=' + encodeURIComponent(n.id);
+        var chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.style.alignSelf = 'flex-start';
+        chip.textContent = n.cat || 'News';
+        a.appendChild(chip);
+        var b = document.createElement('b');
+        b.style.display = 'block';
+        b.style.color = 'var(--ink)';
+        b.style.margin = '10px 0 8px';
+        b.style.fontSize = '15.5px';
+        b.style.lineHeight = '1.4';
+        b.textContent = n.title;
+        a.appendChild(b);
+        var d = document.createElement('span');
+        d.className = 'form-note';
+        d.textContent = (n.desc || '').slice(0, 110) + (((n.desc || '').length > 110) ? '\u2026' : '');
+        a.appendChild(d);
+        var r = document.createElement('span');
+        r.className = 'link-arrow';
+        r.style.marginTop = 'auto';
+        r.style.paddingTop = '10px';
+        r.style.fontSize = '13.5px';
+        r.textContent = 'Read article';
+        a.appendChild(r);
+        strip.insertBefore(a, strip.firstChild);
+      });
+    }
+  }
+
+  // ---- P3.5: offices single-source sync (DRY, audit Tier-3) ---------------
+  // The five office cards were hardcoded in three variants (where-to-buy
+  // #offices + contact "Find your region" = address cards; solutions
+  // #footprint = chip cards). The bridge now carries the canonical list;
+  // this pass syncs entity + address text on address-cards by role match so
+  // an edit in one place (content-payload.ts → bridge) reaches all pages.
+  var bridgeOffices = CMS.offices || [];
+  if (bridgeOffices.length && /\/(solutions|contact|where-to-buy)\.html$/.test(location.pathname)) {
+    var byRole = {};
+    bridgeOffices.forEach(function (o) { byRole[String(o.role).toLowerCase()] = o; });
+    // Address-card variant (where-to-buy + contact): <address><i>entity</i><br>addr</address>
+    Array.prototype.forEach.call(document.querySelectorAll('.card.office'), function (card) {
+      var roleEl = card.querySelector('.of-role');
+      var addr = card.querySelector('address');
+      var o = roleEl ? byRole[(roleEl.textContent || '').trim().toLowerCase()] : null;
+      if (!o || !addr) return;
+      var it = addr.querySelector('i');
+      if (it) it.textContent = o.entity;
+      // address = text nodes after the <i> and <br>
+      var rest = (addr.textContent || '').replace(it ? (it.textContent || '') : '', '').trim();
+      if (rest !== o.address) {
+        // rebuild: keep <i>, then a <br>, then the canonical address
+        while (addr.childNodes.length > (it ? 1 : 0)) addr.removeChild(addr.lastChild);
+        var br = document.createElement('br');
+        addr.appendChild(br);
+        addr.appendChild(document.createTextNode(o.address));
+      }
+      var titleEl = card.querySelector('b');
+      if (titleEl && o.title && (titleEl.textContent || '').trim() !== o.title) titleEl.textContent = o.title;
+    });
+    // Footprint variant (solutions): the cards live in a sibling grid AFTER
+    // the #footprint section (page markup), so scope to that grid. Sync the
+    // note under cards whose chip names the city — chip text stays the
+    // page's own voice ("Taipei, Taiwan"), entity stays for GmbH/Inc variants.
+    var footGrid = document.querySelector('#footprint + .grid.g3, section#footprint ~ .grid.g3');
+    if (footGrid) Array.prototype.forEach.call(footGrid.querySelectorAll('.chip'), function (chip) {
+      var t = (chip.textContent || '').toLowerCase();
+      var o = t.indexOf('taipei') === 0 ? byRole['taiwan']
+        : t.indexOf('dongguan') === 0 ? byRole['china']
+        : t.indexOf('dubai') === 0 ? byRole['dubai']
+        : t.indexOf('cologne') === 0 ? byRole['europe']
+        : t.indexOf('san jose') === 0 ? byRole['usa'] : null;
+      if (!o) return;
+      var card = chip.closest('.card');
+      var b = card ? card.querySelector('b') : null;
+      if (b && o.entity && /GmbH|Inc/.test(o.entity) && (b.textContent || '').trim() !== o.entity) b.textContent = o.entity;
+      var note = card ? card.querySelector('.form-note') : null;
+      if (note && o.note) note.textContent = o.note;
+    });
+  }
 })();
