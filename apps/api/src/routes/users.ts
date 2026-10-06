@@ -60,6 +60,12 @@ export function usersRoute(db: DB, deps: {
     return ok ? s : c.json(problem(403, 'Requires super_admin role'), 403, { 'Content-Type': P });
   }
 
+  /** Any authenticated staff session (P1.4 me/password endpoints). */
+  async function sessionGuard(c: any): Promise<Exclude<AuthSession, null> | Response> {
+    const s = await deps.sessionFromRequest(c.req.raw);
+    return s ?? c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+  }
+
   async function auditRow(c: any, actorId: string | undefined, action: string, entityId: string, diff: unknown) {
     await db.insert(auditLog).values({
       actorId: actorId ?? null,
@@ -71,6 +77,26 @@ export function usersRoute(db: DB, deps: {
       ip: c.req.header('cf-connecting-ip') ?? null,
     });
   }
+
+  // ---- P1.4: forced password rotation endpoints -----------------------------
+  // Both are allowlisted past the app-level mustChangePassword guard so a
+  // flagged account can (only) check its state and clear the flag by rotating.
+  r.get('/users/me/password-state', async (c) => {
+    const s = await sessionGuard(c);
+    if (s instanceof Response) return s;
+    const row = (await db.select({ f: user.mustChangePassword }).from(user).where(eq(user.id, s.user.id)).limit(1))[0];
+    return c.json({ mustChangePassword: Boolean(row?.f) });
+  });
+
+  r.post('/users/me/accept-password', async (c) => {
+    const s = await sessionGuard(c);
+    if (s instanceof Response) return s;
+    // Clear only after Better Auth's change-password succeeded — the SPA calls
+    // this right after POST /auth/change-password with the temporary credential.
+    await db.update(user).set({ mustChangePassword: false, updatedAt: new Date() }).where(eq(user.id, s.user.id));
+    await auditRow(c, s.user.id, 'user.password-rotated', s.user.id, { invitedRotation: true });
+    return c.json({ ok: true });
+  });
 
   // GET /api/v1/admin/users
   r.get('/users', async (c) => {
@@ -201,7 +227,13 @@ export function usersRoute(db: DB, deps: {
       return c.json(problem(409, 'User already exists', 'An account with this email address already exists.'), 409, { 'Content-Type': P });
     }
 
-    const tempPassword = parsed.data.password || ('TwinMOS-' + crypto.randomUUID().slice(0, 8) + '!' + Math.floor(100 + Math.random() * 900));
+    // P1.4 (CWE-338, audit finding U-5/F-2): 100% CSPRNG material — two UUID
+    // segments ≈ 96 bits (NIST 800-63B-compliant generated secret). The old
+    // form mixed in Math.random() digits (~42 bits total). Accounts invited
+    // with a generated password are flagged mustChangePassword and locked out
+    // of /admin until they set their own (guard in app.ts).
+    const generated = !parsed.data.password;
+    const tempPassword = parsed.data.password || ('TwinMOS-' + crypto.randomUUID().slice(0, 8) + '!' + crypto.randomUUID().slice(0, 8));
     try {
       const res = await deps.auth.api.createUser({
         body: {
@@ -212,8 +244,8 @@ export function usersRoute(db: DB, deps: {
         },
       });
       const createdUser = res.user ?? res;
-      await db.update(user).set({ role: parsed.data.role }).where(eq(user.id, createdUser.id));
-      await auditRow(c, s.user.id, 'user.invite', createdUser.id, { email: parsed.data.email, role: parsed.data.role, name: parsed.data.name });
+      await db.update(user).set({ role: parsed.data.role, ...(generated ? { mustChangePassword: true } : {}) }).where(eq(user.id, createdUser.id));
+      await auditRow(c, s.user.id, 'user.invite', createdUser.id, { email: parsed.data.email, role: parsed.data.role, name: parsed.data.name, generatedCredential: generated });
 
       // Dispatch staff invitation email containing login instructions and temporary credentials
       const emailSent = await sendStaffInviteMail(

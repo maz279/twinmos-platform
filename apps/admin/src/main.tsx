@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { API, apiGet } from './api';
 import Login from './login';
 import type { Me } from './login';
+import ForcePasswordChange from './force-password';
 import MfaSetup from './mfa';
 import { MODULES, visibleModules } from './nav';
 import type { NavOpen, TabCtx } from './nav';
@@ -214,7 +215,7 @@ function Workspace({ me, onSignOut, onMfaChange }: { me: Me; onSignOut: () => vo
 
 function App() {
   const [me, setMe] = useState<Me | null>(null);
-  const [state, setState] = useState<'loading' | 'anon' | 'authed' | 'mfa-setup'>('loading');
+  const [state, setState] = useState<'loading' | 'anon' | 'authed' | 'mfa-setup' | 'must-change'>('loading');
   useEffect(() => {
     (async () => {
       // Dev convenience: try a server-side dev session first so the console opens
@@ -227,16 +228,32 @@ function App() {
       try {
         const d = await apiGet<Me>('/auth/get-session');
         setMe(d);
+        if (!d?.user) { setState('anon'); return; }
+        // P1.4: invited accounts with a generated temporary credential rotate
+        // first — the server refuses /admin routes until the flag clears.
+        try {
+          const ps = await apiGet<{ mustChangePassword: boolean }>('/admin/users/me/password-state');
+          if (ps?.mustChangePassword) { setState('must-change'); return; }
+        } catch { /* state endpoint unavailable (pre-migration API) — proceed */ }
         // signed-in staff without MFA get a one-time enrollment offer (skippable);
         // suppressed in dev while iterating so the console opens without friction
-        const offerMfa = !!d?.user && d.user.role !== 'viewer' && !d.user.twoFactorEnabled && !import.meta.env.DEV;
-        setState(d?.user ? (offerMfa ? 'mfa-setup' : 'authed') : 'anon');
+        const offerMfa = d.user.role !== 'viewer' && !d.user.twoFactorEnabled && !import.meta.env.DEV;
+        setState(offerMfa ? 'mfa-setup' : 'authed');
       } catch { setState('anon'); }
     })();
   }, []);
-  const refreshMe = () => apiGet<Me>('/auth/get-session').then((d) => { setMe(d); setState(d?.user ? 'authed' : 'anon'); }).catch(() => {});
+  const refreshMe = () => apiGet<Me>('/auth/get-session').then(async (d) => {
+    setMe(d);
+    if (!d?.user) { setState('anon'); return; }
+    try {
+      const ps = await apiGet<{ mustChangePassword: boolean }>('/admin/users/me/password-state');
+      if (ps?.mustChangePassword) { setState('must-change'); return; }
+    } catch { /* proceed */ }
+    setState('authed');
+  }).catch(() => { setState('anon'); });
   if (state === 'loading') return null;
   if (state === 'anon') return <Login onDone={refreshMe} />;
+  if (state === 'must-change') return <ForcePasswordChange email={me?.user?.email ?? ''} onDone={refreshMe} />;
   if (state === 'mfa-setup') {
     return (
       <div style={{ minHeight: '100vh', background: '#F2F4F6' }}>
