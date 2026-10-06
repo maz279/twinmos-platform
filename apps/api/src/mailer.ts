@@ -54,9 +54,14 @@ async function sendViaResend(mail: MailInput): Promise<void> {
   await client.emails.send({ from, to: mail.to, subject: mail.subject, text: mail.text, replyTo: mail.replyTo });
 }
 
+// Monotonic within the process: two mails written in the same millisecond
+// (routing + auto-reply on a fast runner) must keep their send order, or
+// consumers reading the "newest" outbox file see them swapped.
+let outboxSeq = 0;
+
 function sendViaOutbox(mail: MailInput): void {
   mkdirSync(OUTBOX, { recursive: true });
-  const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.json`;
+  const name = `${Date.now()}-${String(outboxSeq++).padStart(6, '0')}.json`;
   writeFileSync(join(OUTBOX, name), JSON.stringify({ ...mail, at: new Date().toISOString() }, null, 2));
 }
 

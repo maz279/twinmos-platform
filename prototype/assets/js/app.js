@@ -170,11 +170,17 @@ var TM = window.TM || {};
   }
 
   /* ---------- product cards rendering ---------- */
+  // Warranty display text: values are durations ("3 Years", "Lifetime"), but
+  // some catalog rows already carry the word ("Lifetime warranty") — never
+  // append a second one.
+  function wtyText(w) {
+    return /warranty$/i.test(w.trim()) ? w.trim() : w.trim() + ' warranty';
+  }
   function warrantyChip(p) {
     var w = p.warranty || '';
     if (!w) return '';
     var cls = /lifetime/i.test(w) ? 'ok' : 'warn';
-    return '<span class="chip ' + cls + '" style="align-self:flex-start">' + esc(w) + ' warranty</span>';
+    return '<span class="chip ' + cls + '" style="align-self:flex-start">' + esc(wtyText(w)) + '</span>';
   }
   function productCard(p) {
     var badges = '';
@@ -239,7 +245,7 @@ var TM = window.TM || {};
       '  <div class="qv-body">' +
       '    <span class="pcard-cat">' + esc(p.catLabel) + (p.brand && p.brand !== 'TwinMOS' ? ' · ' + esc(p.brand) : '') + '</span>' +
       '    <h3>' + esc(p.name) + '</h3>' +
-      '    <p class="form-note" style="margin:6px 0 12px">' + esc(p.shortSpec || '') + (p.warranty ? ' · ' + esc(p.warranty) + ' warranty' : '') + '</p>' +
+      '    <p class="form-note" style="margin:6px 0 12px">' + esc(p.shortSpec || '') + (p.warranty ? ' · ' + esc(wtyText(p.warranty)) : '') + '</p>' +
       (specKeys.length ? '<table class="spec-table"><tbody>' + specKeys.map(function (k) { return '<tr><th scope="row">' + esc(k) + '</th><td>' + esc(p.specs[k]) + '</td></tr>'; }).join('') + '</tbody></table>' : '') +
       '    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
       '      <a class="btn btn-primary btn-sm" href="product.html?id=' + encodeURIComponent(p.id) + '">Full details</a>' +
@@ -358,7 +364,7 @@ var TM = window.TM || {};
 
   function shareRow(p) {
     var url = location.href, t = encodeURIComponent(p.name + ' — TwinMOS'), u = encodeURIComponent(url);
-    var sum = encodeURIComponent((p.shortSpec || '') + ' | ' + (p.warranty ? p.warranty + ' warranty' : 'TwinMOS'));
+    var sum = encodeURIComponent((p.shortSpec || '') + ' | ' + (p.warranty ? wtyText(p.warranty) : 'TwinMOS'));
     return '<div class="share-row" aria-label="Share this product">' +
       '<span class="share-l">Share</span>' +
       '<a href="https://wa.me/?text=' + t + '%20' + u + '" target="_blank" rel="noopener" aria-label="Share on WhatsApp">WhatsApp</a>' +
@@ -418,7 +424,7 @@ var TM = window.TM || {};
       '  <div class="pdp-info">' +
       '    <span class="pcard-cat">' + esc(p.catLabel) + '</span>' +
       '    <h1>' + esc(p.name) + '</h1>' +
-      '    <p class="lede" style="margin-bottom:18px">' + esc(p.shortSpec || '') + (p.warranty ? ' · ' + esc(p.warranty) + ' warranty' : '') + '</p>' +
+      '    <p class="lede" style="margin-bottom:18px">' + esc(p.shortSpec || '') + (p.warranty ? ' · ' + esc(wtyText(p.warranty)) : '') + '</p>' +
       // P2.4 (audit U-9): the DB carries a real list price — show it as an
       // MSRP line; products without one keep the quote-first flow unchanged.
       (p.priceUsd != null && p.priceUsd > 0

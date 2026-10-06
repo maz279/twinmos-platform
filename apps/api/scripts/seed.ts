@@ -1,5 +1,6 @@
 // Seeds the dev database: first admin user (Better Auth-managed password) + reference catalog rows.
-// Credentials come from env: SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD (defaults are DEV ONLY).
+// Credentials come from env: SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD. The dev-only
+// default password is refused when DATABASE_URL is set (see guard below).
 // Usage: npm run db:seed
 import { eq } from 'drizzle-orm';
 import { betterAuth } from 'better-auth';
@@ -17,7 +18,19 @@ const auth = betterAuth({
 });
 
 const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@twinmos.dev';
-const password = process.env.SEED_ADMIN_PASSWORD ?? 'DevOnly-ChangeMe-2026!';
+// Credentials come from env (SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD). The
+// default password is ONLY for a local PGlite dev store; seeding a
+// DATABASE_URL-backed (production) store must pass the password explicitly
+// — a known default super-admin credential must never be creatable there.
+const hasExternalDb = !!process.env.DATABASE_URL;
+const password = process.env.SEED_ADMIN_PASSWORD ?? (hasExternalDb ? undefined : 'DevOnly-ChangeMe-2026!');
+if (!password) {
+  console.error(
+    '[seed] SEED_ADMIN_PASSWORD is required when seeding a DATABASE_URL-backed store; ' +
+      'refusing to create a super admin with a default password.',
+  );
+  process.exit(1);
+}
 
 // 1) first admin user — created through Better Auth so the password hash format is correct
 const existing = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);

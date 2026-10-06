@@ -43,7 +43,11 @@ jobs:
       # ---- runtime scan against a freshly booted API ------------------------
       - name: Migrate + seed a scratch database
         env:
-          PGLITE_DATA: apps/api/data/ci.pgdata
+          # ABSOLUTE path: PGLITE_DATA resolves against each script's cwd
+          # (npm workspace runs execute in apps/api, the web prebuild in
+          # apps/web) — a relative value here silently split the migrate/
+          # seed/API store from the exporter's store in earlier runs.
+          PGLITE_DATA: ${{ github.workspace }}/apps/api/data/ci.pgdata
           # dev-only auto-login is OFF; scan exercises unauthenticated surfaces
           # plus a seeded admin via env-provided credentials.
           SEED_ADMIN_EMAIL: ci-admin@twinmos.dev
@@ -56,10 +60,14 @@ jobs:
 
       - name: Boot API and run the OWASP-equivalent scan
         env:
-          PGLITE_DATA: apps/api/data/ci.pgdata
+          PGLITE_DATA: ${{ github.workspace }}/apps/api/data/ci.pgdata
           NODE_ENV: development
           PORT: 8787
           BETTER_AUTH_URL: http://127.0.0.1:8787
+          # The admin SPA is served by the Vite dev server (:5173) which
+          # proxies /api here — Better Auth must trust that browser origin
+          # or sign-in POSTs are rejected as untrusted origins.
+          BETTER_AUTH_TRUSTED_ORIGINS: http://localhost:5173,http://127.0.0.1:8787
           ALLOWED_ORIGIN: http://localhost:4321
           API_ALLOW_NO_TURNSTILE: 1
           SEED_ADMIN_EMAIL: ci-admin@twinmos.dev
@@ -79,11 +87,15 @@ jobs:
 
       - name: Playwright gates (public params matrix + admin row-open regression)
         env:
-          PGLITE_DATA: apps/api/data/ci.pgdata
+          PGLITE_DATA: ${{ github.workspace }}/apps/api/data/ci.pgdata
           SEED_ADMIN_EMAIL: ci-admin@twinmos.dev
           SEED_ADMIN_PASSWORD: ${{ secrets.CI_ADMIN_PASSWORD || 'Ci-Admin-Local-Only-2026' }}
-          # The public-site specs fetch the built pages; build the static site
-          # with same-origin API base (production shape).
+          # The public-site specs fetch the BUILT pages and exercise the live
+          # API-backed widgets: build with the cross-origin API base (the same
+          # shape as local dev) — the API allow-lists :4321 via ALLOWED_ORIGIN
+          # above. The Playwright config starts `astro preview` (:4321) and
+          # the admin Vite dev server (:5173, /api proxied here) itself.
+          PUBLIC_API_URL: http://localhost:8787/api/v1
         run: |
           npm run build --workspace @twinmos/web
           npx playwright test --config e2e/playwright.config.ts
