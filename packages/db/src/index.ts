@@ -1,7 +1,8 @@
 // DB client factory — PGlite (dev/test) or Postgres (staging/prod).
 // PRODUCTION GUARD: refuses PGlite when NODE_ENV=production (PGlite is single-tenant dev tooling).
 import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { drizzle } from 'drizzle-orm/pglite';
 import type { PgliteDatabase } from 'drizzle-orm/pglite';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
@@ -29,7 +30,14 @@ export function createDb(databaseUrl?: string): DB {
     const pool = new pg.Pool({ connectionString: url, max: 10 });
     return drizzlePg(pool, { schema }) as unknown as DB;
   }
-  const dataDir = process.env.PGLITE_DATA ?? './data/dev.pgdata';
+  // P2.1 (audit finding U-12): the data dir must resolve to THE live API
+  // database regardless of which workspace's cwd spawned the process — the
+  // old './data/dev.pgdata' default made `apps/web` prebuild exports read a
+  // stale local copy (or an empty dir) and silently ship outdated content.
+  // Anchor to the monorepo root derived from this module's own location.
+  // Explicit PGLITE_DATA still wins (tests, tooling overrides).
+  const dataDir = process.env.PGLITE_DATA
+    ?? resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'apps', 'api', 'data', 'dev.pgdata');
   // SINGLE-WRITER RULE: a second PGlite instance on the same data dir — even
   // read-only — corrupts the store (incident 2026-10-06). The lock throws a
   // loud, actionable error when a live process already owns the directory.

@@ -183,6 +183,22 @@
         openings.appendChild(tr);
       });
     }
+    // P2.5 (audit U-8): the apply-form "Position applied for" select is static
+    // HTML — CMS jobs never appeared in it. Hydrate from the merged job list
+    // so candidates can select the posting they actually saw.
+    var posSelect = document.querySelector('#apply select.input, #apply-form select.input, form select.input');
+    if (posSelect && cmsJobs.length) {
+      var known = {};
+      Array.prototype.forEach.call(posSelect.options, function (o) { known[o.value] = true; });
+      cmsJobs.forEach(function (j) {
+        if (known[j.title]) return;
+        var opt = document.createElement('option');
+        opt.value = j.title;
+        opt.textContent = j.title + (j.location ? ' — ' + j.location : '');
+        posSelect.appendChild(opt);
+        known[j.title] = true;
+      });
+    }
   }
 
   // ---- Where-to-buy directory bridge (0020) -------------------------------
