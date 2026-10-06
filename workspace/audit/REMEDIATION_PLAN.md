@@ -33,11 +33,11 @@
 **Phase 0 status: ✅ COMPLETE (2026-10-06, branch `remediation/phase-0`)**
 - 0.1 ✔ `dev.pgdata.bak-20261006-postrecovery` taken (API stopped); `dev.pgdata.corrupt-20261006` quarantined.
 - 0.2 ✔ `/health` runs a real `SELECT 1` — 200+`connected` live-verified; 503+`degraded` covered by test (simulated dead store).
-- 0.3 ✔ `packages/db/src/lock.ts` PID-lock wired into `createDb`; **live-proven**: `import-catalog` against the running API refused with `[db-lock] … in use by PID … CORRUPTS the database`, and the API stayed healthy (signin 200) after the attempt. `apps/api/data/README.md` documents the binding rules + recovery runbook.
+- 0.3 ✔ `packages/db/src/lock.ts` PID-lock wired into `createDb`; **live-proven**: `import-catalog` against the running API refused with `[db-lock] … in use by PID … CORRUPTS the database`, and the API stayed healthy (signin 200) after the attempt. `apps/api/data/README.md` documents the binding rules + recovery runbook. **Hardened (PR #2):** stale locks naming a PID recycled by the next boot are reclaimed (no false startup refusal); foreign-live-PID + recycle paths pinned by tests; crash-restart reclaim demonstrated live across stack restarts.
 - 0.4 ✔ `react-router-dom` removed (0 imports verified); `npm audit fix` applied — **high = 0** (4 moderates remain: esbuild family via better-auth→drizzle-kit, runtime-unreachable, tracked).
 - 0.5 ✔ `.gitattributes` committed (LF + binary protections); renormalization touched only genuinely-CRLF files.
 - 0.6 ✔ 3 atomic commits on `remediation/phase-0` → PR → merged to `main` → pushed.
-**Gates:** tsc ×2 clean · **258/258 tests across 27 suites** (253 + 5 new P0 gates) · OWASP scan 14/14 clean · live health/lock/sign-in verified.
+**Gates:** tsc ×2 clean · **259/259 tests across 27 suites** (253 + 5 new P0 gates) · OWASP scan 14/14 clean · live health/lock/sign-in verified.
 
 ---
 
