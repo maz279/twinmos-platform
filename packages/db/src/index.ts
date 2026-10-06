@@ -8,7 +8,9 @@ import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { PGlite } from '@electric-sql/pglite';
 import pg from 'pg';
 import * as schema from './schema.ts';
+import { acquireDataDirLock } from './lock.ts';
 export * from './schema.ts'; // tables re-exported for apps (single import surface)
+export { acquireDataDirLock, releaseDataDirLock } from './lock.ts';
 
 /**
  * Canonical DB handle type. The Postgres branch is cast to the PGlite-flavoured
@@ -28,6 +30,10 @@ export function createDb(databaseUrl?: string): DB {
     return drizzlePg(pool, { schema }) as unknown as DB;
   }
   const dataDir = process.env.PGLITE_DATA ?? './data/dev.pgdata';
+  // SINGLE-WRITER RULE: a second PGlite instance on the same data dir — even
+  // read-only — corrupts the store (incident 2026-10-06). The lock throws a
+  // loud, actionable error when a live process already owns the directory.
+  acquireDataDirLock(dataDir);
   // PGlite requires the parent directory to exist before first boot
   mkdirSync(dirname(dataDir), { recursive: true });
   return drizzle(new PGlite(dataDir), { schema });

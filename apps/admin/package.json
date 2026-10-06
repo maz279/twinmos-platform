@@ -12,8 +12,7 @@
     "marked": "18.0.14",
     "qrcode": "1.5.4",
     "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "react-router-dom": "7.9.0"
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@types/qrcode": "1.5.6",
