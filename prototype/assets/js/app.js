@@ -660,6 +660,44 @@ var TM = window.TM || {};
   }
 
   /* ---------- RMA ---------- */
+  // P1.3 (audit finding U-3): the trackers were deterministic string-hash demos
+  // that invented a status for ANY number while a chip claimed "Live in
+  // production". Both page widgets now read the real, PII-masked case record
+  // from the API (GET /api/v1/rma/:number) — 7 canonical states, truthful
+  // "not found" handling, no fabricated data.
+  var RMA_STAGES = [
+    ['submitted', 'Received & registered'],
+    ['under_review', 'Diagnosis & testing'],
+    ['approved', 'Approved — awaiting unit'],
+    ['in_repair', 'Repair / replacement'],
+    ['shipped', 'Replacement shipped'],
+    ['delivered', 'Delivered'],
+    ['closed', 'Closed']
+  ];
+  function rmaStageIndex(status) {
+    for (var i = 0; i < RMA_STAGES.length; i++) if (RMA_STAGES[i][0] === status) return i;
+    return 0;
+  }
+  function rmaWhen(iso) {
+    try {
+      var d = new Date(iso);
+      return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) { return ''; }
+  }
+  function rmaFetchCase(id, render, fail) {
+    var api = String(window.TWINMOS_API || '/api/v1').replace(/\/+$/, '');
+    fetch(api + '/rma/' + encodeURIComponent(id))
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(render)
+      .catch(fail);
+  }
+  function rmaTrackFail(out, id, status) {
+    if (status === 404) {
+      out.innerHTML = '<div class="empty-state"><h3>Case not found</h3><p>No RMA exists with number <b>' + esc(id) + '</b>. Check the number in your confirmation email, or contact support with your proof of purchase.</p></div>';
+    } else {
+      out.innerHTML = '<div class="empty-state"><h3>Status unavailable</h3><p>The service centre could not be reached — please retry in a moment.</p></div>';
+    }
+  }
   function initRMA() {
     // "Start an RMA" form: wire it through the shared form pipeline even when
     // the page predates its data-tm-form attribute (audit fix 2026-09-25).
@@ -673,26 +711,25 @@ var TM = window.TM || {};
       track.addEventListener('click', function () {
         var id = ($('#rmaId').value || '').trim().toUpperCase();
         var out = $('#rmaOut');
-        if (!/^TM-RMA-\d{4}-\d{3,5}$/.test(id)) {
-          out.innerHTML = '<div class="empty-state"><h3>Enter a valid RMA number</h3><p>Format: <span class="kbd">TM-RMA-2026-0142</span>. Demo IDs: TM-RMA-2026-0142 · TM-RMA-2026-0388 · TM-RMA-2026-0517</p></div>';
+        if (!/^TM-RMA-\d{4}-\d{3,8}$/.test(id)) {
+          out.innerHTML = '<div class="empty-state"><h3>Enter a valid RMA number</h3><p>Format: <span class="kbd">TM-RMA-2026-0142</span> — the full number from your confirmation email.</p></div>';
           return;
         }
-        var seed = 0;
-        for (var i = 0; i < id.length; i++) seed = (seed * 31 + id.charCodeAt(i)) >>> 0;
-        var stage = seed % 4; // 0..3
-        var stages = ['Received & registered', 'Diagnosis & testing', 'Repair / replacement', 'Shipped back'];
-        var days = ['12 Feb 2026', '14 Feb 2026', '18 Feb 2026', '21 Feb 2026'];
-        var prods = ['VOLTX DDR5 U-DIMM 32GB Kit', 'CoreX Pro M.2 PCIe Gen 5.0 SSD', 'X3 Ultra USB 3.2 Flash Drive'];
-        var prod = prods[seed % prods.length];
-        out.innerHTML =
-          '<div class="card card-pad" style="margin-top:18px">' +
-          '<h3 class="h3" style="margin-bottom:4px">RMA ' + esc(id) + '</h3>' +
-          '<p class="form-note">Registered product: ' + esc(prod) + ' · Service centre: Taipei HQ</p>' +
-          '<div class="rma-track">' + stages.map(function (s, i) {
-            return '<div class="rma-stage ' + (i < stage ? 'done' : i === stage ? 'now' : '') + '">' + s + '<br><small>' + days[i] + '</small></div>';
-          }).join('') + '</div>' +
-          (stage === 3 ? '<span class="chip ok">Completed — tracking number issued</span>' : '<span class="chip warn">Currently: ' + stages[stage] + '</span>') +
-          ' <span class="form-note">(demo status — deterministic from the RMA number in this prototype)</span></div>';
+        out.innerHTML = '<p class="form-note" style="margin-top:14px">Checking live case status…</p>';
+        rmaFetchCase(id, function (d) {
+          var idx = rmaStageIndex(d.status);
+          var last = (d.timeline && d.timeline.length) ? d.timeline[d.timeline.length - 1] : null;
+          out.innerHTML =
+            '<div class="card card-pad" style="margin-top:18px">' +
+            '<h3 class="h3" style="margin-bottom:4px">RMA ' + esc(d.number || id) + '</h3>' +
+            '<p class="form-note">' + esc((d.maskedInfo && d.maskedInfo.product) || 'Registered product') +
+            (last && last.at ? ' · Updated ' + esc(rmaWhen(last.at)) : '') + '</p>' +
+            '<div class="rma-track">' + RMA_STAGES.map(function (s, i) {
+              return '<div class="rma-stage ' + (i < idx ? 'done' : i === idx ? 'now' : '') + '">' + s[1] + '</div>';
+            }).join('') + '</div>' +
+            (idx >= 5 ? '<span class="chip ok">Completed</span>' : '<span class="chip warn">Currently: ' + esc(RMA_STAGES[idx][1]) + '</span>') +
+            ' <span class="form-note">Live status from the TwinMOS service centre</span></div>';
+        }, function (status) { rmaTrackFail(out, id, status); });
       });
     }
     var form = $('#rmaForm');
@@ -1459,15 +1496,26 @@ var TM = window.TM || {};
         out.innerHTML = '<p class="form-note" style="color:#B3261E;margin:0">Enter the full format from your email — e.g. RMA-2026-123456 or TM-RMA-2026-0142.</p>';
         return;
       }
-      var sum = 0; for (var i = 0; i < v.length; i++) sum = (sum * 31 + v.charCodeAt(i)) >>> 0;
-      var states = ['Under review', 'Approved — ship to service centre', 'Received · In testing', 'Replacement shipped', 'Delivered · Closed'];
-      var idx = sum % 5;
-      out.innerHTML =
-        '<div class="rma-status"><b>' + esc(v) + '</b><span class="chip ' + (idx >= 3 ? 'ok' : '') + '">' + esc(states[idx]) + '</span></div>' +
-        '<div class="rma-timeline">' + states.map(function (s, i) {
-          return '<span class="rt-step' + (i <= idx ? ' on' : '') + (i === idx ? ' now' : '') + '">' + s + '</span>';
-        }).join('<i>→</i>') + '</div>' +
-        '<p class="form-note" style="margin:8px 0 0">Prototype demo — deterministic state per number. The production tracker reads live ticket data and emails every status change.</p>';
+      // P1.3: live case record from the API — no invented states (was sum % 5)
+      out.innerHTML = '<p class="form-note" style="margin:8px 0 0">Checking live case status…</p>';
+      rmaFetchCase(v, function (d) {
+        var idx = rmaStageIndex(d.status);
+        var labels = RMA_STAGES.map(function (s) { return s[1]; });
+        var last = (d.timeline && d.timeline.length) ? d.timeline[d.timeline.length - 1] : null;
+        out.innerHTML =
+          '<div class="rma-status"><b>' + esc(d.number || v) + '</b><span class="chip ' + (idx >= 5 ? 'ok' : '') + '">' + esc(labels[idx]) + '</span></div>' +
+          '<div class="rma-timeline">' + labels.map(function (s, i) {
+            return '<span class="rt-step' + (i <= idx ? ' on' : '') + (i === idx ? ' now' : '') + '">' + s + '</span>';
+          }).join('<i>→</i>') + '</div>' +
+          '<p class="form-note" style="margin:8px 0 0">Live status from the TwinMOS service centre' +
+          (last && last.at ? ' · updated ' + esc(rmaWhen(last.at)) : '') + '.</p>';
+      }, function (status) {
+        if (status === 404) {
+          out.innerHTML = '<p class="form-note" style="color:#B3261E;margin:8px 0 0">No RMA case exists with that number — check your confirmation email, or contact support with your proof of purchase.</p>';
+        } else {
+          out.innerHTML = '<p class="form-note" style="color:#B3261E;margin:8px 0 0">The service centre could not be reached — please retry in a moment.</p>';
+        }
+      });
     });
     // F14.1 — news category filter chips
     var nch = $('#newsChips');
