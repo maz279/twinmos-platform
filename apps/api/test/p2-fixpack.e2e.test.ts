@@ -14,6 +14,10 @@ const TMP = mkdtempSync(join(tmpdir(), 'twinmos-p2-'));
 process.env.PGLITE_DATA = join(TMP, 'db');
 process.env.MAIL_OUTBOX_DIR = join(TMP, 'outbox');
 process.env.FORMS_TO = 'console@twinmos.dev';
+// Isolate the export route's write target — the endpoint writes cms-content.js
+// to a repo-anchored path by default, which would corrupt the dev bundle with
+// test-db content on every suite run (deep-pass finding).
+process.env.CONTENT_OUT = join(TMP, 'cms-content.js');
 
 const { createDb, user, product, brand, category, compatibilityRule }: any = await import('@twinmos/db');
 const { buildApp } = await import('../src/app.ts');
