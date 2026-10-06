@@ -179,7 +179,9 @@ window.CMS_CONTENT = ${JSON.stringify(payload)};
 `;
 }
 
-/** Where cms-content.js lives (repo-anchored, cwd-independent). */
+/** Where cms-content.js lives (repo-anchored, cwd-independent).
+ * CONTENT_OUT overrides (tests isolate their writes to TMP). */
 export function contentOutPath(): string {
+  if (process.env.CONTENT_OUT) return process.env.CONTENT_OUT;
   return join(HERE, '..', 'apps', 'web', 'public', 'assets', 'js', 'cms-content.js');
 }

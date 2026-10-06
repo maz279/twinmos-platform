@@ -113,9 +113,12 @@ export function contentRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const mod = await import('../../../../tooling/content-payload.ts');
-    // Same-origin /api/v1 base keeps media URLs correct behind the prod proxy;
-    // in dev the operator's PUBLIC_API_URL (if set) wins for cross-origin dev.
-    const apiBase = process.env.PUBLIC_API_URL ?? '';
+    // Media-URL base: PUBLIC_API_URL wins when set. Otherwise '' (same-origin
+    // /api/v1 behind the production reverse proxy) — EXCEPT in dev, where the
+    // public site is cross-origin (astro :4321 vs api :8787) and same-origin
+    // URLs 404; there the API's own externally-reachable origin is the truth.
+    const apiBase = process.env.PUBLIC_API_URL
+      ?? (process.env.NODE_ENV === 'production' ? '' : (process.env.BETTER_AUTH_URL ?? 'http://127.0.0.1:8787') + '/api/v1');
     const { counts, payload } = await mod.buildContentPayload(db, { apiBase });
     const out = mod.contentOutPath();
     const { mkdirSync, writeFileSync } = await import('node:fs');
