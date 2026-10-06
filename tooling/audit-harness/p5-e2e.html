@@ -5,6 +5,11 @@
 <iframe id="t" title="site" style="width:900px;height:900px;border:0"></iframe>
 <pre id="out">PENDING</pre>
 <script>
+// P4.7: credentials from the operator - query params (?email=&password=) for
+// scripted runs, prompt() otherwise. Never a literal in source.
+var _qs = new URLSearchParams(location.search);
+var ADMIN_EMAIL = _qs.get('email') || prompt('Admin email (from your operator store):', '');
+var ADMIN_PASSWORD = _qs.get('password') || prompt('Admin password (from your operator store):', '');
 // P5 browser E2E — both public surfaces in one harness:
 //  1. partners.html: real partner sign-in through the (formerly demo) form →
 //     the inline portal dashboard renders the org + gated assets
@@ -27,8 +32,8 @@ function stagePartners() {
         return (x.getAttribute('data-success') || '').indexOf('Demo sign-in') !== -1;
       })[0];
       if (!form) { say('FAIL no demo-signin form'); finish(); return; }
-      setVal(form.querySelector('input[type=email]'), 'admin@twinmos.dev');
-      setVal(form.querySelector('input[type=password]'), 'DevOnly-ChangeMe-2026!');
+      setVal(form.querySelector('input[type=email]'), ADMIN_EMAIL);
+      setVal(form.querySelector('input[type=password]'), ADMIN_PASSWORD);
       form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
       var n = 0;
       (function pollPortal() {

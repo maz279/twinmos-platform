@@ -5,6 +5,11 @@
 <iframe id="app" title="admin app" style="width:1400px;height:900px;border:0"></iframe>
 <pre id="out">PENDING</pre>
 <script>
+// P4.7: credentials from the operator - query params (?email=&password=) for
+// scripted runs, prompt() otherwise. Never a literal in source.
+var _qs = new URLSearchParams(location.search);
+var ADMIN_EMAIL = _qs.get('email') || prompt('Admin email (from your operator store):', '');
+var ADMIN_PASSWORD = _qs.get('password') || prompt('Admin password (from your operator store):', '');
 // Admin E2E harness: signs in from this (same-origin) window, loads the SPA in
 // an iframe so the session cookie applies, then reports the authed shell.
 window.__errs = [];
@@ -28,7 +33,7 @@ app.addEventListener('load', function () {
 });
 fetch('/api/v1/auth/sign-in/email', {
   method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'include',
-  body: JSON.stringify({ email: 'admin@twinmos.dev', password: 'DevOnly-ChangeMe-2026!' }),
+  body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
 }).then(function (r) {
   out.textContent = 'signin=' + r.status;
   if (r.ok) { stage = 'shell'; app.src = '/'; }
