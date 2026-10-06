@@ -61,17 +61,27 @@ describe('P0.3: PGlite single-writer lock', () => {
     releaseDataDirLock(dir);
   });
 
-  it('refuses an open of a data dir owned by a live process (the corruption guard)', () => {
-    // A lock naming a LIVE pid must refuse loudly. Our own pid is guaranteed
-    // live and exercises the same pidAlive() refusal branch as a foreign
-    // live owner, without spawning external processes.
+  it('refuses an open of a data dir owned by a live FOREIGN process (the corruption guard)', () => {
+    // A lock naming a live foreign PID must refuse loudly. The vitest worker
+    // supervisor (process.ppid) is guaranteed alive during this run and is a
+    // genuine foreign process — no external spawn needed.
     const lockFile = `${dir}.lock`;
-    writeFileSync(lockFile, String(process.pid), 'utf8');
+    writeFileSync(lockFile, String(process.ppid), 'utf8');
     let msg = '';
     try { acquireDataDirLock(dir); } catch (e) { msg = String(e); }
-    expect(msg).toMatch(/PID/);
-    expect(msg).toMatch(/single-writer|THIS process/);
-    expect(msg).toMatch(/CORRUPTS|reuse the existing handle/);
+    expect(msg).toMatch(/in use by PID/);
+    expect(msg).toMatch(/single-writer/);
+    expect(msg).toMatch(/CORRUPTS/);
+  });
+
+  it('reclaims a stale lock whose PID was recycled by THIS process (crash-restart resilience)', () => {
+    // A crashed owner's lock can name our own PID after Windows PID reuse.
+    // Since THIS process does not track the lock (not in ACTIVE), it is stale
+    // and must be reclaimed — never a false "already opened" refusal.
+    const lockFile = `${dir}.lock`;
+    writeFileSync(lockFile, String(process.pid), 'utf8');
+    expect(() => acquireDataDirLock(dir)).not.toThrow();
+    releaseDataDirLock(dir);
   });
 
   it('reclaims a stale lock from a dead PID', () => {

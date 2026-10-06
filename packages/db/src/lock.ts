@@ -32,13 +32,15 @@ export function acquireDataDirLock(dataDir: string): void {
     const raw = readFileSync(lockFile, 'utf8').trim();
     const pid = Number(raw);
     if (Number.isFinite(pid)) {
-      if (pid === process.pid) {
+      if (pid === process.pid && ACTIVE.has(lockFile)) {
         throw new Error(
           `[db-lock] PGlite data dir "${dataDir}" is already opened by THIS process (PID ${pid}). ` +
             'PGlite is single-writer — reuse the existing handle instead of calling createDb again.',
         );
       }
-      if (pidAlive(pid)) {
+      // pid === ours but NOT tracked in ACTIVE: our PID was recycled from a
+      // crashed previous owner — the lock is stale and safe to reclaim below.
+      if (pid !== process.pid && pidAlive(pid)) {
         throw new Error(
           `[db-lock] PGlite data dir "${dataDir}" is in use by PID ${pid} (single-writer rule). ` +
             'Stop that process first (or point PGLITE_DATA at a different directory). ' +
