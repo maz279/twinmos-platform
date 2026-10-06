@@ -154,7 +154,20 @@ export function buildApp(db: DB) {
   });
   app.notFound((c) => c.json(problem(404, 'Not Found'), 404, { 'Content-Type': 'application/problem+json' }));
 
-  app.get('/api/v1/health', (c) => c.json({ status: 'ok', service: 'twinmos-api', version: '0.3.0', db: 'connected' }));
+  // P0.2 truthful health: ping the database for real. The canned
+  // "db: connected" once masked a corrupted PGlite store (incident
+  // 2026-10-06) — health must degrade loudly (503) when the DB is unreachable.
+  app.get('/api/v1/health', async (c) => {
+    try {
+      await db.execute(sql`select 1`);
+      return c.json({ status: 'ok', service: 'twinmos-api', version: '0.3.0', db: 'connected' });
+    } catch {
+      return c.json(
+        { status: 'degraded', service: 'twinmos-api', version: '0.3.0', db: 'unreachable' },
+        503,
+      );
+    }
+  });
   app.all('/api/v1/auth/*', (c) => auth.handler(c.req.raw));
 
   // ---- dev-only auto-login (operator convenience during console iteration) ----
