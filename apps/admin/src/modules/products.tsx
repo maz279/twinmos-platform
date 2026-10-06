@@ -188,7 +188,9 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
       onDone();
     } catch (e) {
       if (e instanceof ApiError && e.status === 409) setConflict(true);
-      else setErr(e instanceof Error ? e.message : 'Save failed.');
+      // Deep-iteration fix: surface ApiError.detail so a 422 names the failing
+      // field instead of a bare "Validation Failed".
+      else setErr(e instanceof ApiError ? `${e.message}${e.detail ? ` — ${e.detail}` : ''}` : e instanceof Error ? e.message : 'Save failed.');
     } finally { setBusy(false); }
   }
 

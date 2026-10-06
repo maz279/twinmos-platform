@@ -20,6 +20,14 @@ async function handle<T>(res: Response): Promise<T> {
     const body = await res.json();
     title = body.title ?? title;
     detail = body.detail;
+    // RFC 9457 problem bodies carry field-level zod issues in `errors` —
+    // surface the first one so a 422 names the failing field instead of a
+    // bare "Validation Failed" (deep-iteration UX fix).
+    if (!detail && Array.isArray(body.errors) && body.errors.length > 0) {
+      const issue = body.errors[0] as { path?: unknown[]; message?: string };
+      const path = Array.isArray(issue.path) ? issue.path.join('.') : '';
+      detail = `${path ? path + ': ' : ''}${issue.message ?? 'invalid value'}`;
+    }
   } catch { /* non-JSON error body */ }
   throw new ApiError(res.status, title, detail);
 }
