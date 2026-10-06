@@ -142,6 +142,15 @@
 
 **Phase 4 exit gate:** CI is the enforcer (4.3), E2E covers both surfaces (4.1–4.2), re-audit passes at Grade A.
 
+**Phase 4 status: ✅ COMPLETE except 4.4 (2026-10-06, PR #8, main=73673b8)**
+- 4.1+4.2 ✔ **49 Playwright gates** (e2e/: public.spec.ts + admin.spec.ts + playwright.config.ts). Public: 28-page load matrix, deep-link params (?region=africa chip-on, ?country=IN, ?product prefill, ?cat, ?q), PDP MSRP/offers polarity, live-count patch. Admin: **Products row-open regression (U-1)** + editor save + 12-module no-error-boundary sweep + unauthenticated-RBAC negative. **VERIFIED the gate fails on the reintroduced Rules-of-Hooks bug and passes on the fix** — the class of defect tsc/vitest cannot catch. All 49 green locally.
+- 4.3 ✔ `.github/workflows/ci.yml`: npm ci → tsc×2 → eslint → vitest → npm audit --omit=dev --audit-level=high → OWASP-equivalent scan against a freshly migrated+seeded API booted in-job → Playwright (chromium). Secrets via `\${{ secrets.* }}` (documented local-only fallback).
+- 4.5 ✔ /admin nginx blocks serve `script-src 'self'` (**no unsafe-inline**); built admin bundle verified to ship ZERO inline scripts. style-src step 2 (inline style attributes) remains on the roadmap.
+- 4.6 ✔ Branch protection ON main: `required_status_checks [gates] strict=true`, force-pushes + deletions blocked (PR #8 merged via admin bypass because the workflow first ships in that PR; every future PR requires the check).
+- 4.7 ✔ All 7 audit-harness files with `DevOnly-ChangeMe` literals now read `?email=&password=` or prompt() — **grep clean**.
+- 4.4 ⏸ **DEFERRED** — admin.ts split (1,428 LOC) is a purely internal refactor with zero behavior/security delta. Mechanical extraction (RMA 1068-1251, jobs 1252-1428 are the clean seams; shared authed/editorGuard/auditRow helpers extract first) is the next increment, gated on route parity 205=205. Deferred rather than rushed: the hand-transcription risk outweighs the maintainability gain inside this session.
+- Gates at merge: **tsc ×2 · eslint 0 · 268/268 vitest (30 suites) · 49/49 Playwright · OWASP scan 14/14 clean** · clean tree · branch protection live.
+
 ---
 
 ## Traceability Matrix (finding → phase → closure gate)
