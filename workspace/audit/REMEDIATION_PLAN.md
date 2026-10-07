@@ -174,6 +174,20 @@ A "prove it again" pass (probes A–D over CI workflow, e2e spec quality, harnes
 - Local gates at iteration close: tsc ×2 · eslint 0 · 268/268 vitest · 49/49 Playwright (CI shape: config-managed `astro preview` + cold admin dev server) · seed guard exit-1.
 - Note: the mailer fix (D5) was committed with a one-time user-authorized `--no-verify` — the Mimosa commit gate hard-blocks on 372 pre-existing adjudicated false positives (`app.request` in test files); the changed file itself is scanner-clean.
 
+### Production-stack forensic audit ✅ (2026-10-07, PR #12 — admin↔public wiring + build provenance)
+
+Full-stack verification against the production-shape stack (built same-origin web via `tooling/prod-preview.mjs` :4321, admin bundle :4173, API :8787). **The admin/CMS console IS wired to the public site — proven live in both directions** (create→publish→export→render on learn-blog/learn-explained/article.html, then delete→export→gone), with suites green (268/268 vitest, 49/49 Playwright). Five new findings, all fixed:
+
+| # | Finding | Fix | Evidence |
+|---|---|---|---|
+| D13 | `sync-prototype-assets.mjs` unconditionally preferred the EXTERNAL workspace prototype, whose `app.js` was stale (pre-wtyText) — every local build silently reverted the committed D9 fix (CI unaffected: fresh clones use the in-repo snapshot) | priority flipped: in-repo `prototype/` is canonical, external is fallback | md5 parity in-repo/public/dist; PDP renders "· Lifetime warranty" once |
+| D14 | The PDP no-duplication assertion (D9) was attached to the corex-pro page whose warranty is "5 Years" — it passed under BOTH code vintages (vacuous), which is why D13 went unseen | assertion now targets `microsdxc-class-10-v30-uhs-3` whose warranty VALUE contains the word; polarity-proven (FAIL on stale bundle, PASS on fixed) | gate output both polarities |
+| D15 | The admin save test left "E2E warranty probe" in the long-lived dev catalog on every local run | test restores the original warranty value after the probe save | spec change; dev row restored |
+| D16 | `prod-preview.mjs` + nginx cached ALL `/assets/` for a year immutable — but the four runtime files (app/data/cms-content/cms-merge) are non-hashed and MUTABLE: in production every bridge/deploy update would be invisible to returning visitors for up to a year (the IAB reproduced exactly this) | exact-match no-cache locations (nginx) + NO_CACHE set (prod-preview) | `cache-control: no-cache` on the four, immutable retained elsewhere |
+| D17 | Bridge articles carried a hardcoded `tag:'Guide'`, so non-guide categories (e.g. Explainers) mis-routed to learn-guides | merge maps the article's real category | probe (cat=Explainers) renders on learn-explained, absent from learn-guides |
+
+Also verified: RMA public tracker + SN-check (`/api/v1/sn-check`, serial TMLIVE002 → valid+SKU+mfg date) through the same-origin proxy; all `/admin/*` routes 401 unauthenticated; locales en/ar 200; the exporter is correctly lock-refused while the API is live (fallback preserves the fresh bridge — same path CI exercises); the IAB service worker (`sw.js`) additionally caches assets and must be cleared when testing stale-asset behavior.
+
 ---
 
 ## Traceability Matrix (finding → phase → closure gate)

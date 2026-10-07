@@ -60,10 +60,22 @@ test.describe('admin console', () => {
     // nothing would turn this test into a vacuous pass.
     const warranty = page.locator('input[placeholder*="5 Years"]');
     await expect(warranty.first()).toBeVisible();
+    // probe save, then RESTORE the original value — this test runs against
+    // the long-lived dev store locally (CI uses a scratch DB); leaving
+    // "E2E warranty probe" behind pollutes the catalog (forensic-audit finding)
+    const original = await warranty.first().inputValue();
     await warranty.first().fill('E2E warranty probe');
     await page.locator('button:has-text("Save changes")').click();
     await page.waitForTimeout(2000);
-    const body = await page.textContent('body');
+    let body = await page.textContent('body');
+    expect(body).not.toContain('Save failed');
+    // Save closed the editor (onDone) — re-open to restore original value
+    await page.locator('tr').nth(1).click();
+    await page.waitForTimeout(1800);
+    await warranty.first().fill(original);
+    await page.locator('button:has-text("Save changes")').click();
+    await page.waitForTimeout(2000);
+    body = await page.textContent('body');
     expect(body).not.toContain('Save failed');
   });
 

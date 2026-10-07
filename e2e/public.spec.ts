@@ -68,8 +68,14 @@ test.describe('public site', () => {
       return product?.offers ?? 'ABSENT';
     });
     expect(ld).toBe('ABSENT');
-    // warranty phrasing: values like "Lifetime warranty" must never render
-    // with a second appended word ("warranty warranty" — visual-audit fix)
+    // warranty phrasing regression (visual-audit fix): values that already
+    // end in "warranty" ("Lifetime warranty") must never get a second one.
+    // NOTE the target: this product's corpus warranty VALUE CONTAINS the
+    // word, so the pre-fix template ('…' + ' warranty') renders a visible
+    // duplication and fails here — a clean value like "5 Years" passes under
+    // both code vintages and proves nothing (the original assertion's mistake).
+    await page.goto('product.html?id=microsdxc-class-10-v30-uhs-3');
+    await page.waitForSelector('.pdp-info', { timeout: 10_000 });
     const body = await page.textContent('body');
     expect(body).not.toMatch(/warranty\s+warranty/i);
   });
