@@ -151,6 +151,29 @@
 - 4.4 ⏸ **DEFERRED** — admin.ts split (1,428 LOC) is a purely internal refactor with zero behavior/security delta. Mechanical extraction (RMA 1068-1251, jobs 1252-1428 are the clean seams; shared authed/editorGuard/auditRow helpers extract first) is the next increment, gated on route parity 205=205. Deferred rather than rushed: the hand-transcription risk outweighs the maintainability gain inside this session.
 - Gates at merge: **tsc ×2 · eslint 0 · 268/268 vitest (30 suites) · 49/49 Playwright · OWASP scan 14/14 clean** · clean tree · branch protection live.
 
+### Phase 4 deep-verification iteration ✅ (2026-10-06/07, PR #9, main=430149b)
+
+A "prove it again" pass (probes A–D over CI workflow, e2e spec quality, harness credentials, git/protection state + visual inspection) found the **CI pipeline had never actually been green on GitHub — 4/4 prior runs failed**. Findings and closures:
+
+| # | Finding (probe) | Fix | Evidence |
+|---|---|---|---|
+| D1 | Playwright step had **no servers**: specs target :4321 (built site) + :5173 (admin SPA); the workflow only booted the API | `playwright.config.ts` declares both as `webServer` entries (CI self-starts `astro preview` + admin Vite dev; local reuses running servers); unused `API` const dropped | CI run 37467908303 **success** — first green run in repo history |
+| D2 | `PGLITE_DATA` resolves **cwd-relative**; npm workspace scripts run in `apps/api` vs `apps/web` cwds → migrate/seed/API and the prebuild exporter opened *different* stores (`relation "faq" does not exist`) | absolute path via `${{ github.workspace }}` in all 3 workflow occurrences | migrate+seed+scan steps ✓; exporter now correctly lock-refused → committed bridge artifact (designed fallback) |
+| D3 | Better Auth would reject admin sign-in from the Vite proxy origin (:5173) | `BETTER_AUTH_TRUSTED_ORIGINS` set on the booted API | admin specs signed in and passed on the runner |
+| D4 | Web build in CI had no API base (`PUBLIC_API_URL` unset → same-origin, nothing proxies it) | build with `PUBLIC_API_URL=http://localhost:8787/api/v1` (dev shape, allow-listed via `ALLOWED_ORIGIN`) | all 34 public specs green on the runner |
+| D5 | Latent vitest flake: dev-outbox filenames `${ms}-${random}` — same-millisecond routing+auto-reply mails ordered by random suffix (p6-leads saw `sales@` where it expected the buyer) | monotonic sequence counter in the outbox filename | PR #9 run 1 exposed it; 268/268 after fix; CI vitest stage green |
+| D6 | U-1 row gate asserted `rows > 3` — CI's `db:seed` scratch DB has **2 reference products** | threshold `> 1` (header + ≥1 product row) with dataset comment | admin suite 15/15 in CI |
+| D7 | `signIn` used fixed sleeps — cold Vite on-demand transform raced the 1200ms login check (CI always cold) | signal-based waits (`input, nav, .site-header` CSS union — a comma list after `text=` swallows commas; first `<tr>` for the grid) | 15/15 warm AND cold via config-managed webServer |
+| D8 | Admin save test could pass vacuously (locator `if count > 0`) | warranty input visibility now **required** | spec change; 15/15 |
+| D9 | Visual audit: `Lifetime warranty` rendered **"warranty warranty"** on PDP/compare/share (4 template sites append the word) | `wtyText()` guard in `app.js` (prototype source, synced) + PDP no-duplication regression assertion | fixed PDP screenshot + 34/34 public |
+| D10 | `seed.ts` could create a super admin with the dev-default password against a `DATABASE_URL` (production) store | refuses with exit 1 unless `SEED_ADMIN_PASSWORD` is set | guard verified locally (exit 1) |
+| D11 | Branch protection allowed admin bypass (`enforce_admins=false`; PR #8 had merged `--admin`) | `enforce_admins=true` once gates were actually green | protection verified: `[gates] strict, enforce_admins true` |
+| D12 | Harness credentials re-probed: **14 files** (not 7), all literal-free (`?email=`/prompt pattern) | none needed | grep clean across repo |
+
+- Post-merge main run **green** (37468708356, 5m12s) under the full protection regime.
+- Local gates at iteration close: tsc ×2 · eslint 0 · 268/268 vitest · 49/49 Playwright (CI shape: config-managed `astro preview` + cold admin dev server) · seed guard exit-1.
+- Note: the mailer fix (D5) was committed with a one-time user-authorized `--no-verify` — the Mimosa commit gate hard-blocks on 372 pre-existing adjudicated false positives (`app.request` in test files); the changed file itself is scanner-clean.
+
 ---
 
 ## Traceability Matrix (finding → phase → closure gate)
