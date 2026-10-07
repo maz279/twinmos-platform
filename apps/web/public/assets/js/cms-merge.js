@@ -23,7 +23,7 @@
     .map(function (a) {
       return {
         id: a.slug, cat: a.cat || 'Guide', date: a.date,
-        title: a.title, desc: a.deck || '', tag: 'Guide',
+        title: a.title, desc: a.deck || '', tag: a.cat || 'Guide',
         mins: Math.max(1, Math.round((a.body || '').length / 900)),
         body: (a.body || '').split(/\n{2,}/).filter(Boolean).map(function (para) {
           var h = para.match(/^#+\s*(.+)/);

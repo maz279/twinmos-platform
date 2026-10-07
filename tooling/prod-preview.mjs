@@ -24,10 +24,17 @@ const MIME = {
   '.woff2': 'font/woff2', '.woff': 'font/woff', '.pdf': 'application/pdf',
 };
 
-function sendFile(res, filePath, status = 200) {
+// Non-hashed, MUTABLE runtime files (prototype assets + the CMS bridge).
+// Everything else under /assets/ is treated as immutable — mirroring nginx —
+// but these four change with every sync/export, so they must revalidate.
+const NO_CACHE = new Set(['/assets/js/app.js', '/assets/js/data.js', '/assets/js/cms-content.js', '/assets/js/cms-merge.js']);
+
+function sendFile(res, filePath, urlPath, status = 200) {
   res.writeHead(status, {
     'content-type': MIME[extname(filePath).toLowerCase()] ?? 'application/octet-stream',
-    'cache-control': extname(filePath) === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable',
+    'cache-control': NO_CACHE.has(urlPath) || extname(filePath) === '.html'
+      ? 'no-cache'
+      : 'public, max-age=31536000, immutable',
   });
   createReadStream(filePath).pipe(res);
 }
@@ -51,8 +58,8 @@ const server = createServer((req, res) => {
   const candidate = join(ROOT, clean);
   if (!candidate.startsWith(ROOT + sep) && candidate !== ROOT) { res.writeHead(403).end(); return; }
   const tries = [candidate, join(ROOT, clean, 'index.html'), join(ROOT, clean + '.html')].filter((p) => existsSync(p) && statSync(p).isFile());
-  if (tries.length > 0) { sendFile(res, tries[0]); return; }
-  sendFile(res, join(ROOT, '404.html'), 404);
+  if (tries.length > 0) { sendFile(res, tries[0], urlPath); return; }
+  sendFile(res, join(ROOT, '404.html'), '/404.html', 404);
 });
 
 server.listen(PORT, () => console.log(`[prod-preview] http://localhost:${PORT} → static ${ROOT} + /api → 127.0.0.1:${API_PORT}`));
