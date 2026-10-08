@@ -12,7 +12,12 @@ const TMP = mkdtempSync(join(tmpdir(), 'twinmos-p3-'));
 process.env.PGLITE_DATA = join(TMP, 'db');
 process.env.MAIL_OUTBOX_DIR = join(TMP, 'outbox');
 process.env.FORMS_TO = 'console@twinmos.dev';
-process.env.CONTENT_OUT = join(TMP, 'cms-content.js');
+// Tree-shaped so the dual-write mirror path (<base>/public/assets/js →
+// <base>/dist/assets/js) stays inside this TMP — flat layouts place the
+// mirror outside TMP where existsSync() correctly skips it.
+process.env.CONTENT_OUT = join(TMP, 'public', 'assets', 'js', 'cms-content.js');
+import { mkdirSync } from 'node:fs';
+mkdirSync(join(TMP, 'dist'), { recursive: true });
 
 const { createDb, user, faq, newsPost }: any = await import('@twinmos/db');
 const { buildApp } = await import('../src/app.ts');
@@ -92,5 +97,21 @@ describe('P3 bridges: faqs + offices in the exported bundle', () => {
     });
     const { counts } = await res.json();
     expect(counts.news).toBeGreaterThanOrEqual(1);
+  });
+
+  it('dual-writes the bridge into the dist tree (production-audit fix)', async () => {
+    // The dist mirror is derived from the out path (js → assets → public →
+    // dist). With the old two-hop resolve it pointed at public/dist, which
+    // never exists — the existsSync guard silently skipped the dual-write and
+    // the built site kept serving stale bridge content (2026-10-08 audit).
+    const ck = await editorCookie();
+    const res = await app.request('/api/v1/admin/content/export', {
+      method: 'POST', headers: { 'content-type': 'application/json', cookie: ck }, body: '{}',
+    });
+    expect(res.status).toBe(200);
+    const { out } = await res.json();
+    const mirror = join(TMP, 'dist', 'assets', 'js', 'cms-content.js');
+    expect(readFileSync(mirror, 'utf8')).toBe(readFileSync(out, 'utf8'));
+    expect(readFileSync(mirror, 'utf8')).toContain('P3 published question?');
   });
 });

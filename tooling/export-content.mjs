@@ -23,19 +23,21 @@ const { counts, payload } = await buildContentPayload(db);
 mkdirSync(dirname(OUT), { recursive: true });
 const scriptText = contentScriptText(payload);
 writeFileSync(OUT, scriptText, 'utf8');
-if (!process.env.CONTENT_OUT) {
-  try {
-    const { existsSync } = await import('node:fs');
-    const { resolve } = await import('node:path');
-    const distDir = resolve(dirname(OUT), '..', '..', 'dist');
-    if (existsSync(distDir)) {
-      const distJsDir = resolve(distDir, 'assets', 'js');
-      mkdirSync(distJsDir, { recursive: true });
-      writeFileSync(resolve(distJsDir, 'cms-content.js'), scriptText, 'utf8');
-    }
-  } catch {
-    // non-blocking
+// Dual-write into the built dist tree (same rule as the export ROUTE): the
+// mirror derives from OUT (js → assets → public → dist), so CONTENT_OUT test
+// isolation carries over. THREE hops — two resolve to public/dist, which
+// never exists, silently skipping the write (2026-10-08 production audit).
+try {
+  const { existsSync } = await import('node:fs');
+  const { resolve } = await import('node:path');
+  const distDir = resolve(dirname(OUT), '..', '..', '..', 'dist');
+  if (existsSync(distDir)) {
+    const distJsDir = resolve(distDir, 'assets', 'js');
+    mkdirSync(distJsDir, { recursive: true });
+    writeFileSync(resolve(distJsDir, 'cms-content.js'), scriptText, 'utf8');
   }
+} catch {
+  // non-blocking
 }
 // P2.1: name the data dir this bundle came from — a silent mismatch between
 // the exporter's database and the live API database is exactly how the stale
