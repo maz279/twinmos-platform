@@ -59,13 +59,14 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
         <button style={btnGhost} onClick={() => setBulk(true)} title="Bulk CSV import and full-catalog export">Import / Export</button>
         <RefreshBridgeButton />
         <span style={{ flex: 1 }} />
-        <input style={{ ...input, width: 240 }} placeholder="Search name or SKU…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input style={{ ...input, width: 240 }} placeholder="Search name or SKU…" aria-label="Search name or SKU" value={q} onChange={(e) => setQ(e.target.value)} />
         <select style={input} value={category} onChange={(e) => setCategory(e.target.value ? Number(e.target.value) : '')}
+          aria-label="Filter by category"
           title="Filter by taxonomy category (sidebar: Catalog → Products → category)">
           <option value="">All categories</option>
           {(tax.data?.categories ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select style={input} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter by status">
           <option value="">All statuses</option>
           {['draft', 'in_review', 'scheduled', 'published', 'archived'].map((s) => <option key={s}>{s}</option>)}
         </select>
