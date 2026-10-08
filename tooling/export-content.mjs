@@ -21,7 +21,22 @@ const db = createDb();
 const { counts, payload } = await buildContentPayload(db);
 
 mkdirSync(dirname(OUT), { recursive: true });
-writeFileSync(OUT, contentScriptText(payload), 'utf8');
+const scriptText = contentScriptText(payload);
+writeFileSync(OUT, scriptText, 'utf8');
+if (!process.env.CONTENT_OUT) {
+  try {
+    const { existsSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const distDir = resolve(dirname(OUT), '..', '..', 'dist');
+    if (existsSync(distDir)) {
+      const distJsDir = resolve(distDir, 'assets', 'js');
+      mkdirSync(distJsDir, { recursive: true });
+      writeFileSync(resolve(distJsDir, 'cms-content.js'), scriptText, 'utf8');
+    }
+  } catch {
+    // non-blocking
+  }
+}
 // P2.1: name the data dir this bundle came from — a silent mismatch between
 // the exporter's database and the live API database is exactly how the stale
 // cms-content.js shipped (audit U-12). Explicit PGLITE_DATA wins for tooling.

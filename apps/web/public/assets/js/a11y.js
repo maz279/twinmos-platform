@@ -30,6 +30,25 @@
         setAttr(ctl, 'aria-label', text);
       }
     });
+
+    /* Global inputs outside .fg (header search input, RMA tracker, etc.) */
+    var searchInput = (root || document).getElementById('searchInput');
+    if (searchInput && !searchInput.getAttribute('aria-label')) {
+      setAttr(searchInput, 'aria-label', 'Search catalog products, articles, topics');
+    }
+    var rmaInput = (root || document).getElementById('rmaId');
+    if (rmaInput && !rmaInput.getAttribute('aria-label')) {
+      setAttr(rmaInput, 'aria-label', 'RMA tracking number');
+    }
+    (root || document).querySelectorAll('input, select, textarea').forEach(function (i) {
+      if (i.type === 'hidden' || i.style.display === 'none') return;
+      var hasId = i.id && document.querySelector('label[for="' + i.id + '"]');
+      var hasAria = i.getAttribute('aria-label') || i.getAttribute('aria-labelledby');
+      if (!hasId && !hasAria && !i.closest('label')) {
+        var placeholder = i.getAttribute('placeholder') || i.getAttribute('name') || i.getAttribute('id') || 'Input';
+        setAttr(i, 'aria-label', placeholder);
+      }
+    });
   }
 
   function fixTablists(root) {

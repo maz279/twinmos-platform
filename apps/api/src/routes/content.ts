@@ -121,10 +121,23 @@ export function contentRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
       ?? (process.env.NODE_ENV === 'production' ? '' : (process.env.BETTER_AUTH_URL ?? 'http://127.0.0.1:8787') + '/api/v1');
     const { counts, payload } = await mod.buildContentPayload(db, { apiBase });
     const out = mod.contentOutPath();
-    const { mkdirSync, writeFileSync } = await import('node:fs');
-    const { dirname } = await import('node:path');
+    const { mkdirSync, writeFileSync, existsSync } = await import('node:fs');
+    const { dirname, resolve } = await import('node:path');
     mkdirSync(dirname(out), { recursive: true });
-    writeFileSync(out, mod.contentScriptText(payload), 'utf8');
+    const scriptText = mod.contentScriptText(payload);
+    writeFileSync(out, scriptText, 'utf8');
+    if (!process.env.CONTENT_OUT) {
+      try {
+        const distDir = resolve(dirname(out), '..', '..', 'dist');
+        if (existsSync(distDir)) {
+          const distJsDir = resolve(distDir, 'assets', 'js');
+          mkdirSync(distJsDir, { recursive: true });
+          writeFileSync(resolve(distJsDir, 'cms-content.js'), scriptText, 'utf8');
+        }
+      } catch {
+        // non-blocking if dist is locked or unwritable
+      }
+    }
     await auditRow(c, guard.user.id, 'content.export', 'bridge', String(counts.products), { counts, out });
     return c.json({ ok: true, counts, out, generatedAt: payload.generatedAt });
   });
