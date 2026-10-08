@@ -126,17 +126,21 @@ export function contentRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
     mkdirSync(dirname(out), { recursive: true });
     const scriptText = mod.contentScriptText(payload);
     writeFileSync(out, scriptText, 'utf8');
-    if (!process.env.CONTENT_OUT) {
-      try {
-        const distDir = resolve(dirname(out), '..', '..', 'dist');
-        if (existsSync(distDir)) {
-          const distJsDir = resolve(distDir, 'assets', 'js');
-          mkdirSync(distJsDir, { recursive: true });
-          writeFileSync(resolve(distJsDir, 'cms-content.js'), scriptText, 'utf8');
-        }
-      } catch {
-        // non-blocking if dist is locked or unwritable
+    // Dual-write the same bytes into the built site's dist tree so a live
+    // export reaches prod-preview/nginx-served builds without a rebuild.
+    // The mirror derives from `out` (js → assets → public → dist) and is
+    // therefore CONTENT_OUT-isolation-aware for tests. THREE hops up — two
+    // resolve to public/dist, which never exists, and the guard silently
+    // skipped the write (caught by the 2026-10-08 production audit).
+    try {
+      const distDir = resolve(dirname(out), '..', '..', '..', 'dist');
+      if (existsSync(distDir)) {
+        const distJsDir = resolve(distDir, 'assets', 'js');
+        mkdirSync(distJsDir, { recursive: true });
+        writeFileSync(resolve(distJsDir, 'cms-content.js'), scriptText, 'utf8');
       }
+    } catch {
+      // non-blocking if dist is locked or unwritable
     }
     await auditRow(c, guard.user.id, 'content.export', 'bridge', String(counts.products), { counts, out });
     return c.json({ ok: true, counts, out, generatedAt: payload.generatedAt });
