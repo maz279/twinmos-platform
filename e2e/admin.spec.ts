@@ -7,8 +7,8 @@
 import { test, expect } from '@playwright/test';
 
 const ADMIN = process.env.E2E_ADMIN_URL ?? 'http://localhost:5173';
-const EMAIL = process.env.SEED_ADMIN_EMAIL ?? '';
-const PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? '';
+const EMAIL = process.env.SEED_ADMIN_EMAIL || 'admin@twinmos.dev';
+const PASSWORD = process.env.SEED_ADMIN_PASSWORD || 'admin';
 
 // The admin specs target the Vite dev server (dev) or the built bundle —
 // both serve the SPA at ADMIN.

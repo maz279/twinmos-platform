@@ -10,6 +10,7 @@ import {
   translationUpsertSchema, translationImportSchema, translationDeleteSchema,
   LOCALE_SCHEMA, LOCALES, problem,
 } from '@twinmos/shared';
+import type { Role } from '@twinmos/shared';
 import { translation, auditLog } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
@@ -86,12 +87,15 @@ function parseXliff(xml: string): Array<{ id: string; source: string; target: st
   return [];
 }
 
-export function translationsRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
+export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
   const r = new Hono();
 
-  async function authed(c: any): Promise<Exclude<AuthSession, null> | Response> {
+  /** Session + RBAC guard (defaults to viewer; returns session or 401/403). */
+  async function authed(c: any, minRole: Role = 'viewer'): Promise<Exclude<AuthSession, null> | Response> {
     const s = await deps.sessionFromRequest(c.req.raw);
-    return s ?? c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+    const ok = await deps.requireRole(minRole)(c.req.raw);
+    return ok ? s : c.json(problem(403, `Requires ${minRole} role or above`), 403, { 'Content-Type': P });
   }
   /** §5.1 RBAC: editor+ translates content namespaces; the 'common'
    *  framework namespace stays super_admin-only. */

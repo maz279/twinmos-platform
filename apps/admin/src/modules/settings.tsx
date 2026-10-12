@@ -90,7 +90,7 @@ function Redirects({ canManage }: { canManage: boolean }) {
       {error ? <Err error={error} /> : null}
       {loadError ? <Err error={loadError} /> : loading ? <p>Loading…</p> : data ? (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
-          <thead><tr>{['From', 'To', 'Code', 'Hits', ''].map((h) => <th key={h} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>)}</tr></thead>
+          <thead><tr>{['From', 'To', 'Code', 'Hits', ''].map((h, i) => <th key={`${h || 'col'}-${i}`} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>)}</tr></thead>
           <tbody>
             {items.map((r) => (
               <tr key={r.id}>
@@ -263,7 +263,7 @@ function Locales({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       </div>
       {error ? <Err error={error} /> : loading ? <p>Loading…</p> : data ? (
         <table style={{ borderCollapse: 'collapse', fontSize: 13.5 }}>
-          <thead><tr>{['Code', 'Name', 'Direction', 'Active', ''].map((h) => <th key={h} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>)}</tr></thead>
+          <thead><tr>{['Code', 'Name', 'Direction', 'Active', ''].map((h, i) => <th key={`${h || 'col'}-${i}`} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>)}</tr></thead>
           <tbody>
             {items.map((l) => (
               <tr key={l.code} style={{ background: l.active ? undefined : '#FAFBFC' }}>

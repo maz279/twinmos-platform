@@ -162,7 +162,7 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
               <input className="tm-in" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••" type="password" required autoComplete="current-password" style={cardIn} />
               <button className="tm-btn" disabled={busy} style={{ ...btnMain, opacity: busy ? 0.65 : 1 }}>{busy ? 'Verifying…' : 'Sign in'}</button>
               {err && <p role="alert" style={{ color: '#C2453C', fontSize: 13.5, margin: '14px 0 0', textAlign: 'center' }}>{err}</p>}
-              <p style={{ color: '#93A0B4', fontSize: 12, margin: '20px 0 0', textAlign: 'center' }}>
+              <p style={{ color: '#66748A', fontSize: 12, margin: '20px 0 0', textAlign: 'center' }}>
                 Protected by TOTP multi-factor · TwinMOS ISO-aligned controls
               </p>
             </form>

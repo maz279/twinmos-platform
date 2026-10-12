@@ -32,6 +32,17 @@ export default defineConfig({
   ],
   webServer: [
     {
+      name: 'api',
+      command: 'npm run start --workspace @twinmos/api',
+      url: 'http://127.0.0.1:8787/api/v1/health',
+      // ALWAYS reuse a responding API: the CI workflow boots it in a prior
+      // step (the OWASP scan needs it before Playwright runs), and local
+      // dev stacks always have it up. Playwright only starts its own when
+      // the health URL is silent (bare `npx playwright test` runs).
+      reuseExistingServer: true,
+      timeout: 60_000,
+    },
+    {
       // built bundle — run `npm run build --workspace @twinmos/web` first
       // (the CI workflow does; locally the dev server is reused instead)
       name: 'web',

@@ -47,11 +47,16 @@ function summaryBlock(fields: Record<string, unknown>): string {
     .join('\n');
 }
 
-async function sendViaResend(mail: MailInput): Promise<void> {
+async function sendViaResend(mail: MailInput): Promise<boolean> {
   const { Resend } = await import('resend');
   const client = new Resend(process.env.RESEND_API_KEY);
   const from = process.env.MAIL_FROM ?? 'TwinMOS Website <onboarding@resend.dev>';
-  await client.emails.send({ from, to: mail.to, subject: mail.subject, text: mail.text, replyTo: mail.replyTo });
+  const res = await client.emails.send({ from, to: mail.to, subject: mail.subject, text: mail.text, replyTo: mail.replyTo });
+  if (res.error) {
+    console.error('[mailer] resend api error:', res.error);
+    return false;
+  }
+  return true;
 }
 
 // Monotonic within the process: two mails written in the same millisecond
@@ -69,10 +74,13 @@ function sendViaOutbox(mail: MailInput): void {
 export async function sendMail(mail: MailInput): Promise<boolean> {
   try {
     if (process.env.RESEND_API_KEY) {
-      await sendViaResend(mail);
-    } else {
-      sendViaOutbox(mail);
+      return await sendViaResend(mail);
     }
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[mailer] RESEND_API_KEY is not set in production — refusing silent outbox write');
+      return false;
+    }
+    sendViaOutbox(mail);
     return true;
   } catch (e) {
     console.error('[mailer] delivery failed:', e);

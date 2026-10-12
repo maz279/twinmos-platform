@@ -4,7 +4,7 @@
 import { pgTable, pgEnum, text, varchar, integer, boolean, timestamp, jsonb, serial, numeric, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
-export const roleEnum = pgEnum('role', ['super_admin', 'admin', 'editor', 'author', 'viewer']);
+export const roleEnum = pgEnum('role', ['super_admin', 'admin', 'editor', 'author', 'viewer', 'member']);
 export const contentStatusEnum = pgEnum('content_status', ['draft', 'in_review', 'scheduled', 'published', 'archived']);
 export const rmaStatusEnum = pgEnum('rma_status', ['submitted', 'under_review', 'approved', 'in_repair', 'shipped', 'delivered', 'closed']);
 export const submissionStatusEnum = pgEnum('submission_status', ['new', 'assigned', 'in_progress', 'resolved', 'closed', 'spam']);
@@ -17,7 +17,7 @@ export const user = pgTable('user', {
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
-  role: roleEnum('role').notNull().default('viewer'),
+  role: roleEnum('role').notNull().default('member'),
   image: text('image'),
   twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false), // P7+ MFA flag (Better Auth twoFactor plugin)
   // P1.4: invited accounts that received a system-generated temporary password

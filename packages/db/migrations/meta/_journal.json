@@ -141,6 +141,13 @@
       "when": 1791283200000,
       "tag": "0019_user_must_change_password",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791283300000,
+      "tag": "0020_member_role",
+      "breakpoints": true
     }
   ]
 }

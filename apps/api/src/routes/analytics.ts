@@ -14,21 +14,24 @@
 //                                  (12-week window) + pipeline counts
 import { Hono } from 'hono';
 import { and, count, eq, gte, isNull, sql } from 'drizzle-orm';
-import { problem } from '@twinmos/shared';
+import { problem, LOCALES } from '@twinmos/shared';
+import type { Role } from '@twinmos/shared';
 import { article, category as categoryTable, faq, formSubmission, newsPost, page, product, rmaRequest, translation } from '@twinmos/db';
-import { LOCALES } from '@twinmos/shared';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 
 type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
 
-export function analyticsRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
+export function analyticsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
   const r = new Hono();
 
-  async function authed(c: any): Promise<Exclude<AuthSession, null> | Response> {
+  /** Session + RBAC guard (defaults to viewer; returns session or 401/403). */
+  async function authed(c: any, minRole: Role = 'viewer'): Promise<Exclude<AuthSession, null> | Response> {
     const s = await deps.sessionFromRequest(c.req.raw);
-    return s ?? c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+    const ok = await deps.requireRole(minRole)(c.req.raw);
+    return ok ? s : c.json(problem(403, `Requires ${minRole} role or above`), 403, { 'Content-Type': P });
   }
 
   const OPEN_LEAD_STATES = ['new', 'assigned', 'in_progress'] as const;
@@ -36,7 +39,7 @@ export function analyticsRoute(db: DB, deps: { requireRole: (r: any) => Guard; s
   /** §7.1 "Sales/Leads Dashboard": funnel of lead progression, SLA countdown
    *  gauge buckets, type split and a 14-day arrival series. */
   r.get('/analytics/leads', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const now = Date.now();
 
@@ -120,7 +123,7 @@ export function analyticsRoute(db: DB, deps: { requireRole: (r: any) => Guard; s
    *  product category (SKU → product → category), avg resolution time for
    *  closed cases and a 6-month volume trend. */
   r.get('/analytics/rma', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
 
     const [byStatus, byCategory, closedAgg, monthly] = await Promise.all([

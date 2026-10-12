@@ -1,11 +1,6 @@
 -- P6 (ADR-009): lead/quote hardening.
--- 1) Extend the P2 submission_status enum with in_progress + closed (APPEND-only;
---    existing rows keep their states). PG allows ADD VALUE inside the migration
---    transaction as long as the new values are not USED in the same transaction.
-ALTER TYPE submission_status ADD VALUE IF NOT EXISTS 'in_progress';
---> statement-breakpoint
-ALTER TYPE submission_status ADD VALUE IF NOT EXISTS 'closed';
---> statement-breakpoint
+-- submission_status enum values ('in_progress', 'closed') added in 0004 so they are committed
+-- ahead of this transaction (NEW-01).
 
 -- 2) Lead-handling columns: intake priority + first-response SLA deadline.
 ALTER TABLE form_submission

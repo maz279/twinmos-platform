@@ -26,7 +26,7 @@ draft → in_review → scheduled(publishAt) → published → archived. Author 
 | Content publish | ✓ | ✓ | ✓(own locale) | — | — |
 | Content delete | ✓ | ✓ | — | — | — |
 | Catalog edit | ✓ | ✓ | ✓ | — | — |
-| Support inbox/RMA | ✓ | ✓ | ✓ | — | read |
+| Support inbox/RMA (personal data) | ✓ | ✓ | ✓ | — | — |
 | Users/roles | ✓ | — | — | — | — |
 | Settings/integrations | ✓ | — | — | — | — |
 | Audit log | ✓ | ✓ | read | — | — |

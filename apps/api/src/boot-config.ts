@@ -1,0 +1,71 @@
+// Production boot guards — refuses to start when fatal configuration defects exist.
+// Pure functions over an env object so they are unit-testable.
+
+/** forms.ts:56 replacement — bypass only on the exact value '1', never in production. */
+export function turnstileBypassEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return env.NODE_ENV !== 'production' && env.API_ALLOW_NO_TURNSTILE === '1';
+}
+
+const MAIL_FROM_RE = /^(?:[^<>]*<)?\s*([^<>\s@]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\s*>?\s*$/;
+
+/** Returns a list of fatal misconfigurations (empty list = OK to boot). */
+export function bootConfigErrors(env: Record<string, string | undefined> = process.env): string[] {
+  const errs: string[] = [];
+  if (env.NODE_ENV !== 'production') return errs;
+
+  // Dev-only switches must be ABSENT in production (any value, even '0' or 'false').
+  for (const k of ['API_ALLOW_NO_TURNSTILE', 'API_DEV_AUTOLOGIN']) {
+    if (env[k] !== undefined) {
+      errs.push(`${k} must be unset when NODE_ENV=production (found ${JSON.stringify(env[k])})`);
+    }
+  }
+
+  if (env.TEST !== undefined) {
+    errs.push('TEST must not be set in production (causes shared rate-limit buckets)');
+  }
+
+  if (!env.DATABASE_URL) {
+    errs.push('DATABASE_URL is required in production');
+  }
+
+  if (!env.TURNSTILE_SECRET_KEY) {
+    errs.push('TURNSTILE_SECRET_KEY is required in production');
+  }
+
+  // Better Auth config guards
+  if (!env.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET === 'secret' || env.BETTER_AUTH_SECRET.length < 16) {
+    errs.push('BETTER_AUTH_SECRET is required, must not be default, and must be at least 16 characters in production');
+  }
+
+  if (!env.BETTER_AUTH_URL || !env.BETTER_AUTH_URL.startsWith('https://')) {
+    errs.push(`BETTER_AUTH_URL must start with https:// in production (found ${JSON.stringify(env.BETTER_AUTH_URL)})`);
+  }
+
+  // Mailer: no silent fallback to on-disk outbox in production.
+  if (!env.RESEND_API_KEY) {
+    errs.push('RESEND_API_KEY is required in production (mailer would silently write to ./data/outbox)');
+  } else if (!/^re_[A-Za-z0-9_]{8,}$/.test(env.RESEND_API_KEY)) {
+    errs.push('RESEND_API_KEY does not look like a Resend key (re_...)');
+  }
+
+  const m = (env.MAIL_FROM ?? '').match(MAIL_FROM_RE);
+  if (!m) {
+    errs.push('MAIL_FROM is required in production ("Name <user@verified-domain>")');
+  } else if (/(^|\.)resend\.dev$/i.test(m[2])) {
+    errs.push(`MAIL_FROM uses ${m[2]} (Resend test domain) — use your verified domain`);
+  }
+
+  if (!env.FORMS_TO) {
+    errs.push('FORMS_TO is required in production (form routing recipient)');
+  }
+
+  return errs;
+}
+
+export function assertBootConfig(env: Record<string, string | undefined> = process.env): void {
+  const errs = bootConfigErrors(env);
+  if (errs.length) {
+    console.error('[boot] refusing to start in production:\n  - ' + errs.join('\n  - '));
+    process.exit(1);
+  }
+}

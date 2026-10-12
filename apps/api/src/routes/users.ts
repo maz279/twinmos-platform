@@ -3,7 +3,7 @@
 import { Hono } from 'hono';
 import { and, count, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { problem } from '@twinmos/shared';
+import { problem, ROLES } from '@twinmos/shared';
 import { auditLog, session, user } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
@@ -38,12 +38,12 @@ const P = 'application/problem+json';
 const inviteSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(254),
   name: z.string().trim().min(2).max(120),
-  role: z.enum(['super_admin', 'admin', 'editor', 'author', 'viewer']).default('viewer'),
+  role: z.enum(ROLES).default('viewer'),
   password: z.string().min(10).optional(),
 });
 
 const roleSchema = z.object({
-  role: z.enum(['super_admin', 'admin', 'editor', 'author', 'viewer']),
+  role: z.enum(ROLES),
 });
 
 export function usersRoute(db: DB, deps: {

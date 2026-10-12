@@ -55,7 +55,13 @@
   function flatten(strings) {
     var out = {};
     Object.keys(strings).forEach(function (ns) {
-      Object.keys(strings[ns]).forEach(function (k) { out[k] = strings[ns][k]; });
+      Object.keys(strings[ns]).forEach(function (k) {
+        var val = strings[ns][k];
+        // NF-12: corrupted placeholder strings ('???') must not override valid translations
+        if (!out[k] || (typeof val === 'string' && val.indexOf('???') === -1)) {
+          out[k] = val;
+        }
+      });
     });
     return out;
   }

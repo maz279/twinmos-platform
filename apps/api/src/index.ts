@@ -1,16 +1,18 @@
-// API server entry — builds the app and serves it; graceful PGlite shutdown.
-// P3: also runs the scheduled-publish promoter (boot + interval).
+import { assertBootConfig } from './boot-config.ts';
 import { createDb } from '@twinmos/db';
 import { buildApp } from './app.ts';
 import { startScheduler } from './routes/content.ts';
+
+assertBootConfig(process.env);
 
 const db = createDb();
 const app = buildApp(db);
 const scheduler = startScheduler(db);
 
 const port = Number(process.env.PORT ?? 8787);
+const hostname = process.env.HOST ?? (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
 const { serve } = await import('@hono/node-server');
-const server = serve({ fetch: app.fetch, port }, () => console.log(`[api] http://127.0.0.1:${port}/api/v1/health`));
+const server = serve({ fetch: app.fetch, port, hostname }, () => console.log(`[api] http://${hostname}:${port}/api/v1/health`));
 
 // Graceful shutdown — closing PGlite cleanly prevents the stale-lock/WASM-abort
 // state that a force-killed dev server leaves behind (see scripts/reset.ts).

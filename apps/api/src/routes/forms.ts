@@ -10,6 +10,7 @@ import {
 import { formSubmission, jobApplication, rmaEvent, rmaRequest } from '@twinmos/db';
 import { sendFormRouting, sendCustomerConfirmation } from '../mailer.ts';
 import { IdempotencyStore } from '../idem.ts';
+import { turnstileBypassEnabled } from '../boot-config.ts';
 import type { DB } from '@twinmos/db';
 
 const SAFE_CHARS = /[^A-Za-z0-9 @_.,:+\-()/#]/g;
@@ -52,8 +53,8 @@ export function formsRoute(db: DB) {
     }
     const { type, email, name, payload } = parsed.data;
 
-    // Turnstile is REQUIRED unless the dev bypass is explicitly set.
-    if (!process.env.API_ALLOW_NO_TURNSTILE) {
+    // Turnstile is REQUIRED unless the dev bypass is explicitly set to '1' in non-production.
+    if (!turnstileBypassEnabled()) {
       if (!parsed.data.turnstileToken) {
         return c.json(problem(400, 'Captcha token required'), 400, { 'Content-Type': 'application/problem+json' });
       }
@@ -171,6 +172,14 @@ async function verifyTurnstile(token: string, ip: string | undefined): Promise<b
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ secret: process.env.TURNSTILE_SECRET_KEY, response: token, remoteip: ip ?? undefined }),
     });
-    return (await res.json()).success === true;
-  } catch { return false; }
+    const data = await res.json() as { success?: boolean; 'error-codes'?: string[] };
+    if (!data.success) {
+      console.warn('[forms] turnstile verification failed:', data['error-codes'] ?? 'unspecified');
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[forms] turnstile siteverify request error:', err);
+    return false;
+  }
 }

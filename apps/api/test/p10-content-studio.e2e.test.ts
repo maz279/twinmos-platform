@@ -153,6 +153,7 @@ describe('Phase 2 §2.3: editorial review workflow', () => {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ email: 'p10-viewer@twinmos.dev', password: mkPass() + 'v', name: 'viewer' }),
     });
+    await db.update(user).set({ role: 'viewer' }).where(eq(user.email, 'p10-viewer@twinmos.dev'));
     const vres = await app.request('/api/v1/auth/sign-in/email', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ email: 'p10-viewer@twinmos.dev', password: mkPass() + 'v' }),

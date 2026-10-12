@@ -4,6 +4,7 @@
 import { Hono } from 'hono';
 import { asc, eq } from 'drizzle-orm';
 import { redirectCreateSchema, redirectUpdateSchema, settingUpdateSchema, problem } from '@twinmos/shared';
+import type { Role } from '@twinmos/shared';
 import { setting, redirect, locale, auditLog } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
@@ -11,17 +12,18 @@ import type { AuthSession } from '../auth.ts';
 type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
 
-export function settingsRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
+export function settingsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
   const r = new Hono();
 
-  async function authed(c: any): Promise<Exclude<AuthSession, null> | Response> {
-    const s = await deps.sessionFromRequest(c.req.raw);
-    return s ?? c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
-  }
-  async function roleGuard(c: any, role: string): Promise<Exclude<AuthSession, null> | Response> {
+  /** Session + RBAC guard (defaults to viewer; returns session or 401/403). */
+  async function authed(c: any, minRole: Role = 'viewer'): Promise<Exclude<AuthSession, null> | Response> {
     const s = await deps.sessionFromRequest(c.req.raw);
     if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
-    return (await deps.requireRole(role)(c.req.raw)) ? s : c.json(problem(403, `Requires ${role} role or above`), 403, { 'Content-Type': P });
+    const ok = await deps.requireRole(minRole)(c.req.raw);
+    return ok ? s : c.json(problem(403, `Requires ${minRole} role or above`), 403, { 'Content-Type': P });
+  }
+  async function roleGuard(c: any, role: Role): Promise<Exclude<AuthSession, null> | Response> {
+    return authed(c, role);
   }
   async function auditRow(c: any, actorId: string | undefined, action: string, entity: string, entityId: string, diff: unknown) {
     await db.insert(auditLog).values({
