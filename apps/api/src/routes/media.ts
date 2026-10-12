@@ -331,8 +331,9 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const form = await c.req.formData().catch(() => null);
     const file = form?.get('file');
     const alt = String(form?.get('alt') ?? '').trim();
+    const isDecorative = form?.get('isDecorative') === 'true' || form?.get('isDecorative') === '1';
     if (!(file instanceof File)) return c.json(problem(422, 'Validation Failed', 'multipart field "file" is required.'), 422, { 'Content-Type': P });
-    if (!alt) return c.json(problem(422, 'Validation Failed', 'alt text is required (accessibility).'), 422, { 'Content-Type': P });
+    if (!alt && !isDecorative) return c.json(problem(422, 'Validation Failed', 'alt text is required (accessibility).'), 422, { 'Content-Type': P });
     if (file.size > MAX_BYTES) {
       return c.json(problem(413, 'File too large', `Limit is ${Math.round(MAX_BYTES / 1024 / 1024)} MB.`), 413, { 'Content-Type': P });
     }
@@ -364,6 +365,17 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       folderId = fid;
     }
 
+    let focalPoint = { x: 50, y: 50 };
+    const rawFp = form?.get('focalPoint');
+    if (rawFp) {
+      try {
+        const parsedFp = typeof rawFp === 'string' ? JSON.parse(rawFp) : rawFp;
+        if (typeof parsedFp.x === 'number' && typeof parsedFp.y === 'number') {
+          focalPoint = { x: parsedFp.x, y: parsedFp.y };
+        }
+      } catch {}
+    }
+
     const storage = getStorage();
     const hash = (await import('node:crypto')).createHash('sha256').update(bytes).digest('hex').slice(0, 16);
     const stored = `${hash}${ext}`;
@@ -382,7 +394,10 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     try {
       const rows = await db.insert(mediaAsset).values({
         key: stored, kind,
-        alt: alt.slice(0, 500),
+        alt: isDecorative ? '' : alt.slice(0, 500),
+        isDecorative,
+        focalPoint,
+        variants: derived.variants ?? {},
         width: dims?.width ?? null,
         height: dims?.height ?? null,
         folderId,
@@ -407,6 +422,7 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
           const patch: Record<string, unknown> = {};
           if (alt.slice(0, 500) !== existing.alt) patch.alt = alt.slice(0, 500);
           if (folderId !== existing.folderId) patch.folderId = folderId;
+          if (isDecorative !== existing.isDecorative) patch.isDecorative = isDecorative;
           const rows = Object.keys(patch).length
             ? await db.update(mediaAsset).set(patch).where(eq(mediaAsset.id, existing.id)).returning()
             : [existing];
@@ -481,11 +497,22 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const id = Number(c.req.param('id'));
     const body = await c.req.json().catch(() => ({}));
     const patch: Record<string, unknown> = {};
+
+    if ((body as any).isDecorative !== undefined) {
+      patch.isDecorative = Boolean((body as any).isDecorative);
+    }
+
     if ((body as any).alt !== undefined) {
       const alt = String((body as any).alt ?? '').trim();
-      if (!alt) return c.json(problem(422, 'Validation Failed', 'alt text cannot be empty.'), 422, { 'Content-Type': P });
-      patch.alt = alt.slice(0, 500);
+      if (!alt && !patch.isDecorative && (body as any).isDecorative !== true) {
+        const existing = (await db.select({ isDecorative: mediaAsset.isDecorative }).from(mediaAsset).where(eq(mediaAsset.id, id)).limit(1))[0];
+        if (!existing?.isDecorative && !patch.isDecorative) {
+          return c.json(problem(422, 'Validation Failed', 'alt text cannot be empty for non-decorative images.'), 422, { 'Content-Type': P });
+        }
+      }
+      patch.alt = alt ? alt.slice(0, 500) : (patch.isDecorative || (body as any).isDecorative ? '' : null);
     }
+
     if ((body as any).folderId !== undefined) {
       const folderId = (body as any).folderId == null ? null : Number((body as any).folderId);
       if (folderId != null) {
@@ -494,7 +521,23 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       }
       patch.folderId = folderId;
     }
-    if (!Object.keys(patch).length) return c.json(problem(422, 'Validation Failed', 'Nothing to update (alt and/or folderId).'), 422, { 'Content-Type': P });
+
+    if ((body as any).focalPoint !== undefined) {
+      const fp = (body as any).focalPoint;
+      if (typeof fp === 'object' && fp !== null) {
+        const x = Number(fp.x);
+        const y = Number(fp.y);
+        if (!Number.isNaN(x) && !Number.isNaN(y)) {
+          patch.focalPoint = { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
+        }
+      }
+    }
+
+    if ((body as any).variants !== undefined) {
+      patch.variants = (body as any).variants;
+    }
+
+    if (!Object.keys(patch).length) return c.json(problem(422, 'Validation Failed', 'Nothing to update.'), 422, { 'Content-Type': P });
     const rows = await db.update(mediaAsset).set(patch).where(eq(mediaAsset.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Media not found'), 404, { 'Content-Type': P });
     await auditRow(c, s.user.id, 'media.update', String(id), patch);

@@ -1,8 +1,136 @@
 import { z } from 'zod';
 
-export const DELIVERY_ENTITIES = ['page', 'product', 'article', 'news', 'faq', 'setting', 'menu', 'redirect'] as const;
+export const DELIVERY_ENTITIES = [
+  'page',
+  'product',
+  'article',
+  'news',
+  'faq',
+  'setting',
+  'menu',
+  'redirect',
+  'glossary',
+  'office',
+  'testimonial',
+  'policy',
+  'form',
+  'navigation',
+] as const;
 export const DELIVERY_ENTITY_SCHEMA = z.enum(DELIVERY_ENTITIES);
 export type DeliveryEntity = (typeof DELIVERY_ENTITIES)[number];
+
+export const deliveryNavMenuItemSchema: z.ZodType<any> = z.lazy(() =>
+  z.object({
+    id: z.number(),
+    title: z.string(),
+    targetType: z.string(),
+    targetUrl: z.string().nullable().optional(),
+    targetId: z.string().nullable().optional(),
+    sort: z.number(),
+    metadata: z.record(z.string(), z.unknown()).default({}),
+    icon: z.string().nullable().optional(),
+    badge: z.string().nullable().optional(),
+    children: z.array(deliveryNavMenuItemSchema).default([]),
+  })
+);
+
+export const deliveryNavMenuSchema = z.object({
+  id: z.number(),
+  code: z.string(),
+  title: z.string(),
+  locale: z.string(),
+  items: z.array(deliveryNavMenuItemSchema),
+});
+export type DeliveryNavMenu = z.infer<typeof deliveryNavMenuSchema>;
+
+export const deliveryGlossaryTermSchema = z.object({
+  id: z.number(),
+  term: z.string(),
+  definition: z.string(),
+  letter: z.string(),
+  explainerSlug: z.string().nullable().optional(),
+  locale: z.string(),
+});
+export type DeliveryGlossaryTerm = z.infer<typeof deliveryGlossaryTermSchema>;
+
+export const deliveryOfficeSchema = z.object({
+  id: z.number(),
+  role: z.string(),
+  title: z.string(),
+  entity: z.string(),
+  address: z.string(),
+  flag: z.string().nullable().optional(),
+  note: z.string().nullable().optional(),
+  sort: z.number(),
+  locale: z.string(),
+});
+export type DeliveryOffice = z.infer<typeof deliveryOfficeSchema>;
+
+export const deliveryTestimonialSchema = z.object({
+  id: z.number(),
+  quote: z.string(),
+  author: z.string(),
+  role: z.string().nullable().optional(),
+  context: z.string().nullable().optional(),
+  sort: z.number(),
+  locale: z.string(),
+});
+export type DeliveryTestimonial = z.infer<typeof deliveryTestimonialSchema>;
+
+export const deliveryPolicySchema = z.object({
+  id: z.number(),
+  slug: z.string(),
+  title: z.string(),
+  version: z.string(),
+  effectiveDate: z.string().nullable().optional(),
+  summary: z.string().nullable().optional(),
+  body: z.string(),
+  cookieCategories: z.unknown().optional(),
+  locale: z.string(),
+  updatedAt: z.string(),
+});
+export type DeliveryPolicy = z.infer<typeof deliveryPolicySchema>;
+
+export const deliveryFormDefinitionSchema = z.object({
+  id: z.number(),
+  type: z.string(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  successMessage: z.string().nullable().optional(),
+  privacyNotice: z.string().nullable().optional(),
+  fields: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      label: z.string(),
+      type: z.string(),
+      placeholder: z.string().nullable().optional(),
+      helpText: z.string().nullable().optional(),
+      required: z.boolean(),
+      options: z.unknown().optional(),
+      sort: z.number(),
+    })
+  ),
+});
+export type DeliveryFormDefinition = z.infer<typeof deliveryFormDefinitionSchema>;
+
+export const deliveryPageSchema = z.object({
+  id: z.number(),
+  slug: z.string(),
+  path: z.string().nullable().optional(),
+  title: z.string(),
+  template: z.string(),
+  blocks: z.array(z.unknown()),
+  seoTitle: z.string().nullable().optional(),
+  seoDescription: z.string().nullable().optional(),
+  ogMediaId: z.number().nullable().optional(),
+  noindex: z.boolean().default(false),
+  locale: z.string(),
+  publishedAt: z.string().nullable().optional(),
+  updatedAt: z.string(),
+});
+export type DeliveryPage = z.infer<typeof deliveryPageSchema>;
+
 
 export const previewTokenPayloadSchema = z.object({
   entityType: DELIVERY_ENTITY_SCHEMA,

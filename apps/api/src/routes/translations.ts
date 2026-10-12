@@ -11,7 +11,7 @@ import {
   LOCALE_SCHEMA, LOCALES, problem,
 } from '@twinmos/shared';
 import type { Role } from '@twinmos/shared';
-import { translation, auditLog } from '@twinmos/db';
+import { translation, auditLog, glossaryTerm, office, testimonial, policyDocument } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 
@@ -230,6 +230,121 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     }
     await auditRow(c, guard.user.id, 'translation.xliff.import', locale.data + ':' + ns, { imported, skippedEmpty });
     return c.json({ locale: locale.data, ns, imported, skippedEmpty });
+  });
+
+  /** Phase C (LOC-01): Entity XLIFF export — Glossary, Offices, Testimonials, Policies */
+  r.get('/translations/entities/xliff', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const locale = LOCALE_SCHEMA.safeParse(c.req.query('locale') ?? 'ar');
+    if (!locale.success) return c.json(problem(422, 'Validation Failed', 'locale is required.'), 422, { 'Content-Type': P });
+
+    const [enGlossary, enOffices, enTestimonials, enPolicies] = await Promise.all([
+      db.select().from(glossaryTerm).where(eq(glossaryTerm.locale, 'en')),
+      db.select().from(office).where(eq(office.locale, 'en')),
+      db.select().from(testimonial).where(eq(testimonial.locale, 'en')),
+      db.select().from(policyDocument).where(eq(policyDocument.locale, 'en')),
+    ]);
+
+    const units: string[] = [];
+
+    for (const g of enGlossary) {
+      units.push(
+        `    <trans-unit id="glossary:${g.id}:term">\n      <source xml:lang="en">${esc(g.term)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`,
+        `    <trans-unit id="glossary:${g.id}:definition">\n      <source xml:lang="en">${esc(g.definition)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`
+      );
+    }
+
+    for (const o of enOffices) {
+      units.push(
+        `    <trans-unit id="office:${o.id}:title">\n      <source xml:lang="en">${esc(o.title)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`,
+        `    <trans-unit id="office:${o.id}:address">\n      <source xml:lang="en">${esc(o.address)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`
+      );
+    }
+
+    for (const t of enTestimonials) {
+      units.push(
+        `    <trans-unit id="testimonial:${t.id}:quote">\n      <source xml:lang="en">${esc(t.quote)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`,
+        `    <trans-unit id="testimonial:${t.id}:author">\n      <source xml:lang="en">${esc(t.author)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`
+      );
+    }
+
+    for (const p of enPolicies) {
+      units.push(
+        `    <trans-unit id="policy:${p.id}:title">\n      <source xml:lang="en">${esc(p.title)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`
+      );
+    }
+
+    const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">\n  <file original="twinmos/entities" source-language="en" target-language="' + locale.data + '" datatype="plaintext">\n    <body>\n' + units.join('\n') + '\n    </body>\n  </file>\n</xliff>\n';
+    return c.body(xml, 200, {
+      'content-type': 'application/xliff+xml; charset=utf-8',
+      'content-disposition': `attachment; filename="twinmos-entities-${locale.data}.xliff"`,
+    });
+  });
+
+  /** Phase C (LOC-01): Entity XLIFF import — validates encoding and stores translations */
+  r.post('/translations/entities/xliff', async (c) => {
+    const contentType = c.req.header('content-type') || '';
+    let localeStr = c.req.query('locale');
+    let xml = '';
+    if (contentType.includes('xml')) {
+      xml = await c.req.text();
+      const match = xml.match(/target-language="([a-zA-Z-]+)"/);
+      if (match) localeStr = match[1].toLowerCase();
+    } else {
+      const body = await c.req.json().catch(() => ({}));
+      localeStr = (body as any).locale ?? localeStr;
+      xml = String((body as any).xml ?? '');
+    }
+    if (!localeStr) localeStr = 'ar';
+    const locale = LOCALE_SCHEMA.safeParse(localeStr);
+    if (!locale.success) return c.json(problem(422, 'Validation Failed', 'locale is required and must be supported.'), 422, { 'Content-Type': P });
+    if (!xml.includes('<xliff')) return c.json(problem(422, 'Validation Failed', 'Body is not an XLIFF document.'), 422, { 'Content-Type': P });
+
+    const guard = await translateGuard(c, 'entities');
+    if (guard instanceof Response) return guard;
+
+    const units = parseXliff(xml);
+    if (!units.length) return c.json(problem(422, 'Validation Failed', 'No trans-unit (XLIFF 1.2) or unit (XLIFF 2.0) elements found.'), 422, { 'Content-Type': P });
+
+    const corruptedUnits = units.filter((u) => u.target != null && (u.target.includes('???') || u.target.includes('\uFFFD')));
+    if (corruptedUnits.length > 0 || xml.includes('???') || xml.includes('\uFFFD')) {
+      return c.json(
+        problem(
+          422,
+          'Encoding Validation Failed',
+          `${Math.max(1, corruptedUnits.length)} trans-unit target(s) contain corrupted characters (??? or \\uFFFD).`,
+          corruptedUnits.map((u) => ({ path: ['xml', u.id], message: `Target for unit "${u.id}" contains encoding-loss characters (??? or \\uFFFD)` }))
+        ),
+        422,
+        { 'Content-Type': P }
+      );
+    }
+
+    let imported = 0;
+    let skippedEmpty = 0;
+
+    for (const u of units) {
+      if (u.target == null || u.target === '') {
+        skippedEmpty += 1;
+        continue;
+      }
+      // Store in translation table under 'entities' namespace
+      await db.insert(translation).values({
+        locale: locale.data,
+        ns: 'entities',
+        key: u.id,
+        value: u.target,
+        updatedBy: guard.user.id,
+      }).onConflictDoUpdate({
+        target: [translation.locale, translation.ns, translation.key],
+        set: { value: u.target, updatedBy: guard.user.id, updatedAt: new Date() },
+      });
+      imported += 1;
+    }
+
+    await auditRow(c, guard.user.id, 'translation.entities.xliff.import', locale.data + ':entities', { imported, skippedEmpty });
+    return c.json({ locale: locale.data, ns: 'entities', imported, skippedEmpty });
   });
 
   /** Upsert a single string. */

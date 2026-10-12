@@ -14,6 +14,8 @@ import { Badge, btn, btnGhost, Empty, Err, input, useAsync, usePanelScroll } fro
 type Asset = {
   id: number; key: string; kind: string; alt: string | null; width: number | null; height: number | null;
   folderId: number | null;
+  isDecorative?: boolean;
+  focalPoint?: { x: number; y: number } | null;
   meta: {
     origName?: string; mime?: string; bytes?: number;
     variants?: Record<string, { key: string; mime: string; bytes: number; width: number; height: number }>;
@@ -38,6 +40,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const bulkRef = useRef<HTMLInputElement>(null);
   const [alt, setAlt] = useState('');
+  const [isDecorative, setIsDecorative] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [editing, setEditing] = useState<number | null>(null);
@@ -70,7 +73,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
   const reloadAll = () => { reload(); folders.reload(); };
 
   const items = data?.items ?? [];
-  const missing = items.filter((m) => !m.alt).length;
+  const missing = items.filter((m) => !m.alt && !m.isDecorative).length;
   const total = data?.total ?? items.length;
   const fileUrl = (id: number) => API + '/admin/media/' + id + '/file';
   const publicUrl = (id: number) => {
@@ -85,10 +88,11 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
   /** Filename → human alt ("brand-campaign-hero.png" → "brand campaign hero"). */
   const altFromName = (name: string) => name.replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
 
-  async function uploadOne(file: File, altText: string): Promise<boolean> {
+  async function uploadOne(file: File, altText: string, decorative: boolean = isDecorative): Promise<boolean> {
     const form = new FormData();
     form.append('file', file);
-    form.append('alt', altText);
+    form.append('alt', decorative ? '' : altText);
+    if (decorative) form.append('isDecorative', 'true');
     if (typeof folder === 'number') form.append('folderId', String(folder));
     const res = await fetch((import.meta.env.VITE_API_URL ?? '/api/v1') + '/admin/media', {
       method: 'POST', credentials: 'include', body: form,
@@ -103,11 +107,12 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
   async function upload() {
     const file = fileRef.current?.files?.[0];
     if (!file) { setError('Choose a file first.'); return; }
-    if (!alt.trim()) { setError('Alt text is required (accessibility).'); return; }
+    if (!alt.trim() && !isDecorative) { setError('Alt text is required (accessibility) unless marked decorative.'); return; }
     setBusy(true); setError(null);
     try {
-      await uploadOne(file, alt.trim());
+      await uploadOne(file, alt.trim(), isDecorative);
       setAlt('');
+      setIsDecorative(false);
       if (fileRef.current) fileRef.current.value = '';
       reloadAll();
     } catch (e) { setError(e); } finally { setBusy(false); }
@@ -207,9 +212,13 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
           {view === 'grid' ? '▦ Grid' : '☰ Table'}
         </button>
       </div>
-      <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
         <input ref={fileRef} type="file" style={input} accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.avif,.pdf,.webm,.mp4" />
-        <input style={{ ...input, flex: '1 1 200px' }} placeholder="Alt text (required)" value={alt} onChange={(e) => setAlt(e.target.value)} />
+        <input style={{ ...input, flex: '1 1 200px' }} placeholder={isDecorative ? "Decorative image (alt omitted)" : "Alt text (required)"} disabled={isDecorative} value={alt} onChange={(e) => setAlt(e.target.value)} />
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12.5, color: '#475467', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <input type="checkbox" checked={isDecorative} onChange={(e) => setIsDecorative(e.target.checked)} />
+          Decorative
+        </label>
         <button style={btn} disabled={busy} onClick={upload}>Upload{typeof folder === 'number' ? ` → ${folderName(folder)}` : ''}</button>
         <span style={{ borderLeft: '1px solid #E6EBF1', paddingLeft: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
           <input ref={bulkRef} type="file" multiple style={{ ...input, maxWidth: 240 }} accept=".png,.jpg,.jpeg,.webp,.gif,.avif,.pdf" title="Bulk upload — alt is derived from each filename" />

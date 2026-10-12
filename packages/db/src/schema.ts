@@ -73,6 +73,9 @@ export const mediaAsset = pgTable('media_asset', {
   id: serial('id').primaryKey(), key: text('key').notNull().unique(), kind: varchar('kind', { length: 20 }).notNull().default('image'),
   width: integer('width'), height: integer('height'), alt: text('alt'), uploadedBy: text('uploaded_by').references(() => user.id, { onDelete: 'set null' }),
   folderId: integer('folder_id').references((): AnyPgColumn => mediaFolder.id, { onDelete: 'set null' }),
+  variants: jsonb('variants').default({}),
+  focalPoint: jsonb('focal_point').default({ x: 50, y: 50 }),
+  isDecorative: boolean('is_decorative').notNull().default(false),
   meta: jsonb('meta').default({}), createdAt: ts(),
 }, (t) => [index('media_asset_folder_idx').on(t.folderId)]);
 // Phase 4.3 — virtual folder hierarchy for the media library (products/,
@@ -93,6 +96,9 @@ export const article = pgTable('article', {
   category: varchar('category', { length: 40 }).notNull().default('Article'), tags: text('tags').array().default([]),
   status: contentStatusEnum('status').notNull().default('draft'), publishAt: timestamp('publish_at', { withTimezone: true }),
   authorId: text('author_id').references(() => user.id, { onDelete: 'set null' }), heroMediaId: integer('hero_media_id').references(() => mediaAsset.id, { onDelete: 'set null' }),
+  structuredBody: jsonb('structured_body').default([]),
+  readingTimeMin: integer('reading_time_min'),
+  version: integer('version').notNull().default(1),
   seo: jsonb('seo').default({}), revisionOf: integer('revision_of'), createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
 }, (t) => [uniqueIndex('article_slug_locale_uq').on(t.slug, t.locale), index('article_status_idx').on(t.status, t.publishAt)]);
@@ -100,8 +106,19 @@ export const article = pgTable('article', {
 export const page = pgTable('page', {
   id: serial('id').primaryKey(), slug: varchar('slug', { length: 120 }).notNull(), locale: varchar('locale', { length: 10 }).notNull().default('en'),
   title: text('title').notNull(), blocks: jsonb('blocks').notNull().default([]), status: contentStatusEnum('status').notNull().default('draft'),
+  path: varchar('path', { length: 200 }),
+  template: varchar('template', { length: 60 }).notNull().default('default'),
+  parentId: integer('parent_id'),
+  translationGroup: varchar('translation_group', { length: 60 }),
+  seoTitle: text('seo_title'),
+  seoDescription: text('seo_description'),
+  ogMediaId: integer('og_media_id').references(() => mediaAsset.id, { onDelete: 'set null' }),
+  noindex: boolean('noindex').notNull().default(false),
+  legacyPaths: text('legacy_paths').array().default([]),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  version: integer('version').notNull().default(1),
   seo: jsonb('seo').default({}), createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(), deletedAt: timestamp('deleted_at', { withTimezone: true }),
-}, (t) => [uniqueIndex('page_slug_locale_uq').on(t.slug, t.locale)]);
+}, (t) => [uniqueIndex('page_slug_locale_uq').on(t.slug, t.locale), index('page_path_locale_idx').on(t.path, t.locale)]);
 
 export const newsPost = pgTable('news_post', {
   id: serial('id').primaryKey(), slug: varchar('slug', { length: 120 }).notNull(), locale: varchar('locale', { length: 10 }).notNull().default('en'),
@@ -114,7 +131,9 @@ export const faq = pgTable('faq', {
   id: serial('id').primaryKey(), groupKey: varchar('group_key', { length: 40 }).notNull(), locale: varchar('locale', { length: 10 }).notNull().default('en'),
   question: text('question').notNull(), answer: text('answer').notNull(), sort: integer('sort').notNull().default(0),
   status: contentStatusEnum('status').notNull().default('published'), createdAt: ts(),
-});
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+}, (t) => [index('faq_group_locale_idx').on(t.groupKey, t.locale)]);
 
 // P3: immutable snapshot taken on every publish — enables one-click rollback.
 export const contentRevision = pgTable('content_revision', {
@@ -161,6 +180,12 @@ export const product = pgTable('product', {
   shortSpec: text('short_spec'), facets: jsonb('facets').notNull().default({}),
   heroMediaId: integer('hero_media_id').references(() => mediaAsset.id, { onDelete: 'set null' }),
   gallery: integer('gallery').array().default([]), datasheets: jsonb('datasheets').default([]), badges: text('badges').array().default([]),
+  featured: boolean('featured').notNull().default(false),
+  launchDate: timestamp('launch_date', { withTimezone: true }),
+  isComingSoon: boolean('is_coming_soon').notNull().default(false),
+  warrantyTier: varchar('warranty_tier', { length: 40 }),
+  specsDictionary: jsonb('specs_dictionary').default({}),
+  version: integer('version').notNull().default(1),
   releasedAt: timestamp('released_at', { withTimezone: true }), createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
 }, (t) => [index('product_status_idx').on(t.status), index('product_cat_idx').on(t.categoryId)]);
@@ -314,5 +339,126 @@ export const outbox = pgTable('outbox', {
 }, (t) => [
   index('outbox_status_idx').on(t.status),
   index('outbox_created_at_idx').on(t.createdAt),
+]);
+
+// ---- Phase C: Content Model Entities (C2..C6) ----
+export const navMenu = pgTable('nav_menu', {
+  id: serial('id').primaryKey(),
+  code: varchar('code', { length: 40 }).notNull().unique(),
+  title: text('title').notNull(),
+  locale: varchar('locale', { length: 10 }).notNull().default('en'),
+  createdAt: ts(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const navItem = pgTable('nav_item', {
+  id: serial('id').primaryKey(),
+  menuId: integer('menu_id').notNull().references(() => navMenu.id, { onDelete: 'cascade' }),
+  parentId: integer('parent_id').references((): AnyPgColumn => navItem.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  targetType: varchar('target_type', { length: 30 }).notNull().default('url'),
+  targetUrl: text('target_url'),
+  targetId: text('target_id'),
+  sort: integer('sort').notNull().default(0),
+  metadata: jsonb('metadata').notNull().default({}),
+  icon: varchar('icon', { length: 60 }),
+  badge: varchar('badge', { length: 40 }),
+}, (t) => [
+  index('nav_item_menu_idx').on(t.menuId),
+  index('nav_item_parent_idx').on(t.parentId),
+]);
+
+export const glossaryTerm = pgTable('glossary_term', {
+  id: serial('id').primaryKey(),
+  term: text('term').notNull(),
+  definition: text('definition').notNull(),
+  letter: varchar('letter', { length: 2 }).notNull(),
+  explainerSlug: text('explainer_slug'),
+  locale: varchar('locale', { length: 10 }).notNull().default('en'),
+  translationGroup: varchar('translation_group', { length: 60 }),
+  createdAt: ts(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('glossary_term_letter_idx').on(t.letter, t.locale),
+  index('glossary_term_group_idx').on(t.translationGroup),
+]);
+
+export const office = pgTable('office', {
+  id: serial('id').primaryKey(),
+  role: varchar('role', { length: 60 }).notNull(),
+  title: text('title').notNull(),
+  entity: text('entity').notNull(),
+  address: text('address').notNull(),
+  flag: varchar('flag', { length: 20 }),
+  note: text('note'),
+  sort: integer('sort').notNull().default(0),
+  locale: varchar('locale', { length: 10 }).notNull().default('en'),
+  createdAt: ts(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('office_locale_sort_idx').on(t.locale, t.sort),
+]);
+
+export const testimonial = pgTable('testimonial', {
+  id: serial('id').primaryKey(),
+  quote: text('quote').notNull(),
+  author: text('author').notNull(),
+  role: text('role'),
+  context: text('context'),
+  sort: integer('sort').notNull().default(0),
+  permissionFlag: boolean('permission_flag').notNull().default(true),
+  locale: varchar('locale', { length: 10 }).notNull().default('en'),
+  createdAt: ts(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('testimonial_locale_sort_idx').on(t.locale, t.sort),
+]);
+
+export const policyDocument = pgTable('policy_document', {
+  id: serial('id').primaryKey(),
+  slug: varchar('slug', { length: 120 }).notNull(),
+  title: text('title').notNull(),
+  version: varchar('version', { length: 20 }).notNull().default('1.0'),
+  status: contentStatusEnum('status').notNull().default('draft'),
+  effectiveDate: timestamp('effective_date', { withTimezone: true }),
+  summary: text('summary'),
+  body: text('body').notNull().default(''),
+  cookieCategories: jsonb('cookie_categories').default([]),
+  locale: varchar('locale', { length: 10 }).notNull().default('en'),
+  translationGroup: varchar('translation_group', { length: 60 }),
+  createdAt: ts(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex('policy_doc_slug_locale_uq').on(t.slug, t.locale),
+  index('policy_doc_status_idx').on(t.status),
+]);
+
+export const formDefinition = pgTable('form_definition', {
+  id: serial('id').primaryKey(),
+  type: varchar('type', { length: 40 }).notNull().unique(),
+  title: text('title').notNull(),
+  description: text('description'),
+  successMessage: text('success_message'),
+  routingEmail: text('routing_email'),
+  privacyNotice: text('privacy_notice'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: ts(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const formField = pgTable('form_field', {
+  id: serial('id').primaryKey(),
+  formId: integer('form_id').notNull().references(() => formDefinition.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 60 }).notNull(),
+  label: text('label').notNull(),
+  type: varchar('type', { length: 30 }).notNull().default('text'),
+  placeholder: text('placeholder'),
+  helpText: text('help_text'),
+  required: boolean('required').notNull().default(false),
+  options: jsonb('options').default([]),
+  sort: integer('sort').notNull().default(0),
+  validationRegex: text('validation_regex'),
+}, (t) => [
+  index('form_field_form_idx').on(t.formId, t.sort),
 ]);
 

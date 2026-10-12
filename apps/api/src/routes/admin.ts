@@ -148,13 +148,16 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     return c.json(rows[0]);
   });
 
-  /** 0007: numeric(10,2) columns are string-typed in Drizzle — map the Zod number. */
-  const productValues = <T extends { priceUsd?: number | null }>(d: T): Omit<T, 'priceUsd'> & { priceUsd?: string | null } => {
-    if (d.priceUsd === undefined) {
-      const { priceUsd, ...rest } = d;
-      return rest as any;
+  /** 0007: numeric(10,2) columns are string-typed in Drizzle — map the Zod number, and parse launchDate string to Date. */
+  const productValues = <T extends { priceUsd?: number | null; launchDate?: string | null }>(d: T): any => {
+    const res: any = { ...d };
+    if (d.priceUsd !== undefined) {
+      res.priceUsd = d.priceUsd === null ? null : String(d.priceUsd);
     }
-    return { ...d, priceUsd: d.priceUsd === null ? null : String(d.priceUsd) };
+    if (d.launchDate !== undefined) {
+      res.launchDate = d.launchDate ? new Date(d.launchDate) : null;
+    }
+    return res;
   };
 
   r.post('/products', async (c) => {
@@ -171,18 +174,26 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = productUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = productUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
     // Phase 3.4: optimistic locking — a stale If-Match (the updatedAt the
     // editor loaded) means someone else saved first; refuse with 409 instead
     // of silently overwriting their work.
     const ifMatch = c.req.header('if-match');
-    const current = (await db.select({ updatedAt: product.updatedAt }).from(product).where(eq(product.id, id)).limit(1))[0];
+    const current = (await db.select({ updatedAt: product.updatedAt, version: product.version }).from(product).where(eq(product.id, id)).limit(1))[0];
     if (!current) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
     if (ifMatch && !sameInstant(ifMatch, current.updatedAt)) {
       return c.json(problem(409, 'Conflict', 'This product was modified by someone else after you loaded it. Reload the latest version and re-apply your changes.'), 409, { 'Content-Type': P });
     }
-    const rows = await db.update(product).set({ ...productValues(parsed.data), updatedAt: new Date() })
+    if (rawJson.version !== undefined && current.version !== undefined && rawJson.version !== current.version) {
+      return c.json(problem(409, 'Conflict', 'Version conflict: this product was modified by someone else.'), 409, { 'Content-Type': P });
+    }
+    const updatePayload: Record<string, unknown> = { ...productValues(parsed.data), updatedAt: new Date() };
+    if (current.version !== undefined) {
+      updatePayload.version = (current.version ?? 1) + 1;
+    }
+    const rows = await db.update(product).set(updatePayload as any)
       .where(eq(product.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'product.update', 'product', String(id), parsed.data);

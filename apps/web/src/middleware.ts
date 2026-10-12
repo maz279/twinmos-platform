@@ -1,4 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
+import { LOCALES } from '@twinmos/shared';
 import { matchRedirect } from './lib/redirects.ts';
 
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -10,7 +11,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return context.redirect(redirect.to, redirect.status as 301 | 302);
   }
 
-  // 2. Execute inner route handler
+  // 2. Localization Fallback (Task C8a, LOC-01)
+  // Untranslated subpaths e.g. /fr/<page> return 301 to English fallback (/<page>)
+  const localeMatch = url.pathname.match(/^\/([a-z]{2}(?:-[a-z]{2})?)\/(.+)$/i);
+  if (localeMatch) {
+    const loc = localeMatch[1].toLowerCase();
+    const subpath = localeMatch[2];
+    if (LOCALES.includes(loc as any) && loc !== 'en') {
+      return context.redirect(`/${subpath}${url.search}`, 301);
+    }
+  }
+
+  // 3. Execute inner route handler
   const response = await next();
 
   // 3. Header policy (Tasks B4a, B4b, S-16b)

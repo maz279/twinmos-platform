@@ -1,0 +1,381 @@
+---
+// BlockDispatcher.astro — Renders 25 dynamic page blocks with per-block error isolation.
+// If any single block contains corrupt or unexpected data, it logs the anomaly and degrades
+// gracefully to an empty or fallback presentation rather than failing the entire page render.
+import type { Block } from '@twinmos/shared';
+
+interface Props {
+  blocks?: Block[];
+  className?: string;
+}
+
+const { blocks = [], className = '' } = Astro.props;
+---
+<div class={`block-stream ${className}`}>
+  {blocks.map((b: Block, idx: number) => {
+    try {
+      if (!b || !b.type) return null;
+      const type = b.type;
+      const raw = b as any;
+      const blockId = raw.id ?? `block-${idx}`;
+
+      switch (type) {
+        case 'hero':
+          return (
+            <section class="block-hero page-hero" data-block-id={blockId}>
+              <div class="wrap">
+                {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                {raw.title && <h1 class="h1">{raw.title}</h1>}
+                {raw.lede && <p class="lede">{raw.lede}</p>}
+                {Array.isArray(raw.ctas) && raw.ctas.length > 0 && (
+                  <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+                    {raw.ctas.map((cta: any) => (
+                      <a class={`btn ${cta.variant === 'secondary' ? 'btn-ghost' : 'btn-accent'}`} href={cta.url || '#'}>
+                        {cta.label}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+
+        case 'featureGrid':
+        case 'bentoGrid':
+          return (
+            <section class="block-grid" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2">{raw.title}</h2>}
+                {raw.subtitle && <p class="lede" style="margin-bottom:24px">{raw.subtitle}</p>}
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px">
+                  {Array.isArray(raw.items) && raw.items.map((item: any) => (
+                    <div class="card card-pad" style="border:1px solid #E6EBF1;border-radius:12px">
+                      {item.icon && <div class="item-icon" style="font-size:24px;margin-bottom:8px">{item.icon}</div>}
+                      <h3 class="h3" style="font-size:18px;margin-bottom:8px">{item.title}</h3>
+                      <p style="color:#66748A;font-size:14px;line-height:1.6">{item.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'faqAccordion':
+          return (
+            <section class="block-faq" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2" style="margin-bottom:20px">{raw.title}</h2>}
+                <div class="faq-list" style="display:flex;flex-direction:column;gap:12px">
+                  {Array.isArray(raw.items) && raw.items.map((faq: any) => (
+                    <details class="faq-item card card-pad" style="border:1px solid #E6EBF1;border-radius:8px;padding:16px">
+                      <summary style="font-weight:700;cursor:pointer;font-size:16px">{faq.question || faq.q}</summary>
+                      <p style="margin-top:12px;color:#475467;line-height:1.6">{faq.answer || faq.a}</p>
+                    </details>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'statsCounter':
+          return (
+            <section class="block-stats" data-block-id={blockId} style="padding:40px 0;background:#F8FAFC">
+              <div class="wrap" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;text-align:center">
+                {Array.isArray(raw.stats) && raw.stats.map((stat: any) => (
+                  <div class="stat-item">
+                    <div style="font-size:36px;font-weight:800;color:#1DBF9F">{stat.value}</div>
+                    <div style="font-size:14px;color:#66748A;margin-top:4px">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+
+        case 'ctaBanner':
+        case 'splitCta':
+          return (
+            <section class="block-cta" data-block-id={blockId} style="padding:60px 0">
+              <div class="wrap">
+                <div class="card card-pad" style="background:#0A2540;color:#fff;border-radius:16px;padding:48px 36px;text-align:center">
+                  <h2 style="font-size:28px;font-weight:800;color:#fff;margin-bottom:12px">{raw.title}</h2>
+                  {raw.subtitle && <p style="font-size:16px;color:#CBD5E1;max-width:640px;margin:0 auto 24px">{raw.subtitle}</p>}
+                  {Array.isArray(raw.ctas) && raw.ctas.length > 0 && (
+                    <a class="btn btn-accent" href={raw.ctas[0]?.url || '#'}>{raw.ctas[0]?.label || 'Get Started'}</a>
+                  )}
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'testimonial':
+          return (
+            <section class="block-testimonial" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                <blockquote class="card card-pad" style="border-left:4px solid #1DBF9F;background:#F8FAFC;padding:24px;border-radius:8px">
+                  <p style="font-size:18px;font-style:italic;color:#1F2A37;line-height:1.6">"{raw.quote}"</p>
+                  <footer style="margin-top:12px;font-size:14px;font-weight:700;color:#475467">
+                    — {raw.author}{raw.role ? `, ${raw.role}` : ''}
+                  </footer>
+                </blockquote>
+              </div>
+            </section>
+          );
+
+        case 'textMedia':
+          return (
+            <section class="block-text-media" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center">
+                <div class="text-col">
+                  {raw.title && <h2 class="h2">{raw.title}</h2>}
+                  {raw.body && <div style="color:#475467;line-height:1.6;margin-top:16px">{raw.body}</div>}
+                </div>
+                {raw.media?.key && (
+                  <div class="media-col">
+                    <img src={raw.media.key} alt={raw.media.alt || ''} style="width:100%;border-radius:12px;display:block" loading="lazy" />
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+
+        case 'table':
+          return (
+            <section class="block-table" data-block-id={blockId} style="padding:40px 0;overflow-x:auto">
+              <div class="wrap">
+                {raw.title && <h3 class="h3" style="margin-bottom:16px">{raw.title}</h3>}
+                <table style="width:100%;border-collapse:collapse;font-size:14px">
+                  {Array.isArray(raw.headers) && (
+                    <thead>
+                      <tr>
+                        {raw.headers.map((h: string) => (
+                          <th style="padding:10px 12px;border-bottom:2px solid #E6EBF1;text-align:left;background:#F8FAFC">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                  )}
+                  <tbody>
+                    {Array.isArray(raw.rows) && raw.rows.map((row: string[]) => (
+                      <tr>
+                        {row.map((cell: string) => (
+                          <td style="padding:10px 12px;border-bottom:1px solid #F0F3F7">{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          );
+
+        case 'slider':
+          return (
+            <section class="block-slider" data-block-id={blockId} style="padding:48px 0;background:#0A2540;color:#fff">
+              <div class="wrap">
+                {Array.isArray(raw.slides) && raw.slides.map((s: any) => (
+                  <div class="slide-item" style="padding:20px;text-align:center">
+                    <h3 class="h3" style="color:#fff">{s.title}</h3>
+                    {s.kicker && <p style="color:#1DBF9F">{s.kicker}</p>}
+                    {s.image && <img src={s.image} alt={s.alt || ''} style="max-height:320px;margin:16px auto;display:block" />}
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+
+        case 'timeline':
+          return (
+            <section class="block-timeline" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2" style="margin-bottom:24px">{raw.title}</h2>}
+                <div class="timeline-list" style="border-left:2px solid #E6EBF1;padding-left:20px">
+                  {Array.isArray(raw.items) && raw.items.map((it: any) => (
+                    <div class="timeline-item" style="margin-bottom:20px">
+                      <strong style="color:#1DBF9F">{it.date}</strong>
+                      <h4 class="h4" style="margin:4px 0">{it.title}</h4>
+                      <p style="color:#475467">{it.desc || it.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'productShowcase':
+          return (
+            <section class="block-product-showcase" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2">{raw.title}</h2>}
+                {raw.subtitle && <p class="lede">{raw.subtitle}</p>}
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:24px">
+                  {Array.isArray(raw.products || raw.skus) && (raw.products || raw.skus).map((p: any) => (
+                    <div class="card card-pad" style="border:1px solid #E6EBF1;border-radius:12px;padding:20px">
+                      <h4>{p.name || p.sku}</h4>
+                      {p.note && <p style="font-size:13px;color:#66748A">{p.note}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'whereToBuy':
+          return (
+            <section class="block-where-to-buy" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2">{raw.title}</h2>}
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px">
+                  {Array.isArray(raw.regions) && raw.regions.map((reg: any) => (
+                    <a class="btn btn-ghost" href={reg.href || '#'} style="border:1px solid #CBD5E1;padding:8px 16px;border-radius:8px">
+                      {reg.region || reg.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'downloadDatasheet':
+          return (
+            <section class="block-downloads" data-block-id={blockId} style="padding:40px 0">
+              <div class="wrap">
+                {raw.title && <h3 class="h3">{raw.title}</h3>}
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+                  {Array.isArray(raw.files) && raw.files.map((f: any) => (
+                    <a class="download-link" href={f.url} target="_blank" rel="noopener noreferrer" style="color:#0A2540;font-weight:600">
+                      📄 {f.label || f.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'qvlCompatibility':
+          return (
+            <section class="block-qvl" data-block-id={blockId} style="padding:48px 0;background:#F8FAFC">
+              <div class="wrap" style="text-align:center">
+                {raw.title && <h2 class="h2">{raw.title}</h2>}
+                <p style="color:#475467;margin:12px auto 20px;max-width:540px">Verify compatibility across qualified motherboards and vendors.</p>
+                <a class="btn btn-accent" href={raw.ctaHref || '/compatibility'}>{raw.ctaLabel || 'Check Compatibility'}</a>
+              </div>
+            </section>
+          );
+
+        case 'badgeStrip':
+          return (
+            <section class="block-badge-strip" data-block-id={blockId} style="padding:24px 0">
+              <div class="wrap" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+                {Array.isArray(raw.badges) && raw.badges.map((b: any) => (
+                  <span class="badge" style="background:#EEF2F6;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600">
+                    {typeof b === 'string' ? b : b.label}
+                  </span>
+                ))}
+              </div>
+            </section>
+          );
+
+        case 'steps':
+          return (
+            <section class="block-steps" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2" style="margin-bottom:24px">{raw.title}</h2>}
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px">
+                  {Array.isArray(raw.steps) && raw.steps.map((st: any, i: number) => (
+                    <div class="step-card" style="padding:20px;border:1px solid #E6EBF1;border-radius:10px">
+                      <div style="font-weight:800;color:#1DBF9F;font-size:20px;margin-bottom:8px">Step {i + 1}</div>
+                      <h4>{st.title}</h4>
+                      <p style="color:#66748A;font-size:14px">{st.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'kpiMeters':
+          return (
+            <section class="block-kpi" data-block-id={blockId} style="padding:40px 0">
+              <div class="wrap" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px">
+                {Array.isArray(raw.kpis) && raw.kpis.map((k: any) => (
+                  <div class="kpi-box" style="text-align:center;padding:16px;background:#F8FAFC;border-radius:8px">
+                    <div style="font-size:32px;font-weight:800;color:#0A2540">{k.value}</div>
+                    <div style="color:#66748A;font-size:13px">{k.label}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+
+        case 'callout':
+          return (
+            <aside class="block-callout" data-block-id={blockId} style="padding:24px 0">
+              <div class="wrap">
+                <div class="callout-box" style="border-left:4px solid #0A2540;background:#F8FAFC;padding:16px 20px;border-radius:4px">
+                  {raw.title && <strong>{raw.title}</strong>}
+                  <p style="margin-top:4px;color:#475467">{raw.message || raw.body}</p>
+                </div>
+              </div>
+            </aside>
+          );
+
+        case 'linkChips':
+          return (
+            <nav class="block-link-chips" data-block-id={blockId} style="padding:16px 0">
+              <div class="wrap" style="display:flex;gap:10px;flex-wrap:wrap">
+                {Array.isArray(raw.chips) && raw.chips.map((ch: any) => (
+                  <a href={ch.url || '#'} style="background:#F1F5F9;padding:6px 12px;border-radius:16px;text-decoration:none;font-size:13px;color:#0A2540">
+                    {ch.label}
+                  </a>
+                ))}
+              </div>
+            </nav>
+          );
+
+        case 'categoryTiles':
+          return (
+            <section class="block-category-tiles" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px">
+                {Array.isArray(raw.categories) && raw.categories.map((cat: any) => (
+                  <a href={cat.url || `/categories/${cat.slug}`} class="cat-tile" style="display:block;padding:24px;border:1px solid #E6EBF1;border-radius:12px;text-align:center;text-decoration:none;color:#0A2540">
+                    <h4 style="font-weight:700">{cat.title || cat.name}</h4>
+                  </a>
+                ))}
+              </div>
+            </section>
+          );
+
+        case 'policyTabs':
+        case 'form':
+        case 'officeCards':
+        case 'articleList':
+        case 'glossaryIndex':
+        case 'appEmbed':
+          return (
+            <section class={`block-entity block-${type}`} data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2">{raw.title}</h2>}
+                {raw.description && <p class="lede">{raw.description}</p>}
+                <div class="entity-container" data-entity-type={type} style="margin-top:20px">
+                </div>
+              </div>
+            </section>
+          );
+
+        default:
+          // Generic structured fallback for custom extensions
+          return (
+            <div class={`block-custom block-${type}`} data-block-id={blockId} style="padding:32px 0">
+              <div class="wrap">
+                {raw.title && <h3 class="h3">{raw.title}</h3>}
+                {raw.body && <p style="color:#475467;margin-top:8px">{raw.body}</p>}
+              </div>
+            </div>
+          );
+      }
+    } catch (err) {
+      // Per-block error boundary: isolate error and prevent complete page crashing
+      console.error(`[BlockDispatcher] Rendering error for block #${idx} (${(b as any)?.type}):`, err);
+      return null;
+    }
+  })}
+</div>

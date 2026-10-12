@@ -114,6 +114,12 @@ export const productBaseSchema = z.object({
   gallery: z.array(z.number().int().positive()).max(12),
   datasheets: z.array(z.object({ label: z.string().trim().min(1).max(80), url: z.url().max(500) })).max(6),
   badges: z.array(z.string().max(40)).max(8),
+  featured: z.boolean().default(false),
+  launchDate: z.string().datetime().nullable().optional(),
+  isComingSoon: z.boolean().default(false),
+  warrantyTier: z.enum(['standard', 'extended', 'lifetime', 'limited_lifetime', '1_year', '2_year', '3_year', '5_year', '10_year']).or(z.string()).nullable().optional(),
+  specsDictionary: z.record(z.string(), z.unknown()).default({}),
+  version: z.number().int().optional(),
 });
 
 export const productCreateSchema = productBaseSchema.extend({
@@ -129,6 +135,12 @@ export const productCreateSchema = productBaseSchema.extend({
   gallery: z.array(z.number().int().positive()).max(12).default([]),
   datasheets: z.array(z.object({ label: z.string().trim().min(1).max(80), url: z.url().max(500) })).max(6).default([]),
   badges: z.array(z.string().max(40)).max(8).default([]),
+  featured: z.boolean().default(false),
+  launchDate: z.string().datetime().nullable().optional().default(null),
+  isComingSoon: z.boolean().default(false),
+  warrantyTier: z.enum(['standard', 'extended', 'lifetime', 'limited_lifetime', '1_year', '2_year', '3_year', '5_year', '10_year']).or(z.string()).nullable().optional().default(null),
+  specsDictionary: z.record(z.string(), z.unknown()).default({}),
+  version: z.number().int().default(1),
 });
 export const productUpdateSchema = productBaseSchema.partial();
 
@@ -292,6 +304,9 @@ export const articleBaseSchema = z.object({
   tags: z.array(z.string().max(40)).max(12),
   locale: localeField,
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
+  structuredBody: z.array(z.record(z.string(), z.unknown())).nullable().optional(),
+  readingTimeMin: z.number().int().min(0).nullable().optional(),
+  version: z.number().int().optional(),
 });
 export const articleCreateSchema = articleBaseSchema.extend({
   body: bodyField.default(''),
@@ -299,6 +314,9 @@ export const articleCreateSchema = articleBaseSchema.extend({
   tags: z.array(z.string().max(40)).max(12).default([]),
   locale: localeField.default('en'),
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
+  structuredBody: z.array(z.record(z.string(), z.unknown())).nullable().optional().default(null),
+  readingTimeMin: z.number().int().min(0).nullable().optional().default(null),
+  version: z.number().int().default(1),
 });
 export const articleUpdateSchema = articleBaseSchema.partial();
 
@@ -318,15 +336,36 @@ export const newsUpdateSchema = newsBaseSchema.partial();
 
 export const pageBaseSchema = z.object({
   slug: slugField.optional(),
+  path: z.string().trim().regex(/^\/[a-zA-Z0-9_\-\/]*$/, 'Must start with /').nullable().optional(),
+  template: z.enum(['default', 'landing', 'full_width', 'legal', 'category', 'product_detail', 'support_portal']).default('default'),
+  parentId: z.number().int().positive().nullable().optional(),
+  translationGroup: z.string().trim().nullable().optional(),
   title: z.string().trim().min(2).max(200),
   blocks: z.array(z.record(z.string(), z.unknown())),
   locale: localeField,
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
+  seoTitle: z.string().trim().max(160).nullable().optional(),
+  seoDescription: z.string().trim().max(320).nullable().optional(),
+  ogMediaId: z.number().int().positive().nullable().optional(),
+  noindex: z.boolean().default(false),
+  legacyPaths: z.array(z.string()).default([]),
+  status: z.enum(CONTENT_STATUS).default('draft'),
+  version: z.number().int().optional(),
 });
 export const pageCreateSchema = pageBaseSchema.extend({
   blocks: z.array(z.record(z.string(), z.unknown())).default([]),
   locale: localeField.default('en'),
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
+  path: z.string().trim().regex(/^\/[a-zA-Z0-9_\-\/]*$/, 'Must start with /').nullable().optional().default(null),
+  template: z.enum(['default', 'landing', 'full_width', 'legal', 'category', 'product_detail', 'support_portal']).default('default'),
+  parentId: z.number().int().positive().nullable().optional().default(null),
+  translationGroup: z.string().trim().nullable().optional().default(null),
+  seoTitle: z.string().trim().max(160).nullable().optional().default(null),
+  seoDescription: z.string().trim().max(320).nullable().optional().default(null),
+  ogMediaId: z.number().int().positive().nullable().optional().default(null),
+  noindex: z.boolean().default(false),
+  legacyPaths: z.array(z.string()).default([]),
+  version: z.number().int().default(1),
 });
 export const pageUpdateSchema = pageBaseSchema.partial();
 
@@ -336,10 +375,12 @@ export const faqBaseSchema = z.object({
   answer: z.string().trim().min(1).max(20_000),
   sort: z.number().int().min(0).max(9999),
   locale: localeField,
+  version: z.number().int().optional(),
 });
 export const faqCreateSchema = faqBaseSchema.extend({
   sort: z.number().int().min(0).max(9999).default(0),
   locale: localeField.default('en'),
+  version: z.number().int().default(1),
 });
 export const faqUpdateSchema = faqBaseSchema.partial();
 
@@ -456,4 +497,5 @@ export const snCheckSchema = z.object({
 });
 
 export * from './delivery.ts';
+export * from './blocks.ts';
 

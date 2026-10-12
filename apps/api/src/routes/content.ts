@@ -12,10 +12,10 @@ import {
   articleCreateSchema, articleUpdateSchema, newsCreateSchema, newsUpdateSchema,
   pageCreateSchema, pageUpdateSchema, faqCreateSchema, faqUpdateSchema,
   contentTransitionSchema, contentRevertSchema, CONTENT_TRANSITIONS, CONTENT_ENTITY_SCHEMA,
-  CONTENT_STATUS, problem, slugify, sameInstant,
+  CONTENT_STATUS, problem, slugify, sameInstant, validateBlocks,
 } from '@twinmos/shared';
 import type { Role } from '@twinmos/shared';
-import { article, newsPost, page, faq, contentRevision, contentComment, auditLog, user } from '@twinmos/db';
+import { article, newsPost, page, faq, contentRevision, contentComment, auditLog, user, redirect } from '@twinmos/db';
 import { IdempotencyStore } from '../idem.ts';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
@@ -95,17 +95,17 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
   const updateSchemas = { article: articleUpdateSchema, news: newsUpdateSchema, page: pageUpdateSchema, faq: faqUpdateSchema };
 
   /** Maps a validated payload onto table columns (faq has no slug column;
-   *  every entity starts as a draft regardless of table defaults). */
+   *  defaults to draft unless explicitly specified). */
   function toColumns(entity: EntityType, data: Record<string, unknown>, actorId: string) {
-    if (entity === 'article') return { ...data, authorId: actorId, status: 'draft' };
+    if (entity === 'article') return { ...data, authorId: actorId, status: (data.status as string) || 'draft' };
     if (entity === 'news') {
       // timestamp column needs a Date, not the ISO string the contract carries
       const { eventDate, ...rest } = data as Record<string, unknown>;
-      return { ...rest, status: 'draft', eventDate: eventDate ? new Date(String(eventDate)) : null };
+      return { ...rest, status: (data.status as string) || 'draft', eventDate: eventDate ? new Date(String(eventDate)) : null };
     }
-    if (entity === 'page') return { ...data, status: 'draft' };
+    if (entity === 'page') return { ...data, status: (data.status as string) || 'draft' };
     const { locale, ...rest } = data as Record<string, unknown>;
-    return { ...rest, locale: locale ?? 'en', status: 'draft' };
+    return { ...rest, locale: locale ?? 'en', status: (data.status as string) || 'draft' };
   }
 
   // ---------- P2.2: server-side content-bridge refresh -----------------------
@@ -199,6 +199,16 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
     let data = parsed.data as Record<string, unknown>;
     // allow slug to be derived from the title when omitted
     if (entity !== 'faq' && !data.slug && data.title) data = { ...data, slug: slugify(String(data.title)) };
+    if (entity === 'page' && Array.isArray(data.blocks) && data.blocks.length > 0) {
+      const v = validateBlocks(data.blocks);
+      if (!v.success) {
+        return c.json(
+          problem(422, 'Block Validation Failed', 'One or more page blocks failed validation.', Object.entries(v.errors).map(([idx, errs]: [string, string[]]) => ({ path: ['blocks', Number(idx)], message: errs.join(', ') }))),
+          422,
+          { 'Content-Type': P }
+        );
+      }
+    }
     try {
       const rows = await (db.insert(tableOf(entity)) as any).values(toColumns(entity, data, guard.user.id)).returning();
       const created = row0(rows);
@@ -218,7 +228,8 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
     const entity = resolveEntity(c);
     if (entity instanceof Response) return entity;
     const id = Number(c.req.param('id'));
-    const parsed = updateSchemas[entity].safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = updateSchemas[entity].safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
     const existing = row0(await (db.select().from(tableOf(entity)) as any).where(eq(tableOf(entity).id, id)).limit(1));
@@ -227,15 +238,49 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
     if (guard.user.role === 'author' && existing.authorId !== guard.user.id) {
       return c.json(problem(403, 'Authors may only edit their own content'), 403, { 'Content-Type': P });
     }
-    // Phase 3.4: optimistic locking — a stale If-Match (the updatedAt the
-    // editor loaded) means someone else saved first; refuse with 409.
+    // Phase 3.4 & Phase C (WF-01): optimistic locking — check If-Match header and numeric version
     const ifMatch = c.req.header('if-match');
     if (ifMatch && !sameInstant(ifMatch, existing.updatedAt)) {
       return c.json(problem(409, 'Conflict', 'This item was modified by someone else after you loaded it. Reload the latest version and re-apply your changes.'), 409, { 'Content-Type': P });
     }
+    if (rawJson.version !== undefined && existing.version !== undefined && rawJson.version !== existing.version) {
+      return c.json(problem(409, 'Conflict', 'Version conflict: this item was modified by someone else.'), 409, { 'Content-Type': P });
+    }
+
+    if (entity === 'page' && Array.isArray((parsed.data as any).blocks) && (parsed.data as any).blocks.length > 0) {
+      const v = validateBlocks((parsed.data as any).blocks);
+      if (!v.success) {
+        return c.json(
+          problem(422, 'Block Validation Failed', 'One or more page blocks failed validation.', Object.entries(v.errors).map(([idx, errs]: [string, string[]]) => ({ path: ['blocks', Number(idx)], message: errs.join(', ') }))),
+          422,
+          { 'Content-Type': P }
+        );
+      }
+    }
 
     const patch: Record<string, unknown> = { ...parsed.data, updatedAt: new Date() };
+    if (existing.version !== undefined) {
+      patch.version = (existing.version ?? 1) + 1;
+    }
     if ((parsed.data as any).eventDate !== undefined) patch.eventDate = (parsed.data as any).eventDate ? new Date((parsed.data as any).eventDate) : null;
+
+    // Phase C (CMS-E4): automated 301 redirect on page path change
+    if (entity === 'page' && (parsed.data as any).path && existing.path && (parsed.data as any).path !== existing.path) {
+      await db.insert(redirect).values({
+        from: existing.path,
+        to: (parsed.data as any).path,
+        code: 301,
+      }).onConflictDoUpdate({
+        target: [redirect.from],
+        set: { to: (parsed.data as any).path, code: 301 },
+      });
+      const leg = Array.isArray(existing.legacyPaths) ? [...existing.legacyPaths] : [];
+      if (!leg.includes(existing.path)) {
+        leg.push(existing.path);
+        patch.legacyPaths = leg;
+      }
+    }
+
     const rows = await (db.update(tableOf(entity)) as any).set(patch).where(eq(tableOf(entity).id, id)).returning();
     await auditRow(c, guard.user.id, `${entity}.update`, entity, String(id), parsed.data);
     return c.json(row0(rows));

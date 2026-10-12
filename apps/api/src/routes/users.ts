@@ -171,9 +171,9 @@ export function usersRoute(db: DB, deps: {
       db.select({ n: count() }).from(user).where(eq(user.banned, true)),
       db.select({ n: count() }).from(session).where(sql`${session.expiresAt} > now()`),
     ]);
-    const joins = await db.select({ d: sql<string>`to_char(${user.createdAt}, 'YYYY-MM-DD')`, n: count() })
+    const joins = await db.select({ d: sql<string>`to_char(${user.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`, n: count() })
       .from(user).where(sql`${user.createdAt} > now() - interval '13 days'`)
-      .groupBy(sql`to_char(${user.createdAt}, 'YYYY-MM-DD')`);
+      .groupBy(sql`to_char(${user.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`);
     const series: Array<{ d: string; n: number }> = [];
     for (let i = 13; i >= 0; i--) {
       const key = new Date(Date.now() - i * 86400_000).toISOString().slice(0, 10);

@@ -110,11 +110,11 @@ export default function PageBuilder({ blocks, onChange }: {
                 <span>{def?.icon ?? '▪️'}</span>
                 <b style={{ color: NAVY, fontSize: 13.5, flex: 1 }}>{def?.label ?? block.type} <span style={{ color: '#93A0B4', fontWeight: 400, fontSize: 11.5 }}>#{i + 1}</span></b>
                 <span style={{ display: 'flex', gap: 4 }}>
-                  <IconBtn title="Move up" disabled={i === 0} onClick={(e) => { e.stopPropagation(); move(i, i - 1); }}>↑</IconBtn>
-                  <IconBtn title="Move down" disabled={i === blocks.length - 1} onClick={(e) => { e.stopPropagation(); move(i, i + 1); }}>↓</IconBtn>
-                  <IconBtn title="Duplicate" onClick={(e) => { e.stopPropagation(); duplicate(i); }}>⧉</IconBtn>
-                  <IconBtn title="Delete block" onClick={(e) => { e.stopPropagation(); remove(i); }}>✕</IconBtn>
-                  <IconBtn title={expanded ? 'Collapse' : 'Settings'}>{expanded ? '▾' : '▸'}</IconBtn>
+                  <IconBtn title="Move up" ariaLabel={`Move ${def?.label ?? block.type} block up`} disabled={i === 0} onClick={(e) => { e.stopPropagation(); move(i, i - 1); }}>↑</IconBtn>
+                  <IconBtn title="Move down" ariaLabel={`Move ${def?.label ?? block.type} block down`} disabled={i === blocks.length - 1} onClick={(e) => { e.stopPropagation(); move(i, i + 1); }}>↓</IconBtn>
+                  <IconBtn title="Duplicate" ariaLabel={`Duplicate ${def?.label ?? block.type} block`} onClick={(e) => { e.stopPropagation(); duplicate(i); }}>⧉</IconBtn>
+                  <IconBtn title="Delete block" ariaLabel={`Delete ${def?.label ?? block.type} block`} onClick={(e) => { e.stopPropagation(); remove(i); }}>✕</IconBtn>
+                  <IconBtn title={expanded ? 'Collapse' : 'Settings'} ariaLabel={expanded ? 'Collapse block settings' : 'Expand block settings'}>{expanded ? '▾' : '▸'}</IconBtn>
                 </span>
               </div>
               {expanded && def && (
@@ -145,9 +145,9 @@ export default function PageBuilder({ blocks, onChange }: {
   );
 }
 
-function IconBtn({ title, children, disabled, onClick }: { title: string; children: React.ReactNode; disabled?: boolean; onClick?: (e: React.MouseEvent) => void }) {
+function IconBtn({ title, ariaLabel, children, disabled, onClick }: { title: string; ariaLabel?: string; children: React.ReactNode; disabled?: boolean; onClick?: (e: React.MouseEvent) => void }) {
   return (
-    <button title={title} disabled={disabled} onClick={onClick}
+    <button title={title} aria-label={ariaLabel || title} disabled={disabled} onClick={onClick}
       style={{ width: 24, height: 24, border: '1px solid #E6EBF1', borderRadius: 6, background: '#fff', color: NAVY, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.4 : 1, fontSize: 12, padding: 0 }}>
       {children}
     </button>

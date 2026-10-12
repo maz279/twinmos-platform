@@ -27,6 +27,7 @@
     "test:e2e": "playwright test",
     "verify:gate-a": "node tooling/verify/run-all-gate-a.mjs",
     "verify:gate-b": "node tooling/verify/run-all-gate-b.mjs",
+    "verify:gate-c": "node tooling/verify/run-all-gate-c.mjs",
     "verify:manual": "node tooling/verify/manual-test-suite.mjs",
     "verify:visual": "node tooling/verify/visual-a11y-audit.mjs"
   },

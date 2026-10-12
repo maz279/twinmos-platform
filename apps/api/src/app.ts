@@ -19,6 +19,8 @@ import { settingsRoute } from './routes/settings.ts';
 import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
 import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
 import { snCheckRoute, snReportRoute, serialAdminRoute } from './routes/sncheck.ts';
+import { navigationRoute } from './routes/navigation.ts';
+import { entitiesRoute } from './routes/entities.ts';
 import { makeDeliveryRouter } from './routes/delivery/index.ts';
 import { dispatchOutbox } from './services/outbox.ts';
 import { sendMail } from './mailer.ts';
@@ -364,6 +366,8 @@ export function buildApp(db: DB) {
   app.route('/api/v1/admin', contentRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', mediaRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', settingsRoute(db, { requireRole, sessionFromRequest }));
+  app.route('/api/v1/admin', navigationRoute(db, { requireRole, sessionFromRequest }));
+  app.route('/api/v1/admin', entitiesRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', translationsRoute(db, { requireRole, sessionFromRequest })); // P4
   app.route('/api/v1', i18nPublicRoute(db)); // public i18n bundles (P4)
   app.route('/api/v1', publicMediaRoute(db)); // P8 imagery bridge — public read-only product imagery

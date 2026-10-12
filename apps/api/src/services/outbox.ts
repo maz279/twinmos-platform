@@ -8,7 +8,8 @@ export interface OutboxPayload {
   entityType?: string;
   entityId?: string | number;
   slug?: string;
-  action?: 'publish' | 'unpublish' | 'archive' | 'delete' | 'update';
+  action?: 'publish' | 'unpublish' | 'archive' | 'delete' | 'update' | string;
+  [key: string]: unknown;
 }
 
 /**
