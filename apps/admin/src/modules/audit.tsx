@@ -122,7 +122,6 @@ export default function AuditLog({ nav, me }: ModProps) {
       return [...data.items, ...older];
     });
     setCursor(data.cursor);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, data]);
 
   async function loadMore() {

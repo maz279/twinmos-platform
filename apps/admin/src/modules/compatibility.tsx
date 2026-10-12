@@ -43,7 +43,7 @@ export default function Compatibility({ canWrite }: { canWrite: boolean }) {
     return apiGet('/admin/compatibility' + (qs.toString() ? '?' + qs.toString() : ''));
   }, [query.q, query.gen, query.type]);
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data?.items]);
   const coverage = useMemo(() => {
     const byType: Record<string, number> = {};
     for (const r of items) byType[r.deviceType] = (byType[r.deviceType] ?? 0) + 1;

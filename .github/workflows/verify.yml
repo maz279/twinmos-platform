@@ -1,0 +1,53 @@
+name: verify-kit
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Nightly at 03:00 UTC
+  workflow_dispatch:
+  push:
+    branches: [main, 'release/**']
+
+jobs:
+  gate-a-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: GATE-01 Typecheck
+        run: npm run typecheck
+
+      - name: GATE-02 Admin Lint (zero warnings)
+        run: node tooling/verify/walk-admin.mjs
+
+      - name: GATE-05 Dependency Audit Policy
+        run: node tooling/verify/check-dependencies.mjs
+
+      - name: STATIC-A Repository Static Sweep
+        run: node tooling/verify/static-sweep.mjs
+
+      - name: PG-05 Migration Journal Guard
+        run: node tooling/verify/check-migration-journal.mjs
+
+      - name: EDGE-01 & EDGE-RIP Edge Real-IP Proof
+        run: node tooling/verify/edge-ip-proof.mjs
+
+      - name: DATA-01 & DATA-02 Translation Encoding Integrity
+        run: node --experimental-strip-types --no-warnings tooling/verify/check-translations.mjs
+
+      - name: GATE-03 Unit & E2E Security Tests
+        run: npm test --workspace @twinmos/api
+
+      - name: BUILD-01 & CONTENT-03 Build & Provenance
+        run: |
+          npm run build --workspace @twinmos/web
+          npm run build --workspace @twinmos/admin
+          node tooling/verify/build-provenance.mjs

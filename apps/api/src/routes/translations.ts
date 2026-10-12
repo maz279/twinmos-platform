@@ -204,6 +204,19 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     if (guard instanceof Response) return guard;
     const units = parseXliff(xml);
     if (!units.length) return c.json(problem(422, 'Validation Failed', 'No trans-unit (XLIFF 1.2) or unit (XLIFF 2.0) elements found.'), 422, { 'Content-Type': P });
+    const corruptedUnits = units.filter((u) => u.target != null && (u.target.includes('???') || u.target.includes('\uFFFD')));
+    if (corruptedUnits.length > 0) {
+      return c.json(
+        problem(
+          422,
+          'Encoding Validation Failed',
+          `${corruptedUnits.length} trans-unit target(s) contain corrupted characters (??? or \\uFFFD).`,
+          corruptedUnits.map((u) => ({ path: ['xml', u.id], message: `Target for unit "${u.id}" contains encoding-loss characters (??? or \\uFFFD)` }))
+        ),
+        422,
+        { 'Content-Type': P }
+      );
+    }
     let imported = 0;
     let skippedEmpty = 0;
     for (const u of units) {
@@ -224,6 +237,18 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     const parsed = translationUpsertSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
     const { locale, ns, key, value } = parsed.data;
+    if (value.includes('???') || value.includes('\uFFFD')) {
+      return c.json(
+        problem(
+          422,
+          'Encoding Validation Failed',
+          'Translation value contains corrupted characters (??? or \\uFFFD).',
+          [{ path: ['value'], message: 'Value contains encoding-loss characters (??? or \\uFFFD)' }]
+        ),
+        422,
+        { 'Content-Type': P }
+      );
+    }
     const guard = await translateGuard(c, ns);
     if (guard instanceof Response) return guard;
     await db.insert(translation).values({ locale, ns, key, value, updatedBy: guard.user.id })
@@ -240,6 +265,19 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     const parsed = translationImportSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
     const { locale, ns, strings } = parsed.data;
+    const corruptedEntries = Object.entries(strings).filter(([_, val]) => val.includes('???') || val.includes('\uFFFD'));
+    if (corruptedEntries.length > 0) {
+      return c.json(
+        problem(
+          422,
+          'Encoding Validation Failed',
+          `${corruptedEntries.length} translation value(s) contain corrupted characters (??? or \\uFFFD).`,
+          corruptedEntries.map(([k]) => ({ path: ['strings', k], message: `Key "${k}" contains encoding-loss characters` }))
+        ),
+        422,
+        { 'Content-Type': P }
+      );
+    }
     const guard = await translateGuard(c, ns);
     if (guard instanceof Response) return guard;
     const entries = Object.entries(strings);

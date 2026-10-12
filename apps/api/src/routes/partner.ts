@@ -143,7 +143,7 @@ export function partnerRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
 }
 
 
-export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
+export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession>; auth?: any }) {
   const r = new Hono();
   const FILES_DIR = process.env.PARTNER_FILES_DIR ?? './data/partner-files';
 
@@ -241,16 +241,64 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     const parsed = partnerMemberAddSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
     const { user } = await import('@twinmos/db');
-    const found = await db.select({ id: user.id }).from(user).where(eq(user.email, parsed.data.email)).limit(1);
-    if (!found[0]) {
-      return c.json(problem(404, 'No account with that email', 'The partner must create a site account first (sign-up), then be added.'), 404, { 'Content-Type': P });
+    const normalizedEmail = parsed.data.email.toLowerCase().trim();
+    const found = await db.select({ id: user.id }).from(user).where(eq(user.email, normalizedEmail)).limit(1);
+    let userId = found[0]?.id;
+    let autoProvisioned = false;
+
+    if (!userId) {
+      // A1 / A-INVITE: Self-signup is disabled in production. Staff member invitation
+      // auto-provisions the user account with role='member' and mustChangePassword=true.
+      const tempPassword = 'TwinMOS-' + crypto.randomUUID().slice(0, 8) + '!' + crypto.randomUUID().slice(0, 8);
+      if (deps.auth?.api?.createUser) {
+        try {
+          const res = await deps.auth.api.createUser({
+            body: {
+              email: normalizedEmail,
+              password: tempPassword,
+              name: normalizedEmail.split('@')[0],
+              role: 'member',
+            },
+          });
+          const createdUser = res.user ?? res;
+          userId = createdUser.id;
+          await db.update(user).set({ mustChangePassword: true, emailVerified: true }).where(eq(user.id, userId));
+          autoProvisioned = true;
+        } catch {
+          // fallback to direct insertion
+        }
+      }
+      if (!userId) {
+        const generatedId = crypto.randomUUID();
+        const [newUser] = await db.insert(user).values({
+          id: generatedId,
+          email: normalizedEmail,
+          name: normalizedEmail.split('@')[0],
+          role: 'member',
+          emailVerified: true,
+          mustChangePassword: true,
+        }).returning({ id: user.id });
+        userId = newUser.id;
+        autoProvisioned = true;
+      }
+      try {
+        const { sendMail } = await import('../mailer.ts');
+        await sendMail({
+          to: normalizedEmail,
+          subject: 'TwinMOS Partner Portal Invitation',
+          text: `You have been added to the TwinMOS Partner Portal. Your temporary password is: ${tempPassword}\nPlease sign in and set your new password immediately.`,
+        });
+      } catch (err) {
+        console.warn('[partner] invitation mail failed:', err);
+      }
     }
+
     const rows = await db.insert(partnerMember)
-      .values({ orgId: id, userId: found[0].id, role: parsed.data.role })
+      .values({ orgId: id, userId, role: parsed.data.role })
       .onConflictDoNothing().returning();
     if (!rows[0]) return c.json(problem(409, 'Already a member of this organization'), 409, { 'Content-Type': P });
-    await auditRow(c, guard.user.id, 'partnerMember.add', String(id), { email: parsed.data.email, role: parsed.data.role });
-    return c.json(rows[0], 201);
+    await auditRow(c, guard.user.id, 'partnerMember.add', String(id), { email: normalizedEmail, role: parsed.data.role, autoProvisioned });
+    return c.json({ ...rows[0], email: normalizedEmail, userCreated: autoProvisioned, member: { ...rows[0], email: normalizedEmail } }, 201);
   });
 
   r.get('/partner-orgs/:id/members', async (c) => {

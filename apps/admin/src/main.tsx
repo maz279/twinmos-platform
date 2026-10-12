@@ -1,3 +1,4 @@
+import './zod-jitless';
 // TwinMOS Admin — P1+ console: login/MFA state machine + tab workspace shell.
 // Navigation architecture (grouped sidebar, mega menu, multi-tab, ⌘K search) lives
 // in shell.tsx and nav.ts (docs/08-ADMIN-CONSOLE-PLAN.md); this file owns state.
@@ -9,6 +10,7 @@ import Login from './login';
 import type { Me } from './login';
 import ForcePasswordChange from './force-password';
 import MfaSetup from './mfa';
+import ResetPassword from './reset-password';
 import { MODULES, visibleModules } from './nav';
 import type { NavOpen, TabCtx } from './nav';
 import { Shell } from './shell';
@@ -251,6 +253,21 @@ function App() {
     } catch { /* proceed */ }
     setState('authed');
   }).catch(() => { setState('anon'); });
+  const resetToken = typeof window !== 'undefined'
+    ? (new URLSearchParams(window.location.search).get('token')
+      || (window.location.hash.startsWith('#reset')
+        ? new URLSearchParams(window.location.hash.replace(/^#reset\??/, '')).get('token')
+        : null))
+    : null;
+
+  if (resetToken) {
+    return (
+      <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 32, background: '#0F1720' }}>
+        <ResetPassword token={resetToken} onDone={() => { window.location.href = window.location.pathname; }} />
+      </main>
+    );
+  }
+
   if (state === 'loading') return null;
   if (state === 'anon') return <Login onDone={refreshMe} />;
   if (state === 'must-change') return <ForcePasswordChange email={me?.user?.email ?? ''} onDone={refreshMe} />;

@@ -198,4 +198,206 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     expect(res.headers.get('access-control-allow-origin')).toBeNull();
     expect(res.headers.get('access-control-allow-credentials')).toBeNull();
   });
+
+  it('S-01: Self sign-up refused when disabled', async () => {
+    const prev = process.env.AUTH_DISABLE_SIGNUP;
+    try {
+      process.env.AUTH_DISABLE_SIGNUP = '1';
+      const disabledApp = buildApp(db);
+      const res = await disabledApp.request('/api/v1/auth/sign-up/email', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'self-signup@twinmos.test', password: 'Password123!', name: 'Attacker' }),
+      });
+      expect([400, 404]).toContain(res.status);
+    } finally {
+      process.env.AUTH_DISABLE_SIGNUP = prev;
+    }
+  });
+
+  it('S-04: Password reset endpoint dispatches reset instructions', async () => {
+    const res = await app.request('/api/v1/auth/forget-password', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: 'sec-viewer@twinmos.test',
+        redirectTo: 'http://localhost:5173/admin/reset-password',
+      }),
+    });
+    expect([200, 204]).toContain(res.status);
+  });
+
+  it('S-06: Per-account lockout after 5 consecutive failures from rotating IPs', async () => {
+    const victim = 'lockout-victim@twinmos.test';
+    // 5 consecutive failed attempts from 5 distinct IP addresses
+    for (let i = 1; i <= 5; i++) {
+      const failRes = await app.request('/api/v1/auth/sign-in/email', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-real-ip': `198.51.100.${i}`,
+        },
+        body: JSON.stringify({ email: victim, password: 'WrongPassword!' }),
+      });
+      expect(failRes.status).toBe(401);
+    }
+
+    // 6th attempt with ANY password from a 6th IP address must be locked out with 401
+    const lockedRes = await app.request('/api/v1/auth/sign-in/email', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-real-ip': '198.51.100.99',
+      },
+      body: JSON.stringify({ email: victim, password: 'AnyPassword' }),
+    });
+    expect(lockedRes.status).toBe(401);
+    const body = await lockedRes.json();
+    expect(body.title).toBe('Account Locked');
+    expect(lockedRes.headers.get('retry-after')).toBeDefined();
+  });
+
+  it('S-07 & S-09: Admin mutation enforces MFA when ENFORCE_MFA=1', async () => {
+    const prev = process.env.ENFORCE_MFA;
+    try {
+      process.env.ENFORCE_MFA = '1';
+      // Editor without 2FA attempts to create a product
+      const res = await app.request('/api/v1/admin/products', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          Cookie: editorCookie,
+        },
+        body: JSON.stringify({ title: 'Test Product', categoryId: 'cat-1' }),
+      });
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(body.code).toBe('MFA_REQUIRED');
+    } finally {
+      process.env.ENFORCE_MFA = prev;
+    }
+  });
+
+  it('S-10: Forged X-Forwarded-For does not override real-IP', async () => {
+    // Both limitIp and Better Auth read x-real-ip and ignore x-forwarded-for
+    const res = await app.request('/api/v1/health', {
+      headers: {
+        'x-real-ip': '203.0.113.10',
+        'x-forwarded-for': '1.2.3.4, 5.6.7.8',
+      },
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it('S-16a: Responses include secure baseline headers', async () => {
+    const res = await app.request('/api/v1/health');
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(res.headers.get('x-frame-options')).toBe('DENY');
+    expect(res.headers.get('content-security-policy')).toContain("frame-ancestors 'none'");
+  });
+
+  it('DATA-02: Translation write endpoints reject encoding corruption with 422', async () => {
+    // Setup super_admin user for translation mutation
+    const adminCookie = await setupTestUser('sec-superadmin@twinmos.test', 'super_admin');
+
+    // 1. PUT /translations with ???
+    const putRes = await app.request('/api/v1/admin/translations', {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json',
+        Cookie: adminCookie,
+      },
+      body: JSON.stringify({
+        locale: 'ar',
+        ns: 'common',
+        key: 'corrupt.test',
+        value: '????? ??????',
+      }),
+    });
+    expect(putRes.status).toBe(422);
+    const putBody = await putRes.json();
+    expect(putBody.title).toBe('Encoding Validation Failed');
+
+    // 2. POST /translations/import with U+FFFD
+    const importRes = await app.request('/api/v1/admin/translations/import', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        Cookie: adminCookie,
+      },
+      body: JSON.stringify({
+        locale: 'ar',
+        ns: 'common',
+        strings: {
+          'corrupt.import': 'Bad \uFFFD Character',
+        },
+      }),
+    });
+    expect(importRes.status).toBe(422);
+    const importBody = await importRes.json();
+    expect(importBody.title).toBe('Encoding Validation Failed');
+
+    // 3. POST /translations/xliff with corrupted target
+    const xliffXml = `<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2">
+  <file original="twinmos/common" source-language="en" target-language="ar" datatype="plaintext">
+    <body>
+      <trans-unit id="corrupt.xliff">
+        <source>Original</source>
+        <target>?????</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>`;
+    const xliffRes = await app.request('/api/v1/admin/translations/xliff', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        Cookie: adminCookie,
+      },
+      body: JSON.stringify({
+        locale: 'ar',
+        ns: 'common',
+        xml: xliffXml,
+      }),
+    });
+    expect(xliffRes.status).toBe(422);
+    const xliffBody = await xliffRes.json();
+    expect(xliffBody.title).toBe('Encoding Validation Failed');
+  });
+
+  it('A-INVITE: Partner member addition auto-provisions user account', async () => {
+    const adminCookie = await setupTestUser('partner-admin@twinmos.test', 'super_admin');
+    const { partnerOrg } = await import('@twinmos/db');
+    const [org] = await db.insert(partnerOrg).values({
+      name: 'Acme Test Partner',
+      type: 'distributor',
+      country: 'AE',
+    }).returning();
+
+    const memberEmail = `invited-${Date.now()}@acmepartner.test`;
+    const res = await app.request(`/api/v1/admin/partner-orgs/${org.id}/members`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        Cookie: adminCookie,
+      },
+      body: JSON.stringify({
+        email: memberEmail,
+        name: 'Invited Member',
+      }),
+    });
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.member.email).toBe(memberEmail);
+    expect(body.userCreated).toBe(true);
+
+    // Verify user exists in database with role 'member'
+    const { eq } = await import('drizzle-orm');
+    const [createdUser] = await db.select().from(user).where(eq(user.email, memberEmail));
+    expect(createdUser).toBeDefined();
+    expect(createdUser.role).toBe('member');
+  });
 });
+

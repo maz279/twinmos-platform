@@ -9,7 +9,7 @@ import QRCode from 'qrcode';
 import { API } from './api';
 
 const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
-const LOGO = '/assets/img/logo.webp';
+const LOGO = `${import.meta.env.BASE_URL}assets/img/logo.webp`;
 const cardIn: React.CSSProperties = {
   width: '100%', padding: '11px 13px', border: '1px solid #D9E0E8', borderRadius: 8,
   fontSize: 14, marginBottom: 12, background: '#fff', boxSizing: 'border-box',

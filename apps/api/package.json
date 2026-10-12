@@ -8,7 +8,8 @@
     "test": "vitest run",
     "db:migrate": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/migrate.ts",
     "db:seed": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/seed.ts",
-    "db:reset": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/reset.ts"
+    "db:reset": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/reset.ts",
+    "db:repair-translations": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/repair-translations.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",

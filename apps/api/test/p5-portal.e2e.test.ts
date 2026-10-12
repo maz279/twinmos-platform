@@ -121,12 +121,14 @@ describe('partner portal', () => {
       body: JSON.stringify({ email: 'p5-dist@twinmos.dev' }),
     });
     expect(dup.status).toBe(409);
+    // A1: staff invitation auto-provisions user account (role: member) when user does not exist yet
     const ghost = await app.request(`/api/v1/admin/partner-orgs/${orgId}/members`, {
       method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
       body: JSON.stringify({ email: 'ghost@nowhere.dev' }),
     });
-    expect(ghost.status).toBe(404);
-    expect((await ghost.json()).detail).toContain('account');
+    expect(ghost.status).toBe(201);
+    const ghostBody = await ghost.json();
+    expect(ghostBody.userCreated).toBe(true);
   });
 
   it('/partner/me returns org + role for the active member', async () => {

@@ -1,23 +1,36 @@
 import { defineConfig } from 'astro/config';
+import { writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 
-// P1: URL scheme preserved 1:1 from the prototype — every route emits /page.html
-// (format:'file') so all internal links (shop.html?cat=…, product.html?id=…)
-// keep working verbatim. Parity testing runs against `astro build` + `astro preview`.
-// P4: 9-locale routing (EN default, unprefixed; BN removed per the
-// post-remediation fact base). Locale landings live under /[locale]/.
+function buildInfoIntegration() {
+  return {
+    name: 'build-info-stamp',
+    hooks: {
+      'astro:build:done': async ({ dir }) => {
+        let commitSha = process.env.GIT_SHA || process.env.GITHUB_SHA || '';
+        if (!commitSha) {
+          try {
+            commitSha = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+          } catch {
+            commitSha = 'dev-local';
+          }
+        }
+        const outDir = fileURLToPath(dir);
+        writeFileSync(
+          `${outDir}/build-info.json`,
+          JSON.stringify({ app: 'web', commitSha, builtAt: new Date().toISOString() }, null, 2)
+        );
+      },
+    },
+  };
+}
+
 export default defineConfig({
   site: 'https://www.twinmos.com',
   output: 'static',
   build: { format: 'file' },
-  // Production parity for `astro preview` (dev + preview both honor this):
-  // the deployed shape is same-origin /api/v1 behind the nginx reverse proxy
-  // (deploy/nginx/twinmos.conf). Locally, a same-origin build (PUBLIC_API_URL
-  // unset/empty) needs the same forwarding to reach the API on :8787.
-  // Cross-origin dev (apps/web/.env PUBLIC_API_URL=…) bypasses this entirely.
-  // `astro preview` does NOT proxy (server.proxy is dev-only) — production-shape
-  // preview locally is served by tooling/prod-preview.mjs (static dist +
-  // /api forwarding, mirroring deploy/nginx/twinmos.conf). server.proxy here
-  // covers bare-clone `astro dev` without PUBLIC_API_URL in apps/web/.env.
+  integrations: [buildInfoIntegration()],
   server: { proxy: { '/api': 'http://127.0.0.1:8787' } },
   i18n: {
     defaultLocale: 'en',
@@ -25,3 +38,4 @@ export default defineConfig({
     routing: { prefixDefaultLocale: false },
   },
 });
+

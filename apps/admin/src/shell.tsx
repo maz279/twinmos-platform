@@ -76,7 +76,7 @@ function RailLogo({ collapsed, onToggle }: { collapsed: boolean; onToggle: () =>
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '10px 0 8px' : '0 0 14px' }}>
       <span style={{ display: 'inline-flex', background: 'rgba(255,255,255,.94)', borderRadius: 9, padding: '7px 10px', boxShadow: '0 4px 14px rgba(2,12,28,.38)', flexShrink: 0 }}>
-        <img src="/assets/img/logo.webp" alt="TwinMOS" style={{ height: 18, width: 'auto', display: 'block' }} />
+        <img src={`${import.meta.env.BASE_URL}assets/img/logo.webp`} alt="TwinMOS" style={{ height: 18, width: 'auto', display: 'block' }} />
       </span>
       {!collapsed && (
         <span style={{ lineHeight: 1.15 }}>

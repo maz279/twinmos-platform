@@ -1,6 +1,6 @@
 # DEPLOY — TwinMOS production runbook (P7)
 
-**Topology (docs/01 §4.6):** Cloudflare (TLS, WAF) → VM nginx (this config: `deploy/nginx/twinmos.conf`) → static web + admin bundles on disk, `/api/` → Node service (`deploy/systemd/twinmos-api.service`) → Postgres 16 (same VM or dedicated). One origin keeps Better Auth cookies same-site.
+**Topology (docs/01 §4.6, ADR D-2):** Cloudflare (TLS, WAF) → VM nginx (`deploy/nginx/twinmos.conf` with `deploy/nginx/realip_cloudflare.conf`) → static web + admin bundles on disk, `/api/` → Node service (`deploy/systemd/twinmos-api.service`) → Postgres 18 (same VM or dedicated managed PG18 per ADR D-2). One origin keeps Better Auth cookies same-site.
 
 ## 0. Prerequisites (once per VM)
 
@@ -12,10 +12,10 @@ sudo mkdir -p /opt/twinmos/api /var/www/twinmos/web /var/www/twinmos/admin \
              /etc/twinmos /var/backups/twinmos
 sudo chown -R twinmos:twinmos /var/lib/twinmos
 
-# node 24 + postgres 16 + nginx (distro or nodesource/pgdg)
+# node 24 + postgres 18 (PGDG repository) + nginx
 ```
 
-## 1. Database
+## 1. Database (PostgreSQL 18 pinned)
 
 ```bash
 sudo -u postgres createuser twinmos && sudo -u postgres createdb twinmos -O twinmos
@@ -29,8 +29,10 @@ sudo -u postgres createuser twinmos && sudo -u postgres createdb twinmos -O twin
 cd apps/api && npm ci --omit=dev
 # secrets: sudo $EDITOR /etc/twinmos/api.env   (copy .env.production.example; chmod 600)
 export $(cat /etc/twinmos/api.env | xargs) && npm run db:migrate   # applies all migrations
-npm run db:seed          # first boot only: admin user + demo/reference rows
-# (rotate the seeded admin password immediately on first sign-in)
+# Bootstrap super admin creation (SEED-01, SEED-02):
+# Demo partner orgs, demo leads, and demo translations are strictly skipped in production/bootstrap mode.
+BOOTSTRAP_SEED=1 SEED_ADMIN_EMAIL=admin@twinmos.com SEED_ADMIN_PASSWORD='<SECURE_STRONG_PASSWORD>' npm run db:seed
+# (rotate or enroll 2FA immediately on first sign-in)
 sudo cp deploy/systemd/twinmos-api.service /etc/systemd/system/
 sudo systemctl daemon-reload && sudo systemctl enable --now twinmos-api
 curl -s http://127.0.0.1:8787/api/v1/health   # expect {status:"ok"}
@@ -57,12 +59,15 @@ sudo rsync -a --delete apps/admin/dist/ /var/www/twinmos/admin/
 ## 4. nginx + Cloudflare
 
 ```bash
+sudo cp deploy/nginx/realip_cloudflare.conf /etc/nginx/snippets/realip_cloudflare.conf
 sudo cp deploy/nginx/twinmos.conf /etc/nginx/sites-available/twinmos.conf
 sudo ln -s /etc/nginx/sites-available/twinmos.conf /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-Cloudflare DNS → VM (proxied). Edge rules: TLS full-strict, Brotli, "Full (strict)" origin cert (`/etc/nginx/certs/twinmos.pem`). Set `TRUST_PROXY=1` in `/etc/twinmos/api.env` (already in the template) so rate limiting reads `cf-connecting-ip`.
+Cloudflare DNS → VM (proxied). Edge rules: TLS full-strict, Brotli, "Full (strict)" origin cert (`/etc/nginx/certs/twinmos.pem`).
+nginx includes `realip_cloudflare.conf` to restore client IP from Cloudflare ranges and passes single trusted `X-Real-IP: $remote_addr`.
+Set `TRUST_PROXY=1` in `/etc/twinmos/api.env` so the API reads the single canonical `X-Real-IP` header (`EDGE-01`).
 
 ## 5. Backups
 

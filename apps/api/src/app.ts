@@ -37,7 +37,7 @@ import type { Context } from 'hono';
 export function clientIp(c: Context): string {
   const trustHeader = process.env.TRUST_PROXY === '1' || process.env.NODE_ENV !== 'production';
   if (trustHeader) {
-    return c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'local';
+    return c.req.header('x-real-ip') ?? c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'local';
   }
   const addr = (c.env as { incoming?: { socket?: { remoteAddress?: string } } })?.incoming?.socket?.remoteAddress;
   return addr ?? 'unknown';
@@ -112,13 +112,13 @@ export function buildApp(db: DB) {
     await next();
   });
 
-  // Tiered body limit middleware (NF-18, NEW-05)
+  // Tiered body limit middleware (NF-18, NEW-05, V-14)
   app.use('/api/v1/*', async (c, next) => {
     const p = c.req.path;
     let maxSize = 256 * 1024; // 256 KB default
     if (p.startsWith('/api/v1/admin/media') || p.startsWith('/api/v1/admin/serials/import')) {
       maxSize = 10 * 1024 * 1024; // 10 MB media / serial CSV ingest
-    } else if (p.startsWith('/api/v1/partner')) {
+    } else if (p.startsWith('/api/v1/partner') || (p.startsWith('/api/v1/admin/partner-orgs/') && p.endsWith('/assets'))) {
       maxSize = 25 * 1024 * 1024; // 25 MB partner assets
     } else if (p.startsWith('/api/v1/auth')) {
       maxSize = 64 * 1024; // 64 KB auth
@@ -218,6 +218,70 @@ export function buildApp(db: DB) {
       );
     }
   });
+
+  // Per-account login lockout guard (S-07 / A4a):
+  // Tracks consecutive failed login attempts by email address. After 5 failures within 15 minutes,
+  // locks the account for 15 minutes, neutralizing rotating-IP brute force attacks.
+  const LOGIN_FAILURES = new Map<string, { count: number; lockedUntil: number }>();
+  app.post('/api/v1/auth/sign-in/email', async (c) => {
+    let email = '';
+    try {
+      const cloned = c.req.raw.clone();
+      const body = await cloned.json();
+      if (typeof body?.email === 'string') email = body.email.toLowerCase().trim();
+    } catch { /* proceed */ }
+
+    const now = Date.now();
+    if (email) {
+      const rec = LOGIN_FAILURES.get(email);
+      if (rec && rec.lockedUntil > now) {
+        const waitSec = Math.ceil((rec.lockedUntil - now) / 1000);
+        c.header('Retry-After', String(waitSec));
+        return c.json(
+          problem(401, 'Account Locked', `Account is temporarily locked due to consecutive failed login attempts. Retry after ${waitSec} seconds.`),
+          401,
+          { 'Content-Type': 'application/problem+json' }
+        );
+      }
+    }
+
+    const res = await auth.handler(c.req.raw);
+    if (email) {
+      if (res.status === 200) {
+        LOGIN_FAILURES.delete(email);
+      } else if (res.status === 401) {
+        const rec = LOGIN_FAILURES.get(email) ?? { count: 0, lockedUntil: 0 };
+        rec.count += 1;
+        if (rec.count >= 5) {
+          rec.lockedUntil = now + 15 * 60_000;
+          console.warn(`[auth] Account locked for ${email} after 5 failed attempts`);
+        }
+        LOGIN_FAILURES.set(email, rec);
+      }
+    }
+    return res;
+  });
+
+  // Password reset bridge: maps /forget-password to Better Auth /request-password-reset
+  app.post('/api/v1/auth/forget-password', async (c) => {
+    let bodyJson: any = {};
+    try {
+      bodyJson = await c.req.raw.clone().json();
+    } catch { /* empty */ }
+    const email = bodyJson?.email ?? '';
+    const redirectTo = bodyJson?.redirectTo ?? '';
+    const origin = (process.env.BETTER_AUTH_URL ?? 'http://127.0.0.1:8787').replace(/\/$/, '');
+    const resetReq = new Request(`${origin}/api/v1/auth/request-password-reset`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(c.req.header('x-real-ip') ? { 'x-real-ip': c.req.header('x-real-ip')! } : {}),
+      },
+      body: JSON.stringify({ email, redirectTo }),
+    });
+    return auth.handler(resetReq);
+  });
+
   app.all('/api/v1/auth/*', (c) => auth.handler(c.req.raw));
 
   // ---- dev-only auto-login (operator convenience during console iteration) ----
@@ -267,13 +331,26 @@ export function buildApp(db: DB) {
         { 'Content-Type': 'application/problem+json' },
       );
     }
-    const row = (await db.select({ f: user.mustChangePassword }).from(user).where(eq(user.id, s.user.id)).limit(1))[0];
+    const row = (await db.select({ f: user.mustChangePassword, mfa: user.twoFactorEnabled }).from(user).where(eq(user.id, s.user.id)).limit(1))[0];
     if (row?.f) {
       return c.json(
         problem(403, 'Password change required', 'This account was invited with a temporary password — set a new password before using the console.'),
         403,
         { 'Content-Type': 'application/problem+json' },
       );
+    }
+    // S-09 / A4a: MFA enforcement when ENFORCE_MFA=1 on non-GET administrative actions
+    if (process.env.ENFORCE_MFA === '1' && c.req.method !== 'GET') {
+      if (!row?.mfa && ['super_admin', 'admin', 'editor'].includes(s.user.role)) {
+        return c.json(
+          {
+            ...problem(403, 'MFA Enrollment Required', 'Two-factor authentication must be enrolled before performing administrative mutations.'),
+            code: 'MFA_REQUIRED',
+          },
+          403,
+          { 'Content-Type': 'application/problem+json' }
+        );
+      }
     }
     return next();
   });
@@ -287,7 +364,7 @@ export function buildApp(db: DB) {
   app.route('/api/v1', i18nPublicRoute(db)); // public i18n bundles (P4)
   app.route('/api/v1', publicMediaRoute(db)); // P8 imagery bridge — public read-only product imagery
   app.route('/api/v1', partnerRoute(db, { requireRole, sessionFromRequest })); // P5 portal (member)
-  app.route('/api/v1/admin', partnerAdminRoute(db, { requireRole, sessionFromRequest })); // P5 portal (admin)
+  app.route('/api/v1/admin', partnerAdminRoute(db, { requireRole, sessionFromRequest, auth })); // P5 portal (admin)
   app.route('/api/v1', snCheckRoute(db)); // P5 public anti-counterfeit check
   app.route('/api/v1/admin', snReportRoute(db, { requireRole, sessionFromRequest })); // P5 reporting
   // Phase 5.3: serial registry management — batch CSV ingest, search and the

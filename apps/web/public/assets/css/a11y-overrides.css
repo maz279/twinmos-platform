@@ -145,3 +145,11 @@ button.tab,
 .b-neon p {
   color: #afc4d6;
 }
+
+/* Color-contrast remediations (E8 / AXE-01) */
+/* 1. Office company name: inline style="opacity:.75" blends --body to #6E808E (4.08:1 on white). */
+.office address i { opacity: 1 !important; }
+/* 2. The generic .form-note slate (#4E6579) also matches the black gaming cards (3.20:1). */
+.b-neon .form-note { color: #afc4d6; }
+/* 3. The compare empty-state link override must not recolour the navy .btn-primary (2.88:1). */
+#cmpMount .empty-state a.btn { color: #fff; text-decoration: none; }

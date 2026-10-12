@@ -35,7 +35,18 @@ export function initAuth(db: DB) {
     trustedOrigins: (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? '')
       .split(',').map((s) => s.trim()).filter(Boolean),
     database: drizzleAdapter(db, { provider: 'pg', schema }),
-    emailAndPassword: { enabled: true, minPasswordLength: 10, disableSignUp },
+    emailAndPassword: {
+      enabled: true,
+      minPasswordLength: 10,
+      disableSignUp,
+      requireEmailVerification: process.env.NODE_ENV === 'production' || process.env.REQUIRE_EMAIL_VERIFICATION === '1',
+      sendResetPassword: async ({ user, url, token }: any) => {
+        console.log(`[auth] sendResetPassword for ${user.email}: ${url} (token: ${token})`);
+      },
+      sendVerificationEmail: async ({ user, url, token }: any) => {
+        console.log(`[auth] sendVerificationEmail for ${user.email}: ${url} (token: ${token})`);
+      },
+    },
     disabledPaths: [
       ...(disableSignUp ? ['/sign-up/email'] : []),
       // Close admin privilege escalation & account takeover (NEW-03 / A2)
@@ -59,7 +70,7 @@ export function initAuth(db: DB) {
       database: { generateId: () => crypto.randomUUID() },
       useSecureCookies: process.env.NODE_ENV === 'production' || (process.env.BETTER_AUTH_URL?.startsWith('https://') ?? false),
       ipAddress: {
-        ipAddressHeaders: ['cf-connecting-ip', 'x-real-ip', 'x-forwarded-for'],
+        ipAddressHeaders: ['x-real-ip'],
       },
     },
     session: { expiresIn: 60 * 60 * 8, updateAge: 60 * 30 }, // 8h, refresh every 30min

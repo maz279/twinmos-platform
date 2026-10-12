@@ -25,10 +25,20 @@ npm run dev                 # api :8787 · admin :5173 (proxies /api) · web :43
 
 > **Windows dev note:** if the API is force-killed (e.g. `taskkill /F`), PGlite may abort on the next boot. Stop the server with Ctrl+C (graceful shutdown is wired), or recover with `npm run db:reset` — dev data is fully reproducible.
 
-Seeded dev admin: `admin@twinmos.dev` / `DevOnly-ChangeMe-2026!` (override via `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD`).
+> **Seed Account Configuration:** Set `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` in your local `.env` (or environment secrets in staging/production). Hardcoded default credentials are strictly rejected in staging/production by the seed runner (`SEED-01`, `SEED-02`).
 
 ## Verify
 ```bash
+# Automated Phase A close-out scorecard (12 checks: TS, ESLint, security, DB, a11y, E2E)
+npm run verify:gate-a
+
+# Interactive manual test suite (Admin security UI, invites, lockout, upload caps)
+npm run verify:manual
+
+# Visual & WCAG 2.2 AA contrast audit across 29 public routes (screenshots in tooling/verify/evidence)
+npm run verify:visual
+
+# Sanity probes
 curl http://127.0.0.1:8787/api/v1/health
 curl -X POST http://127.0.0.1:8787/api/v1/forms/contact -H 'content-type: application/json' \
      -d '{"email":"a@b.io","consent":true}'   # dev bypass skips Turnstile
