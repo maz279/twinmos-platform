@@ -19,10 +19,13 @@ import { settingsRoute } from './routes/settings.ts';
 import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
 import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
 import { snCheckRoute, snReportRoute, serialAdminRoute } from './routes/sncheck.ts';
+import { makeDeliveryRouter } from './routes/delivery/index.ts';
+import { dispatchOutbox } from './services/outbox.ts';
 import { sendMail } from './mailer.ts';
 import { auditLog, user } from '@twinmos/db';
 import { eq } from 'drizzle-orm';
 import type { DB } from '@twinmos/db';
+
 import type { Context } from 'hono';
 
 /**
@@ -311,6 +314,7 @@ export function buildApp(db: DB) {
 
   app.route('/api/v1', formsRoute(db));
   app.route('/api/v1', previewRoute(db)); // public, token-gated draft previews
+  app.route('/api/v1/delivery', makeDeliveryRouter(db, sessionFromRequest)); // Phase B Task B3 Delivery API
   // ---- P1.4: forced password rotation guard + member role restriction ------
   // Accounts invited with a system-generated temporary credential are refused
   // by every /admin route until they set their own password.
@@ -390,5 +394,17 @@ export function buildApp(db: DB) {
     return c.json({ promoted });
   });
 
+  // Outbox revalidation dispatch endpoint (Phase B Task B7)
+  app.post('/api/v1/admin/cron/dispatch-outbox', async (c) => {
+    const s = await sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': 'application/problem+json' });
+    if (!(await requireRole('editor')(c.req.raw))) {
+      return c.json(problem(403, 'Requires editor role or above'), 403, { 'Content-Type': 'application/problem+json' });
+    }
+    const result = await dispatchOutbox(db);
+    return c.json(result);
+  });
+
   return app;
 }
+

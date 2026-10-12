@@ -96,3 +96,25 @@ Restore/DR: `deploy/restore.sh` (production restore asks for the stamp; `--drill
 Static bundles: redeploy previous `dist` (keep last 3 dated copies on the VM).
 API: `git checkout <prev-tag> && systemctl restart twinmos-api`.
 Database: migrations are forward-only — restore from backup (`restore.sh`) if a migration must be undone.
+
+## 8. Containerized Staging & Automated Deployment (Phase B / DEPLOY-01)
+
+### VM Bootstrap (One-time host setup)
+```bash
+sudo ./deploy/staging/bootstrap-vm.sh
+# Provisions Docker, enables UFW firewall (allows 22, 80, 443; enforces S-11 port isolation)
+```
+
+### Automated Rollout
+```bash
+./deploy/staging/deploy.sh
+# Executes pre-flight checks, builds multi-stage containers (non-root node),
+# runs migrations, healthchecks API & Web SSR, and performs atomic edge reload.
+```
+
+### Docker Compose Topologies
+- **Base topology**: `deploy/compose/docker-compose.yml` (Edge, Web SSR, API with internal-only S-11 network, Postgres 18)
+- **Production overlay**: `deploy/compose/docker-compose.prod.yml` (resource limits, restart: always)
+- **CI overlay**: `deploy/compose/docker-compose.ci.yml` (tmpfs postgres, automated runner port maps)
+- **Dev overlay**: `deploy/compose/docker-compose.dev.yml` (loopback bind for local debugging)
+

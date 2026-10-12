@@ -1,7 +1,10 @@
 import { defineConfig } from 'astro/config';
-import { writeFileSync } from 'node:fs';
+import node from '@astrojs/node';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { execSync } from 'node:child_process';
+
 
 function buildInfoIntegration() {
   return {
@@ -17,25 +20,40 @@ function buildInfoIntegration() {
           }
         }
         const outDir = fileURLToPath(dir);
-        writeFileSync(
-          `${outDir}/build-info.json`,
-          JSON.stringify({ app: 'web', commitSha, builtAt: new Date().toISOString() }, null, 2)
-        );
+        const stamp = JSON.stringify({
+          app: 'web',
+          commitSha,
+          commit: commitSha,
+          builtAt: new Date().toISOString(),
+          nodeVersion: process.version,
+        }, null, 2);
+        writeFileSync(`${outDir}/build-info.json`, stamp);
+        try {
+          writeFileSync(resolve(outDir, '..', 'build-info.json'), stamp);
+        } catch {}
       },
     },
   };
 }
 
+
 export default defineConfig({
   site: 'https://www.twinmos.com',
   output: 'static',
   build: { format: 'file' },
+  adapter: node({ mode: 'standalone' }),
+  session: false,
   integrations: [buildInfoIntegration()],
   server: { proxy: { '/api': 'http://127.0.0.1:8787' } },
+  security: {
+    allowedDomains: [
+      { hostname: 'www.twinmos.com', protocol: 'https' },
+      { hostname: 'twinmos.com', protocol: 'https' },
+    ],
+  },
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'],
     routing: { prefixDefaultLocale: false },
   },
 });
-

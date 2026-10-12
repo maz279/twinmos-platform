@@ -82,77 +82,15 @@ const SITE_LD = JSON.stringify({
     <link rel="stylesheet" href="assets/css/main.css" />
     <link rel="stylesheet" href="assets/css/a11y-overrides.css" />
     {locale !== 'en' && <link rel="stylesheet" href="assets/css/rtl.css" />}
+    <meta name="twinmos-api" content={import.meta.env.PUBLIC_API_URL ?? ''} />
+    <meta name="turnstile-site-key" content={import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? ''} />
     <script type="application/ld+json" set:html={ORG_LD} />
     <script type="application/ld+json" set:html={SITE_LD} />
-    <script>if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js').catch(function(){});}</script>
   </head>
   <body class={bodyClass}>
     <slot />
-    <script is:inline define:vars={{ apiUrl: import.meta.env.PUBLIC_API_URL ?? '', turnstileSiteKey: import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '' }}>
-      window.TWINMOS_API = apiUrl; // '' → same-origin /api/v1 (prod reverse proxy); set PUBLIC_API_URL for cross-origin dev
-      window.TURNSTILE_SITE_KEY = turnstileSiteKey; // '' → widget stays hidden (dev); set PUBLIC_TURNSTILE_SITE_KEY for production
-    </script>
-    <!-- PDP deep links: discover the hero image at parse-end (the app layer
-         renders it ~3s later). Map loaded async; preload is best-effort. -->
-    <script is:inline>
-      (function () {
-        try {
-          if (!/product\.html$/.test(location.pathname)) return;
-          var id = new URLSearchParams(location.search).get('id');
-          if (!id) return;
-          var s = document.createElement('script');
-          s.src = 'assets/js/pdp-hero.js';
-          s.onload = function () {
-            var src = window.PDP_HERO && window.PDP_HERO[id];
-            if (!src) return;
-            var l = document.createElement('link');
-            l.rel = 'preload';
-            l.as = 'image';
-            l.href = src;
-            document.head.appendChild(l);
-          };
-          document.body.appendChild(s);
-        } catch (e) { /* best-effort */ }
-      })();
-    </script>
-    <!-- App layer boots post-first-paint: the server-rendered hero (LCP) paints
-         while the heavy data.js/app.js parse+hydrate right after (measured LCP:
-         1.4s with this boot vs 4.5s with a load-event boot vs 7.1s on the
-         prototype's body-end scripts). Order-preserving (async=false). -->
-    <script is:inline>
-      (function () {
-        /* URL-param hygiene before the app layer parses them: app.js renders
-         * ?id/?cat/?q values into the DOM, so strip markup-significant bytes
-         * at the entry point. app.js itself stays byte-identical to the
-         * audited prototype; this wrapper is the port's sanitize boundary. */
-        try {
-          var s = location.search;
-          if (s && /[<>"'`]/.test(s)) {
-            var params = new URLSearchParams(s);
-            var clean = new URLSearchParams();
-            params.forEach(function (v, k) {
-              clean.set(k, v.replace(/[<>"'`]/g, ''));
-            });
-            var qs = clean.toString();
-            history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
-          }
-        } catch (e) { /* never block the page */ }
-
-        var files = ['assets/js/data.js', 'assets/js/cms-content.js', 'assets/js/cms-merge.js', 'assets/js/app.js', 'assets/js/img-dims.js', 'assets/js/a11y.js', 'assets/js/forms.js', 'assets/js/i18n.js', 'assets/js/portal.js'];
-        function boot() {
-          files.forEach(function (src) {
-            var s = document.createElement('script');
-            s.src = src;
-            s.async = false;
-            document.body.appendChild(s);
-          });
-        }
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(boot, { timeout: 300 });
-        } else {
-          setTimeout(boot, 300);
-        }
-      })();
-    </script>
+    <!-- App layer boots post-first-paint via layout-init.js (eliminates unsafe-inline in script-src) -->
+    <script is:inline src="assets/js/layout-init.js"></script>
   </body>
 </html>
+

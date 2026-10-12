@@ -1,0 +1,39 @@
+# Production deployment overlay
+services:
+  edge:
+    restart: always
+    volumes:
+      - /etc/letsencrypt:/etc/nginx/certs:ro
+      - ssr_cache:/var/cache/nginx
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+
+  web:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+
+  api:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+
+  postgres:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+volumes:
+  ssr_cache:

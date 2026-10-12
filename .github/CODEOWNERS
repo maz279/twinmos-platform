@@ -1,0 +1,25 @@
+# TwinMOS Monorepo CODEOWNERS (PROC-01)
+# Enforces PR review approval requirements across monorepo boundaries
+
+*                   @twinmos/platform-core
+
+# Edge and deployment infrastructure
+/deploy/            @twinmos/devops-team @twinmos/platform-core
+/.github/workflows/ @twinmos/devops-team @twinmos/platform-core
+/Dockerfile*        @twinmos/devops-team
+/.dockerignore      @twinmos/devops-team
+
+# Web frontend (Astro SSR)
+/apps/web/          @twinmos/frontend-team @twinmos/platform-core
+
+# Admin console SPA
+/apps/admin/        @twinmos/admin-team @twinmos/platform-core
+
+# Core API backend
+/apps/api/          @twinmos/backend-team @twinmos/platform-core
+
+# Database schemas & migrations
+/packages/db/       @twinmos/database-team @twinmos/platform-core
+
+# Shared contracts and schemas
+/packages/shared/   @twinmos/platform-core

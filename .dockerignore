@@ -1,0 +1,29 @@
+# Git and ide
+.git
+.github
+.gitignore
+.vscode
+.idea
+
+# Workspace untracked data and logs
+workspace/
+apps/api/data/
+*.log
+*.tmp
+.env
+.env.*
+!.env.example
+
+# Build artifacts and caches
+dist/
+build/
+.cache/
+.astro/
+coverage/
+node_modules/
+npm-debug.log*
+
+# Test fixtures and reports
+playwright-report/
+test-results/
+tooling/verify/evidence/

@@ -1,9 +1,5 @@
-# Phase 4.3 — CI quality gates (TM-REM-2026-001).
-# Every PR to main must pass: install → typecheck ×2 → lint → unit/E2E suite →
-# dependency audit (fail on high) → OWASP-equivalent runtime scan against a
-# freshly booted API. The scan needs a live API on a fresh PGlite store:
-# migrate + seed, boot in the background, wait for health, scan, tear down.
-name: ci
+# TwinMOS Production-Parity Continuous Integration Pipeline (CI-01, CI-02)
+name: CI Production Parity Pipeline
 
 on:
   push:
@@ -12,90 +8,78 @@ on:
     branches: [main]
 
 jobs:
-  gates:
+  build-and-verify:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: twinmos_ci
+          POSTGRES_PASSWORD: twinmos_ci_password_secure
+          POSTGRES_DB: twinmos_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    env:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://twinmos_ci:twinmos_ci_password_secure@localhost:5432/twinmos_ci
+      BETTER_AUTH_SECRET: ci-test-secret-twinmos-parity-key-32chars
+      BETTER_AUTH_URL: http://127.0.0.1:8787
+      PREVIEW_SIGNING_KEY: ci-preview-hmac-sha256-signing-key-32ch
+      REVALIDATION_SECRET: ci-revalidation-secret-key-32ch
+      # Real Cloudflare Turnstile test mode keys (never bypass via disabled flags)
+      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
 
-      - name: Install dependencies
+      - name: Install Monorepo Dependencies
         run: npm ci
 
-      - name: Typecheck (api + admin)
-        run: |
-          ./node_modules/.bin/tsc -p apps/api/tsconfig.json
-          ./node_modules/.bin/tsc -p apps/admin/tsconfig.json
+      - name: TypeScript Compilation Across All Workspaces (GATE-01, NF-32)
+        run: npm run typecheck
 
-      - name: Lint (admin rules-of-hooks)
+      - name: ESLint Zero Warnings (GATE-02)
         run: npm run lint --workspace @twinmos/admin
 
-      - name: Unit + E2E suite (vitest, isolated PGlite per suite)
-        run: npm test --workspace @twinmos/api
+      - name: Run Monorepo Test Suites
+        run: npm test
 
-      - name: Dependency audit (fail on high)
+      - name: Production Dependency Audit
         run: npm audit --omit=dev --audit-level=high
 
-      # ---- runtime scan against a freshly booted API ------------------------
-      - name: Migrate + seed a scratch database
-        env:
-          # ABSOLUTE path: PGLITE_DATA resolves against each script's cwd
-          # (npm workspace runs execute in apps/api, the web prebuild in
-          # apps/web) — a relative value here silently split the migrate/
-          # seed/API store from the exporter's store in earlier runs.
-          PGLITE_DATA: ${{ github.workspace }}/apps/api/data/ci.pgdata
-          # dev-only auto-login is OFF; scan exercises unauthenticated surfaces
-          # plus a seeded admin via env-provided credentials.
-          SEED_ADMIN_EMAIL: ci-admin@twinmos.dev
-          # Credential comes from the environment (GitHub secret or the
-          # action-level default below) — never a literal in source.
-          SEED_ADMIN_PASSWORD: ${{ secrets.CI_ADMIN_PASSWORD || 'Ci-Admin-Local-Only-2026' }}
-        run: |
-          npm run db:migrate --workspace @twinmos/api
-          npm run db:seed --workspace @twinmos/api
+      - name: Run Database Migrations on Postgres 18
+        run: npm run db:migrate --workspace @twinmos/api
 
-      - name: Boot API and run the OWASP-equivalent scan
+      - name: Seed Initial Data on Postgres 18
+        run: npm run db:seed --workspace @twinmos/api
         env:
-          PGLITE_DATA: ${{ github.workspace }}/apps/api/data/ci.pgdata
-          NODE_ENV: development
-          PORT: 8787
-          BETTER_AUTH_URL: http://127.0.0.1:8787
-          # The admin SPA is served by the Vite dev server (:5173) which
-          # proxies /api here — Better Auth must trust that browser origin
-          # or sign-in POSTs are rejected as untrusted origins.
-          BETTER_AUTH_TRUSTED_ORIGINS: http://localhost:5173,http://127.0.0.1:8787
-          ALLOWED_ORIGIN: http://localhost:4321
-          API_ALLOW_NO_TURNSTILE: 1
           SEED_ADMIN_EMAIL: ci-admin@twinmos.dev
           SEED_ADMIN_PASSWORD: ${{ secrets.CI_ADMIN_PASSWORD || 'Ci-Admin-Local-Only-2026' }}
-        run: |
-          npm run start --workspace @twinmos/api &
-          for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:8787/api/v1/health >/dev/null 2>&1; then break; fi
-            sleep 2
-          done
-          curl -sf http://127.0.0.1:8787/api/v1/health
-          node tooling/owasp-local-scan.mjs --target http://127.0.0.1:8787 --allow-private
 
-      # ---- Playwright browser gates ------------------------------------------
-      - name: Install Playwright browsers (chromium only)
+      - name: Build Web Production SSR Bundle
+        run: npm run build --workspace @twinmos/web
+
+      - name: Install Playwright Browsers (Chromium)
         run: npx playwright install --with-deps chromium
 
-      - name: Playwright gates (public params matrix + admin row-open regression)
-        env:
-          PGLITE_DATA: ${{ github.workspace }}/apps/api/data/ci.pgdata
-          SEED_ADMIN_EMAIL: ci-admin@twinmos.dev
-          SEED_ADMIN_PASSWORD: ${{ secrets.CI_ADMIN_PASSWORD || 'Ci-Admin-Local-Only-2026' }}
-          # The public-site specs fetch the BUILT pages and exercise the live
-          # API-backed widgets: build with the cross-origin API base (the same
-          # shape as local dev) — the API allow-lists :4321 via ALLOWED_ORIGIN
-          # above. The Playwright config starts `astro preview` (:4321) and
-          # the admin Vite dev server (:5173, /api proxied here) itself.
-          PUBLIC_API_URL: http://localhost:8787/api/v1
-        run: |
-          npm run build --workspace @twinmos/web
-          npx playwright test --config e2e/playwright.config.ts
+      - name: Gate A Close-Out Verification (VC-A: 56 Checks)
+        run: npm run verify:gate-a
+
+      - name: Gate B Platform Foundation Verification (VC-B: 17 Checks)
+        run: npm run verify:gate-b

@@ -19,8 +19,10 @@ import { article, newsPost, page, faq, contentRevision, contentComment, auditLog
 import { IdempotencyStore } from '../idem.ts';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
+import { recordOutboxEvent } from '../services/outbox.ts';
 
 type Guard = (req: Request) => Promise<AuthSession | null>;
+
 const P = 'application/problem+json';
 const TRANSITION_IDEM = new IdempotencyStore();
 
@@ -252,6 +254,17 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
     const rows = await (db.update(tableOf(entity)) as any).set({ deletedAt: new Date() }).where(eq(tableOf(entity).id, id)).returning();
     if (!row0(rows)) return c.json(problem(404, 'Not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, `${entity}.delete`, entity, String(id), {});
+    try {
+      const slugVal = (rows[0] as any)?.slug || String(id);
+      await recordOutboxEvent(db, 'content.delete', {
+        entityType: entity,
+        entityId: id,
+        slug: slugVal,
+        action: 'delete',
+        tags: [entity, `${entity}:${slugVal}`, 'sitemap'],
+        paths: [`/${entity}/${slugVal}.html`],
+      });
+    } catch {}
     return c.json({ deleted: true });
   });
 
@@ -297,10 +310,25 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
 
     const rows = await (db.update(tableOf(entity)) as any).set(patch).where(eq(tableOf(entity).id, id)).returning();
     await auditRow(c, guard.user.id, `${entity}.transition`, entity, String(id), { from: existing.status, to: parsed.data.to, publishAt: patch.publishAt ?? null });
+    
+    // Phase B (Task B7): record publish/unpublish/archive outbox event
+    try {
+      const slugVal = existing.slug || String(id);
+      await recordOutboxEvent(db, `content.${parsed.data.to}`, {
+        entityType: entity,
+        entityId: id,
+        slug: slugVal,
+        action: parsed.data.to as any,
+        tags: [entity, `${entity}:${slugVal}`, 'sitemap'],
+        paths: [`/${entity}/${slugVal}.html`],
+      });
+    } catch {}
+
     const body = row0(rows);
     if (idemKey) TRANSITION_IDEM.set(idemKey, { status: 200, body });
     return c.json(body);
   });
+
 
   // ---------- revisions + revert ----------
   r.get('/content/:entity/:id/revisions', async (c) => {

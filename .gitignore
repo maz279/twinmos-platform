@@ -17,3 +17,6 @@ _p1/
 apps/web/public/assets/js/app.js
 apps/web/public/assets/js/data.js
 test-results
+workspace/
+apps/api/data/
+

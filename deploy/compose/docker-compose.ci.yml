@@ -1,0 +1,9 @@
+# CI testing overlay
+services:
+  edge:
+    ports:
+      - "8080:80"
+  
+  postgres:
+    tmpfs:
+      - /var/lib/postgresql/data

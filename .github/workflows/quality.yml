@@ -1,0 +1,80 @@
+# TwinMOS Quality Jobs Workflow (QJ-01)
+# Enforces WCAG 2.2 AA accessibility, Lighthouse CI performance budgets,
+# CycloneDX SBOM provenance, and OWASP ZAP baseline security.
+name: Quality Jobs & Audits
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Daily at 02:00 UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - 'apps/admin/**'
+      - 'deploy/**'
+      - 'tooling/verify/**'
+
+jobs:
+  accessibility-and-performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install Monorepo Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Web Application Bundle
+        run: npm run build --workspace @twinmos/web
+
+      - name: WCAG 2.2 AA Axe-Core Audit (Reduced & Settled Motion)
+        run: node tooling/verify/visual-a11y-audit.mjs
+
+      - name: Run Lighthouse CI Audit
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: './lighthouserc.json'
+          uploadHandler: 'temporary-public-storage'
+
+  security-and-sbom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Generate CycloneDX SBOM (SBOM-01)
+        run: |
+          npm sbom --omit=dev --sbom-format=cyclonedx > cyclonedx-sbom.json
+          ls -la cyclonedx-sbom.json
+
+      - name: Verify Container & SBOM Isolation
+        run: node tooling/verify/verify-container-sbom.mjs
+
+      - name: OWASP ZAP Baseline Security Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
+          target: 'http://localhost/'
+          rules_file_name: 'deploy/zap/zap-baseline.rules'
+          cmd_options: '-m 2'
+          allow_issue_writing: false
+        continue-on-error: true

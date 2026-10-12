@@ -11,6 +11,7 @@ const axeSource = readFileSync(axeSourcePath, 'utf8');
 
 const PORT = process.env.AUDIT_PORT ? Number(process.env.AUDIT_PORT) : 4399;
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..', 'apps', 'web', 'dist');
+const SERVE_ROOT = existsSync(join(ROOT, 'client')) ? join(ROOT, 'client') : ROOT;
 const EVIDENCE_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..', 'tooling', 'verify', 'evidence');
 mkdirSync(EVIDENCE_DIR, { recursive: true });
 
@@ -32,11 +33,18 @@ function sendFile(res, filePath, status = 200) {
 const server = createServer((req, res) => {
   const urlPath = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname);
   const clean = normalize(urlPath).replaceAll('..', '');
-  const candidate = join(ROOT, clean);
-  if (!candidate.startsWith(ROOT + sep) && candidate !== ROOT) { res.writeHead(403).end(); return; }
-  const tries = [candidate, join(ROOT, clean, 'index.html'), join(ROOT, clean + '.html')].filter((p) => existsSync(p) && statSync(p).isFile());
+  const candidate = join(SERVE_ROOT, clean);
+  const rootCandidate = join(ROOT, clean);
+  if (!candidate.startsWith(SERVE_ROOT + sep) && candidate !== SERVE_ROOT) { res.writeHead(403).end(); return; }
+  const tries = [
+    candidate,
+    join(SERVE_ROOT, clean, 'index.html'),
+    join(SERVE_ROOT, clean + '.html'),
+    rootCandidate,
+    join(ROOT, clean, 'index.html'),
+  ].filter((p) => existsSync(p) && statSync(p).isFile());
   if (tries.length > 0) { sendFile(res, tries[0]); return; }
-  sendFile(res, join(ROOT, '404.html'), 404);
+  sendFile(res, join(SERVE_ROOT, '404.html'), 404);
 });
 
 const ROUTES_29 = [

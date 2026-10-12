@@ -300,3 +300,19 @@ export const contentComment = pgTable('content_comment', {
   body: text('body').notNull(),
   createdAt: ts(),
 }, (t) => [index('content_comment_target_idx').on(t.entity, t.entityId)]);
+
+/** Phase B (Task B7): outbox table for reliable publish -> revalidate pipeline */
+export const outbox = pgTable('outbox', {
+  id: serial('id').primaryKey(),
+  eventType: varchar('event_type', { length: 60 }).notNull(),
+  payload: jsonb('payload').notNull().default({}),
+  status: varchar('status', { length: 20 }).notNull().default('pending'),
+  attempts: integer('attempts').notNull().default(0),
+  lastError: text('last_error'),
+  createdAt: ts(),
+  processedAt: timestamp('processed_at', { withTimezone: true }),
+}, (t) => [
+  index('outbox_status_idx').on(t.status),
+  index('outbox_created_at_idx').on(t.createdAt),
+]);
+
