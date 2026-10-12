@@ -24,6 +24,7 @@
     "typecheck": "tsc -p apps/api/tsconfig.json && tsc -p apps/admin/tsconfig.json && tsc -p packages/db/tsconfig.json && tsc -p packages/shared/tsconfig.json && npm run typecheck --workspace @twinmos/web",
 
     "test:ci": "npm run build -w @twinmos/web && npm run test --workspaces --if-present",
+    "test:e2e": "playwright test",
     "verify:gate-a": "node tooling/verify/run-all-gate-a.mjs",
     "verify:gate-b": "node tooling/verify/run-all-gate-b.mjs",
     "verify:manual": "node tooling/verify/manual-test-suite.mjs",
