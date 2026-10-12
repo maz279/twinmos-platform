@@ -146,9 +146,10 @@
 - 4.1+4.2 ✔ **49 Playwright gates** (e2e/: public.spec.ts + admin.spec.ts + playwright.config.ts). Public: 28-page load matrix, deep-link params (?region=africa chip-on, ?country=IN, ?product prefill, ?cat, ?q), PDP MSRP/offers polarity, live-count patch. Admin: **Products row-open regression (U-1)** + editor save + 12-module no-error-boundary sweep + unauthenticated-RBAC negative. **VERIFIED the gate fails on the reintroduced Rules-of-Hooks bug and passes on the fix** — the class of defect tsc/vitest cannot catch. All 49 green locally.
 - 4.3 ✔ `.github/workflows/ci.yml`: npm ci → tsc×2 → eslint → vitest → npm audit --omit=dev --audit-level=high → OWASP-equivalent scan against a freshly migrated+seeded API booted in-job → Playwright (chromium). Secrets via `\${{ secrets.* }}` (documented local-only fallback).
 - 4.5 ✔ /admin nginx blocks serve `script-src 'self'` (**no unsafe-inline**); built admin bundle verified to ship ZERO inline scripts. style-src step 2 (inline style attributes) remains on the roadmap.
-- 4.6 ✔ Branch protection ON main: `required_status_checks [gates] strict=true`, force-pushes + deletions blocked (PR #8 merged via admin bypass because the workflow first ships in that PR; every future PR requires the check).
+- 4.6 ◐ **PARTIAL — deviation recorded (2026-10-08 meta-audit):** Branch protection ON main: `required_status_checks [gates] strict=true` + `enforce_admins=true`, force-pushes + deletions blocked (PR #8 merged via admin bypass because the workflow first ships in that PR; every later PR required and passed the check). The gate's second clause — "a second developer completes a sample fix PR" — was **never satisfied and cannot be in a single-maintainer repository** (fabricating a second author identity would be dishonest; requiring PR review would deadlock all merges since GitHub forbids self-approval). The original ✔ overstated closure; corrected here. Compensating controls in force: required CI gates with admin enforcement, the docs 00-08 + runbooks + this plan as onboarding curriculum, and PR-review enforcement becomes a one-line change once a second maintainer exists. The "PR + 1 review" configuration is intentionally NOT enabled while the repo has one committer.
 - 4.7 ✔ All 7 audit-harness files with `DevOnly-ChangeMe` literals now read `?email=&password=` or prompt() — **grep clean**.
 - 4.4 ⏸ **DEFERRED** — admin.ts split (1,428 LOC) is a purely internal refactor with zero behavior/security delta. Mechanical extraction (RMA 1068-1251, jobs 1252-1428 are the clean seams; shared authed/editorGuard/auditRow helpers extract first) is the next increment, gated on route parity 205=205. Deferred rather than rushed: the hand-transcription risk outweighs the maintainability gain inside this session.
+- 4.8 ✔ **EXECUTED 2026-10-08 (meta-audit)** — see the re-audit annex below for methodology, scoped scores, raw-finding triage and the exit-matrix walkthrough. Verdict: authored product code Grade A (99.5/99.0/96.5 across web/src, packages, e2e; api 76 with both P1s triaged as false positives — Drizzle `sql\`\`` tagged templates and a now-fixed regex `.exec`); the vendored prototype runtime and tooling score F on raw static patterns (SMELL-04 innerHTML against the verified esc() convention; swallowed-catch prototype idioms) — inherited, triaged, and tracked as Tier-3 backlog, not regressions. Defect ledger U-1..U-14: closed with the gates cited throughout this file and re-proven by the live production-stack audits (2026-10-07/08).
 - Gates at merge: **tsc ×2 · eslint 0 · 268/268 vitest (30 suites) · 49/49 Playwright · OWASP scan 14/14 clean** · clean tree · branch protection live.
 
 ### Phase 4 deep-verification iteration ✅ (2026-10-06/07, PR #9, main=430149b)
@@ -187,6 +188,41 @@ Full-stack verification against the production-shape stack (built same-origin we
 | D17 | Bridge articles carried a hardcoded `tag:'Guide'`, so non-guide categories (e.g. Explainers) mis-routed to learn-guides | merge maps the article's real category | probe (cat=Explainers) renders on learn-explained, absent from learn-guides |
 
 Also verified: RMA public tracker + SN-check (`/api/v1/sn-check`, serial TMLIVE002 → valid+SKU+mfg date) through the same-origin proxy; all `/admin/*` routes 401 unauthenticated; locales en/ar 200; the exporter is correctly lock-refused while the API is live (fallback preserves the fresh bridge — same path CI exercises); the IAB service worker (`sw.js`) additionally caches assets and must be cleared when testing stale-asset behavior.
+
+### Instruction-compliance meta-audit ✅ (2026-10-08 PM — "check every phase was done with 100% accuracy")
+
+A full audit OF THE REMEDIATION WORK ITSELF: every phase-status claim in this file was re-checked against its own gate, plus fresh evidence runs. Findings:
+
+| # | Finding | Resolution | Evidence |
+|---|---|---|---|
+| D19 | **4.6's ✔ overstated closure** — the "second developer completes a sample fix PR" clause was never met (impossible in a single-maintainer repo) | Status corrected to PARTIAL with an honest deviation record + compensating controls (see 4.6 above) | This file; branch protection config (gates strict + enforce_admins, no review requirement — deliberate) |
+| D20 | **4.8 was never executed** — no graded re-audit was run or recorded despite the program's definition-of-done requiring it | Executed now: scoped scanner runs, raw-finding triage, exit-matrix walkthrough — annex below | Annex A below |
+| D21 | 3 static P1s (SMELL-03 regex `.exec()` patterns: app.js topSpeed/deviceMaxSpeed, boot-config.ts MAIL_FROM) — flagged by the graded scan, trivially fixable | Fixed with match/matchAll rewrites; behaviour polarity-checked (topSpeed 6000, deviceMaxSpeed 5600/empty) before/after | scanner re-run: api P1 2→1 (remaining = the Drizzle sql`` false positive), assets P1 3→2 (remaining = `document.execCommand('copy')` legacy-clipboard fallback, retained deliberately and triaged) |
+| D22 | Backup convention drifted — last dev.pgdata backup was 2026-10-06 despite multiple maintenance windows since | Fresh backup taken API-stopped: `dev.pgdata.bak-20261008-compliance` (60M) | apps/api/data listing |
+| D23 | Parallel-session claims unverified (a11y orphaned-inputs fix; morning hardening work) | a11y probe executed end-to-end: 9 public pages orphaned-inputs=0, alt/buttons clean, admin console loads; combined tree (incl. in-flight member-role hardening) fully gated | probe output; 282/282 vitest + 49/49 Playwright + tsc ×2 + eslint 0 |
+
+Fresh gate evidence at meta-audit close: **tsc ×2 · eslint 0 · vitest 282/282 (32 suites) · Playwright 49/49 · npm audit --omit=dev: 0 high (4 moderate)**.
+
+### Annex A — 4.8 re-audit record (2026-10-08)
+
+**Methodology.** `audit_scanner.py` (the plan's prescribed tool) run scoped per surface; raw findings triaged one by one; exit matrix walked against this file's gates and the live production-stack audits. Whole-repo raw score (0.0/F, 50 "P0") is dominated by the 3.2M-LOC `workspace/` document archive and test fixtures — the same noise profile the original audit triaged (100% fixture noise on P0); scoped runs below are the meaningful signal.
+
+**Scoped scores (post-D21 fixes):**
+
+| Surface | Health | Notes |
+|---|---|---|
+| apps/web/src (Astro) | 99.5 (A) | — |
+| packages (db+shared) | 99.0 (A) | — |
+| e2e | 96.5 (A) | — |
+| apps/api/src | 76 (C) | 2 P1 raw: Drizzle `sql\`\`` tagged-template (parameterised, not injection) and the MAIL_FROM `.exec` (now fixed) |
+| apps/web/public/assets/js (vendored prototype runtime) | F raw | 3 P1 → 2 after D21 (both counts = `document.execCommand('copy')` legacy-clipboard fallback at app.js:1013, retained deliberately — it is the non-secure-context copy path, not dynamic code execution); 46→47 P2 = SMELL-04 innerHTML against the verified `esc()` convention (spot-verified incl. the app.js:384 sink; live XSS PoCs negative in Phases 1–2) + swallowed-catch prototype idioms — inherited Tier-3 backlog |
+| tooling | F raw | script-class patterns (literal-SQL `db.exec` on trusted local files) — adjudicated with the Mimosa tooling guidance |
+
+**Exit matrix (U-1..U-14 / F-1..F-9):** every row's closure gate re-cited and re-proven — U-1 (row-open e2e gate, polarity-proven), U-2 (DOMPurify, PoC negative), U-3 (live RMA 200s through the production proxy), U-5/F-2 (CSPRNG + rotation tests), U-6/F-3 (npm audit 0 high, re-run this audit), U-7..U-11 (bridge surfaces live-verified 2026-10-07/08), U-12 (exporter dir logging + dual-write proven), U-13 (no dead route string), U-14 (live count 40 everywhere), F-6 (.gitattributes), F-9 (CI green, first-green run 37467908303), F-4 (grep clean), F-7 (4.6 partial, above), F-8 (4.4 deferred, above).
+
+**Verdict.** Engineering axis: **Grade A on authored code** (weighted ≈93 across the four A/C surfaces after triage); functional/CMS axis: **Grade A within the audited scope** (bridge proven live both directions, 10-module wiring matrix, suites green). The two-axis ≥90 gate is met **on triaged evidence**, with the vendored-runtime Tier-3 backlog explicitly carried (not regressions; tracked in the traceability matrix).
+
+
 
 ---
 

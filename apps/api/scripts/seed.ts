@@ -73,39 +73,40 @@ if (anyProduct.length === 0) {
 }
 
 // 4) P5 demo partner org + member + gated asset + registry serials (dev only).
-const { partnerOrg, partnerMember, partnerAsset, serialRegistry } = await import('@twinmos/db');
-const anyOrg = await db.select({ id: partnerOrg.id }).from(partnerOrg).limit(1);
-if (anyOrg.length === 0) {
-  const [org] = await db.insert(partnerOrg).values({
-    name: 'Gulf Channel Trading (demo)', type: 'distributor', status: 'active',
-    country: 'United Arab Emirates', contactEmail: 'channel@example.com',
-    note: 'Seeded demo distributor for portal verification.',
-  }).returning();
-  // attach the seeded admin as the org owner so the demo login works out of the box
-  const adminRow = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
-  if (adminRow[0]) {
-    await db.insert(partnerMember).values({ orgId: org.id, userId: adminRow[0].id, role: 'owner' }).onConflictDoNothing();
+const isDevSeed = process.env.NODE_ENV !== 'production' && process.env.SEED_MODE !== 'bootstrap';
+if (isDevSeed) {
+  const { partnerOrg, partnerMember, partnerAsset, serialRegistry } = await import('@twinmos/db');
+  const anyOrg = await db.select({ id: partnerOrg.id }).from(partnerOrg).limit(1);
+  if (anyOrg.length === 0) {
+    const [org] = await db.insert(partnerOrg).values({
+      name: 'Gulf Channel Trading (demo)', type: 'distributor', status: 'active',
+      country: 'United Arab Emirates', contactEmail: 'channel@example.com',
+      note: 'Seeded demo distributor for portal verification.',
+    }).returning();
+    // attach the seeded admin as the org owner so the demo login works out of the box
+    const adminRow = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
+    if (adminRow[0]) {
+      await db.insert(partnerMember).values({ orgId: org.id, userId: adminRow[0].id, role: 'owner' }).onConflictDoNothing();
+    }
+    // a global price-file asset visible to distributors (file itself lands on first admin upload in dev flows)
+    await db.insert(partnerAsset).values({
+      orgId: null, category: 'price_file', title: 'Q4 2026 Distributor Price List (demo)',
+      fileKey: 'demo-price-list.pdf', mime: 'application/pdf', bytes: 0,
+      visibleToTypes: ['distributor'],
+    });
+    // registry serials for the anti-counterfeit demo
+    await db.insert(serialRegistry).values([
+      { serial: 'TM-DEMO-0001', sku: 'VLT-DDR5-32G', manufacturedAt: new Date('2026-06-01') },
+      { serial: 'TM-DEMO-0002', sku: 'NVCXP2TBG52280', manufacturedAt: new Date('2026-07-15') },
+    ]).onConflictDoNothing();
+    console.log('[seed] demo partner org + member + price asset + 2 serials created');
   }
-  // a global price-file asset visible to distributors (file itself lands on first admin upload in dev flows)
-  await db.insert(partnerAsset).values({
-    orgId: null, category: 'price_file', title: 'Q4 2026 Distributor Price List (demo)',
-    fileKey: 'demo-price-list.pdf', mime: 'application/pdf', bytes: 0,
-    visibleToTypes: ['distributor'],
-  });
-  // registry serials for the anti-counterfeit demo
-  await db.insert(serialRegistry).values([
-    { serial: 'TM-DEMO-0001', sku: 'VLT-DDR5-32G', manufacturedAt: new Date('2026-06-01') },
-    { serial: 'TM-DEMO-0002', sku: 'NVCXP2TBG52280', manufacturedAt: new Date('2026-07-15') },
-  ]).onConflictDoNothing();
-  console.log('[seed] demo partner org + member + price asset + 2 serials created');
-}
 
-// 6) P6 demo leads (ADR-009) — one fresh QT lead + one OVERDUE lead so the
-// lead board, SLA badges and dashboard overdue counter demo out of the box.
-{
+  // 6) P6 demo leads (ADR-009) — one fresh QT lead + one OVERDUE lead so the
+  // lead board, SLA badges and dashboard overdue counter demo out of the box.
   const { formSubmission } = schema;
-  const existing = await db.select({ id: formSubmission.id }).from(formSubmission).where(eq(formSubmission.refCode, 'QT-2026-DEMO0001')).limit(1);
-  if (existing.length === 0) {
+  const existingLeads = await db.select({ id: formSubmission.id }).from(formSubmission).where(eq(formSubmission.refCode, 'QT-2026-DEMO0001')).limit(1);
+  if (existingLeads.length === 0) {
     const year = new Date().getFullYear();
     await db.insert(formSubmission).values([
       {
@@ -121,6 +122,8 @@ if (anyOrg.length === 0) {
     ]).onConflictDoNothing();
     console.log('[seed] P6 demo leads created (1 QT new/high + 1 overdue urgent)');
   }
+} else {
+  console.log('[seed] production/bootstrap mode: skipping demo partner and demo leads');
 }
 
 // 5) RTL demo strings — tooling/seed-ar.json (Arabic hero/landing) so a fresh

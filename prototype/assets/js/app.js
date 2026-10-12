@@ -559,13 +559,14 @@ var TM = window.TM || {};
     // top MT/s figure in a product spec like "DDR5-6000" or "4800MHz,5200MHz,5600MHz"
     function topSpeed(p) {
       var s = (p.shortSpec || '') + ' ' + (p.interface || '');
-      var best = 0, m;
-      var re = /(\d{4})\s*(?:MHz|MT\/s)|DDR\d-(\d{4})/g;
-      while ((m = re.exec(s))) { best = Math.max(best, parseInt(m[1] || m[2], 10)); }
+      var best = 0;
+      Array.from(s.matchAll(/(\d{4})\s*(?:MHz|MT\/s)|DDR\d-(\d{4})/g)).forEach(function (m) {
+        best = Math.max(best, parseInt(m[1] || m[2], 10));
+      });
       return best;
     }
     function deviceMaxSpeed(model) {
-      var m = /(\d{4})/.exec(model.speed || '');
+      var m = (model.speed || '').match(/(\d{4})/);
       return m ? parseInt(m[1], 10) : 0;
     }
     function memReason(p, model) {

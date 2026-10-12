@@ -29,7 +29,7 @@ export const GREEN = '#1F9D62';
 export const BLUE = '#3E8DDD';
 export const PURPLE = '#7C5CDB';
 export const MUTED = '#66748A';  // secondary text
-export const FAINT = '#93A0B4';  // captions / placeholders
+export const FAINT = '#607286';  // captions / placeholders (WCAG AA >= 4.5:1 on white)
 export const LINE = '#E6EBF1';   // card borders
 export const PAGE = '#F2F4F6';   // canvas behind cards
 
@@ -116,7 +116,7 @@ export function Table({ head, children }: { head: string[]; children: React.Reac
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
-          <tr>{head.map((h) => <th key={h} style={{ textAlign: 'left', padding: '9px 10px', borderBottom: `1px solid ${LINE}`, color: FAINT, fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>)}</tr>
+          <tr>{head.map((h, i) => <th key={`${h || 'col'}-${i}`} style={{ textAlign: 'left', padding: '9px 10px', borderBottom: `1px solid ${LINE}`, color: FAINT, fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>)}</tr>
         </thead>
         <tbody>{children}</tbody>
       </table>

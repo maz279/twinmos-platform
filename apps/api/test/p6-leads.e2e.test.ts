@@ -115,14 +115,18 @@ describe('P6 lead intake (ADR-009)', () => {
   });
 
   it('list carries priority + slaState; sla=overdue filter matches only past-due open leads', async () => {
+    // viewer is denied reading submissions (D-9a personal data protection)
+    const denied = await app.request('/api/v1/admin/submissions', { headers: { cookie: viewerCookie } });
+    expect(denied.status).toBe(403);
+
     // make one lead overdue directly
     await db.update(formSubmission).set({ dueAt: new Date(Date.now() - 3600_000) }).where(eq(formSubmission.refCode, ctRef));
-    const all = await (await app.request('/api/v1/admin/submissions', { headers: { cookie: viewerCookie } })).json();
+    const all = await (await app.request('/api/v1/admin/submissions', { headers: { cookie: editorCookie } })).json();
     const qt = all.items.find((i: any) => i.refCode === qtRef);
     const ct = all.items.find((i: any) => i.refCode === ctRef);
     expect(qt.slaState).toBe('on_track');
     expect(ct.slaState).toBe('overdue');
-    const overdue = await (await app.request('/api/v1/admin/submissions?sla=overdue', { headers: { cookie: viewerCookie } })).json();
+    const overdue = await (await app.request('/api/v1/admin/submissions?sla=overdue', { headers: { cookie: editorCookie } })).json();
     expect(overdue.items.some((i: any) => i.refCode === ctRef)).toBe(true);
     expect(overdue.items.some((i: any) => i.refCode === qtRef)).toBe(false);
   });
@@ -143,7 +147,7 @@ describe('P6 lead intake (ADR-009)', () => {
     const afterClosed = await patch({ status: 'assigned' });
     expect(afterClosed.status).toBe(422); // closed is terminal
     // slaState nulls out for closed leads
-    const detail = await (await app.request(`/api/v1/admin/submissions/${id}`, { headers: { cookie: viewerCookie } })).json();
+    const detail = await (await app.request(`/api/v1/admin/submissions/${id}`, { headers: { cookie: editorCookie } })).json();
     expect(detail.slaState).toBeNull();
     expect(detail.status).toBe('closed');
   });
@@ -187,7 +191,7 @@ describe('P6 lead intake (ADR-009)', () => {
     expect((await app.request(`/api/v1/admin/submissions/${id}/notes`, {
       method: 'POST', headers: { ...json, cookie: editorCookie }, body: JSON.stringify({ body: 'Sent draft quote v1.' }),
     })).status).toBe(201);
-    const detail = await (await app.request(`/api/v1/admin/submissions/${id}`, { headers: { cookie: viewerCookie } })).json();
+    const detail = await (await app.request(`/api/v1/admin/submissions/${id}`, { headers: { cookie: editorCookie } })).json();
     expect(detail.notes.length).toBe(2);
     expect(detail.notes[0].body).toContain('draft quote');
     expect(detail.notes[0].author).toBe('p6-editor@twinmos.dev');
@@ -219,10 +223,10 @@ describe('P6 lead intake (ADR-009)', () => {
 
   it('audit-2: assignee email is joined into list/detail/CSV (not a raw uuid)', async () => {
     // the QT lead was assigned to p6-editor earlier in this suite (now closed)
-    const list = await (await app.request('/api/v1/admin/submissions?type=quote', { headers: { cookie: viewerCookie } })).json();
+    const list = await (await app.request('/api/v1/admin/submissions?type=quote', { headers: { cookie: editorCookie } })).json();
     const qt = list.items.find((i: any) => i.refCode === qtRef);
     expect(qt.assigneeEmail).toBe('p6-editor@twinmos.dev');
-    const detail = await (await app.request(`/api/v1/admin/submissions/${qt.id}`, { headers: { cookie: viewerCookie } })).json();
+    const detail = await (await app.request(`/api/v1/admin/submissions/${qt.id}`, { headers: { cookie: editorCookie } })).json();
     expect(detail.assigneeEmail).toBe('p6-editor@twinmos.dev');
     const csv = await (await app.request('/api/v1/admin/submissions.csv?type=quote', { headers: { cookie: editorCookie } })).text();
     const row = csv.split('\r\n').find((l) => l.includes(qtRef));

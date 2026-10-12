@@ -41,4 +41,6 @@ CREATE TABLE IF NOT EXISTS "sn_check" (
 	"checked_at" timestamp with time zone DEFAULT now() NOT NULL
 );--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "sn_check_serial_idx" ON "sn_check" ("serial","checked_at");--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "sn_check_checked_at_idx" ON "sn_check" ("checked_at");
+CREATE INDEX IF NOT EXISTS "sn_check_checked_at_idx" ON "sn_check" ("checked_at");--> statement-breakpoint
+ALTER TYPE submission_status ADD VALUE IF NOT EXISTS 'in_progress';--> statement-breakpoint
+ALTER TYPE submission_status ADD VALUE IF NOT EXISTS 'closed';

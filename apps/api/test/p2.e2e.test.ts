@@ -293,22 +293,30 @@ describe('admin modules', () => {
     expect(anon.headers.get('content-type')).toContain('application/problem+json');
 
     // create + sign in a viewer
+    const { eq } = await import('drizzle-orm');
     const VIEWER_PASSWORD = process.env.E2E_VIEWER_PASSWORD ?? 'E2e-Viewer-' + new Date().getFullYear() + '!';
     await app.request('/api/v1/auth/sign-up/email', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ email: 'viewer@twinmos.dev', password: VIEWER_PASSWORD, name: 'Viewer' }),
     });
+    // promote to viewer (default sign-up role is member)
+    await db.update(user).set({ role: 'viewer' }).where(eq(user.email, 'viewer@twinmos.dev'));
     const signIn = await app.request('/api/v1/auth/sign-in/email', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ email: 'viewer@twinmos.dev', password: VIEWER_PASSWORD }),
     });
     const viewerCookie = signIn.headers.getSetCookie().map((c: string) => c.split(';')[0]).join('; ');
     const read = await app.request('/api/v1/admin/submissions', { headers: { cookie: viewerCookie } });
-    expect(read.status).toBe(200); // viewer may read
+    expect(read.status).toBe(403); // viewer cannot read PII submissions (D-9a requires editor)
     const write = await app.request('/api/v1/admin/submissions/1', {
       method: 'PATCH', headers: { 'content-type': 'application/json', cookie: viewerCookie },
       body: JSON.stringify({ status: 'resolved' }),
     });
     expect(write.status).toBe(403); // viewer cannot write
+
+    // promote to editor: editor may read submissions
+    await db.update(user).set({ role: 'editor' }).where(eq(user.email, 'viewer@twinmos.dev'));
+    const readEditor = await app.request('/api/v1/admin/submissions', { headers: { cookie: viewerCookie } });
+    expect(readEditor.status).toBe(200); // editor may read
   });
 });

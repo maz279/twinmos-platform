@@ -318,8 +318,8 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
               </div>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
-                <thead><tr>{['File', 'Kind', 'Folder', 'Alt text', 'Variants', 'Size', 'Uploaded', ''].map((h) => (
-                  <th key={h} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>
+                <thead><tr>{['File', 'Kind', 'Folder', 'Alt text', 'Variants', 'Size', 'Uploaded', ''].map((h, i) => (
+                  <th key={`${h || 'col'}-${i}`} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>
                 ))}</tr></thead>
                 <tbody>
                   {items.map((m) => (

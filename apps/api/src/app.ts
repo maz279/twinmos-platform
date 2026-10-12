@@ -4,6 +4,8 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
+import { bodyLimit } from 'hono/body-limit';
+import { HTTPException } from 'hono/http-exception';
 import { sql } from 'drizzle-orm';
 import { problem } from '@twinmos/shared';
 import { initAuth } from './auth.ts';
@@ -44,13 +46,14 @@ export function clientIp(c: Context): string {
 /**
  * P7: audit-log retention (docs/02 §audit — 12 months). Boot sweep + daily
  * interval; unref'd so the timer never holds the process open (tests, scripts).
+ * NF-09: audit_log table timestamp column is created_at (not at).
  */
 function startAuditRetention(db: DB): void {
   if (process.env.AUDIT_RETENTION_DISABLED === '1') return;
   const RETAIN_DAYS = Number(process.env.AUDIT_RETENTION_DAYS ?? 365);
   const sweep = async () => {
     try {
-      const res = await db.execute(sql`DELETE FROM audit_log WHERE at < now() - (${RETAIN_DAYS} || ' days')::interval`);
+      const res = await db.execute(sql`DELETE FROM audit_log WHERE created_at < now() - (${RETAIN_DAYS} || ' days')::interval`);
       const n = (res as unknown as { rowCount?: number })?.rowCount ?? 0;
       if (n > 0) console.log(`[audit-retention] removed ${n} rows older than ${RETAIN_DAYS}d`);
     } catch { /* retention must never take the API down */ }
@@ -83,19 +86,54 @@ export function buildApp(db: DB) {
   // CORS for the admin SPA and the website in local dev (ports differ). In
   // production both are served same-origin by the API host; set ALLOWED_ORIGIN
   // to the public origins only.
-  app.use('/api/v1/*', cors({
-    origin: (process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173').split(','),
-    allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Idempotency-Key'],
-    credentials: true,
-    maxAge: 600,
-  }));
+  const allowedOrigins = (process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // NF-33 / A8: Run cors() only for allow-listed origins so disallowed origins get neither ACAO nor ACAC.
+  app.use('/api/v1/*', async (c, next) => {
+    const reqOrigin = c.req.header('origin');
+    if (!reqOrigin || !allowedOrigins.includes(reqOrigin)) {
+      return next();
+    }
+    return cors({
+      origin: reqOrigin,
+      allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowHeaders: ['Content-Type', 'Idempotency-Key'],
+      credentials: true,
+      maxAge: 600,
+    })(c, next);
+  });
   app.use('*', async (c, next) => {
     const requestId = crypto.randomUUID();
     c.set('requestId', requestId);
     c.header('X-Request-Id', requestId);
     await next();
   });
+
+  // Tiered body limit middleware (NF-18, NEW-05)
+  app.use('/api/v1/*', async (c, next) => {
+    const p = c.req.path;
+    let maxSize = 256 * 1024; // 256 KB default
+    if (p.startsWith('/api/v1/admin/media') || p.startsWith('/api/v1/admin/serials/import')) {
+      maxSize = 10 * 1024 * 1024; // 10 MB media / serial CSV ingest
+    } else if (p.startsWith('/api/v1/partner')) {
+      maxSize = 25 * 1024 * 1024; // 25 MB partner assets
+    } else if (p.startsWith('/api/v1/auth')) {
+      maxSize = 64 * 1024; // 64 KB auth
+    }
+
+    return bodyLimit({
+      maxSize,
+      onError: (ctx) => ctx.json(
+        problem(413, 'Payload Too Large', `Request body exceeds size limit of ${Math.round(maxSize / 1024)} KB.`),
+        413,
+        { 'Content-Type': 'application/problem+json' },
+      ),
+    })(c, next);
+  });
+
   startAuditRetention(db);
 
   // ---- public form rate limit: 5 requests / minute / IP (in-memory; Redis in prod) ----
@@ -150,6 +188,17 @@ export function buildApp(db: DB) {
 
   // ---- error envelope: RFC 9457 problem+json on every API error ----
   app.onError((err, c) => {
+    if (err instanceof HTTPException) {
+      const res = err.getResponse();
+      if (res.headers.get('content-type')?.includes('application/problem+json')) {
+        return res;
+      }
+      return c.json(
+        problem(err.status, err.message || (err.status === 413 ? 'Payload Too Large' : 'HTTP Error')),
+        err.status,
+        { 'Content-Type': 'application/problem+json' }
+      );
+    }
     console.error('[api]', err);
     return c.json(problem(500, 'Internal Server Error', 'Unexpected — see server logs (request id in header).'), 500, { 'Content-Type': 'application/problem+json' });
   });
@@ -198,17 +247,26 @@ export function buildApp(db: DB) {
 
   app.route('/api/v1', formsRoute(db));
   app.route('/api/v1', previewRoute(db)); // public, token-gated draft previews
-  // ---- P1.4: forced password rotation guard ---------------------------------
+  // ---- P1.4: forced password rotation guard + member role restriction ------
   // Accounts invited with a system-generated temporary credential are refused
-  // by every /admin route until they set their own password. Registered BEFORE
-  // any /admin router mounts (Hono runs handlers in registration order) so no
-  // admin handler can respond ahead of the gate. Allowlisted: the two
-  // me/password endpoints that power the rotation screen.
+  // by every /admin route until they set their own password.
+  // Furthermore, role 'member' (e.g. partner portal users) is blocked from all
+  // /admin routes (must have role viewer or above).
+  // Registered BEFORE any /admin router mounts (Hono runs handlers in registration
+  // order) so no admin handler can respond ahead of the gate.
+  // Allowlisted: the two me/password endpoints that power the rotation screen.
   app.use('/api/v1/admin/*', async (c, next) => {
     const p = c.req.path;
     if (p === '/api/v1/admin/users/me/password-state' || p === '/api/v1/admin/users/me/accept-password') return next();
     const s = await sessionFromRequest(c.req.raw);
     if (!s) return next(); // unauthenticated — each router enforces its own 401
+    if (!(await requireRole('viewer')(c.req.raw))) {
+      return c.json(
+        problem(403, 'Forbidden', 'Console access requires staff credentials (viewer or above).'),
+        403,
+        { 'Content-Type': 'application/problem+json' },
+      );
+    }
     const row = (await db.select({ f: user.mustChangePassword }).from(user).where(eq(user.id, s.user.id)).limit(1))[0];
     if (row?.f) {
       return c.json(

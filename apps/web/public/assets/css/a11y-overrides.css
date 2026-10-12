@@ -22,6 +22,25 @@
  *       → #4E6579 = 5.4:1 (this one is the most pervasive: 136 instances on
  *       news.html alone — the main driver of that page's parity cost)
  */
+:root {
+  --muted: #4e6579;
+  --accent-deep: #00729c;
+}
+
+/* Ensure links inside body text blocks do not rely on colour alone (WCAG 1.4.1 / 1.4.3) */
+p > a,
+.empty-state a {
+  text-decoration: underline;
+}
+
+/* Sitemap and related chip link contrast */
+.sitemap-col a,
+.sitemap-grid a,
+.sitemap-links a,
+.art-rel-chips > a {
+  color: #00729c;
+}
+
 .eyebrow,
 .link-arrow,
 .cat-cta,

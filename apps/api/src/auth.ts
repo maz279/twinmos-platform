@@ -20,6 +20,12 @@ export function initAuth(db: DB) {
     user: [],
     session: [],
   });
+  const memberAcRole = ac.newRole({
+    user: [],
+    session: [],
+  });
+
+  const disableSignUp = process.env.NODE_ENV === 'production' || process.env.AUTH_DISABLE_SIGNUP === '1';
 
   const auth = betterAuth({
     baseURL: process.env.BETTER_AUTH_URL ?? 'http://127.0.0.1:8787',
@@ -29,8 +35,33 @@ export function initAuth(db: DB) {
     trustedOrigins: (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? '')
       .split(',').map((s) => s.trim()).filter(Boolean),
     database: drizzleAdapter(db, { provider: 'pg', schema }),
-    emailAndPassword: { enabled: true, minPasswordLength: 10 },
-    advanced: { database: { generateId: () => crypto.randomUUID() } },
+    emailAndPassword: { enabled: true, minPasswordLength: 10, disableSignUp },
+    disabledPaths: [
+      ...(disableSignUp ? ['/sign-up/email'] : []),
+      // Close admin privilege escalation & account takeover (NEW-03 / A2)
+      '/admin/set-role',
+      '/admin/get-user',
+      '/admin/create-user',
+      '/admin/update-user',
+      '/admin/list-users',
+      '/admin/list-user-sessions',
+      '/admin/unban-user',
+      '/admin/ban-user',
+      '/admin/impersonate-user',
+      '/admin/stop-impersonating',
+      '/admin/revoke-user-session',
+      '/admin/revoke-user-sessions',
+      '/admin/remove-user',
+      '/admin/set-user-password',
+      '/admin/has-permission',
+    ],
+    advanced: {
+      database: { generateId: () => crypto.randomUUID() },
+      useSecureCookies: process.env.NODE_ENV === 'production' || (process.env.BETTER_AUTH_URL?.startsWith('https://') ?? false),
+      ipAddress: {
+        ipAddressHeaders: ['cf-connecting-ip', 'x-real-ip', 'x-forwarded-for'],
+      },
+    },
     session: { expiresIn: 60 * 60 * 8, updateAge: 60 * 30 }, // 8h, refresh every 30min
     plugins: [
       // P7+ MFA for the admin panel: TOTP + backup codes (migration 0006).
@@ -44,9 +75,10 @@ export function initAuth(db: DB) {
           editor: staffAcRole,
           author: staffAcRole,
           viewer: staffAcRole,
+          member: memberAcRole,
         },
         adminRoles: ['super_admin', 'admin'],
-        defaultRole: 'viewer',
+        defaultRole: 'member',
       }),
     ],
   });
@@ -75,13 +107,13 @@ export function initAuth(db: DB) {
       user: {
         id: r.user.id,
         email: String(r.user.email),
-        role: String((r.user as any).role ?? 'viewer'),
+        role: String((r.user as any).role ?? 'member'),
         banned: Boolean(u.banned),
       },
     };
   }
 
-  const RANK: Record<string, number> = { viewer: 1, author: 2, editor: 3, admin: 4, super_admin: 5 };
+  const RANK: Record<string, number> = { member: 0, viewer: 1, author: 2, editor: 3, admin: 4, super_admin: 5 };
 
   /** Hono guard factory — deny by default; checks minimum role. Returns the session when allowed. */
   function requireRole(min: Role) {

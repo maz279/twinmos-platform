@@ -32,6 +32,13 @@ export default defineConfig({
   ],
   webServer: [
     {
+      name: 'api',
+      command: 'npm run start --workspace @twinmos/api',
+      url: 'http://127.0.0.1:8787/api/v1/health',
+      reuseExistingServer: REUSE,
+      timeout: 60_000,
+    },
+    {
       // built bundle — run `npm run build --workspace @twinmos/web` first
       // (the CI workflow does; locally the dev server is reused instead)
       name: 'web',

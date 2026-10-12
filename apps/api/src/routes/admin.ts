@@ -43,17 +43,16 @@ function slaState(row: { status: string; dueAt: Date | null }, now = Date.now())
 export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
   const r = new Hono();
 
-  /** Session or a ready 401 Response (AuthSession is null-able; we narrow here). */
-  async function authed(c: any): Promise<Exclude<AuthSession, null> | Response> {
+  /** Session + RBAC guard (defaults to viewer; returns session or 401/403). */
+  async function authed(c: any, minRole: Role = 'viewer'): Promise<Exclude<AuthSession, null> | Response> {
     const s = await deps.sessionFromRequest(c.req.raw);
-    return s ?? c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+    const ok = await deps.requireRole(minRole)(c.req.raw);
+    return ok ? s : c.json(problem(403, `Requires ${minRole} role or above`), 403, { 'Content-Type': P });
   }
   /** Editor+ write guard: session + RBAC, or a ready 401/403 Response. */
   async function editorGuard(c: any): Promise<Exclude<AuthSession, null> | Response> {
-    const s = await deps.sessionFromRequest(c.req.raw);
-    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
-    const ok = await deps.requireRole('editor')(c.req.raw);
-    return ok ? s : c.json(problem(403, 'Requires editor role or above'), 403, { 'Content-Type': P });
+    return authed(c, 'editor');
   }
 
   async function auditRow(c: any, actorId: string | undefined, action: string, entity: string, entityId: string, diff: unknown) {
@@ -547,10 +546,8 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
 
   /** Distinct actors who have audited events, joined with user for name/email (editor+). */
   r.get('/audit/actors', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
-    const ok = await deps.requireRole('editor')(c.req.raw);
-    if (!ok) return c.json(problem(403, 'Requires editor role or above (read)'), 403, { 'Content-Type': P });
 
     const rows = await db.select({
       id: user.id,
@@ -565,11 +562,8 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
   });
 
   r.get('/audit', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
-    // docs/04 RBAC: audit log — admin full, editor read
-    const ok = await deps.requireRole('editor')(c.req.raw);
-    if (!ok) return c.json(problem(403, 'Requires editor role or above (read)'), 403, { 'Content-Type': P });
 
     const actorId = c.req.query('actorId');
     const entity = c.req.query('entity');
@@ -620,10 +614,8 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
 
   /** Audit log CSV export with formula-injection prevention (editor+; compliance/archiving). */
   r.get('/audit.csv', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
-    const ok = await deps.requireRole('editor')(c.req.raw);
-    if (!ok) return c.json(problem(403, 'Requires editor role or above (read)'), 403, { 'Content-Type': P });
 
     const actorId = c.req.query('actorId');
     const entity = c.req.query('entity');
@@ -841,9 +833,14 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     ];
     push('Content', contentHits.slice(0, CAP));
     push('Products', products.map((x) => ({ id: x.id, title: x.title, sub: `${x.sku} · ${x.status}`, module: 'products', kind: 'product' })));
-    push('Leads & quotes', subs.map((x) => ({ id: x.id, title: x.title, sub: `${x.type} · ${x.email}`, module: 'submissions', kind: 'lead' })));
-    push('RMA', rmas.map((x) => ({ id: x.id, title: x.title, sub: `${x.sku ?? '—'} · ${x.status}`, module: 'rma', kind: 'rma' })));
-    push('Careers', [...apps.map((x) => ({ id: x.id, title: x.title, sub: x.email, module: 'jobs', kind: 'application' })), ...postings.map((x) => ({ id: x.id, title: x.title, sub: `posting · ${x.status}`, module: 'jobs', kind: 'posting' }))].slice(0, CAP));
+    const isEditor = await deps.requireRole('editor')(c.req.raw);
+    if (isEditor) {
+      push('Leads & quotes', subs.map((x) => ({ id: x.id, title: x.title, sub: `${x.type} · ${x.email}`, module: 'submissions', kind: 'lead' })));
+      push('RMA', rmas.map((x) => ({ id: x.id, title: x.title, sub: `${x.sku ?? '—'} · ${x.status}`, module: 'rma', kind: 'rma' })));
+      push('Careers', [...apps.map((x) => ({ id: x.id, title: x.title, sub: x.email, module: 'jobs', kind: 'application' })), ...postings.map((x) => ({ id: x.id, title: x.title, sub: `posting · ${x.status}`, module: 'jobs', kind: 'posting' }))].slice(0, CAP));
+    } else {
+      push('Careers', postings.map((x) => ({ id: x.id, title: x.title, sub: `posting · ${x.status}`, module: 'jobs', kind: 'posting' })).slice(0, CAP));
+    }
     push('Media', assets.map((x) => ({ id: x.id, title: x.title, sub: x.alt ?? 'no alt text', module: 'media', kind: 'media' })));
     push('Compatibility', compat.map((x) => ({ id: x.id, title: `${x.brand} ${x.model}`, sub: `QVL · ${x.gen ?? '—'} · ${x.ff ?? '—'}`, module: 'compatibility', kind: 'compat' })));
     push('Serials', serials.map((x) => ({ id: 1, title: x.serial, sub: `registry · ${x.sku ?? 'no SKU'}`, module: 'partners', kind: 'serial' })));
@@ -852,7 +849,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
 
   // ==================== P2: submissions inbox · P6: lead board (ADR-009) ====================
   r.get('/submissions', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const limit = Math.min(Number(c.req.query('limit') ?? 25) || 25, 100);
     const cursor = Number(c.req.query('cursor') ?? 0) || 0;
@@ -903,7 +900,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
   /** 0018: minimal staff options for the assignment dropdown — id/email/role for
    * editor-and-above roles only (the full /users directory stays super_admin). */
   r.get('/staff-options', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const rows = await db.select({ id: user.id, email: user.email, role: user.role })
       .from(user).where(inArray(user.role, ['editor', 'admin', 'super_admin']))
@@ -964,7 +961,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
   });
 
   r.get('/submissions/:id', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const id = Number(c.req.param('id'));
     const rows = await db.select({ sub: formSubmission, assigneeEmail: user.email })
@@ -1067,7 +1064,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
 
   // ==================== P2: RMA board ====================
   r.get('/rma', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const limit = Math.min(Number(c.req.query('limit') ?? 50) || 50, 100);
     const status = rmaStatusQ.safeParse(c.req.query('status') ?? undefined);
@@ -1104,7 +1101,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
   });
 
   r.get('/rma/:id', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const id = Number(c.req.param('id'));
     const rows = await db.select().from(rmaRequest).where(eq(rmaRequest.id, id)).limit(1);
@@ -1121,7 +1118,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
    * (the same >5-distinct-sources anomaly rule as the counterfeit scan) BEFORE
    * warranty service is approved. Read-only; authed. */
   r.get('/rma/:id/serial-check', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const id = Number(c.req.param('id'));
     const rows = await db.select().from(rmaRequest).where(eq(rmaRequest.id, id)).limit(1);
@@ -1280,7 +1277,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
   /** 0022: careers analytics — postings by status, applications by status,
    *  top postings by application count, 14-day arrival trend. */
   r.get('/job-analytics', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const now = Date.now();
     const [byStatus, appsByStatus, topPostings, arrivals] = await Promise.all([
@@ -1356,7 +1353,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
 
   // ==================== P2: job applications (HR) ====================
   r.get('/job-applications', async (c) => {
-    const a = await authed(c);
+    const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const limit = Math.min(Number(c.req.query('limit') ?? 50) || 50, 100);
     const status = submissionStatusQ.safeParse(c.req.query('status') ?? undefined);

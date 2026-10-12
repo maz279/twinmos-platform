@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // ---- enums (mirror packages/db pg enums; single source for API + admin + web) ----
-export const ROLES = ['super_admin', 'admin', 'editor', 'author', 'viewer'] as const;
+export const ROLES = ['super_admin', 'admin', 'editor', 'author', 'viewer', 'member'] as const;
 export const ROLE_SCHEMA = z.enum(ROLES);
 export type Role = (typeof ROLES)[number];
 
