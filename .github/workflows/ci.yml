@@ -1,4 +1,4 @@
-# TwinMOS Production-Parity Continuous Integration Pipeline (CI-01, CI-02)
+# TwinMOS Production-Parity Continuous Integration Pipeline (CI-01, CI-02, Roadmap v3.0 R0.2)
 name: CI Production Parity Pipeline
 
 on:
@@ -11,6 +11,59 @@ jobs:
   build-and-verify:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+
+    env:
+      BETTER_AUTH_SECRET: ci-test-secret-twinmos-parity-key-32chars
+      BETTER_AUTH_URL: http://127.0.0.1:8787
+      PREVIEW_SIGNING_KEY: ci-preview-hmac-sha256-signing-key-32ch
+      REVALIDATION_SECRET: ci-revalidation-secret-key-32ch
+      # Real Cloudflare Turnstile test mode keys (never bypass via disabled flags)
+      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+      FORCE_PGLITE: '1'
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install Monorepo Dependencies
+        run: npm ci --include=dev
+
+      - name: TypeScript Compilation Across All Workspaces (GATE-01, NF-32)
+        run: npm run typecheck
+
+      - name: ESLint Zero Warnings (GATE-02)
+        run: npm run lint --workspace @twinmos/admin
+
+      - name: Run Monorepo Test Suites (Enforce >0 tests)
+        run: npx vitest run --passWithNoTests=false
+
+      - name: Production Dependency Audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Build Web Production SSR Bundle (Clean Checkout Safe)
+        run: npm run build --workspace @twinmos/web
+        env:
+          NODE_ENV: production
+
+      - name: Install Playwright Browsers (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Gate A Close-Out Verification (VC-A: 56 Checks)
+        run: npm run verify:gate-a
+
+      - name: Gate B Platform Foundation Verification (VC-B: 17 Checks)
+        run: npm run verify:gate-b
+
+  test-postgres-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     services:
       postgres:
@@ -28,13 +81,11 @@ jobs:
           --health-retries 5
 
     env:
-      NODE_ENV: production
       DATABASE_URL: postgresql://twinmos_ci:twinmos_ci_password_secure@localhost:5432/twinmos_ci
       BETTER_AUTH_SECRET: ci-test-secret-twinmos-parity-key-32chars
       BETTER_AUTH_URL: http://127.0.0.1:8787
       PREVIEW_SIGNING_KEY: ci-preview-hmac-sha256-signing-key-32ch
       REVALIDATION_SECRET: ci-revalidation-secret-key-32ch
-      # Real Cloudflare Turnstile test mode keys (never bypass via disabled flags)
       TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
       PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
 
@@ -49,37 +100,34 @@ jobs:
           cache: npm
 
       - name: Install Monorepo Dependencies
-        run: npm ci
+        run: npm ci --include=dev
 
-      - name: TypeScript Compilation Across All Workspaces (GATE-01, NF-32)
-        run: npm run typecheck
-
-      - name: ESLint Zero Warnings (GATE-02)
-        run: npm run lint --workspace @twinmos/admin
-
-      - name: Run Monorepo Test Suites
-        run: npm test
-
-      - name: Production Dependency Audit
-        run: npm audit --omit=dev --audit-level=high
-
-      - name: Run Database Migrations on Postgres 18
+      - name: Run A10 Set-Based Migrations on Postgres 18
         run: npm run db:migrate --workspace @twinmos/api
+        env:
+          NODE_ENV: production
 
-      - name: Seed Initial Data on Postgres 18
+      - name: Seed Initial Production-Parity Data on Postgres 18
         run: npm run db:seed --workspace @twinmos/api
         env:
+          NODE_ENV: production
           SEED_ADMIN_EMAIL: ci-admin@twinmos.dev
           SEED_ADMIN_PASSWORD: ${{ secrets.CI_ADMIN_PASSWORD || 'Ci-Admin-Local-Only-2026' }}
 
-      - name: Build Web Production SSR Bundle
-        run: npm run build --workspace @twinmos/web
-
-      - name: Install Playwright Browsers (Chromium)
-        run: npx playwright install --with-deps chromium
-
-      - name: Gate A Close-Out Verification (VC-A: 56 Checks)
-        run: npm run verify:gate-a
-
-      - name: Gate B Platform Foundation Verification (VC-B: 17 Checks)
-        run: npm run verify:gate-b
+      - name: Verify API Service Health against Postgres 18
+        run: |
+          node -e "
+            const pg = require('pg');
+            const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+            pool.query('SELECT current_setting(\'server_version_num\') as ver, count(*) as tables from information_schema.tables where table_schema = \'public\'')
+              .then(res => {
+                console.log('Postgres 18 Connected: Version', res.rows[0].ver, 'Public tables:', res.rows[0].tables);
+                if (Number(res.rows[0].ver) < 180000) throw new Error('Postgres version < 18');
+                if (Number(res.rows[0].tables) < 30) throw new Error('Migrations incomplete: table count < 30');
+                process.exit(0);
+              })
+              .catch(err => {
+                console.error(err);
+                process.exit(1);
+              });
+          "
