@@ -30,3 +30,29 @@
    - Confirm Authenticated Origin Pulls (AOP) active.
 3. **Rollback Trigger**:
    - If origin health returns non-200 for >3 consecutive minutes, revert DNS records immediately to standby origin.
+
+---
+
+## 3. GitHub Repository Branch Protection Policy (`main`)
+
+**Target Branch:** `main`  
+**Enforcement Level:** Mandatory (Applies to all contributors, including administrators)
+
+### Enforced Rules & Gates:
+1. **Require Pull Request Before Merging**:
+   - Minimum number of approvals: **1**.
+   - Dismiss stale pull request approvals when new commits are pushed.
+   - Require review from Code Owners where defined.
+2. **Require Status Checks to Pass Before Merging**:
+   - Status checks must be green prior to merge:
+     - `build-and-verify` (CI Production Parity Pipeline: TypeScript compilation, lint, Vitest unit test suites, Astro SSR build, and gate checks).
+     - `test-postgres-integration` (PostgreSQL 18 A10 migration runner, schema verification, and API service health).
+   - Require branches to be up to date before merging (`Strict` branch ordering).
+3. **Commit History & Integrity**:
+   - Require linear history (Merge commits disabled; Squash or Rebase merge only).
+   - Require signed commits (GPG/SSH signature verification recommended).
+4. **Access Restrictions**:
+   - Restrict direct pushes to `main` (0 direct pushes; all changes via Pull Request).
+   - Force pushes disabled (`--force` prohibited).
+   - Branch deletion disabled.
+

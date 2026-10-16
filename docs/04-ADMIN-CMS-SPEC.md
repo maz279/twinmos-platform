@@ -12,9 +12,9 @@ React 19 SPA · TanStack Router (file routes, code-split per module) · TanStack
 | **Channel** | Distributors (region/country/status), Marketplace listings (verify + quarterly re-verify queue) | Feeds where-to-buy locator |
 | **Careers** | Job postings editor + applications inbox | Applications carry privacy metadata |
 | **Media** | Library (upload, alt-text compliance column, usage refs), folders | Sharp-derived variants; B2/S3 driver |
-| **Users & Roles** | User list, invite, role assign, MFA enforcement, sessions revoke | Better Auth admin plugin |
+| **Users & Roles** | User list, invite, role assign, MFA enforcement, sessions revoke | Server-side `requireRole()` middleware (Better Auth 1.7.6 core session + `@twinmos/db` user.role enum: super_admin, admin, editor, author, viewer, member; NEW-07) |
 | **Audit Log** | Filterable read-only (actor, entity, action, date, requestId) | 12-month retention |
-| **Settings** | Locales, Menus, Redirects, Feature flags, Integrations (Resend/Turnstile keys — secret write-only) | super_admin only |
+| **Settings** | Locales, Menus, Redirects, Platform configurations, Integrations (Resend/Turnstile keys — secret write-only) | super_admin only; feature toggles configured via platform environment/runtime settings (NF-38) |
 
 ## Publishing workflow
 draft → in_review → scheduled(publishAt) → published → archived. Author creates/reviews nothing; Editor reviews + publishes own-locale; Admin publishes any; scheduled jobs promote at publishAt (cron worker in api). Revisions: every publish snapshots prior version (jsonb) for one-click rollback; preview URLs render draft via api-render endpoint on staging.
