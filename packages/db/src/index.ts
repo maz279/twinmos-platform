@@ -21,28 +21,25 @@ export { acquireDataDirLock, releaseDataDirLock } from './lock.ts';
  */
 export type DB = PgliteDatabase<typeof schema>;
 
-export function createDb(databaseUrl?: string): DB {
+export function createPgliteDb(dataDir?: string): DB {
+  const dir = dataDir ?? process.env.PGLITE_DATA
+    ?? resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'apps', 'api', 'data', 'dev.pgdata');
+  acquireDataDirLock(dir);
+  mkdirSync(dirname(dir), { recursive: true });
+  return drizzle(new PGlite(dir), { schema });
+}
+
+export function createDb(databaseUrl?: string, options?: { forcePglite?: boolean }): DB {
+  if (options?.forcePglite || process.env.FORCE_PGLITE === '1') {
+    return createPgliteDb();
+  }
   const url = databaseUrl ?? process.env.DATABASE_URL;
   if (process.env.NODE_ENV === 'production' && !url) {
     throw new Error('DATABASE_URL is required in production (PGlite is dev-only)');
   }
-  if (url) {
+  if (url && process.env.FORCE_PGLITE !== '1') {
     const pool = new pg.Pool({ connectionString: url, max: 10 });
     return drizzlePg(pool, { schema }) as unknown as DB;
   }
-  // P2.1 (audit finding U-12): the data dir must resolve to THE live API
-  // database regardless of which workspace's cwd spawned the process — the
-  // old './data/dev.pgdata' default made `apps/web` prebuild exports read a
-  // stale local copy (or an empty dir) and silently ship outdated content.
-  // Anchor to the monorepo root derived from this module's own location.
-  // Explicit PGLITE_DATA still wins (tests, tooling overrides).
-  const dataDir = process.env.PGLITE_DATA
-    ?? resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'apps', 'api', 'data', 'dev.pgdata');
-  // SINGLE-WRITER RULE: a second PGlite instance on the same data dir — even
-  // read-only — corrupts the store (incident 2026-10-06). The lock throws a
-  // loud, actionable error when a live process already owns the directory.
-  acquireDataDirLock(dataDir);
-  // PGlite requires the parent directory to exist before first boot
-  mkdirSync(dirname(dataDir), { recursive: true });
-  return drizzle(new PGlite(dataDir), { schema });
+  return createPgliteDb();
 }
