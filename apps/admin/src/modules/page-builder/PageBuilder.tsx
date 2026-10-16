@@ -177,13 +177,13 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
           <div key={idx} style={{ display: 'grid', gap: 8, border: '1px solid #F0F3F7', borderRadius: 7, padding: 8, marginBottom: 8, background: '#FBFDFE' }}>
             <div style={{ display: 'flex', gap: 4 }}>
               <b style={{ fontSize: 11.5, color: '#66748A', flex: 1 }}>{field.itemLabel} {idx + 1}</b>
-              <IconBtn title="Move up" disabled={idx === 0} onClick={() => {
+              <IconBtn title="Move up" ariaLabel={`Move ${field.itemLabel} ${idx + 1} up`} disabled={idx === 0} onClick={() => {
                 const next = [...items]; const [x] = next.splice(idx, 1); next.splice(idx - 1, 0, x); onChange(basePath, next);
               }}>↑</IconBtn>
-              <IconBtn title="Move down" disabled={idx === items.length - 1} onClick={() => {
+              <IconBtn title="Move down" ariaLabel={`Move ${field.itemLabel} ${idx + 1} down`} disabled={idx === items.length - 1} onClick={() => {
                 const next = [...items]; const [x] = next.splice(idx, 1); next.splice(idx + 1, 0, x); onChange(basePath, next);
               }}>↓</IconBtn>
-              <IconBtn title="Remove" onClick={() => onChange(basePath, items.filter((_, j) => j !== idx))}>✕</IconBtn>
+              <IconBtn title="Remove" ariaLabel={`Remove ${field.itemLabel} ${idx + 1}`} onClick={() => onChange(basePath, items.filter((_, j) => j !== idx))}>✕</IconBtn>
             </div>
             {field.itemFields.map((f) => (
               <FieldRow key={f.key} field={f} value={item[f.key]} basePath={[...basePath, idx, f.key]}
@@ -206,7 +206,7 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
             {id != null && Number.isFinite(id) && <img src={API + '/admin/media/' + id + '/file'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
           </span>
           <button style={{ ...btnGhost, fontSize: 12 }} onClick={() => onMediaPick(basePath)}>{id ? 'Change' : 'Choose image'}</button>
-          {id != null && <IconBtn title="Clear" onClick={() => onChange(basePath, null)}>✕</IconBtn>}
+          {id != null && <IconBtn title="Clear" ariaLabel={`Clear ${field.label} image`} onClick={() => onChange(basePath, null)}>✕</IconBtn>}
         </div>
       </div>
     );

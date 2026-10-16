@@ -4,6 +4,8 @@ import type { DB } from '@twinmos/db';
 import {
   page,
   product,
+  category,
+  brand,
   article,
   newsPost,
   faq,
@@ -18,8 +20,9 @@ import {
   policyDocument,
   formDefinition,
   formField,
+  searchQueryLog,
 } from '@twinmos/db';
-import { problem } from '@twinmos/shared';
+import { problem, slugify } from '@twinmos/shared';
 import { createPreviewToken, verifyPreviewToken } from './preview.ts';
 
 const PROBLEM_JSON = 'application/problem+json';
@@ -150,12 +153,87 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
   });
 
   // --- 3. Products ---
+  r.get('/products/facets', async (c) => {
+    const products = await db.select().from(product).where(eq(product.status, 'published'));
+    const categories = await db.select().from(category);
+    const brands = await db.select().from(brand);
+
+    const catCounts: Record<string, number> = {};
+    const brandCounts: Record<string, number> = {};
+    const genCounts: Record<string, number> = {};
+    const formCounts: Record<string, number> = {};
+    const capCounts: Record<string, number> = {};
+
+    for (const p of products) {
+      if (p.categoryId) {
+        const cat = categories.find((ct) => ct.id === p.categoryId);
+        if (cat) catCounts[cat.slug] = (catCounts[cat.slug] || 0) + 1;
+      }
+      if (p.brandId) {
+        const br = brands.find((b) => b.id === p.brandId);
+        if (br) brandCounts[br.slug] = (brandCounts[br.slug] || 0) + 1;
+      }
+      const facets = (p.facets || {}) as Record<string, any>;
+      if (facets.gen) {
+        const val = String(facets.gen);
+        genCounts[val] = (genCounts[val] || 0) + 1;
+      }
+      if (facets.form) {
+        const val = String(facets.form);
+        formCounts[val] = (formCounts[val] || 0) + 1;
+      }
+      if (facets.cap) {
+        const val = String(facets.cap);
+        capCounts[val] = (capCounts[val] || 0) + 1;
+      }
+    }
+
+    applyHeaders(c, ['products', 'facets']);
+    return c.json({
+      data: {
+        total: products.length,
+        categories: categories.map((cat) => ({ id: cat.id, slug: cat.slug, name: cat.name, count: catCounts[cat.slug] || 0 })),
+        brands: brands.map((br) => ({ id: br.id, slug: br.slug, name: br.name, count: brandCounts[br.slug] || 0 })),
+        gen: Object.entries(genCounts).map(([value, count]) => ({ value, count })),
+        form: Object.entries(formCounts).map(([value, count]) => ({ value, count })),
+        capacities: Object.entries(capCounts).map(([value, count]) => ({ value, count })),
+      },
+    });
+  });
+
   r.get('/products', async (c) => {
-    const rows = await db
+    const catSlug = c.req.query('cat') || c.req.query('category');
+    const brandSlug = c.req.query('brand');
+    const q = c.req.query('q');
+
+    let rows = await db
       .select()
       .from(product)
       .where(eq(product.status, 'published'))
       .orderBy(desc(product.id));
+
+    if (catSlug) {
+      const targetCat = await db.select().from(category).where(eq(category.slug, catSlug)).limit(1);
+      if (targetCat[0]) {
+        rows = rows.filter((p) => p.categoryId === targetCat[0].id);
+      }
+    }
+
+    if (brandSlug) {
+      const targetBrand = await db.select().from(brand).where(eq(brand.slug, brandSlug)).limit(1);
+      if (targetBrand[0]) {
+        rows = rows.filter((p) => p.brandId === targetBrand[0].id);
+      }
+    }
+
+    if (q) {
+      const cleanQ = q.toLowerCase();
+      rows = rows.filter((p) =>
+        p.name.toLowerCase().includes(cleanQ) ||
+        (p.description && p.description.toLowerCase().includes(cleanQ)) ||
+        (p.shortSpec && p.shortSpec.toLowerCase().includes(cleanQ))
+      );
+    }
 
     applyHeaders(c, ['products']);
     return c.json({ data: rows });
@@ -575,8 +653,203 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
       });
     }
 
+    if (!entries.some((e) => e.loc === '/' || e.loc === '/index.html')) {
+      entries.unshift({ loc: '/', locale: 'en' });
+    }
+
+    const targetLocale = c.req.query('locale');
+    const filtered = targetLocale ? entries.filter((e) => e.locale === targetLocale) : entries;
+
     applyHeaders(c, ['sitemap']);
-    return c.json({ data: entries });
+    return c.json({
+      data: filtered,
+      items: filtered.map((e) => ({ path: e.loc, ...e })),
+    });
+  });
+
+  // --- 10. Search & Suggestions (Tasks D7a, D7b) ---
+  r.get('/search/suggest', async (c) => {
+    const q = String(c.req.query('q') || '').trim();
+    if (!q || q.length < 2) {
+      return c.json({ query: q, suggestions: [] });
+    }
+    const cleanQ = q.toLowerCase();
+
+    // Query published products, articles, pages, glossary
+    const [prods, arts, terms] = await Promise.all([
+      db.select({ name: product.name, slug: product.slug })
+        .from(product)
+        .where(and(eq(product.status, 'published'), ilike(product.name, `%${cleanQ}%`)))
+        .limit(5),
+      db.select({ title: article.title, slug: article.slug })
+        .from(article)
+        .where(and(eq(article.status, 'published'), ilike(article.title, `%${cleanQ}%`)))
+        .limit(5),
+      db.select({ term: glossaryTerm.term })
+        .from(glossaryTerm)
+        .where(ilike(glossaryTerm.term, `%${cleanQ}%`))
+        .limit(5),
+    ]);
+
+    const suggestions: Array<{ text: string; type: string; url: string }> = [];
+    for (const p of prods) {
+      suggestions.push({ text: p.name, type: 'product', url: `/product.html?id=${p.slug}` });
+    }
+    for (const a of arts) {
+      suggestions.push({ text: a.title, type: 'article', url: `/article.html?id=${a.slug}` });
+    }
+    for (const t of terms) {
+      suggestions.push({ text: t.term, type: 'glossary', url: `/learn-glossary.html#term-${slugify(t.term)}` });
+    }
+
+    applyHeaders(c, ['search']);
+    return c.json({ query: q, suggestions: suggestions.slice(0, 8) });
+  });
+
+  r.get('/search', async (c) => {
+    const q = String(c.req.query('q') || '').trim();
+    const type = c.req.query('type'); // product, article, page, glossary
+    const locale = c.req.query('locale') || 'en';
+    const pageNum = Math.max(1, parseInt(c.req.query('page') || '1', 10));
+    const limit = Math.min(50, Math.max(1, parseInt(c.req.query('limit') || '20', 10)));
+
+    if (!q) {
+      return c.json({ query: '', total: 0, page: pageNum, limit, facets: {}, results: [] });
+    }
+
+    const cleanQ = q.toLowerCase();
+    const queryTokens = cleanQ.split(/\s+/).filter(Boolean);
+
+    // 1. Products search
+    let prodResults: any[] = [];
+    if (!type || type === 'product') {
+      const allProds = await db.select({
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        description: product.description,
+        shortSpec: product.shortSpec,
+        warranty: product.warranty,
+        categoryId: product.categoryId,
+      }).from(product).where(eq(product.status, 'published'));
+
+      prodResults = allProds.filter((p) => {
+        const text = `${p.name} ${p.description || ''} ${p.shortSpec || ''}`.toLowerCase();
+        return queryTokens.every((tok) => text.includes(tok));
+      }).map((p) => ({
+        type: 'product',
+        id: p.id,
+        title: p.name,
+        slug: p.slug,
+        url: `/product.html?id=${p.slug}`,
+        snippet: p.shortSpec || (p.description ? p.description.slice(0, 160) : ''),
+        badge: p.warranty || 'Product',
+        locale: 'en',
+      }));
+    }
+
+    // 2. Articles search
+    let artResults: any[] = [];
+    if (!type || type === 'article') {
+      const allArts = await db.select({
+        id: article.id,
+        title: article.title,
+        slug: article.slug,
+        deck: article.deck,
+        body: article.body,
+        category: article.category,
+        locale: article.locale,
+      }).from(article).where(and(eq(article.status, 'published'), eq(article.locale, locale)));
+
+      artResults = allArts.filter((a) => {
+        const text = `${a.title} ${a.deck || ''} ${a.body}`.toLowerCase();
+        return queryTokens.every((tok) => text.includes(tok));
+      }).map((a) => ({
+        type: 'article',
+        id: a.id,
+        title: a.title,
+        slug: a.slug,
+        url: `/article.html?id=${a.slug}`,
+        snippet: a.deck || (a.body ? a.body.slice(0, 160) : ''),
+        badge: a.category || 'Article',
+        category: a.category,
+        locale: a.locale,
+      }));
+    }
+
+    // 3. Glossary search
+    let glossaryResults: any[] = [];
+    if (!type || type === 'glossary') {
+      const allTerms = await db.select().from(glossaryTerm).where(eq(glossaryTerm.locale, locale));
+      glossaryResults = allTerms.filter((t) => {
+        const text = `${t.term} ${t.definition}`.toLowerCase();
+        return queryTokens.every((tok) => text.includes(tok));
+      }).map((t) => ({
+        type: 'glossary',
+        id: t.id,
+        title: t.term,
+        slug: t.term,
+        url: `/learn-glossary.html#term-${slugify(t.term)}`,
+        snippet: t.definition.slice(0, 160),
+        badge: 'Glossary',
+        locale: t.locale,
+      }));
+    }
+
+    // 4. Pages search
+    let pageResults: any[] = [];
+    if (!type || type === 'page') {
+      const allPages = await db.select({
+        id: page.id,
+        title: page.title,
+        slug: page.slug,
+        path: page.path,
+        seoDescription: page.seoDescription,
+        locale: page.locale,
+      }).from(page).where(and(eq(page.status, 'published'), eq(page.locale, locale)));
+
+      pageResults = allPages.filter((p) => {
+        const text = `${p.title} ${p.seoDescription || ''}`.toLowerCase();
+        return queryTokens.every((tok) => text.includes(tok));
+      }).map((p) => ({
+        type: 'page',
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        url: p.path ? `${p.path}.html` : `/${p.slug}.html`,
+        snippet: p.seoDescription ? p.seoDescription.slice(0, 160) : '',
+        badge: 'Page',
+        locale: p.locale,
+      }));
+    }
+
+    const combined = [...prodResults, ...artResults, ...glossaryResults, ...pageResults];
+    const total = combined.length;
+
+    // Log query analytics with 0 personal data (Task D7a)
+    try {
+      await db.insert(searchQueryLog).values({ query: q.slice(0, 200), locale, resultsCount: total });
+    } catch {}
+
+    const facets: Record<string, number> = {
+      product: prodResults.length,
+      article: artResults.length,
+      glossary: glossaryResults.length,
+      page: pageResults.length,
+    };
+
+    const start = (pageNum - 1) * limit;
+    const paginated = combined.slice(start, start + limit);
+
+    applyHeaders(c, ['search']);
+    return c.json({
+      query: q,
+      total,
+      page: pageNum,
+      limit,
+      facets,
+      results: paginated,
+    });
   });
 
   return r;

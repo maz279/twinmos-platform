@@ -178,3 +178,38 @@ export const deliverySitemapEntrySchema = z.object({
   })).optional(),
 });
 export type DeliverySitemapEntry = z.infer<typeof deliverySitemapEntrySchema>;
+
+// Phase D Search Contracts (Tasks D7a, D7b)
+export const searchResultItemSchema = z.object({
+  type: z.enum(['product', 'article', 'page', 'glossary']),
+  id: z.union([z.string(), z.number()]),
+  title: z.string(),
+  slug: z.string(),
+  url: z.string(),
+  snippet: z.string(),
+  badge: z.string().optional(),
+  category: z.string().optional(),
+  locale: z.string().default('en'),
+});
+export type SearchResultItem = z.infer<typeof searchResultItemSchema>;
+
+export const searchResponseSchema = z.object({
+  query: z.string(),
+  total: z.number(),
+  page: z.number().default(1),
+  limit: z.number().default(20),
+  facets: z.record(z.string(), z.number()).optional(),
+  results: z.array(searchResultItemSchema),
+});
+export type SearchResponse = z.infer<typeof searchResponseSchema>;
+
+export const searchSuggestResponseSchema = z.object({
+  query: z.string(),
+  suggestions: z.array(z.object({
+    text: z.string(),
+    type: z.string(),
+    url: z.string(),
+  })),
+});
+export type SearchSuggestResponse = z.infer<typeof searchSuggestResponseSchema>;
+

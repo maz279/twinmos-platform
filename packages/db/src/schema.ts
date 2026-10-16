@@ -462,3 +462,31 @@ export const formField = pgTable('form_field', {
   index('form_field_form_idx').on(t.formId, t.sort),
 ]);
 
+// ---- Phase D: Search & Newsletter Subscribers ----
+export const newsletterSubscriber = pgTable('newsletter_subscriber', {
+  id: serial('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | active | unsubscribed
+  token: varchar('token', { length: 64 }),
+  source: varchar('source', { length: 100 }).default('site_footer'),
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+  unsubscribedAt: timestamp('unsubscribed_at', { withTimezone: true }),
+  ip: text('ip'),
+  createdAt: ts(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('newsletter_sub_status_idx').on(t.status),
+  index('newsletter_sub_token_idx').on(t.token),
+]);
+
+export const searchQueryLog = pgTable('search_query_log', {
+  id: serial('id').primaryKey(),
+  query: text('query').notNull(),
+  locale: varchar('locale', { length: 10 }).notNull().default('en'),
+  resultsCount: integer('results_count').notNull().default(0),
+  createdAt: ts(),
+}, (t) => [
+  index('search_log_created_idx').on(t.createdAt),
+]);
+
+

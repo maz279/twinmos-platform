@@ -1,2 +1,80 @@
-# TwinMOS CMS-managed redirects map (CMS-E1 / NF-14)
+# TwinMOS CMS-managed redirects map (CMS-E1 / NF-14 / Task E2)
 # Syntax: <source_path> <destination_path>;
+
+# Product Categories
+/product-category/dram-module /shop.html?cat=dram;
+/product-category/dram-module/ /shop.html?cat=dram;
+/product-category/dram-module/desktop-dram /shop.html?cat=dram-desktop;
+/product-category/dram-module/desktop-dram/ /shop.html?cat=dram-desktop;
+/product-category/dram-module/gaming-dram /shop.html?cat=dram-gaming;
+/product-category/dram-module/gaming-dram/ /shop.html?cat=dram-gaming;
+/product-category/dram-module/notebook-dram /shop.html?cat=dram-notebook;
+/product-category/dram-module/notebook-dram/ /shop.html?cat=dram-notebook;
+/product-category/solid-state-drive /shop.html?cat=ssd;
+/product-category/solid-state-drive/ /shop.html?cat=ssd;
+/product-category/solid-state-drive/nvme-ssd /shop.html?cat=ssd-nvme;
+/product-category/solid-state-drive/nvme-ssd/ /shop.html?cat=ssd-nvme;
+/product-category/solid-state-drive/sata-ssd /shop.html?cat=ssd-sata;
+/product-category/solid-state-drive/sata-ssd/ /shop.html?cat=ssd-sata;
+/product-category/portable-drives /shop.html?cat=portable;
+/product-category/portable-drives/ /shop.html?cat=portable;
+/product-category/portable-drives/portable-ssd /shop.html?cat=portable-ssd;
+/product-category/portable-drives/portable-ssd/ /shop.html?cat=portable-ssd;
+/product-category/portable-drives/portable-hdd /shop.html?cat=portable-hdd;
+/product-category/portable-drives/portable-hdd/ /shop.html?cat=portable-hdd;
+/product-category/flash-drive /shop.html?cat=flash;
+/product-category/flash-drive/ /shop.html?cat=flash;
+/product-category/microsd-card /shop.html?cat=microsd;
+/product-category/microsd-card/ /shop.html?cat=microsd;
+/product-category/power-supply /shop.html?cat=psu;
+/product-category/power-supply/ /shop.html?cat=psu;
+/product-category/usb-hub /shop.html?cat=hub;
+/product-category/usb-hub/ /shop.html?cat=hub;
+
+# Corporate & Pages
+/about-us /about.html;
+/about-us/ /about.html;
+/contact-us /contact.html;
+/contact-us/ /contact.html;
+/career /careers.html;
+/career/ /careers.html;
+/warranty /legal.html#warranty;
+/warranty/ /legal.html#warranty;
+/warranty-policy /legal.html#warranty;
+/warranty-policy/ /legal.html#warranty;
+/terms-of-use /legal.html#terms;
+/terms-of-use/ /legal.html#terms;
+/privacy-policy /legal.html#privacy;
+/privacy-policy/ /legal.html#privacy;
+/privacy-policy-2 /legal.html#privacy;
+/privacy-policy-2/ /legal.html#privacy;
+/category/articles /learn-blog.html;
+/category/articles/ /learn-blog.html;
+/category/news /news.html;
+/category/news/ /news.html;
+/blog /learn-blog.html;
+/blog/ /learn-blog.html;
+/media-events /news.html;
+/media-events/ /news.html;
+/computex-2026 /news.html;
+/computex-2026/ /news.html;
+/notice /news.html;
+/notice/ /news.html;
+/notice/latest-announcements /news.html;
+/notice/latest-announcements/ /news.html;
+
+# Specific legacy products
+/product/twinmos-alphapro-nvme-m-2-2280-new-ssd /product.html?id=alphapro-nvme-m2-2280-ssd;
+/product/twinmos-alphapro-nvme-m-2-2280-new-ssd/ /product.html?id=alphapro-nvme-m2-2280-ssd;
+/product/twinmos-corex-pro-m-2-pcie-gen-5-0-nvme-ssd /product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd;
+/product/twinmos-corex-pro-m-2-pcie-gen-5-0-nvme-ssd/ /product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd;
+/product/twinmos-voltx-ddr5-u-dimm-for-desktop /product.html?id=voltx-ddr5-udimm-16gb;
+/product/twinmos-voltx-ddr5-u-dimm-for-desktop/ /product.html?id=voltx-ddr5-udimm-16gb;
+/product/twinmos-voltx-ddr5-so-dimm-for-laptop /product.html?id=voltx-ddr5-sodimm-16gb;
+/product/twinmos-voltx-ddr5-so-dimm-for-laptop/ /product.html?id=voltx-ddr5-sodimm-16gb;
+/product/twinmos-tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop /product.html?id=tornadox7-ddr4-3200mhz-udimm;
+/product/twinmos-tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop/ /product.html?id=tornadox7-ddr4-3200mhz-udimm;
+/product/twinmos-portable-ssd-elite-drive-pro-usb-type-c /product.html?id=elite-drive-pro-portable-ssd;
+/product/twinmos-portable-ssd-elite-drive-pro-usb-type-c/ /product.html?id=elite-drive-pro-portable-ssd;
+/product/twinmos-portable-hdd-prodrive-ultra-usb-3-0 /product.html?id=prodrive-ultra-portable-hdd;
+/product/twinmos-portable-hdd-prodrive-ultra-usb-3-0/ /product.html?id=prodrive-ultra-portable-hdd;

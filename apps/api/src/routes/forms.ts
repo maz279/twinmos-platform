@@ -7,8 +7,9 @@ import {
   formSubmissionSchema, rmaIntakeSchema, problem,
   submissionRefPrefix, submissionAutoPriority, submissionSlaHours,
 } from '@twinmos/shared';
-import { formSubmission, jobApplication, rmaEvent, rmaRequest } from '@twinmos/db';
+import { formSubmission, jobApplication, rmaEvent, rmaRequest, newsletterSubscriber } from '@twinmos/db';
 import { sendFormRouting, sendCustomerConfirmation } from '../mailer.ts';
+import { alertManager } from '../services/alerts.ts';
 import { IdempotencyStore } from '../idem.ts';
 import { turnstileBypassEnabled } from '../boot-config.ts';
 import type { DB } from '@twinmos/db';
@@ -38,6 +39,143 @@ async function nextRmaNumber(db: DB): Promise<string> {
 
 export function formsRoute(db: DB) {
   const r = new Hono();
+
+  // --- Newsletter Double Opt-in (Task D6: FORMS-01) ---
+  r.post('/forms/newsletter', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    let email = body.email;
+    const honeypot = body.website || body.hp;
+    const fillTimeMs = Number(body.fillTimeMs || 0);
+    const source = String(body.source || 'site_footer').slice(0, 100);
+
+    // Spam guards: honeypot + timing (must take >= 1s to fill)
+    if (honeypot) {
+      return c.json({ ok: true, requiresConfirmation: true, status: 'pending', message: 'Verification link sent if email is valid.' }, 200);
+    }
+    if (fillTimeMs > 0 && fillTimeMs < 800) {
+      return c.json(problem(400, 'Suspicious submission speed'), 400, { 'Content-Type': 'application/problem+json' });
+    }
+
+    if (!email || !email.includes('@') || email.length > 255) {
+      return c.json(problem(422, 'Invalid email address'), 422, { 'Content-Type': 'application/problem+json' });
+    }
+
+    const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    const ip = c.req.header('cf-connecting-ip') ?? null;
+
+    const existing = await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.email, email)).limit(1);
+    if (existing[0]) {
+      if (existing[0].status === 'active') {
+        return c.json({ ok: true, requiresConfirmation: false, status: 'active', message: 'You are already subscribed to the TwinMOS newsletter.' });
+      }
+      await db.update(newsletterSubscriber)
+        .set({ token, status: 'pending', source, ip, updatedAt: new Date() })
+        .where(eq(newsletterSubscriber.id, existing[0].id));
+    } else {
+      await db.insert(newsletterSubscriber).values({
+        email, token, status: 'pending', source, ip,
+      });
+    }
+
+    // Send confirmation link
+    const confirmUrl = `/api/v1/forms/newsletter/confirm?token=${token}`;
+    await sendCustomerConfirmation(
+      email,
+      'Confirm your TwinMOS newsletter subscription',
+      `Please confirm your subscription to the TwinMOS newsletter by clicking the link below:\n\n${confirmUrl}\n\nIf you did not request this, you can ignore this message.`,
+      { kind: 'newsletter-opt-in', token }
+    );
+
+    const prefix = 'NL';
+    const refCode = prefix + '-' + new Date().getFullYear() + '-' + crypto.randomUUID().slice(0, 8);
+
+    await db.insert(formSubmission).values({
+      type: 'newsletter',
+      refCode,
+      status: 'new',
+      priority: 'low',
+      dueAt: new Date(Date.now() + 24 * 3600_000),
+      email,
+      payload: { source: body.source ?? 'newsletter' },
+      ip: ip ?? null,
+      ua: c.req.header('user-agent') ?? null,
+    });
+
+    await sendFormRouting('newsletter', refCode, email, { source: body.source ?? 'newsletter' });
+
+    return c.json({
+      ok: true,
+      reference: refCode,
+      requiresConfirmation: true,
+      status: 'pending',
+      message: 'Subscription initiated. Please check your inbox to confirm your email.',
+      confirmUrl,
+    }, 201);
+  });
+
+  r.get('/forms/newsletter/confirm', async (c) => {
+    const token = c.req.query('token');
+    if (!token) {
+      return c.json(problem(400, 'Confirmation token required'), 400, { 'Content-Type': 'application/problem+json' });
+    }
+
+    const sub = await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.token, token)).limit(1);
+    if (!sub[0]) {
+      return c.json(problem(404, 'Invalid or expired confirmation token'), 404, { 'Content-Type': 'application/problem+json' });
+    }
+
+    await db.update(newsletterSubscriber)
+      .set({ status: 'active', confirmedAt: new Date(), updatedAt: new Date() })
+      .where(eq(newsletterSubscriber.id, sub[0].id));
+
+    return c.json({
+      ok: true,
+      confirmed: true,
+      status: 'active',
+      message: 'Thank you! Your TwinMOS newsletter subscription has been confirmed.',
+    });
+  });
+
+  const handleUnsubscribe = async (c: any) => {
+    const token = c.req.query('token');
+    let email = c.req.query('email');
+    if (!email && !token) {
+      const body = await c.req.json().catch(() => ({}));
+      email = body.email;
+    }
+    if (token) {
+      const sub = await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.token, token)).limit(1);
+      if (sub[0]) {
+        await db.update(newsletterSubscriber)
+          .set({ status: 'unsubscribed', unsubscribedAt: new Date(), updatedAt: new Date() })
+          .where(eq(newsletterSubscriber.id, sub[0].id));
+        return c.json({
+          ok: true,
+          unsubscribed: true,
+          status: 'unsubscribed',
+          message: 'You have been successfully unsubscribed from the TwinMOS newsletter.',
+        });
+      }
+    }
+    if (!email) {
+      return c.json(problem(400, 'Email address or token required'), 400, { 'Content-Type': 'application/problem+json' });
+    }
+    email = String(email).trim().toLowerCase();
+
+    await db.update(newsletterSubscriber)
+      .set({ status: 'unsubscribed', unsubscribedAt: new Date(), updatedAt: new Date() })
+      .where(eq(newsletterSubscriber.email, email));
+
+    return c.json({
+      ok: true,
+      unsubscribed: true,
+      status: 'unsubscribed',
+      message: 'You have been successfully unsubscribed from the TwinMOS newsletter.',
+    });
+  };
+
+  r.post('/forms/newsletter/unsubscribe', handleUnsubscribe);
+  r.get('/forms/newsletter/unsubscribe', handleUnsubscribe);
 
   r.post('/forms/:type', async (c) => {
     // Idempotency-Key replay (TTL-bounded window; Redis in prod per docs/02)
@@ -116,17 +254,23 @@ export function formsRoute(db: DB) {
     }
 
     // Team routing email — never blocks the response on failure.
-    await sendFormRouting(type, refCode, email, fullPayload);
+    const routingOk = await sendFormRouting(type, refCode, email, fullPayload);
+    if (!routingOk) {
+      alertManager.recordMailFailure(type, refCode, 'Internal form routing mail delivery failed');
+    }
 
     // P6 (ADR-009, BR-4.1): ticketed auto-reply for every form family — RMA
     // already carries its own dedicated confirmation with the RMA number.
     if (!rmaNumber) {
-      await sendCustomerConfirmation(
+      const confirmOk = await sendCustomerConfirmation(
         email,
         `TwinMOS request ${refCode} — we received your ${type.replace(/-/g, ' ')}`,
         `Thank you for contacting TwinMOS.\n\nYour reference: ${refCode}\nKeep it for any follow-up with our team.\n\nOur ${type === 'quote' ? 'regional sales office replies within one business day' : 'team replies within ' + Math.round(submissionSlaHours(type) / 24) + ' business day(s)'}.\n\nTwinMOS Technologies — Dubai DAFZA · Taipei · Cologne · San Jose · Dongguan`,
         { kind: 'submission-auto-reply', refCode, type },
       );
+      if (!confirmOk) {
+        alertManager.recordMailFailure(type, refCode, 'Customer confirmation auto-reply delivery failed');
+      }
     }
 
     const body = rmaNumber

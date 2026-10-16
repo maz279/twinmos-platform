@@ -195,18 +195,21 @@ function Menus({ canManage }: { canManage: boolean }) {
                 <span style={{ fontSize: 11, color: '#93A0B4' }}>{doc[g]?.length ?? 0} slots</span>
                 {canManage && (
                   <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} title="Delete this menu group (and its slots)"
+                    aria-label={`Delete ${g} menu group`}
                     onClick={() => { if (window.confirm(`Delete the "${g}" menu group?`)) { const next = { ...doc }; delete next[g]; edit(next); } }}>✕</button>
                 )}
               </div>
               {(doc[g] ?? []).map((row, i) => (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr 22px 22px 22px', gap: 6, marginBottom: 6, alignItems: 'center' }}>
                   <input style={{ ...input, padding: '5px 8px', fontSize: 12.5 }} placeholder="Label" value={row.label} disabled={!canManage}
+                    aria-label={`Slot ${i + 1} label in ${g}`}
                     onChange={(e) => setGroup(g, (doc[g] ?? []).map((r, j) => (j === i ? { ...r, label: e.target.value } : r)))} />
                   <input style={{ ...input, padding: '5px 8px', fontSize: 12.5, fontFamily: 'ui-monospace, monospace' }} placeholder="/url" value={row.url} disabled={!canManage}
+                    aria-label={`Slot ${i + 1} URL in ${g}`}
                     onChange={(e) => setGroup(g, (doc[g] ?? []).map((r, j) => (j === i ? { ...r, url: e.target.value } : r)))} />
-                  <button title="Move up" disabled={!canManage || i === 0} onClick={() => moveRow(g, i, -1)} style={{ border: 0, background: 'none', color: i === 0 ? '#D5DDE7' : '#66748A', cursor: canManage && i > 0 ? 'pointer' : 'default', fontSize: 13 }}>↑</button>
-                  <button title="Move down" disabled={!canManage || i === (doc[g]?.length ?? 0) - 1} onClick={() => moveRow(g, i, 1)} style={{ border: 0, background: 'none', color: i === (doc[g]?.length ?? 0) - 1 ? '#D5DDE7' : '#66748A', cursor: canManage && i < (doc[g]?.length ?? 0) - 1 ? 'pointer' : 'default', fontSize: 13 }}>↓</button>
-                  <button title="Remove" disabled={!canManage} onClick={() => setGroup(g, (doc[g] ?? []).filter((_, j) => j !== i))} style={{ border: 0, background: 'none', color: '#C2453C', cursor: canManage ? 'pointer' : 'default', fontSize: 12 }}>✕</button>
+                  <button title="Move up" aria-label={`Move ${row.label || 'slot ' + (i + 1)} up`} disabled={!canManage || i === 0} onClick={() => moveRow(g, i, -1)} style={{ border: 0, background: 'none', color: i === 0 ? '#D5DDE7' : '#66748A', cursor: canManage && i > 0 ? 'pointer' : 'default', fontSize: 13 }}>↑</button>
+                  <button title="Move down" aria-label={`Move ${row.label || 'slot ' + (i + 1)} down`} disabled={!canManage || i === (doc[g]?.length ?? 0) - 1} onClick={() => moveRow(g, i, 1)} style={{ border: 0, background: 'none', color: i === (doc[g]?.length ?? 0) - 1 ? '#D5DDE7' : '#66748A', cursor: canManage && i < (doc[g]?.length ?? 0) - 1 ? 'pointer' : 'default', fontSize: 13 }}>↓</button>
+                  <button title="Remove" aria-label={`Remove ${row.label || 'slot ' + (i + 1)}`} disabled={!canManage} onClick={() => setGroup(g, (doc[g] ?? []).filter((_, j) => j !== i))} style={{ border: 0, background: 'none', color: '#C2453C', cursor: canManage ? 'pointer' : 'default', fontSize: 12 }}>✕</button>
                 </div>
               ))}
               {canManage && (

@@ -21,8 +21,10 @@ import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
 import { snCheckRoute, snReportRoute, serialAdminRoute } from './routes/sncheck.ts';
 import { navigationRoute } from './routes/navigation.ts';
 import { entitiesRoute } from './routes/entities.ts';
+import { privacyRoute } from './routes/privacy.ts';
 import { makeDeliveryRouter } from './routes/delivery/index.ts';
 import { dispatchOutbox } from './services/outbox.ts';
+import { alertManager } from './services/alerts.ts';
 import { sendMail } from './mailer.ts';
 import { auditLog, user } from '@twinmos/db';
 import { eq } from 'drizzle-orm';
@@ -114,7 +116,10 @@ export function buildApp(db: DB) {
     const requestId = crypto.randomUUID();
     c.set('requestId', requestId);
     c.header('X-Request-Id', requestId);
+    const start = Date.now();
     await next();
+    const duration = Date.now() - start;
+    alertManager.recordRequest(c.res.status, duration);
   });
 
   // Tiered body limit middleware (NF-18, NEW-05, V-14)
@@ -224,6 +229,44 @@ export function buildApp(db: DB) {
     }
   });
 
+  // Task F2 / OBS-01: Deep health inspection with component diagnostics & latency
+  app.get('/api/v1/health/deep', async (c) => {
+    const t0 = Date.now();
+    let dbStatus = 'connected';
+    let dbLatencyMs = 0;
+    let outboxQueueDepth = 0;
+    try {
+      await db.execute(sql`select 1`);
+      dbLatencyMs = Date.now() - t0;
+    } catch {
+      dbStatus = 'unreachable';
+    }
+
+    try {
+      const outboxRows = await db.execute(sql`SELECT count(*)::int as cnt FROM outbox WHERE processed_at IS NULL`);
+      outboxQueueDepth = (outboxRows as unknown as Array<{ cnt: number }>)[0]?.cnt ?? 0;
+    } catch {
+      // Outbox query optional if table uninitialized in non-outbox tests
+    }
+
+    const metrics = alertManager.getMetrics();
+    const firingAlerts = alertManager.getFiringCount();
+    const isDegraded = dbStatus !== 'connected' || firingAlerts > 10;
+
+    return c.json({
+      status: isDegraded ? 'degraded' : 'ok',
+      service: 'twinmos-api',
+      version: '0.3.0',
+      uptimeSec: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
+      components: {
+        database: { status: dbStatus, latencyMs: dbLatencyMs },
+        outbox: { status: outboxQueueDepth > 100 ? 'backlogged' : 'healthy', pendingCount: outboxQueueDepth },
+        alerts: { firingCount: firingAlerts, metrics },
+      },
+    }, isDegraded ? 503 : 200);
+  });
+
   // Per-account login lockout guard (S-07 / A4a):
   // Tracks consecutive failed login attempts by email address. After 5 failures within 15 minutes,
   // locks the account for 15 minutes, neutralizing rotating-IP brute force attacks.
@@ -260,6 +303,7 @@ export function buildApp(db: DB) {
         if (rec.count >= 5) {
           rec.lockedUntil = now + 15 * 60_000;
           console.warn(`[auth] Account locked for ${email} after 5 failed attempts`);
+          alertManager.recordLockout(email, clientIp(c), rec.count);
         }
         LOGIN_FAILURES.set(email, rec);
       }
@@ -369,6 +413,7 @@ export function buildApp(db: DB) {
   app.route('/api/v1/admin', navigationRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', entitiesRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', translationsRoute(db, { requireRole, sessionFromRequest })); // P4
+  app.route('/api/v1/admin/privacy', privacyRoute(db, { requireRole, sessionFromRequest })); // Phase E DSAR & Retention Operations
   app.route('/api/v1', i18nPublicRoute(db)); // public i18n bundles (P4)
   app.route('/api/v1', publicMediaRoute(db)); // P8 imagery bridge — public read-only product imagery
   app.route('/api/v1', partnerRoute(db, { requireRole, sessionFromRequest })); // P5 portal (member)
@@ -407,6 +452,40 @@ export function buildApp(db: DB) {
     }
     const result = await dispatchOutbox(db);
     return c.json(result);
+  });
+
+  // Task F2 / OBS-01: Admin Alert Management endpoints
+  app.get('/api/v1/admin/alerts', async (c) => {
+    const s = await sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': 'application/problem+json' });
+    if (!(await requireRole('viewer')(c.req.raw))) {
+      return c.json(problem(403, 'Forbidden', 'Requires viewer or above'), 403, { 'Content-Type': 'application/problem+json' });
+    }
+    return c.json({
+      alerts: alertManager.getAlerts(),
+      summary: alertManager.getSummary(),
+    });
+  });
+
+  app.post('/api/v1/admin/alerts/test', async (c) => {
+    const s = await sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': 'application/problem+json' });
+    if (!(await requireRole('admin')(c.req.raw))) {
+      return c.json(problem(403, 'Forbidden', 'Requires admin role'), 403, { 'Content-Type': 'application/problem+json' });
+    }
+    const alert = alertManager.recordAlert('manual.test', 'Manual Ops Alert Test', 'Verification ping from admin console', 'info', { triggeredBy: s.user.email });
+    return c.json({ triggered: true, alert });
+  });
+
+  app.post('/api/v1/admin/alerts/:id/resolve', async (c) => {
+    const s = await sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': 'application/problem+json' });
+    if (!(await requireRole('admin')(c.req.raw))) {
+      return c.json(problem(403, 'Forbidden', 'Requires admin role'), 403, { 'Content-Type': 'application/problem+json' });
+    }
+    const id = c.req.param('id');
+    const resolved = alertManager.resolveAlert(id);
+    return c.json({ resolved, id });
   });
 
   return app;
