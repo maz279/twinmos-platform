@@ -136,6 +136,7 @@ export const previewTokenPayloadSchema = z.object({
   entityType: DELIVERY_ENTITY_SCHEMA,
   entityId: z.union([z.string(), z.number()]),
   slug: z.string().optional(),
+  locale: z.string().optional(),
   exp: z.number().int().positive(), // Epoch seconds
   iat: z.number().int().positive().optional(),
 });

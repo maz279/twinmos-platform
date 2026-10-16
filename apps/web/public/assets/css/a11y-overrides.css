@@ -166,3 +166,9 @@ button.tab,
   border-color: #ffffff !important;
   color: #ffffff !important;
 }
+/* 5. Callout box on light background #F8FAFC requires dark text */
+.callout-box,
+.callout-box strong,
+.callout-box p {
+  color: #0a2540 !important;
+}

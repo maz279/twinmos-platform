@@ -87,7 +87,10 @@ async function main() {
   await new Promise(resolveServer => server.listen(PORT, resolveServer));
   console.log(`[audit-server] Serving static bundle from ${ROOT} on http://localhost:${PORT}`);
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    channel: process.env.PLAYWRIGHT_CHROMIUM_CHANNEL || 'chrome'
+  });
   
   // -------------------------------------------------------------
   // Test AXE-01: prefers-reduced-motion: reduce (29 routes)

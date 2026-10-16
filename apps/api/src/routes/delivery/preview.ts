@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { previewTokenPayloadSchema, type PreviewTokenPayload, type DeliveryEntity } from '@twinmos/shared';
 
 function getSecret(): string {
-  return process.env.BETTER_AUTH_SECRET || 'dev-insecure-secret-twinmos-platform';
+  return process.env.PREVIEW_SIGNING_KEY || process.env.BETTER_AUTH_SECRET || 'dev-insecure-secret-twinmos-platform';
 }
 
 function base64UrlEncode(str: string): string {
@@ -14,22 +14,26 @@ function base64UrlDecode(str: string): string {
 }
 
 /**
- * Creates a signed, short-lived preview token scoped to an entity.
- * Default TTL: 1 hour (3600 seconds).
+ * Creates a signed, short-lived preview token scoped to an entity and optional locale.
+ * Default and maximum TTL: 1 hour (3600 seconds).
  */
 export function createPreviewToken(
   entityType: DeliveryEntity,
   entityId: string | number,
   slug?: string,
-  ttlSeconds = 3600
+  ttlSeconds = 3600,
+  locale?: string
 ): string {
   const now = Math.floor(Date.now() / 1000);
+  // Cap the TTL at 3,600 s (Roadmap R0.3 / Z-01)
+  const maxTtl = Math.min(3600, Number(ttlSeconds ?? 3600));
   const payload: PreviewTokenPayload = {
     entityType,
     entityId,
     slug,
+    locale,
     iat: now,
-    exp: now + ttlSeconds,
+    exp: now + maxTtl,
   };
 
   const payloadEncoded = base64UrlEncode(JSON.stringify(payload));
@@ -41,12 +45,13 @@ export function createPreviewToken(
 }
 
 /**
- * Verifies a preview token. Checks HMAC signature, schema, expiry, and scope.
+ * Verifies a preview token. Checks HMAC signature, schema, expiry, entity type, id/slug, and locale scope.
  */
 export function verifyPreviewToken(
   token: string | undefined | null,
   expectedEntityType?: DeliveryEntity,
-  expectedEntityIdOrSlug?: string | number
+  expectedEntityIdOrSlug?: string | number,
+  expectedLocale?: string
 ): PreviewTokenPayload | null {
   if (!token || typeof token !== 'string') return null;
 
@@ -88,6 +93,10 @@ export function verifyPreviewToken(
       if (!matchId && !matchSlug) {
         return null;
       }
+    }
+
+    if (expectedLocale && payload.locale && payload.locale !== expectedLocale) {
+      return null;
     }
 
     return payload;

@@ -11,6 +11,7 @@ export type MailInput = {
   subject: string;
   text: string;
   replyTo?: string;
+  headers?: Record<string, string>;
   meta?: Record<string, unknown>;
 };
 
@@ -51,7 +52,14 @@ async function sendViaResend(mail: MailInput): Promise<boolean> {
   const { Resend } = await import('resend');
   const client = new Resend(process.env.RESEND_API_KEY);
   const from = process.env.MAIL_FROM ?? 'TwinMOS Website <onboarding@resend.dev>';
-  const res = await client.emails.send({ from, to: mail.to, subject: mail.subject, text: mail.text, replyTo: mail.replyTo });
+  const res = await client.emails.send({
+    from,
+    to: mail.to,
+    subject: mail.subject,
+    text: mail.text,
+    replyTo: mail.replyTo,
+    headers: mail.headers,
+  });
   if (res.error) {
     console.error('[mailer] resend api error:', res.error);
     return false;
@@ -106,8 +114,15 @@ export async function sendFormRouting(type: string, refCode: string, email: stri
 }
 
 /** Confirmation email to the customer (used for RMA intake and on request). */
-export async function sendCustomerConfirmation(to: string, subject: string, text: string, meta?: Record<string, unknown>): Promise<boolean> {
-  return sendMail({ to, subject, text, meta: { kind: 'customer-confirmation', ...meta } });
+export async function sendCustomerConfirmation(
+  to: string,
+  subject: string,
+  text: string,
+  meta?: Record<string, unknown>,
+  headers?: Record<string, string>,
+): Promise<boolean> {
+  const mailHeaders = headers ?? (meta?.headers as Record<string, string> | undefined);
+  return sendMail({ to, subject, text, headers: mailHeaders, meta: { kind: 'customer-confirmation', ...meta } });
 }
 
 /** RMA status-change notification (opt-in per transition). */

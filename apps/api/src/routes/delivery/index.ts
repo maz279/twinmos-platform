@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { eq, and, or, lte, desc, asc, ilike } from 'drizzle-orm';
+import { eq, and, or, lte, desc, asc, ilike, isNull } from 'drizzle-orm';
 import type { DB } from '@twinmos/db';
 import {
   page,
@@ -50,20 +50,15 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
         authorized = true;
       }
     }
-    // Also allow internal secret if called server-to-server
-    const secretHdr = c.req.header('x-revalidate-secret');
-    if (secretHdr && secretHdr === (process.env.REVALIDATE_SECRET || 'dev-revalidate-secret')) {
-      authorized = true;
-    }
 
     if (!authorized) {
-      return c.json(problem(401, 'Unauthorized', 'Valid staff session or secret required'), 401, {
+      return c.json(problem(401, 'Unauthorized', 'Staff session (author+) required'), 401, {
         'Content-Type': PROBLEM_JSON,
       });
     }
 
     const body = await c.req.json().catch(() => ({}));
-    const { entityType, entityId, slug, ttlSeconds } = body;
+    const { entityType, entityId, slug, ttlSeconds, locale } = body;
 
     if (!entityType || !entityId) {
       return c.json(problem(400, 'Invalid parameters', 'entityType and entityId are required'), 400, {
@@ -71,7 +66,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
       });
     }
 
-    const token = createPreviewToken(entityType, entityId, slug, ttlSeconds);
+    const token = createPreviewToken(entityType, entityId, slug, ttlSeconds, locale);
     return c.json({ token });
   });
 
@@ -80,8 +75,8 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const locale = c.req.query('locale') || 'en';
     const path = c.req.query('path');
     const condition = path
-      ? and(eq(page.locale, locale), eq(page.status, 'published'), eq(page.path, path))
-      : and(eq(page.locale, locale), eq(page.status, 'published'));
+      ? and(eq(page.locale, locale), eq(page.status, 'published'), isNull(page.deletedAt), eq(page.path, path))
+      : and(eq(page.locale, locale), eq(page.status, 'published'), isNull(page.deletedAt));
 
     const rows = await db
       .select()
@@ -102,7 +97,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const rows = await db
       .select()
       .from(page)
-      .where(and(eq(page.path, path), eq(page.locale, locale), eq(page.status, 'published')))
+      .where(and(eq(page.path, path), eq(page.locale, locale), eq(page.status, 'published'), isNull(page.deletedAt)))
       .limit(1);
 
     if (!rows[0]) {
@@ -117,19 +112,19 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const locale = c.req.query('locale') || 'en';
     const previewToken = c.req.query('preview');
 
-    const tokenPayload = verifyPreviewToken(previewToken, 'page', slug);
+    const tokenPayload = verifyPreviewToken(previewToken, 'page', slug, locale);
     const isPreview = Boolean(tokenPayload);
 
     const condition = isPreview
-      ? and(eq(page.slug, slug), eq(page.locale, locale))
-      : and(eq(page.slug, slug), eq(page.locale, locale), eq(page.status, 'published'));
+      ? and(eq(page.slug, slug), eq(page.locale, locale), isNull(page.deletedAt))
+      : and(eq(page.slug, slug), eq(page.locale, locale), eq(page.status, 'published'), isNull(page.deletedAt));
 
     const rows = await db.select().from(page).where(condition).limit(1);
     let pageRow = rows[0];
     if (!pageRow) {
       const pathCondition = isPreview
-        ? and(eq(page.path, '/' + slug.replace(/^\//, '')), eq(page.locale, locale))
-        : and(eq(page.path, '/' + slug.replace(/^\//, '')), eq(page.locale, locale), eq(page.status, 'published'));
+        ? and(eq(page.path, '/' + slug.replace(/^\//, '')), eq(page.locale, locale), isNull(page.deletedAt))
+        : and(eq(page.path, '/' + slug.replace(/^\//, '')), eq(page.locale, locale), eq(page.status, 'published'), isNull(page.deletedAt));
       const pathRows = await db.select().from(page).where(pathCondition).limit(1);
       pageRow = pathRows[0];
     }
@@ -154,7 +149,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
 
   // --- 3. Products ---
   r.get('/products/facets', async (c) => {
-    const products = await db.select().from(product).where(eq(product.status, 'published'));
+    const products = await db.select().from(product).where(and(eq(product.status, 'published'), isNull(product.deletedAt)));
     const categories = await db.select().from(category);
     const brands = await db.select().from(brand);
 
@@ -209,7 +204,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     let rows = await db
       .select()
       .from(product)
-      .where(eq(product.status, 'published'))
+      .where(and(eq(product.status, 'published'), isNull(product.deletedAt)))
       .orderBy(desc(product.id));
 
     if (catSlug) {
@@ -247,8 +242,8 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const isPreview = Boolean(tokenPayload);
 
     const condition = isPreview
-      ? eq(product.slug, slug)
-      : and(eq(product.slug, slug), eq(product.status, 'published'));
+      ? and(eq(product.slug, slug), isNull(product.deletedAt))
+      : and(eq(product.slug, slug), eq(product.status, 'published'), isNull(product.deletedAt));
 
     const rows = await db.select().from(product).where(condition).limit(1);
     if (!rows[0]) {
@@ -285,7 +280,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const rows = await db
       .select()
       .from(article)
-      .where(and(eq(article.locale, locale), eq(article.status, 'published')))
+      .where(and(eq(article.locale, locale), eq(article.status, 'published'), isNull(article.deletedAt)))
       .orderBy(desc(article.id));
 
     applyHeaders(c, ['articles', `articles:${locale}`]);
@@ -297,12 +292,12 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const locale = c.req.query('locale') || 'en';
     const previewToken = c.req.query('preview');
 
-    const tokenPayload = verifyPreviewToken(previewToken, 'article', slug);
+    const tokenPayload = verifyPreviewToken(previewToken, 'article', slug, locale);
     const isPreview = Boolean(tokenPayload);
 
     const condition = isPreview
-      ? and(eq(article.slug, slug), eq(article.locale, locale))
-      : and(eq(article.slug, slug), eq(article.locale, locale), eq(article.status, 'published'));
+      ? and(eq(article.slug, slug), eq(article.locale, locale), isNull(article.deletedAt))
+      : and(eq(article.slug, slug), eq(article.locale, locale), eq(article.status, 'published'), isNull(article.deletedAt));
 
     const rows = await db.select().from(article).where(condition).limit(1);
     if (!rows[0]) {
@@ -330,7 +325,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const rows = await db
       .select()
       .from(newsPost)
-      .where(and(eq(newsPost.locale, locale), eq(newsPost.status, 'published')))
+      .where(and(eq(newsPost.locale, locale), eq(newsPost.status, 'published'), isNull(newsPost.deletedAt)))
       .orderBy(desc(newsPost.id));
 
     applyHeaders(c, ['news', `news:${locale}`]);
@@ -342,12 +337,12 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const locale = c.req.query('locale') || 'en';
     const previewToken = c.req.query('preview');
 
-    const tokenPayload = verifyPreviewToken(previewToken, 'news', slug);
+    const tokenPayload = verifyPreviewToken(previewToken, 'news', slug, locale);
     const isPreview = Boolean(tokenPayload);
 
     const condition = isPreview
-      ? and(eq(newsPost.slug, slug), eq(newsPost.locale, locale))
-      : and(eq(newsPost.slug, slug), eq(newsPost.locale, locale), eq(newsPost.status, 'published'));
+      ? and(eq(newsPost.slug, slug), eq(newsPost.locale, locale), isNull(newsPost.deletedAt))
+      : and(eq(newsPost.slug, slug), eq(newsPost.locale, locale), eq(newsPost.status, 'published'), isNull(newsPost.deletedAt));
 
     const rows = await db.select().from(newsPost).where(condition).limit(1);
     if (!rows[0]) {
@@ -375,8 +370,8 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const locale = c.req.query('locale') || 'en';
     const groupKey = c.req.query('groupKey');
     const condition = groupKey
-      ? and(eq(faq.locale, locale), eq(faq.groupKey, groupKey))
-      : eq(faq.locale, locale);
+      ? and(eq(faq.locale, locale), eq(faq.groupKey, groupKey), eq(faq.status, 'published'))
+      : and(eq(faq.locale, locale), eq(faq.status, 'published'));
 
     const rows = await db.select().from(faq).where(condition).orderBy(asc(faq.sort));
     applyHeaders(c, ['faqs', `faqs:${locale}`]);
@@ -559,21 +554,32 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
       .where(eq(formField.formId, defRows[0].id))
       .orderBy(asc(formField.sort), asc(formField.id));
 
+    // Security (Roadmap R0.3 / Z-12): never expose internal routingEmail on public delivery
+    const { routingEmail, ...safeDef } = defRows[0];
+
     applyHeaders(c, ['forms', `form:${formType}`]);
     return c.json({
       data: {
-        ...defRows[0],
+        ...safeDef,
         fields,
       },
     });
   });
+
+  const PUBLIC_SETTING_KEYS = new Set([
+    'site_name', 'site_description', 'site_url', 'contact_email', 'contact_phone',
+    'address', 'social_links', 'footer_links', 'announcement_banner', 'theme',
+    'brand_theme', 'menus', 'default_locale', 'supported_locales'
+  ]);
 
   // --- 7. Settings & Menus ---
   r.get('/settings', async (c) => {
     const rows = await db.select().from(setting);
     const map: Record<string, unknown> = {};
     for (const r of rows) {
-      map[r.key] = r.value;
+      if (PUBLIC_SETTING_KEYS.has(r.key)) {
+        map[r.key] = r.value;
+      }
     }
     applyHeaders(c, ['settings']);
     return c.json({ data: map });
@@ -597,22 +603,22 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const publishedPages = await db
       .select({ slug: page.slug, locale: page.locale, updatedAt: page.updatedAt })
       .from(page)
-      .where(eq(page.status, 'published'));
+      .where(and(eq(page.status, 'published'), isNull(page.deletedAt)));
 
     const publishedProducts = await db
       .select({ slug: product.slug, updatedAt: product.updatedAt })
       .from(product)
-      .where(eq(product.status, 'published'));
+      .where(and(eq(product.status, 'published'), isNull(product.deletedAt)));
 
     const publishedArticles = await db
       .select({ slug: article.slug, locale: article.locale, updatedAt: article.updatedAt })
       .from(article)
-      .where(eq(article.status, 'published'));
+      .where(and(eq(article.status, 'published'), isNull(article.deletedAt)));
 
     const publishedNews = await db
       .select({ slug: newsPost.slug, locale: newsPost.locale, updatedAt: newsPost.createdAt })
       .from(newsPost)
-      .where(eq(newsPost.status, 'published'));
+      .where(and(eq(newsPost.status, 'published'), isNull(newsPost.deletedAt)));
 
 
     const entries: Array<{ loc: string; lastmod?: string; locale: string }> = [];
@@ -679,11 +685,11 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const [prods, arts, terms] = await Promise.all([
       db.select({ name: product.name, slug: product.slug })
         .from(product)
-        .where(and(eq(product.status, 'published'), ilike(product.name, `%${cleanQ}%`)))
+        .where(and(eq(product.status, 'published'), isNull(product.deletedAt), ilike(product.name, `%${cleanQ}%`)))
         .limit(5),
       db.select({ title: article.title, slug: article.slug })
         .from(article)
-        .where(and(eq(article.status, 'published'), ilike(article.title, `%${cleanQ}%`)))
+        .where(and(eq(article.status, 'published'), isNull(article.deletedAt), ilike(article.title, `%${cleanQ}%`)))
         .limit(5),
       db.select({ term: glossaryTerm.term })
         .from(glossaryTerm)
@@ -731,7 +737,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
         shortSpec: product.shortSpec,
         warranty: product.warranty,
         categoryId: product.categoryId,
-      }).from(product).where(eq(product.status, 'published'));
+      }).from(product).where(and(eq(product.status, 'published'), isNull(product.deletedAt)));
 
       prodResults = allProds.filter((p) => {
         const text = `${p.name} ${p.description || ''} ${p.shortSpec || ''}`.toLowerCase();
@@ -759,7 +765,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
         body: article.body,
         category: article.category,
         locale: article.locale,
-      }).from(article).where(and(eq(article.status, 'published'), eq(article.locale, locale)));
+      }).from(article).where(and(eq(article.status, 'published'), eq(article.locale, locale), isNull(article.deletedAt)));
 
       artResults = allArts.filter((a) => {
         const text = `${a.title} ${a.deck || ''} ${a.body}`.toLowerCase();
@@ -806,7 +812,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
         path: page.path,
         seoDescription: page.seoDescription,
         locale: page.locale,
-      }).from(page).where(and(eq(page.status, 'published'), eq(page.locale, locale)));
+      }).from(page).where(and(eq(page.status, 'published'), eq(page.locale, locale), isNull(page.deletedAt)));
 
       pageResults = allPages.filter((p) => {
         const text = `${p.title} ${p.seoDescription || ''}`.toLowerCase();

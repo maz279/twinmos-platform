@@ -40,11 +40,19 @@ export function initAuth(db: DB) {
       minPasswordLength: 10,
       disableSignUp,
       requireEmailVerification: process.env.NODE_ENV === 'production' || process.env.REQUIRE_EMAIL_VERIFICATION === '1',
-      sendResetPassword: async ({ user, url, token }: any) => {
-        console.log(`[auth] sendResetPassword for ${user.email}: ${url} (token: ${token})`);
+      sendResetPassword: async ({ user }: any) => {
+        // Security (Roadmap R0.3 / Z-09 / RESET-LOG): never log reset URLs or tokens to console.
+        const err: any = new Error('Password reset mailer is not configured');
+        err.status = 503;
+        err.statusCode = 503;
+        throw err;
       },
-      sendVerificationEmail: async ({ user, url, token }: any) => {
-        console.log(`[auth] sendVerificationEmail for ${user.email}: ${url} (token: ${token})`);
+      sendVerificationEmail: async ({ user }: any) => {
+        // Security (Roadmap R0.3 / Z-09 / RESET-LOG): never log verification URLs or tokens to console.
+        const err: any = new Error('Verification email mailer is not configured');
+        err.status = 503;
+        err.statusCode = 503;
+        throw err;
       },
     },
     disabledPaths: [

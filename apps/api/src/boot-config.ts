@@ -59,6 +59,16 @@ export function bootConfigErrors(env: Record<string, string | undefined> = proce
     errs.push('FORMS_TO is required in production (form routing recipient)');
   }
 
+  // Preview signing key (Roadmap R0.3 / Z-01)
+  if (!env.PREVIEW_SIGNING_KEY || env.PREVIEW_SIGNING_KEY === 'dev-insecure-secret-twinmos-platform' || env.PREVIEW_SIGNING_KEY.length < 32) {
+    errs.push('PREVIEW_SIGNING_KEY is required in production, must not be default, and must be at least 32 characters');
+  }
+
+  // Revalidation secret (Roadmap R0.3 / Z-01, Z-12)
+  if (!env.REVALIDATE_SECRET || env.REVALIDATE_SECRET === 'dev-revalidate-secret' || env.REVALIDATE_SECRET.length < 32) {
+    errs.push('REVALIDATE_SECRET is required in production, must not be default, and must be at least 32 characters');
+  }
+
   return errs;
 }
 

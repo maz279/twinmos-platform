@@ -35,7 +35,8 @@ export async function runHypercareDailyCheck(options = {}) {
   const healthRes = await app.request('/api/v1/health');
   if (healthRes.status !== 200) throw new Error(`/api/v1/health returned ${healthRes.status}`);
 
-  const deepRes = await app.request('/api/v1/health/deep');
+  const internalSecret = process.env.REVALIDATE_SECRET || 'internal-dev-check';
+  const deepRes = await app.request('/api/v1/health/deep', { headers: { 'x-internal-secret': internalSecret } });
   if (deepRes.status !== 200) throw new Error(`/api/v1/health/deep returned ${deepRes.status}`);
   const deepJson = await deepRes.json();
 

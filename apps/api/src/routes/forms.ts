@@ -40,10 +40,11 @@ async function nextRmaNumber(db: DB): Promise<string> {
 export function formsRoute(db: DB) {
   const r = new Hono();
 
-  // --- Newsletter Double Opt-in (Task D6: FORMS-01) ---
+  // --- Newsletter Double Opt-in (Task D6: FORMS-01, R0.3: Z-21) ---
   r.post('/forms/newsletter', async (c) => {
     const body = await c.req.json().catch(() => ({}));
-    let email = body.email;
+    const rawEmail = String(body.email ?? '').trim();
+    const email = rawEmail.toLowerCase();
     const honeypot = body.website || body.hp;
     const fillTimeMs = Number(body.fillTimeMs || 0);
     const source = String(body.source || 'site_footer').slice(0, 100);
@@ -54,6 +55,16 @@ export function formsRoute(db: DB) {
     }
     if (fillTimeMs > 0 && fillTimeMs < 800) {
       return c.json(problem(400, 'Suspicious submission speed'), 400, { 'Content-Type': 'application/problem+json' });
+    }
+
+    // Turnstile is REQUIRED unless the dev bypass is explicitly set to '1' in non-production.
+    if (!turnstileBypassEnabled()) {
+      const turnstileToken = body.turnstileToken || body['cf-turnstile-response'];
+      if (!turnstileToken) {
+        return c.json(problem(400, 'Captcha token required'), 400, { 'Content-Type': 'application/problem+json' });
+      }
+      const ok = await verifyTurnstile(turnstileToken, c.req.header('cf-connecting-ip'));
+      if (!ok) return c.json(problem(403, 'Captcha Failed'), 403, { 'Content-Type': 'application/problem+json' });
     }
 
     if (!email || !email.includes('@') || email.length > 255) {
@@ -77,13 +88,24 @@ export function formsRoute(db: DB) {
       });
     }
 
-    // Send confirmation link
-    const confirmUrl = `/api/v1/forms/newsletter/confirm?token=${token}`;
+    // Send confirmation link with absolute URL and List-Unsubscribe headers
+    const siteUrl = process.env.PUBLIC_SITE_URL || process.env.ORIGIN || 'https://www.twinmos.com';
+    const baseUrl = siteUrl.replace(/\/+$/, '');
+    const confirmUrl = `${baseUrl}/api/v1/forms/newsletter/confirm?token=${token}`;
+    const unsubUrl = `${baseUrl}/api/v1/forms/newsletter/unsubscribe?token=${token}`;
+
     await sendCustomerConfirmation(
       email,
       'Confirm your TwinMOS newsletter subscription',
-      `Please confirm your subscription to the TwinMOS newsletter by clicking the link below:\n\n${confirmUrl}\n\nIf you did not request this, you can ignore this message.`,
-      { kind: 'newsletter-opt-in', token }
+      `Please confirm your subscription to the TwinMOS newsletter by clicking the link below:\n\n${confirmUrl}\n\nTo unsubscribe or cancel this request at any time:\n${unsubUrl}\n\nIf you did not request this, you can ignore this message.`,
+      {
+        kind: 'newsletter-opt-in',
+        token,
+        headers: {
+          'List-Unsubscribe': `<${unsubUrl}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
+      }
     );
 
     const prefix = 'NL';
@@ -103,13 +125,13 @@ export function formsRoute(db: DB) {
 
     await sendFormRouting('newsletter', refCode, email, { source: body.source ?? 'newsletter' });
 
+    // Z-21: Never expose the confirmation token or confirmUrl in the JSON response
     return c.json({
       ok: true,
       reference: refCode,
       requiresConfirmation: true,
       status: 'pending',
       message: 'Subscription initiated. Please check your inbox to confirm your email.',
-      confirmUrl,
     }, 201);
   });
 
@@ -137,40 +159,35 @@ export function formsRoute(db: DB) {
   });
 
   const handleUnsubscribe = async (c: any) => {
-    const token = c.req.query('token');
-    let email = c.req.query('email');
-    if (!email && !token) {
+    let token = c.req.query('token');
+    if (!token) {
       const body = await c.req.json().catch(() => ({}));
-      email = body.email;
+      token = body.token;
     }
-    if (token) {
-      const sub = await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.token, token)).limit(1);
-      if (sub[0]) {
-        await db.update(newsletterSubscriber)
-          .set({ status: 'unsubscribed', unsubscribedAt: new Date(), updatedAt: new Date() })
-          .where(eq(newsletterSubscriber.id, sub[0].id));
-        return c.json({
-          ok: true,
-          unsubscribed: true,
-          status: 'unsubscribed',
-          message: 'You have been successfully unsubscribed from the TwinMOS newsletter.',
-        });
-      }
+    if (!token || typeof token !== 'string' || token.trim().length === 0) {
+      return c.json(problem(400, 'Unsubscribe token required'), 400, { 'Content-Type': 'application/problem+json' });
     }
-    if (!email) {
-      return c.json(problem(400, 'Email address or token required'), 400, { 'Content-Type': 'application/problem+json' });
+    const cleanToken = token.trim();
+    const sub = await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.token, cleanToken)).limit(1);
+    if (!sub[0]) {
+      return c.json(problem(404, 'Invalid or expired unsubscribe token'), 404, { 'Content-Type': 'application/problem+json' });
     }
-    email = String(email).trim().toLowerCase();
 
     await db.update(newsletterSubscriber)
       .set({ status: 'unsubscribed', unsubscribedAt: new Date(), updatedAt: new Date() })
-      .where(eq(newsletterSubscriber.email, email));
+      .where(eq(newsletterSubscriber.id, sub[0].id));
+
+    const siteUrl = process.env.PUBLIC_SITE_URL || process.env.ORIGIN || 'https://www.twinmos.com';
+    const unsubUrl = `${siteUrl.replace(/\/+$/, '')}/api/v1/forms/newsletter/unsubscribe?token=${cleanToken}`;
 
     return c.json({
       ok: true,
       unsubscribed: true,
       status: 'unsubscribed',
       message: 'You have been successfully unsubscribed from the TwinMOS newsletter.',
+    }, 200, {
+      'List-Unsubscribe': `<${unsubUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     });
   };
 

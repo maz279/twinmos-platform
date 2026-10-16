@@ -59,7 +59,7 @@ describe('Phase F Operations & Launch (VC-F / S5–S11)', () => {
     });
 
     it('deep health probe /health/deep returns component diagnostics & latency', async () => {
-      const res = await app.request('/api/v1/health/deep');
+      const res = await app.request('/api/v1/health/deep', { headers: { cookie: adminCookie } });
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.status).toBe('ok');
@@ -123,7 +123,7 @@ describe('Phase F Operations & Launch (VC-F / S5–S11)', () => {
   describe('F4 / LOAD-01: Concurrent Health & Latency Validation', () => {
     it('handles 50 concurrent health and deep health requests cleanly', async () => {
       const promises = Array.from({ length: 50 }, (_, i) =>
-        i % 2 === 0 ? app.request('/api/v1/health') : app.request('/api/v1/health/deep')
+        i % 2 === 0 ? app.request('/api/v1/health') : app.request('/api/v1/health/deep', { headers: { cookie: adminCookie } })
       );
       const responses = await Promise.all(promises);
       for (const res of responses) {

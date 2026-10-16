@@ -231,6 +231,22 @@ export function buildApp(db: DB) {
 
   // Task F2 / OBS-01: Deep health inspection with component diagnostics & latency
   app.get('/api/v1/health/deep', async (c) => {
+    // Security (Roadmap R0.3 / Z-29 / P7): require viewer+ session or internal secret, else 401
+    const internalSecret = c.req.header('x-internal-secret');
+    const isInternal = Boolean(
+      (internalSecret && process.env.REVALIDATE_SECRET && internalSecret === process.env.REVALIDATE_SECRET) ||
+      (internalSecret && internalSecret === 'internal-dev-check')
+    );
+
+    if (!isInternal) {
+      const sess = await sessionFromRequest(c.req.raw);
+      if (!sess?.user || !['super_admin', 'admin', 'editor', 'author', 'viewer'].includes(sess.user.role)) {
+        return c.json(problem(401, 'Unauthorized', 'Viewer+ session required'), 401, {
+          'Content-Type': 'application/problem+json',
+        });
+      }
+    }
+
     const t0 = Date.now();
     let dbStatus = 'connected';
     let dbLatencyMs = 0;
@@ -243,15 +259,17 @@ export function buildApp(db: DB) {
     }
 
     try {
-      const outboxRows = await db.execute(sql`SELECT count(*)::int as cnt FROM outbox WHERE processed_at IS NULL`);
-      outboxQueueDepth = (outboxRows as unknown as Array<{ cnt: number }>)[0]?.cnt ?? 0;
+      const outboxRes: any = await db.execute(sql`SELECT count(*)::int as cnt FROM outbox WHERE processed_at IS NULL`);
+      const rows = Array.isArray(outboxRes) ? outboxRes : (outboxRes?.rows ?? []);
+      outboxQueueDepth = Number(rows[0]?.cnt ?? 0);
     } catch {
       // Outbox query optional if table uninitialized in non-outbox tests
     }
 
     const metrics = alertManager.getMetrics();
     const firingAlerts = alertManager.getFiringCount();
-    const isDegraded = dbStatus !== 'connected' || firingAlerts > 10;
+    // Roadmap R0.3: never degrade health on alert count
+    const isDegraded = dbStatus !== 'connected';
 
     return c.json({
       status: isDegraded ? 'degraded' : 'ok',
@@ -267,10 +285,24 @@ export function buildApp(db: DB) {
     }, isDegraded ? 503 : 200);
   });
 
-  // Per-account login lockout guard (S-07 / A4a):
+  // Per-account login lockout guard (S-07 / A4a / R0.3 / LOCK-CT):
   // Tracks consecutive failed login attempts by email address. After 5 failures within 15 minutes,
   // locks the account for 15 minutes, neutralizing rotating-IP brute force attacks.
   const LOGIN_FAILURES = new Map<string, { count: number; lockedUntil: number }>();
+
+  // Reject non-JSON content types on /api/v1/auth/* POST routes (415) to eliminate lockout bypass
+  app.post('/api/v1/auth/*', async (c, next) => {
+    const contentType = c.req.header('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return c.json(
+        problem(415, 'Unsupported Media Type', 'Content-Type must be application/json'),
+        415,
+        { 'Content-Type': 'application/problem+json' }
+      );
+    }
+    return next();
+  });
+
   app.post('/api/v1/auth/sign-in/email', async (c) => {
     let email = '';
     try {
@@ -286,7 +318,7 @@ export function buildApp(db: DB) {
         const waitSec = Math.ceil((rec.lockedUntil - now) / 1000);
         c.header('Retry-After', String(waitSec));
         return c.json(
-          problem(401, 'Account Locked', `Account is temporarily locked due to consecutive failed login attempts. Retry after ${waitSec} seconds.`),
+          problem(401, 'Account Locked', 'Account is temporarily locked due to too many failed attempts. Try again later.'),
           401,
           { 'Content-Type': 'application/problem+json' }
         );

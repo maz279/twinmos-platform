@@ -8,6 +8,7 @@ process.env.PGLITE_DATA = join(TMP, 'db');
 process.env.NODE_ENV = 'test';
 process.env.BETTER_AUTH_SECRET = 'test-secret-twinmos-phase-d-12345';
 process.env.MAIL_OUTBOX_DIR = join(TMP, 'outbox');
+process.env.API_ALLOW_NO_TURNSTILE = '1';
 
 const { createDb, page, product, article, brand, category, glossaryTerm, newsletterSubscriber, searchQueryLog }: any = await import('@twinmos/db');
 const { migrate } = await import('drizzle-orm/pglite/migrator');

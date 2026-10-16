@@ -65,7 +65,7 @@ describe('Task F8: Post-Launch Hypercare Surveillance & Stabilization (Two Weeks
     });
 
     it('verifies /api/v1/health/deep exposes component health and zero pending backlog', async () => {
-      const res = await app.request('/api/v1/health/deep');
+      const res = await app.request('/api/v1/health/deep', { headers: { cookie: adminCookie } });
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.status).toBe('ok');
