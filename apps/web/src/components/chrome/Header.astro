@@ -1,0 +1,284 @@
+---
+// Header.astro — Server-rendered header with accessible navigation and mega-menus.
+// Tasks D1a / GPROV-100 / GPARITY-D / WCAG 2.2 AA compliant.
+interface Props {
+  activePath?: string;
+  currentLocale?: string;
+}
+
+const { activePath = '', currentLocale = 'en' } = Astro.props;
+
+// Supported locales for global multi-language navigation (LOC-02)
+const LOCALES = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'] as const;
+const activeLocale = (LOCALES as readonly string[]).includes(currentLocale.toLowerCase()) ? currentLocale : 'en';
+void activeLocale;
+
+const normalize = (p: string) => p.replace(/^\//, '').replace(/\/$/, '') || 'index.html';
+const current = normalize(activePath);
+
+const isCurrent = (p: string) => {
+  const norm = normalize(p);
+  if (norm === 'index.html' && (current === 'index.html' || current === '')) return true;
+  return current === norm || current.startsWith(norm.replace('.html', ''));
+};
+---
+
+<header class="site-header">
+  <div class="wrap header-in">
+    <a class="logo" href="index.html" aria-label="TwinMOS home">
+      <img src="assets/img/logo.webp?v=219974299b" alt="TwinMOS" />
+    </a>
+
+    <nav aria-label="Main navigation">
+      <ul class="nav">
+        <li>
+          <a href="shop.html" aria-haspopup="true" class={isCurrent('shop.html') ? 'on' : ''} aria-current={isCurrent('shop.html') ? 'page' : undefined}>
+            Products <span class="caret" aria-hidden="true">&#9662;</span>
+          </a>
+          <div class="mega mega-wide" role="menu" aria-label="Products menu">
+            <div class="mega-col">
+              <h4>Memories</h4>
+              <a role="menuitem" href="shop.html?cat=dram-gaming">Gaming DRAM</a>
+              <a role="menuitem" href="shop.html?cat=dram-desktop">Desktop DRAM</a>
+              <a role="menuitem" href="shop.html?cat=dram-notebook">Notebook DRAM</a>
+              <a role="menuitem" href="shop.html" style="color:var(--accent-deep);font-weight:750">All products &rarr;</a>
+            </div>
+            <div class="mega-col">
+              <h4>Internal Storage</h4>
+              <a role="menuitem" href="shop.html?cat=ssd-nvme">NVMe SSD</a>
+              <a role="menuitem" href="shop.html?cat=ssd-sata">SATA SSD</a>
+              <a role="menuitem" href="shop.html" style="color:var(--accent-deep);font-weight:750">All products &rarr;</a>
+            </div>
+            <div class="mega-col">
+              <h4>Portable Storage</h4>
+              <a role="menuitem" href="shop.html?cat=portable-ssd">Portable SSD</a>
+              <a role="menuitem" href="shop.html?cat=portable-hdd">Portable HDD</a>
+              <a role="menuitem" href="shop.html" style="color:var(--accent-deep);font-weight:750">All products &rarr;</a>
+            </div>
+            <div class="mega-col">
+              <h4>Flash &amp; More</h4>
+              <a role="menuitem" href="shop.html?cat=flash">USB Flash Drive</a>
+              <a role="menuitem" href="shop.html?cat=microsd">MicroSD Card</a>
+              <a role="menuitem" href="shop.html?cat=psu">Power Supply</a>
+              <a role="menuitem" href="shop.html?cat=hub">USB HUB</a>
+              <a role="menuitem" href="shop.html" style="color:var(--accent-deep);font-weight:750">All products &rarr;</a>
+            </div>
+            <div class="mega-feature">
+              <img src="assets/img/card/corex-pro.webp" alt="TwinMOS CoreX Pro PCIe Gen 5.0 NVMe SSD" />
+              <b>CoreX Pro &mdash; PCIe Gen 5.0</b>
+              <span style="font-size:13px;color:var(--muted)">Up to 14,000 MB/s sequential read &middot; 5-year warranty</span>
+              <a class="link-arrow" href="product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd">View the flagship SSD</a>
+            </div>
+            <div class="mega-all">
+              <a role="menuitem" href="shop.html">Browse the full catalog &mdash; 45 products &rarr;</a>
+              <span style="margin-left:auto;display:inline-flex;gap:16px;font-weight:650">
+                <a role="menuitem" href="compare.html">Compare products</a>
+                <a role="menuitem" href="compatibility.html">Compatibility finder</a>
+              </span>
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <a href="gaming.html" aria-haspopup="true" class={isCurrent('gaming.html') ? 'on' : ''} aria-current={isCurrent('gaming.html') ? 'page' : undefined}>
+            Gaming <span class="caret" aria-hidden="true">&#9662;</span>
+          </a>
+          <div class="mega mega-edge" style="grid-template-columns:repeat(3,minmax(0,1fr)) minmax(190px,.65fr)" role="menu" aria-label="Gaming menu">
+            <div class="mega-col">
+              <h4>Explore</h4>
+              <a role="menuitem" href="gaming.html">Gaming home &mdash; VOLTX</a>
+              <a role="menuitem" href="gaming.html#arsenal">The arsenal &amp; specs</a>
+              <a role="menuitem" href="shop.html?cat=dram-gaming">Gaming DRAM catalog</a>
+              <a role="menuitem" href="gaming.html#sync">RGB sync ecosystems</a>
+            </div>
+            <div class="mega-col">
+              <h4>Tune &amp; sync</h4>
+              <a role="menuitem" href="gaming.html#rgb">RGB effects lab</a>
+              <a role="menuitem" href="gaming.html#tuning">XMP 3.0 &amp; EXPO tuning</a>
+              <a role="menuitem" href="article.html?id=what-is-xmp">What is XMP?</a>
+              <a role="menuitem" href="article.html?id=what-is-amd-expo">What is AMD EXPO?</a>
+            </div>
+            <div class="mega-col">
+              <h4>Community</h4>
+              <a role="menuitem" href="gaming.html#builds">Rigs from the scene</a>
+              <a role="menuitem" href="gaming.html#downloads">Wallpapers</a>
+              <a role="menuitem" href="gaming.html#stories">From the VOLTX desk</a>
+              <a role="menuitem" href="contact.html">Submit your build</a>
+            </div>
+            <div class="mega-feature">
+              <img src="assets/img/card/rgb-ram.webp?v=219974299b" alt="TwinMOS VOLTX DDR5 RGB module" loading="lazy" />
+              <b>VOLTX DDR5 RGB</b>
+              <span style="font-size:12.5px;color:var(--muted)">Addressable RGB &middot; XMP 3.0 / EXPO &middot; lifetime warranty</span>
+              <a class="link-arrow" href="shop.html?cat=dram-gaming">Shop the VOLTX line</a>
+            </div>
+            <div class="mega-all">
+              <a role="menuitem" href="gaming.html">Enter the gaming hub &rarr;</a>
+              <span style="margin-left:auto;display:inline-flex;gap:16px;font-weight:650">
+                <a role="menuitem" href="article.html?id=best-ram-for-gaming">Best RAM for gaming</a>
+                <a role="menuitem" href="article.html?id=directstorage-gen5-gaming">DirectStorage &amp; Gen 5</a>
+              </span>
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <a href="solutions.html" aria-haspopup="true" class={isCurrent('solutions.html') ? 'on' : ''} aria-current={isCurrent('solutions.html') ? 'page' : undefined}>
+            Solutions <span class="caret" aria-hidden="true">&#9662;</span>
+          </a>
+          <div class="mega mega-edge" style="grid-template-columns:repeat(2,minmax(0,1fr)) minmax(200px,.7fr)" role="menu" aria-label="Solutions menu">
+            <div class="mega-col">
+              <h4>Business lines</h4>
+              <a role="menuitem" href="solutions.html">Solutions home</a>
+              <a role="menuitem" href="solutions.html#dist">Regional distribution</a>
+              <a role="menuitem" href="solutions.html#oem">OEM manufacturing</a>
+              <a role="menuitem" href="solutions.html#fleet">Fleet &amp; workplace</a>
+              <a role="menuitem" href="solutions.html#workloads">Solutions by workload</a>
+            </div>
+            <div class="mega-col">
+              <h4>Work with us</h4>
+              <a role="menuitem" href="quote.html">Request a quote</a>
+              <a role="menuitem" href="partners.html">Become a distributor</a>
+              <a role="menuitem" href="solutions.html#process">How we work &mdash; 4 steps</a>
+              <a role="menuitem" href="solutions.html#footprint">Where we operate</a>
+              <a role="menuitem" href="contact.html">Contact an office</a>
+            </div>
+            <div class="mega-feature">
+              <b>From requirement to rollout</b>
+              <span style="font-size:12.5px;color:var(--body)">Taipei R&amp;D and Dongguan manufacturing behind every custom-labeled module &mdash; JEDEC-compliant DDR3&ndash;DDR5, NVMe, SATA and flash lines.</span>
+              <span style="font-size:12.5px;color:var(--muted)">T&Uuml;V S&Uuml;D ISO 9001 since 2002 &middot; 93+ countries</span>
+              <a class="link-arrow" href="quote.html">Start an OEM quote</a>
+            </div>
+            <div class="mega-all">
+              <a role="menuitem" href="solutions.html">Explore B2B &amp; OEM solutions &rarr;</a>
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <a href="where-to-buy.html" aria-haspopup="true" class={isCurrent('where-to-buy.html') ? 'on' : ''} aria-current={isCurrent('where-to-buy.html') ? 'page' : undefined}>
+            Where to Buy <span class="caret" aria-hidden="true">&#9662;</span>
+          </a>
+          <div class="mega mega-co" role="menu" aria-label="Where to buy menu">
+            <div class="mega-col">
+              <h4>Shop online</h4>
+              <a role="menuitem" href="where-to-buy.html">Where to Buy home</a>
+              <a role="menuitem" href="where-to-buy.html#marketplaces">Verified marketplaces</a>
+              <a role="menuitem" href="where-to-buy.html#trust">Buy with confidence</a>
+            </div>
+            <div class="mega-col">
+              <h4>Find a channel</h4>
+              <a role="menuitem" href="where-to-buy.html#locator">Distributor locator</a>
+              <a role="menuitem" href="where-to-buy.html#offices">TwinMOS offices &amp; hubs</a>
+              <a role="menuitem" href="partners.html">Become a distributor</a>
+              <a role="menuitem" href="quote.html">Volume &amp; OEM supply</a>
+            </div>
+            <div class="mega-feature">
+              <b>Authorized only</b>
+              <span style="font-size:12.5px;color:var(--body)">Marketplace and distributor listings are re-verified quarterly &mdash; 93+ countries across 6 regions.</span>
+              <a class="link-arrow" href="where-to-buy.html#locator">Find your channel</a>
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <a href="support.html" aria-haspopup="true" class={isCurrent('support.html') ? 'on' : ''} aria-current={isCurrent('support.html') ? 'page' : undefined}>
+            Support <span class="caret" aria-hidden="true">&#9662;</span>
+          </a>
+          <div class="mega mega-co" style="grid-template-columns:repeat(3,1fr)" role="menu" aria-label="Support menu">
+            <div class="mega-col">
+              <h4>Self-service</h4>
+              <a role="menuitem" href="support.html">Support Center</a>
+              <a role="menuitem" href="rma.html">Warranty &amp; RMA</a>
+              <a role="menuitem" href="support.html#faq">FAQ</a>
+              <a role="menuitem" href="support.html#downloads">Firmware &amp; manuals</a>
+            </div>
+            <div class="mega-col">
+              <h4>Knowledge hub</h4>
+              <a role="menuitem" href="learn.html">Learn home</a>
+              <a role="menuitem" href="learn-guides.html">Buying guides</a>
+              <a role="menuitem" href="learn-explained.html">Technology explainers</a>
+              <a role="menuitem" href="learn-benchmarks.html">Benchmarks</a>
+              <a role="menuitem" href="learn-glossary.html">Glossary A&ndash;Z</a>
+              <a role="menuitem" href="learn-blog.html">Tech insights &amp; blog</a>
+            </div>
+            <div class="mega-col">
+              <h4>Get help</h4>
+              <a role="menuitem" href="contact.html">Contact support</a>
+              <a role="menuitem" href="compatibility.html">Compatibility finder</a>
+              <a role="menuitem" href="where-to-buy.html">Where to buy</a>
+              <a role="menuitem" href="legal.html#warranty">Warranty policy</a>
+            </div>
+            <div class="mega-feature" style="grid-column:1/-1;display:flex;align-items:center;gap:14px">
+              <img src="assets/img/card/corex-pro.webp?v=219974299b" alt="" style="height:44px;width:auto" loading="lazy" />
+              <span style="font-size:13.5px;color:var(--body)">54 buying guides, technology explainers and benchmarks &mdash; written by the <img class="ilog" src="assets/img/logo.webp?v=219974299b" alt="TwinMOS" style="height:14px;width:auto" loading="lazy" /> engineering team.</span>
+              <a class="link-arrow" style="margin-left:auto;white-space:nowrap" href="learn.html">Open the Knowledge Hub</a>
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <a href="about.html" aria-haspopup="true" class={isCurrent('about.html') ? 'on' : ''} aria-current={isCurrent('about.html') ? 'page' : undefined}>
+            Company <span class="caret" aria-hidden="true">&#9662;</span>
+          </a>
+          <div class="mega mega-co" role="menu" aria-label="Company menu">
+            <div class="mega-col">
+              <h4>Company</h4>
+              <a role="menuitem" href="about.html">About Us</a>
+              <a role="menuitem" href="technology.html">Technology &amp; R&amp;D</a>
+              <a role="menuitem" href="about.html#quality">Quality Assurance</a>
+            </div>
+            <div class="mega-col">
+              <h4>People &amp; news</h4>
+              <a role="menuitem" href="news.html">News &amp; Events</a>
+              <a role="menuitem" href="careers.html">Careers</a>
+              <a role="menuitem" href="partners.html">Partners</a>
+              <a role="menuitem" href="contact.html">Contact</a>
+            </div>
+            <div class="mega-feature">
+              <b>Since 1998</b>
+              <span>Taipei HQ &amp; R&amp;D, manufacturing in Dongguan &mdash; a memory brand trusted in 93+ countries.</span>
+              <a class="link-arrow" href="about.html">Meet TwinMOS</a>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="header-cta">
+      <select id="langSel" class="lang-sel" aria-label="Language">
+        <option value="en" selected={currentLocale === 'en'}>EN</option>
+        <option value="ar" selected={currentLocale === 'ar'}>AR (RTL)</option>
+        <option value="hi" selected={currentLocale === 'hi'}>HI</option>
+        <option value="ru" selected={currentLocale === 'ru'}>RU</option>
+        <option value="zh-CN" selected={currentLocale === 'zh-CN'}>ZH-CN</option>
+        <option value="fr" selected={currentLocale === 'fr'}>FR</option>
+        <option value="es" selected={currentLocale === 'es'}>ES</option>
+        <option value="pt" selected={currentLocale === 'pt'}>PT</option>
+        <option value="de" selected={currentLocale === 'de'}>DE</option>
+      </select>
+
+      <button class="icon-btn" id="searchBtn" aria-label="Search" type="button">
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="8.2" cy="8.2" r="5.6"></circle>
+          <path d="M12.4 12.4 16 16"></path>
+        </svg>
+      </button>
+
+      <a class="icon-btn" href="compare.html" aria-label="Compare tray">
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2.5 5h11M13.5 5l-2.4-2.4M13.5 5l-2.4 2.4"></path>
+          <path d="M13.5 11h-11M2.5 11l2.4-2.4M2.5 11l2.4 2.4"></path>
+        </svg>
+        <span class="tray-count" data-tray-count style="display:none">0</span>
+      </a>
+
+      <a class="btn btn-accent btn-sm" href="quote.html" style="margin-left:4px">Get a quote</a>
+
+      <button class="icon-btn burger" id="burger" aria-label="Open menu" aria-expanded="false" type="button">
+        <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2 4h12M2 8h12M2 12h12"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>

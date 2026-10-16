@@ -1,0 +1,54 @@
+---
+// Breadcrumb.astro — Accessible breadcrumbs with Schema.org JSON-LD generation.
+// Tasks D1b / WCAG 2.2 AA compliant.
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  items?: BreadcrumbItem[];
+}
+
+const { items = [] } = Astro.props;
+
+if (items.length === 0) {
+  return null;
+}
+
+const schemaLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: items.map((item: BreadcrumbItem, index: number) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.label,
+    ...(item.href ? { item: new URL(item.href, Astro.site || 'https://www.twinmos.com').toString() } : {}),
+  })),
+});
+---
+
+<div class="wrap">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol style="display:flex;flex-wrap:wrap;align-items:center;list-style:none;margin:0;padding:12px 0;font-size:13.5px;color:var(--muted)">
+      {items.map((it: BreadcrumbItem, idx: number) => {
+        const isLast = idx === items.length - 1;
+        return (
+          <>
+            <li style="display:inline-flex;align-items:center" aria-current={isLast ? 'page' : undefined}>
+              {!isLast && it.href ? (
+                <a href={it.href} style="color:inherit;text-decoration:none">{it.label}</a>
+              ) : (
+                <span style="color:var(--body);font-weight:600">{it.label}</span>
+              )}
+            </li>
+            {!isLast && (
+              <li aria-hidden="true" style="margin:0 8px;opacity:0.6">/</li>
+            )}
+          </>
+        );
+      })}
+    </ol>
+  </nav>
+</div>
+<script type="application/ld+json" set:html={schemaLd} />

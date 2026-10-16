@@ -51,9 +51,6 @@
 
   // App layer boots post-first-paint
   var files = [
-    'assets/js/data.js',
-    'assets/js/cms-content.js',
-    'assets/js/cms-merge.js',
     'assets/js/app.js',
     'assets/js/img-dims.js',
     'assets/js/a11y.js',

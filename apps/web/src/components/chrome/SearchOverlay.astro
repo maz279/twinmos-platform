@@ -1,0 +1,44 @@
+---
+// SearchOverlay.astro — Site search modal overlay with autocomplete combobox accessibility.
+// Tasks D1a, D7b / WCAG 2.2 AA compliant.
+---
+
+<div class="search-overlay" id="searchOverlay" role="dialog" aria-modal="true" aria-label="Site search">
+  <div class="drawer-veil"></div>
+  <div class="search-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <b class="search-title">
+        <img class="ilog" src="assets/img/logo.webp?v=219974299b" alt="TwinMOS" style="height:20px;width:auto" loading="lazy" />
+        catalog search
+      </b>
+      <button class="icon-btn search-close" aria-label="Close search" type="button">
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3.5 3.5l9 9M12.5 3.5l-9 9"></path>
+        </svg>
+      </button>
+    </div>
+
+    <form id="searchForm" action="search.html" method="get" style="display:flex;gap:10px;align-items:stretch">
+      <input
+        id="searchInput"
+        name="q"
+        type="search"
+        placeholder="Products, articles, topics…"
+        aria-label="Search products, articles, and topics"
+        autocomplete="off"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded="false"
+        aria-controls="searchSuggestions"
+        style="flex:1"
+      />
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+
+    <div id="searchSuggestions" class="search-suggestions" role="listbox" style="display:none;margin-top:12px;background:#fff;border-radius:8px;max-height:240px;overflow-y:auto"></div>
+
+    <div class="search-hint">
+      Try “DDR5”, “Gen 5”, “VOLTX”, “portable SSD”, “warranty” — press Enter for all results.
+    </div>
+  </div>
+</div>

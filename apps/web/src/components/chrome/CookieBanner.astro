@@ -1,0 +1,73 @@
+---
+// CookieBanner.astro — Accessible GDPR/ePrivacy compliant cookie banner with symmetric Accept & Decline.
+// Tasks D1b, E5a / CONSENT-01 compliant.
+---
+
+<div class="cookie-bar" id="cookieBar" role="region" aria-label="Cookie consent">
+  <span>
+    🍪 We use essential cookies for site functionality and optional analytics cookies to enhance performance. See our <a href="legal.html#privacy" style="text-decoration:underline">privacy policy</a>.
+  </span>
+  <div style="display:inline-flex;gap:8px;align-items:center;margin-left:auto">
+    <button class="btn btn-ghost btn-sm cookie-decline" id="cookieDecline" type="button" style="color:#ffffff!important;border:1px solid rgba(255,255,255,0.6)!important">Decline</button>
+    <button class="btn btn-accent btn-sm cookie-accept" id="cookieAccept" type="button">Accept</button>
+  </div>
+</div>
+
+<script is:inline>
+  (function() {
+    var bar = document.getElementById('cookieBar');
+    if (!bar) return;
+
+    var STORAGE_KEY = 'twinmos_consent';
+    function getConsent() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveConsent(analytics) {
+      try {
+        var id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'c-' + Date.now();
+        var record = {
+          id: id,
+          timestamp: new Date().toISOString(),
+          version: '2026.1',
+          categories: {
+            essential: true,
+            analytics: Boolean(analytics),
+            preferences: Boolean(analytics)
+          }
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
+        bar.style.display = 'none';
+        window.dispatchEvent(new CustomEvent('twinmos:consent', { detail: record }));
+      } catch (e) {
+        bar.style.display = 'none';
+      }
+    }
+
+    var consent = getConsent();
+    if (consent) {
+      bar.style.display = 'none';
+    } else {
+      bar.style.display = 'flex';
+    }
+
+    var acceptBtn = document.getElementById('cookieAccept');
+    var declineBtn = document.getElementById('cookieDecline');
+    if (acceptBtn) {
+      acceptBtn.addEventListener('click', function() { saveConsent(true); });
+    }
+    if (declineBtn) {
+      declineBtn.addEventListener('click', function() { saveConsent(false); });
+    }
+
+    window.addEventListener('twinmos:open-consent', function() {
+      bar.style.display = 'flex';
+      bar.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    });
+  })();
+</script>

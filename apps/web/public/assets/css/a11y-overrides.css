@@ -153,3 +153,16 @@ button.tab,
 .b-neon .form-note { color: #afc4d6; }
 /* 3. The compare empty-state link override must not recolour the navy .btn-primary (2.88:1). */
 #cmpMount .empty-state a.btn { color: #fff; text-decoration: none; }
+/* 4. Cookie decline button contrast on dark navy (#0A2540) background (15.54:1 on navy) */
+.cookie-bar .cookie-decline,
+.cookie-bar #cookieDecline {
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  background: transparent !important;
+}
+.cookie-bar .cookie-decline:hover,
+.cookie-bar #cookieDecline:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+}

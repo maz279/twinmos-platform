@@ -1,0 +1,101 @@
+---
+// Footer.astro — Server-rendered footer with clean dynamic metadata and no prototype copy.
+// Tasks D1b, D8c / CONTENT-01 compliant.
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <img src="assets/img/logo.webp?v=219974299b" alt="TwinMOS" />
+        <p style="font-size:13.5px;max-width:34ch">
+          Legendary memory brand since 1998. Memory modules, SSDs, portable storage and accessories for customers in 93+ countries.
+        </p>
+
+        <form id="nlForm" class="newsletter" action="/api/v1/forms/newsletter/subscribe" method="post" style="max-width:320px">
+          <input id="nlEmail" name="email" type="email" placeholder="Email for product news" aria-label="Email for newsletter" required />
+          <button class="btn btn-accent btn-sm" type="submit">Join</button>
+        </form>
+
+        <div class="social-row">
+          <a href="https://www.facebook.com/twinmos.tech" aria-label="Facebook" target="_blank" rel="noopener">f</a>
+          <a href="https://instagram.com/twinmos.tech" aria-label="Instagram" target="_blank" rel="noopener">&#9678;</a>
+          <a href="https://www.linkedin.com/company/twinmos-technologies/" aria-label="LinkedIn" target="_blank" rel="noopener">in</a>
+          <a href="https://x.com/twinmos" aria-label="X (Twitter)" target="_blank" rel="noopener">&#120143;</a>
+          <a href="https://www.youtube.com/c/TwinMOStech" aria-label="YouTube" target="_blank" rel="noopener">&#9654;</a>
+          <a href="https://www.pinterest.com/twinmos" aria-label="Pinterest" target="_blank" rel="noopener">P</a>
+        </div>
+      </div>
+
+      <div>
+        <h4>Products</h4>
+        <a href="shop.html?cat=dram-gaming">Gaming DRAM</a>
+        <a href="shop.html?cat=dram-desktop">Desktop DRAM</a>
+        <a href="shop.html?cat=dram-notebook">Notebook DRAM</a>
+        <a href="shop.html?cat=ssd-nvme">NVMe SSD</a>
+        <a href="shop.html?cat=ssd-sata">SATA SSD</a>
+        <a href="shop.html?cat=portable-ssd">Portable SSD</a>
+        <a href="shop.html?cat=portable-hdd">Portable HDD</a>
+        <a href="shop.html?cat=flash">USB Flash Drive</a>
+        <a href="shop.html?cat=microsd">MicroSD Card</a>
+        <a href="shop.html?cat=psu">Power Supply</a>
+        <a href="shop.html?cat=hub">USB HUB</a>
+      </div>
+
+      <div>
+        <h4>Company</h4>
+        <a href="about.html">About Us</a>
+        <a href="about.html#quality">Quality Assurance</a>
+        <a href="technology.html">Technology &amp; R&amp;D</a>
+        <a href="news.html">News &amp; Events</a>
+        <a href="careers.html">Careers</a>
+        <a href="partners.html">Partners</a>
+        <a href="contact.html">Contact</a>
+      </div>
+
+      <div>
+        <h4>Support</h4>
+        <a href="support.html">Support Center</a>
+        <a href="rma.html">Warranty &amp; RMA</a>
+        <a href="learn.html">Knowledge Hub</a>
+        <a href="learn-guides.html">Buying guides</a>
+        <a href="learn-explained.html">Technology explainers</a>
+        <a href="learn-glossary.html">Glossary A&ndash;Z</a>
+        <a href="support.html#faq">FAQ</a>
+        <a href="legal.html#warranty">Warranty Policy</a>
+        <a href="legal.html#terms">Terms of Use</a>
+        <a href="legal.html#privacy">Privacy Policy</a>
+        <a href="legal.html#eol">EOL Product List</a>
+      </div>
+
+      <div class="footer-contact">
+        <h4 style="display:flex;align-items:center;gap:8px">
+          <img class="ilog" src="assets/img/logo.webp?v=219974299b" alt="TwinMOS" style="height:17px;width:auto" loading="lazy" />
+          Technologies Ltd.
+        </h4>
+        5F.-5, No. 29, Sec. 1, Minsheng E. Rd.,<br />
+        Zhongshan Dist., Taipei City 104619, Taiwan<br />
+        <b>sales@twinmos.com</b><br />
+        <b>+886-970 368 077</b><br />
+        Mon&ndash;Fri: 9am&ndash;5pm
+        <div style="margin-top:10px">
+          <a class="btn btn-accent btn-sm" href="quote.html">Request a quote</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <span style="display:inline-flex;align-items:center;gap:6px">
+        <img class="ilog" src="assets/img/logo.webp?v=219974299b" alt="TwinMOS" style="height:13px;width:auto" loading="lazy" />
+        Technologies &copy; {currentYear}. All rights reserved.
+      </span>
+      <span>
+        <a href="legal.html#terms" style="display:inline">Terms</a> &middot;
+        <a href="legal.html#privacy" style="display:inline">Privacy</a> &middot;
+        <button id="cookiePreferencesBtn" type="button" style="background:none;border:none;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer;display:inline" onclick="window.dispatchEvent(new CustomEvent('twinmos:open-consent'))">Cookie Preferences</button> &middot;
+        <a href="sitemap.html" style="display:inline">Sitemap</a>
+      </span>
+    </div>
+  </div>
+</footer>

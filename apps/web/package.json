@@ -5,17 +5,14 @@
   "scripts": {
     "dev": "astro dev",
     "typecheck": "astro check",
-    "build": "astro build && pagefind --site dist",
-
+    "build": "astro build",
     "build:only": "astro build",
     "preview": "astro preview",
-    "port": "python ../../tooling/port_pages.py",
-    "sitemap": "python ../../tooling/gen_sitemap.py",
+    "sitemap": "node ../../tooling/gen_sitemap.mjs",
     "predev": "node ../../tooling/sync-prototype-assets.mjs",
-    "prebuild": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/export-content.mjs || node ../../tooling/export-fallback.mjs",
+    "prebuild": "node ../../tooling/sync-prototype-assets.mjs && node ../../tooling/gen_sitemap.mjs",
     "sync:proto": "node ../../tooling/sync-prototype-assets.mjs",
-    "import:corpus": "node --experimental-strip-types --no-warnings ../../tooling/import-corpus.ts",
-    "export:content": "node --experimental-strip-types --no-warnings ../../tooling/export-content.mjs"
+    "import:corpus": "node --experimental-strip-types --no-warnings ../../tooling/import-corpus.ts"
   },
   "dependencies": {
     "@astrojs/check": "0.9.10",
@@ -25,7 +22,6 @@
   },
   "devDependencies": {
     "axe-core": "^4.13.0",
-    "lighthouse": "^12.0.0",
-    "pagefind": "^1.5.2"
+    "lighthouse": "^12.0.0"
   }
 }

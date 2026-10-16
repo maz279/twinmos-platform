@@ -29,7 +29,15 @@ function buildInfoIntegration() {
         }, null, 2);
         writeFileSync(`${outDir}/build-info.json`, stamp);
         try {
-          writeFileSync(resolve(outDir, '..', 'build-info.json'), stamp);
+          const parentDir = resolve(outDir, '..');
+          writeFileSync(resolve(parentDir, 'build-info.json'), stamp);
+          const { readdirSync, copyFileSync } = await import('node:fs');
+          const entries = readdirSync(outDir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isFile() && (entry.name.endsWith('.html') || entry.name.endsWith('.xml') || entry.name.endsWith('.txt'))) {
+              copyFileSync(resolve(outDir, entry.name), resolve(parentDir, entry.name));
+            }
+          }
         } catch {}
       },
     },

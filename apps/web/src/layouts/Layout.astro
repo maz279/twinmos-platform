@@ -1,36 +1,51 @@
 ---
-// P1 layout — owns the document shell (head + body wrapper + runtime scripts).
-// Page bodies are ported verbatim from the audited prototype (see tooling/port_pages.py)
-// so visual parity holds by construction. Chrome componentization lands with islands (P2+).
+// Layout.astro — Document shell and server-rendered Site Chrome (Tasks D1a, D1b, VC-D/E).
+import Header from '../components/chrome/Header.astro';
+import Drawer from '../components/chrome/Drawer.astro';
+import SearchOverlay from '../components/chrome/SearchOverlay.astro';
+import Breadcrumb from '../components/chrome/Breadcrumb.astro';
+import Footer from '../components/chrome/Footer.astro';
+import CookieBanner from '../components/chrome/CookieBanner.astro';
+import CompareTray from '../components/chrome/CompareTray.astro';
+
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
 interface Props {
   title: string;
   desc: string;
   bodyClass?: string;
   noindex?: boolean;
-  /** P4: locale of THIS page (affects lang/dir + which hreflang is canonical). */
   locale?: string;
-  /** P4: when true, emit the full 9-locale hreflang grid (locale landings only). */
   hreflangGrid?: boolean;
+  breadcrumbs?: BreadcrumbItem[];
+  renderChrome?: boolean;
 }
-const { title, desc, bodyClass = '', noindex = false, locale = 'en', hreflangGrid = false } = Astro.props;
-/* Homepage canonical is the site root (not /index.html) to avoid signal
- * fragmentation; other pages keep their .html path (build.format = 'file'). */
-const path = Astro.url.pathname === '/index.html' ? '/' : Astro.url.pathname;
-const canonical = new URL(path, Astro.site);
 
-/* P4: hreflang — 9-locale grid for locale landings; plain en/x-default on EN.
- * build.format:'file' emits landings as /{code}.html (consistent with the
- * whole site's /page.html URL scheme). */
+const {
+  title,
+  desc,
+  bodyClass = '',
+  noindex = false,
+  locale = 'en',
+  hreflangGrid = false,
+  breadcrumbs = [],
+  renderChrome = true,
+} = Astro.props;
+
+const path = Astro.url.pathname === '/index.html' ? '/' : Astro.url.pathname;
+const canonical = new URL(path, Astro.site || 'https://www.twinmos.com');
+
 const LOCALES = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'];
 const RTL = ['ar'];
-// dir is emitted ONLY for RTL — the prototype ships LTR pages with no dir
-// attribute, and an explicit dir="ltr" measurably shifts Chrome's text
-// layout (parity @390 dropped ~4pp on every text line until this matched).
 const dir = RTL.includes(locale) ? 'rtl' : undefined;
+
 const localeUrl = (code: string) =>
   code === 'en'
-    ? new URL(hreflangGrid ? '/' : (path === '/' ? '/' : path), Astro.site) // landings mirror the homepage
-    : new URL(`/${code}.html`, Astro.site);
+    ? new URL(hreflangGrid ? '/' : (path === '/' ? '/' : path), Astro.site || 'https://www.twinmos.com')
+    : new URL(`/${code}.html`, Astro.site || 'https://www.twinmos.com');
 
 const ORG_LD = JSON.stringify({
   '@context': 'https://schema.org',
@@ -49,6 +64,7 @@ const ORG_LD = JSON.stringify({
     'https://www.pinterest.com/twinmos',
   ],
 });
+
 const SITE_LD = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'WebSite',
@@ -60,6 +76,19 @@ const SITE_LD = JSON.stringify({
     'query-input': 'required name=q',
   },
 });
+const BREADCRUMB_LD = breadcrumbs && breadcrumbs.length > 0 ? JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbs.map((b: { label: string; href?: string }, idx: number) => ({
+    '@type': 'ListItem',
+    position: idx + 1,
+    name: b.label,
+    item: b.href ? new URL(b.href, Astro.site || 'https://www.twinmos.com').toString() : undefined,
+  })),
+}) : null;
+
+const OG_IMAGE = 'https://www.twinmos.com/assets/img/og-cover.png';
+const OG_TYPE = path === '/' ? 'website' : 'article';
 ---
 <!doctype html>
 <html lang={locale} dir={dir}>
@@ -68,7 +97,7 @@ const SITE_LD = JSON.stringify({
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#0A2540" />
     <meta name="description" content={desc} />
-    {noindex && <meta name="robots" content="noindex" />}
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
     <title>{title}</title>
     <link rel="canonical" href={canonical} />
     {hreflangGrid ? (
@@ -77,6 +106,21 @@ const SITE_LD = JSON.stringify({
       <link rel="alternate" hreflang={locale} href={canonical} />
     )}
     <link rel="alternate" hreflang="x-default" href={localeUrl('en')} />
+
+    <!-- Open Graph (Task E1 / SEO-01) -->
+    <meta property="og:site_name" content="TwinMOS Technologies" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonical.toString()} />
+    <meta property="og:type" content={OG_TYPE} />
+    <meta property="og:image" content={OG_IMAGE} />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={desc} />
+    <meta name="twitter:image" content={OG_IMAGE} />
+
     <link rel="icon" type="image/png" href="assets/img/favicon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="assets/css/main.css" />
@@ -84,13 +128,35 @@ const SITE_LD = JSON.stringify({
     {locale !== 'en' && <link rel="stylesheet" href="assets/css/rtl.css" />}
     <meta name="twinmos-api" content={import.meta.env.PUBLIC_API_URL ?? ''} />
     <meta name="turnstile-site-key" content={import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? ''} />
+    <script is:inline define:vars={{ turnstileSiteKey: import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '' }}>
+      window.TURNSTILE_SITE_KEY = turnstileSiteKey;
+    </script>
     <script type="application/ld+json" set:html={ORG_LD} />
     <script type="application/ld+json" set:html={SITE_LD} />
+    {BREADCRUMB_LD && <script type="application/ld+json" set:html={BREADCRUMB_LD} />}
   </head>
   <body class={bodyClass}>
+    {renderChrome && (
+      <>
+        <a class="skip-link" href="#main">Skip to main content</a>
+        <Header activePath={path} currentLocale={locale} />
+        <Drawer currentLocale={locale} />
+        <SearchOverlay />
+        {breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
+      </>
+    )}
+
     <slot />
+
+    {renderChrome && (
+      <>
+        <Footer />
+        <CookieBanner />
+        <CompareTray />
+      </>
+    )}
+
     <!-- App layer boots post-first-paint via layout-init.js (eliminates unsafe-inline in script-src) -->
     <script is:inline src="assets/js/layout-init.js"></script>
   </body>
 </html>
-
