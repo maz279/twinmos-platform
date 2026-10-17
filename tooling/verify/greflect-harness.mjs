@@ -1,13 +1,12 @@
-// G-REFLECT Architectural Reflection Harness (Task B8b / GREF-H)
-// Verifies:
-// 1. Layer boundary isolation: apps/web/src NEVER imports @twinmos/db directly (must use Delivery API).
-// 2. Preview token cryptographic resilience (HMAC-SHA256 signature and tampering detection).
+// G-REFLECT Architectural Tier Lint & Crypto Verification (Relabeled under T2.2.1 / Z-17)
+// 1. Static architectural layer boundary lint: apps/web/src NEVER imports @twinmos/db directly.
+// 2. Preview token cryptographic resilience (HMAC-SHA256 signature, tampering, and expiration).
 // 3. Outbox pipeline contracts and event dispatching.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { createPreviewToken, verifyPreviewToken } from '../../apps/api/src/routes/delivery/preview.ts';
 
-console.log('[greflect-harness] Running G-REFLECT architectural reflection verification...');
+console.log('[greflect-harness] Running architectural tier lint & crypto preview token verification...');
 
 let failures = 0;
 

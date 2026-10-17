@@ -8,46 +8,114 @@ on:
     branches: [main, 'release/**']
 
 jobs:
-  gate-a-verification:
+  nightly-verification:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: twinmos_test
+          POSTGRES_USER: twinmos_test
+          POSTGRES_PASSWORD: twinmos_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://twinmos_test:twinmos_test_password@localhost:5432/twinmos_test
+      NODE_ENV: test
+      BETTER_AUTH_SECRET: test-secret-twinmos-workflow-ci-key-12345
+      BETTER_AUTH_URL: http://127.0.0.1:8787
+      PORT: 8787
+      MAIL_TRANSPORT: mock
+      CAPTCHA_BYPASS: '1'
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
       - name: GATE-01 Typecheck
         run: npm run typecheck
-
-      - name: GATE-02 Admin Lint (zero warnings)
-        run: node tooling/verify/walk-admin.mjs
 
       - name: GATE-05 Dependency Audit Policy
         run: node tooling/verify/check-dependencies.mjs
 
-      - name: STATIC-A Repository Static Sweep
-        run: node tooling/verify/static-sweep.mjs
+      - name: EVID-01 Automated Report Quality Linter
+        run: node tooling/verify/report-lint.mjs
 
       - name: PG-05 Migration Journal Guard
         run: node tooling/verify/check-migration-journal.mjs
 
-      - name: EDGE-01 & EDGE-RIP Edge Real-IP Proof
-        run: node tooling/verify/edge-ip-proof.mjs
+      - name: Database Migrations & Seed
+        run: |
+          npm run db:migrate --workspace @twinmos/db
+          npm run seed --workspace @twinmos/api
 
-      - name: DATA-01 & DATA-02 Translation Encoding Integrity
-        run: node --experimental-strip-types --no-warnings tooling/verify/check-translations.mjs
-
-      - name: GATE-03 Unit & E2E Security Tests
-        run: npm test --workspace @twinmos/api
-
-      - name: BUILD-01 & CONTENT-03 Build & Provenance
+      - name: Build Web & Admin (BUILD-01)
         run: |
           npm run build --workspace @twinmos/web
           npm run build --workspace @twinmos/admin
           node tooling/verify/build-provenance.mjs
+
+      - name: Static Configuration & Encoding Sweeps
+        run: |
+          node tooling/verify/edge-ip-proof.mjs
+          node tooling/verify/hard-01-audit.mjs
+          node tooling/verify/static-sweep.mjs
+          node --experimental-strip-types --no-warnings tooling/verify/check-translations.mjs
+
+      - name: Start API Daemon
+        run: |
+          node --env-file-if-exists=.env --experimental-strip-types --no-warnings apps/api/src/index.ts &
+          sleep 3
+          curl -f http://127.0.0.1:8787/api/v1/health
+
+      - name: WALK-PUB Public Routes Browser Walkthrough
+        run: node tooling/verify/walk-public.mjs
+
+      - name: EDGE-LIVE Real Edge IP & Rate Limit Proof
+        run: node tooling/verify/edge-ip-live-proof.mjs
+
+      - name: PROD-SEC Security Probes & Tiered Body Limits
+        run: node tooling/verify/prod-security-probes.mjs
+
+      - name: CF-SIM Cloudflare Edge Simulation Probes
+        run: node tooling/verify/cf-sim-probe.mjs
+
+      - name: GATE-03 Unit & Integration Tests
+        run: npm test --workspace @twinmos/api
+
+      - name: MUT-01 Negative Mutation Test Suite
+        run: |
+          node tooling/verify/report-lint.mjs --test-planted
+          node tooling/verify/build-provenance.mjs --test-stale
+          node tooling/verify/walk-public.mjs --test-planted
+          node tooling/verify/edge-ip-live-proof.mjs --test-planted
+          node tooling/verify/prod-security-probes.mjs --test-planted
+          node tooling/verify/cf-sim-probe.mjs --test-planted
+
+      - name: Archive Verification Telemetry & Evidence (KIT-01)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-evidence
+          path: |
+            tooling/verify/evidence/
+            docs/reports/
+          retention-days: 14

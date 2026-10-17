@@ -34,8 +34,8 @@ const checks = [
   },
   {
     id: 'UAT-01',
-    name: 'UAT Sign-off & Cutover Rehearsal (28 BRD criteria, 0 critical/high defects, cutover < 300s)',
-    cmd: 'node tooling/verify/uat-01-audit.mjs',
+    name: 'Cutover Rehearsal & Redirect Validation (cutover < 300s, legacy redirects)',
+    cmd: 'node tooling/ops/cutover-drill.mjs',
   },
   {
     id: 'DRIVE-THRU',

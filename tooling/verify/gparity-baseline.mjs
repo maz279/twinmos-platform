@@ -1,5 +1,5 @@
-// G-PARITY Baseline Verification Script (Task B8b / GPARITY)
-// Verifies baseline configuration parity across development, CI, and production:
+// G-PARITY Static Workspace & Configuration Lint (Relabeled under T2.2.1 / Z-17)
+// Static linter for monorepo configuration parity across development, CI, and production:
 // 1. Shared schemas consistency across packages
 // 2. Database migration journal alignment
 // 3. Environment contract and delivery API entity coverage
@@ -7,7 +7,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { DELIVERY_ENTITIES } from '../../packages/shared/src/delivery.ts';
 
-console.log('[gparity-baseline] Running G-PARITY configuration baseline verification...');
+console.log('[gparity-lint] Running G-PARITY static configuration lint...');
 
 let failures = 0;
 

@@ -6,6 +6,7 @@
     "dev": "astro dev",
     "typecheck": "astro check",
     "build": "astro build",
+    "postbuild": "node ../../tooling/write-build-info.mjs dist",
     "build:only": "astro build",
     "preview": "astro preview",
     "sitemap": "node ../../tooling/gen_sitemap.mjs",

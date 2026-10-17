@@ -1,5 +1,5 @@
-// EDGE-01, EDGE-RIP, S-16a Verification Script
-// Verifies nginx configuration for:
+// EDGE-01, EDGE-RIP, S-16a Static Configuration Lint (Relabeled under T2.2.1 / Z-17)
+// Static linter for nginx configuration files:
 // - Cloudflare real-IP topology and include file (EDGE-RIP)
 // - Single X-Real-IP header passed to API backend (EDGE-RIP, S-09, S-10)
 // - Security headers: one CSP per response, HSTS, server_tokens off (S-16a, EDGE-01)
@@ -7,7 +7,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-console.log('[edge-ip-proof] Verifying EDGE-01, EDGE-RIP, and S-16a...');
+console.log('[edge-ip-lint] Linting EDGE-01, EDGE-RIP, and S-16a static nginx configurations...');
 
 const confPath = resolve(process.cwd(), 'deploy/nginx/twinmos.conf');
 const realipConfPath = resolve(process.cwd(), 'deploy/nginx/realip_cloudflare.conf');

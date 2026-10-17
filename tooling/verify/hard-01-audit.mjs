@@ -1,5 +1,5 @@
-// Gate F Check HARD-01: Security Hardening, Origin Isolation & AOP Audit
-// Verifies firewall rules, Cloudflare IP allow-list, default 444 drop, AOP directives, and secret rotation.
+// Static Configuration Lint: HARD-01 (Relabeled under T2.2.1 / Z-17)
+// Static linter for firewall rules, Cloudflare IP allow-list, default 444 drop, and secret rotation drill.
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,7 +8,7 @@ import { runSecretRotationDrill } from '../ops/rotate-secrets.mjs';
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..', '..');
 
-export async function verifyHARD01() {
+export async function lintHARD01Config() {
   // 1. Verify deploy/firewall/setup-firewall.sh
   const fwScript = resolve(repoRoot, 'deploy', 'firewall', 'setup-firewall.sh');
   if (!existsSync(fwScript)) throw new Error('Missing deploy/firewall/setup-firewall.sh');
@@ -63,7 +63,7 @@ export async function verifyHARD01() {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
-  verifyHARD01()
-    .then((msg) => { console.log('[*] HARD-01:', msg); process.exit(0); })
-    .catch((err) => { console.error('[✗] HARD-01 FAILED:', err.message); process.exit(1); });
+  lintHARD01Config()
+    .then((msg) => { console.log('[hard-01-lint]: PASS', msg); process.exit(0); })
+    .catch((err) => { console.error('[hard-01-lint]: FAILED', err.message); process.exit(1); });
 }

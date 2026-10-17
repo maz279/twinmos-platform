@@ -168,8 +168,8 @@ async function main() {
               specs: dbP.specs || {},
               description: dbP.description || '',
               featured: Boolean(dbP.featured),
-              img: (dbP.gallery && dbP.gallery[0]) || 'assets/img/prodrive-1.webp',
-              gallery: dbP.gallery || ['assets/img/prodrive-1.webp'],
+              img: (Array.isArray(dbP.gallery) && typeof dbP.gallery[0] === 'string' && (dbP.gallery[0].indexOf('/') !== -1 || dbP.gallery[0].indexOf('.') !== -1)) ? dbP.gallery[0] : 'assets/img/prodrive-1.webp',
+              gallery: (Array.isArray(dbP.gallery) && dbP.gallery.length > 0 && typeof dbP.gallery[0] === 'string' && (dbP.gallery[0].indexOf('/') !== -1 || dbP.gallery[0].indexOf('.') !== -1)) ? dbP.gallery : ['assets/img/prodrive-1.webp'],
               variants: ['Standard'],
               search: dbP.name || slug
             };

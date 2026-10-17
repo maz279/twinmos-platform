@@ -1,5 +1,5 @@
-// G-REFLECT-C Component Reflection Verification Harness (Tasks C1..C11b / Check GREF-C)
-// Verifies 100% component reflection for all Phase C entities, tables, schemas, routes, and components:
+// [greflect-c-lint]: Static Schema & Block Definitions Lint (Relabeled under T2.2.1 / Z-17)
+// Static linter for Phase C entities, tables, schemas, routes, and block contracts:
 // 1. Database schema tables & columns reflection (navMenu, navItem, glossaryTerm, office, testimonial, policyDocument, formDefinition, formField).
 // 2. 25-block framework contracts & dispatcher synchronization (@twinmos/shared, apps/admin, apps/web).
 // 3. Public Delivery API endpoint reflection for all entities and pages.
@@ -9,7 +9,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 console.log('================================================================');
-console.log('       G-REFLECT-C Component & Architectural Reflection Harness');
+console.log('  [greflect-c-lint] Static Schema & Block Definitions Lint');
 console.log('================================================================\n');
 
 let failures = 0;

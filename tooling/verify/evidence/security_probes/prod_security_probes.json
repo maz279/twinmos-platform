@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-10-17T13:29:34.703Z",
+  "cases": [
+    {
+      "name": "Oversized JSON on standard admin route returns 413 Payload Too Large",
+      "status": 413,
+      "expected": 413,
+      "ok": true
+    },
+    {
+      "name": "Standard small JSON reaches auth guard (401/403)",
+      "status": 401,
+      "expected": "401 or 403",
+      "ok": true
+    },
+    {
+      "name": "Health check response has proper content-type and security headers",
+      "status": 200,
+      "ok": true
+    }
+  ],
+  "passed": true
+}

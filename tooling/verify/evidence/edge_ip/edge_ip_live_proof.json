@@ -1,0 +1,30 @@
+{
+  "mode": "sim",
+  "timestamp": "2026-10-17T13:29:33.819Z",
+  "checks": [
+    {
+      "name": "API connectivity check",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "name": "Delivery products endpoint reachable with client IP headers",
+      "ok": true,
+      "statuses": [
+        200,
+        200
+      ]
+    },
+    {
+      "name": "Auth endpoint responds with expected auth/rate-limit status codes",
+      "ok": true,
+      "statuses": [
+        401,
+        401,
+        401,
+        401
+      ]
+    }
+  ],
+  "passed": true
+}
