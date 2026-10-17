@@ -131,3 +131,25 @@ jobs:
                 process.exit(1);
               });
           "
+
+  test-edge-config:
+    name: Edge Nginx Configuration Verification (EDGE-START, EDGE-01)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Build Edge Docker Image (EDGE-START, EDGE-01)
+        run: |
+          docker build -t twinmos-edge:test -f deploy/edge/Dockerfile .
+
+      - name: Verify Nginx Configuration Starts Cleanly (nginx -t)
+        run: |
+          docker run --rm twinmos-edge:test nginx -t
+
+      - name: Verify Edge Security Policies and Real-IP Proof
+        run: |
+          node tooling/verify/edge-ip-proof.mjs
+

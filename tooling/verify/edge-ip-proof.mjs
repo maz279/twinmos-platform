@@ -44,6 +44,27 @@ if (!conf.includes('proxy_set_header X-Real-IP $remote_addr;')) {
   console.log('[edge-ip-proof] PASS EDGE-RIP: proxy_set_header X-Real-IP $remote_addr present in proxy locations.');
 }
 
+// 2b. EDGE-START / Z-07 checks (no duplicate real_ip_header, map_hash_bucket_size, no private CIDRs)
+if (conf.includes('real_ip_header')) {
+  console.error('[edge-ip-proof] FAIL Z-07: Duplicate real_ip_header found in twinmos.conf (must only be in realip_cloudflare.conf).');
+  failures++;
+} else {
+  console.log('[edge-ip-proof] PASS Z-07: Zero duplicate real_ip_header directives in twinmos.conf.');
+}
+if (!conf.includes('map_hash_bucket_size 128;')) {
+  console.error('[edge-ip-proof] FAIL Z-07: map_hash_bucket_size 128; missing from twinmos.conf.');
+  failures++;
+} else {
+  console.log('[edge-ip-proof] PASS Z-07: map_hash_bucket_size 128 configured.');
+}
+const privateCidrs = ['127.0.0.1/32', '172.16.0.0/12', '10.0.0.0/8', '192.168.0.0/16'];
+for (const priv of privateCidrs) {
+  if (conf.includes(`set_real_ip_from ${priv}`)) {
+    console.error(`[edge-ip-proof] FAIL Z-07: Untrusted private range ${priv} present in twinmos.conf.`);
+    failures++;
+  }
+}
+
 // 3. Server tokens off and HSTS
 if (!conf.includes('server_tokens off;')) {
   console.error('[edge-ip-proof] FAIL S-16a: server_tokens off missing.');

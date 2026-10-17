@@ -8,6 +8,13 @@ RUN mkdir -p /var/cache/nginx/ssr \
     /var/www/twinmos/admin \
     && chown -R nginx:nginx /var/cache/nginx
 
+# Generate test/dev certificates for syntax validation and lab environments
+RUN apk add --no-cache openssl && \
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+      -keyout /etc/nginx/certs/twinmos.key \
+      -out /etc/nginx/certs/twinmos.pem \
+      -subj "/CN=twinmos.com"
+
 # Copy edge configurations
 COPY deploy/nginx/realip_cloudflare.conf /etc/nginx/snippets/realip_cloudflare.conf
 COPY deploy/nginx/twinmos-redirects.map /etc/nginx/twinmos-redirects.map
