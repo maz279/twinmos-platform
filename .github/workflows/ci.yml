@@ -16,7 +16,7 @@ jobs:
       BETTER_AUTH_SECRET: ci-test-secret-twinmos-parity-key-32chars
       BETTER_AUTH_URL: http://127.0.0.1:8787
       PREVIEW_SIGNING_KEY: ci-preview-hmac-sha256-signing-key-32ch
-      REVALIDATION_SECRET: ci-revalidation-secret-key-32ch
+      REVALIDATE_SECRET: ci-revalidation-secret-key-32ch
       # Real Cloudflare Turnstile test mode keys (never bypass via disabled flags)
       TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
       PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
@@ -85,7 +85,7 @@ jobs:
       BETTER_AUTH_SECRET: ci-test-secret-twinmos-parity-key-32chars
       BETTER_AUTH_URL: http://127.0.0.1:8787
       PREVIEW_SIGNING_KEY: ci-preview-hmac-sha256-signing-key-32ch
-      REVALIDATION_SECRET: ci-revalidation-secret-key-32ch
+      REVALIDATE_SECRET: ci-revalidation-secret-key-32ch
       TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
       PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
 

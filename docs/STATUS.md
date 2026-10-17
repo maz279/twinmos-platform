@@ -37,8 +37,8 @@
 | **MS1.1** | Freeze and truth reset | Mon 19 – Tue 20 Oct 2026 | **Lead, FS1, QA** | **DONE** (16/16 checks, `verify-ms11-audit.mjs`) |
 | **MS1.2** | Push the work, make CI run, make the edge start | Wed 21 Oct 2026 | **DO, FS2** | **DONE** (20/20 checks, `verify-ms12-audit.mjs`) |
 | **MS1.3** | Emergency security fixes | Wed 21 – Thu 22 Oct 2026 | **FS1, FS2** | **DONE** (44/44 checks, `verify-ms13-audit.mjs`, probes P6/P6b/P7/P8/P8b/X4/X5) |
-| **MS1.4** | Stop silent data changes on edit | Thu 22 Oct 2026 | **FS2, FE** | Next |
-| **MS1.5** | Public-site stop-gap: working catalogue, consent & CSP | Fri 23 Oct 2026 | **FE, QA** | Scheduled |
+| **MS1.4** | Stop silent data changes on edit | Thu 22 Oct 2026 | **FS2, FE** | **DONE** (52/52 checks, `verify-ms14-audit.mjs`, probes X1/X3/X3b, `DATA-PATCH`) |
+| **MS1.5** | Public-site stop-gap: working catalogue, consent & CSP | Fri 23 Oct 2026 | **FE, QA** | Next |
 | **MS1.6** | Stop-the-line review & QA dry run (VC-R0 exit gate) | Mon 26 Oct 2026 | **QA, Lead** | Scheduled |
 
 ### Verified Milestone Deliverable: MS1.3 Emergency Security Fixes (T1.3.1 – T1.3.8)
@@ -50,6 +50,12 @@
 - **T1.3.6 (Deep Health / `P7`)**: `/api/v1/health/deep` requires `viewer`+ or internal secret with `timingSafeEqual`. Outbox queue depth parses `{rows}` correctly. Health degradation decoupled from alert firing count. Probe P7 passes.
 - **T1.3.7 (Newsletter / `FORMS-01` / `P8`, `P8b`)**: Double opt-in requires Turnstile captcha in production. Lowercases subscriber emails. JSON response never leaks `token` or `confirmUrl` (defeats self-confirmation). Unsubscribe strictly requires signed `token` (bare email returns 400). `List-Unsubscribe` headers attached.
 - **T1.3.8 (Production Probes)**: Probes P6, P6b, P7, P8, P8b, X4, X5 all pass against live API daemon in `tooling/verify/verify-ms13-audit.mjs`.
+
+### Verified Milestone Deliverable: MS1.4 Stop Silent Data Changes on Edit (T1.4.1 – T1.4.4)
+- **T1.4.1 (`DATA-PATCH` Gate)**: Table-driven test suite `apps/api/test/data-patch.test.ts` passing 18/18 checks across all 18 entity types on PGlite & PostgreSQL 18. Specifically verifies probes X1 (page status preserved), X3 (policy status & version preserved), and X3b (testimonial permission_flag & sort preserved).
+- **T1.4.2 (Schema Separation & Payload Pruning)**: All 17 update schemas reconstructed without defaults using `xBase.partial()` in `packages/shared/src/index.ts`, `entities.ts`, `navigation.ts`, `content.ts`, `admin.ts`, `partner.ts`, and `settings.ts`. Safe `prunePatch(rawJson, parsedData)` strips untransmitted default-bearing keys. Both `PATCH` and `PUT` methods registered across all entity endpoints.
+- **T1.4.3 (Data Repair & Formal Ledger)**: Data repair runbook `tooling/repair-r04-data.ts` executed. Formal repair audit ledger committed at `docs/reports/DATA_REPAIR_MS14.md` documenting zero remaining silent status drifts, zero corrupted permission flags, and 0 defects across 25 pages, 12 policies, and 17 testimonials.
+- **T1.4.4 (Live Audit Probes X1, X3, X3b)**: Production live probes executed against running API daemon in `tooling/verify/verify-ms14-audit.mjs` and `tooling/verify/verify-x1-x3.mjs` with 30/30 checks PASSED. Full verification suite passes 52/52 checks.
 
 
 ## Task-by-Task Status Ledger (92 Tasks)

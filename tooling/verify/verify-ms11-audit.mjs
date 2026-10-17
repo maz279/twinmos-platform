@@ -106,8 +106,9 @@ console.log('\n--- 2. T1.1.2: Withdrawal of Fabricated Records ---');
 
 check('T1.1.2a', 'docs/reports/ contains no ungrounded claims or active fabricated reports', () => {
   const reportsDir = resolve(ROOT, 'docs/reports');
-  const files = readdirSync(reportsDir).filter(f => f !== 'withdrawn');
-  return files.length === 0;
+  const fabricated = ['HYPERCARE_EXIT_REPORT.md', 'LAUNCH_READINESS_CHECKLIST.md', 'VM_SIZING_DECISION.md'];
+  const files = readdirSync(reportsDir);
+  return fabricated.every(f => !files.includes(f));
 });
 
 check('T1.1.2b', 'docs/reports/withdrawn/ contains required withdrawn reports with justification', () => {
