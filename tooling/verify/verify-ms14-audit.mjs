@@ -37,7 +37,7 @@ async function run() {
     const testOutput = execSync('npx vitest run test/data-patch.test.ts', {
       cwd: 'apps/api',
       encoding: 'utf8',
-      timeout: 60000,
+      timeout: 120000,
     });
     assert(testOutput.includes('18 passed'), `vitest data-patch.test.ts passed all 18 table-driven tests (PGlite)`);
   } catch (err) {

@@ -38,8 +38,8 @@
 | **MS1.2** | Push the work, make CI run, make the edge start | Wed 21 Oct 2026 | **DO, FS2** | **DONE** (20/20 checks, `verify-ms12-audit.mjs`) |
 | **MS1.3** | Emergency security fixes | Wed 21 – Thu 22 Oct 2026 | **FS1, FS2** | **DONE** (44/44 checks, `verify-ms13-audit.mjs`, probes P6/P6b/P7/P8/P8b/X4/X5) |
 | **MS1.4** | Stop silent data changes on edit | Thu 22 Oct 2026 | **FS2, FE** | **DONE** (52/52 checks, `verify-ms14-audit.mjs`, probes X1/X3/X3b, `DATA-PATCH`) |
-| **MS1.5** | Public-site stop-gap: working catalogue, consent & CSP | Fri 23 Oct 2026 | **FE, QA** | Next |
-| **MS1.6** | Stop-the-line review & QA dry run (VC-R0 exit gate) | Mon 26 Oct 2026 | **QA, Lead** | Scheduled |
+| **MS1.5** | Public-site stop-gap: working catalogue, consent & CSP | Fri 23 Oct 2026 | **FE, QA** | **DONE** (26/26 checks, `verify-ms15-audit.mjs`, `SITE-FUNC (stop-gap)`, `CONSENT-CSP`) |
+| **MS1.6** | Stop-the-line review & QA dry run (VC-R0 exit gate) | Mon 26 Oct 2026 | **QA, Lead** | Next |
 
 ### Verified Milestone Deliverable: MS1.3 Emergency Security Fixes (T1.3.1 – T1.3.8)
 - **T1.3.1 (`SEC-PREVIEW`)**: Token minting locked down to staff sessions (`author`+). Capped at 3,600s TTL. Cryptographically bound to `entityType`, `entityId`, `slug`, and `locale`. Boot guard mandates `PREVIEW_SIGNING_KEY` >= 32 chars in production. Probes P6 and P6b pass cleanly.
@@ -56,6 +56,14 @@
 - **T1.4.2 (Schema Separation & Payload Pruning)**: All 17 update schemas reconstructed without defaults using `xBase.partial()` in `packages/shared/src/index.ts`, `entities.ts`, `navigation.ts`, `content.ts`, `admin.ts`, `partner.ts`, and `settings.ts`. Safe `prunePatch(rawJson, parsedData)` strips untransmitted default-bearing keys. Both `PATCH` and `PUT` methods registered across all entity endpoints.
 - **T1.4.3 (Data Repair & Formal Ledger)**: Data repair runbook `tooling/repair-r04-data.ts` executed. Formal repair audit ledger committed at `docs/reports/DATA_REPAIR_MS14.md` documenting zero remaining silent status drifts, zero corrupted permission flags, and 0 defects across 25 pages, 12 policies, and 17 testimonials.
 - **T1.4.4 (Live Audit Probes X1, X3, X3b)**: Production live probes executed against running API daemon in `tooling/verify/verify-ms14-audit.mjs` and `tooling/verify/verify-x1-x3.mjs` with 30/30 checks PASSED. Full verification suite passes 52/52 checks.
+
+### Verified Milestone Deliverable: MS1.5 Public-Site Stop-Gap: Catalogue, Consent & CSP (T1.5.1 – T1.5.5)
+- **T1.5.1 (`CSP-PASS` / Clean Script Model)**: Zero inline `<script>` tags across all 29 public page templates (excluding standard JSON-LD `application/ld+json`). Zero inline event handlers (`onclick`, `onload`, etc.). Turnstile site key and TwinMOS API endpoint passed cleanly via `<meta name="turnstile-site-key">` and `<meta name="twinmos-api">` in `Layout.astro`. Cookie preferences button bound cleanly via external script.
+- **T1.5.2 (`SITE-FUNC (stop-gap)` / Live Catalogue Feed & Clean Prototype)**: Live catalogue feed generator `catalog-data.js` pre-seeds `window.TM` with 41 published products fetched directly from Delivery API, along with valid categories, articles, FAQs, and compatibility records. Shop catalogue renders 41 active products with functioning category filters. PDP (`/products/voltx-ddr5-u-dimm-for-desktop.html`) renders hero, specs, and gallery without getting stuck on "Loading product...". Prototype toasts ("in this prototype") completely eradicated.
+- **T1.5.3 (`CONSENT-CSP` / Honored Decline & Revocation UI)**: Cookie banner copy cleansed of inaccurate "analytics cookies" claims. Clicking "Decline" (`#cookieDecline`) persists `false` to `localStorage['twinmos_cookie_consent']` and immediately hides banner. Re-opening consent bar via `#cookiePreferencesBtn` restores banner for preference adjustment. External `consent.js` handles all events without inline handlers.
+- **T1.5.4 (Service Worker Scope Hardening)**: `sw.js` explicitly excludes `/api/` and `/internal/` endpoints from caching. Respects HTTP `Cache-Control: private` and `no-store` response directives. Service worker activation immediately purges stale caches outside the canonical cache version.
+- **T1.5.5 (Automated Test Suite & Live E2E Audit)**: `apps/api/test/consent-csp.test.ts` passing 11/11 tests. Dedicated audit runner `tooling/verify/verify-ms15-audit.mjs` passing 26/26 checks (100%). Playwright manual E2E test suite passing all public visitor flows. Full visual and WCAG 2.2 AA audit (`tooling/verify/visual-a11y-audit.mjs`) passing with 0 axe violations across all 29 routes.
+
 
 
 ## Task-by-Task Status Ledger (92 Tasks)
