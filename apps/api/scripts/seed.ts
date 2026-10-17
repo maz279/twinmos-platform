@@ -8,6 +8,15 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { createDb, brand, category, locale, product, user } from '@twinmos/db';
 import * as schema from '@twinmos/db';
 
+const args = process.argv.slice(2);
+const isDemo = args.includes('--demo') || process.env.SEED_MODE === 'demo';
+
+// SEED-01 & SEED-02: seed:demo refuses to run in production
+if (isDemo && process.env.NODE_ENV === 'production') {
+  console.error('[seed] Refusing to run demo seed in production environment (SEED-01, SEED-02)');
+  process.exit(1);
+}
+
 const db = createDb();
 
 const auth = betterAuth({
@@ -16,6 +25,13 @@ const auth = betterAuth({
   advanced: { database: { generateId: () => crypto.randomUUID() } },
   user: { additionalFields: { role: { type: 'string', defaultValue: 'viewer', input: false } } },
 });
+
+const isBootstrap =
+  args.includes('--bootstrap') ||
+  process.env.BOOTSTRAP_SEED === '1' ||
+  process.env.BOOTSTRAP_SEED === 'true' ||
+  process.env.SEED_MODE === 'bootstrap' ||
+  (!isDemo && process.env.NODE_ENV === 'production');
 
 const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@twinmos.dev';
 // Credentials come from env (SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD). The
@@ -33,53 +49,54 @@ if (!password) {
 }
 
 // 1) first admin user — created through Better Auth so the password hash format is correct
+// SEED-01 / AUTH-BOOT: super_admin created verified so staff sign-in is immediately unblocked
 const existing = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
 if (existing.length === 0) {
   await auth.api.signUpEmail({ body: { email, password, name: 'Platform Admin' } });
-  await db.update(user).set({ role: 'super_admin' }).where(eq(user.email, email));
-  console.log('[seed] admin user created: ' + email + ' (super_admin)');
+  await db.update(user).set({ role: 'super_admin', emailVerified: true }).where(eq(user.email, email));
+  console.log('[seed] admin user created: ' + email + ' (super_admin, verified)');
 } else {
-  console.log('[seed] admin user already present: ' + email);
+  await db.update(user).set({ role: 'super_admin', emailVerified: true }).where(eq(user.email, email));
+  console.log('[seed] admin user already present: ' + email + ' (ensured super_admin, verified)');
 }
 
-// 2) reference locale rows (Phase 4 activates more)
-const en = await db.select().from(locale).limit(1);
-if (en.length === 0) {
-  await db.insert(locale).values([
-    // 9-locale reconciled plan (BN removed per post-remediation fact base)
-    { code: 'en', name: 'English', dir: 'ltr', active: true },
-    { code: 'ar', name: 'العربية', dir: 'rtl', active: false },
-    { code: 'hi', name: 'हिन्दी', dir: 'ltr', active: false },
-    { code: 'ru', name: 'Русский', dir: 'ltr', active: false },
-    { code: 'zh-cn', name: '简体中文', dir: 'ltr', active: false },
-    { code: 'fr', name: 'Français', dir: 'ltr', active: false },
-    { code: 'es', name: 'Español', dir: 'ltr', active: false },
-    { code: 'pt', name: 'Português', dir: 'ltr', active: false },
-    { code: 'de', name: 'Deutsch', dir: 'ltr', active: false },
-  ]);
-  console.log('[seed] locale rows created');
+// 2) reference locale rows (idempotent, Phase 4 activates more)
+for (const loc of [
+  // 9-locale reconciled plan (BN removed per post-remediation fact base)
+  { code: 'en', name: 'English', dir: 'ltr', active: true },
+  { code: 'ar', name: 'العربية', dir: 'rtl', active: false },
+  { code: 'hi', name: 'हिन्दी', dir: 'ltr', active: false },
+  { code: 'ru', name: 'Русский', dir: 'ltr', active: false },
+  { code: 'zh-cn', name: '简体中文', dir: 'ltr', active: false },
+  { code: 'fr', name: 'Français', dir: 'ltr', active: false },
+  { code: 'es', name: 'Español', dir: 'ltr', active: false },
+  { code: 'pt', name: 'Português', dir: 'ltr', active: false },
+  { code: 'de', name: 'Deutsch', dir: 'ltr', active: false },
+]) {
+  await db.insert(locale).values(loc).onConflictDoNothing();
+}
+console.log('[seed] locale rows verified');
+
+// 3) demo catalog rows — strictly skipped in bootstrap seed (SEED-01)
+if (isDemo) {
+  const anyProduct = await db.select({ id: product.id }).from(product).limit(1);
+  if (anyProduct.length === 0) {
+    const [b] = await db.insert(brand).values({ slug: 'voltx', name: 'VOLTX' }).onConflictDoNothing().returning({ id: brand.id });
+    const [c] = await db.insert(category).values({ slug: 'dram-gaming', name: 'Gaming DRAM' }).onConflictDoNothing().returning({ id: category.id });
+    if (b && c) {
+      await db.insert(product).values([
+        { sku: 'VLT-DDR5-16G', slug: 'voltx-ddr5-udimm-16gb', name: 'VOLTX DDR5 U-DIMM 16GB', brandId: b.id, categoryId: c.id, status: 'published', specs: { capacity: '16GB', speed: '6000MT/s' }, badges: ['XMP 3.0'] },
+        { sku: 'VLT-DDR5-32G', slug: 'voltx-ddr5-udimm-32gb', name: 'VOLTX DDR5 U-DIMM 32GB', brandId: b.id, categoryId: c.id, status: 'draft', specs: { capacity: '32GB', speed: '6000MT/s' }, badges: [] },
+      ]).onConflictDoNothing();
+      console.log('[seed] demo brand/category/products created');
+    }
+  }
+} else {
+  console.log('[seed] bootstrap mode: skipping demo products (SEED-01)');
 }
 
-// 3) reference catalog rows (Phase 1 replaces with the full products.json import)
-const anyProduct = await db.select({ id: product.id }).from(product).limit(1);
-if (anyProduct.length === 0) {
-  const [b] = await db.insert(brand).values({ slug: 'voltx', name: 'VOLTX' }).returning({ id: brand.id });
-  const [c] = await db.insert(category).values({ slug: 'dram-gaming', name: 'Gaming DRAM' }).returning({ id: category.id });
-  await db.insert(product).values([
-    { sku: 'VLT-DDR5-16G', slug: 'voltx-ddr5-udimm-16gb', name: 'VOLTX DDR5 U-DIMM 16GB', brandId: b.id, categoryId: c.id, status: 'published', specs: { capacity: '16GB', speed: '6000MT/s' }, badges: ['XMP 3.0'] },
-    { sku: 'VLT-DDR5-32G', slug: 'voltx-ddr5-udimm-32gb', name: 'VOLTX DDR5 U-DIMM 32GB', brandId: b.id, categoryId: c.id, status: 'draft', specs: { capacity: '32GB', speed: '6000MT/s' }, badges: [] },
-  ]);
-  console.log('[seed] reference brand/category/products created');
-}
-
-// 4) P5 demo partner org + member + gated asset + registry serials (dev only).
-const isDevSeed =
-  process.env.NODE_ENV !== 'production' &&
-  process.env.SEED_MODE !== 'bootstrap' &&
-  process.env.BOOTSTRAP_SEED !== '1' &&
-  process.env.BOOTSTRAP_SEED !== 'true';
-
-if (isDevSeed) {
+// 4) P5 demo partner org + member + gated asset + registry serials (demo mode only).
+if (isDemo) {
   const { partnerOrg, partnerMember, partnerAsset, serialRegistry } = await import('@twinmos/db');
   const anyOrg = await db.select({ id: partnerOrg.id }).from(partnerOrg).limit(1);
   if (anyOrg.length === 0) {
@@ -129,7 +146,7 @@ if (isDevSeed) {
   }
 
   // 6) RTL demo strings — tooling/seed-ar.json (Arabic hero/landing) so a fresh
-  // dev DB renders the /ar.html demo WITHOUT a manual admin import. (dev only).
+  // dev DB renders the /ar.html demo WITHOUT a manual admin import. (demo mode only).
   {
     const { translation } = schema;
     const existing = await db.select({ k: translation.key }).from(translation).where(eq(translation.locale, 'ar')).limit(1);
@@ -152,7 +169,7 @@ if (isDevSeed) {
     }
   }
 } else {
-  console.log('[seed] production/bootstrap mode: skipping demo partner, demo leads, and demo translations');
+  console.log('[seed] bootstrap mode: skipping demo partner, demo leads, and demo translations (SEED-01, SEED-02)');
 }
 console.log('[seed] done');
 process.exit(0);

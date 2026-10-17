@@ -93,7 +93,7 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guar
   /** Session + RBAC guard (defaults to viewer; returns session or 401/403). */
   async function authed(c: any, minRole: Role = 'viewer'): Promise<Exclude<AuthSession, null> | Response> {
     const s = await deps.sessionFromRequest(c.req.raw);
-    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
+    if (!s) return c.json(problem(401, 'Unauthorized from translations line 96'), 401, { 'Content-Type': P });
     const ok = await deps.requireRole(minRole)(c.req.raw);
     return ok ? s : c.json(problem(403, `Requires ${minRole} role or above`), 403, { 'Content-Type': P });
   }
@@ -200,8 +200,6 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     const xml = String((body as any).xml ?? '');
     if (!locale.success) return c.json(problem(422, 'Validation Failed', 'locale is required.'), 422, { 'Content-Type': P });
     if (!xml.includes('<xliff')) return c.json(problem(422, 'Validation Failed', 'Body is not an XLIFF document.'), 422, { 'Content-Type': P });
-    const guard = await translateGuard(c, ns);
-    if (guard instanceof Response) return guard;
     const units = parseXliff(xml);
     if (!units.length) return c.json(problem(422, 'Validation Failed', 'No trans-unit (XLIFF 1.2) or unit (XLIFF 2.0) elements found.'), 422, { 'Content-Type': P });
     const corruptedUnits = units.filter((u) => u.target != null && (u.target.includes('???') || u.target.includes('\uFFFD')));
@@ -217,6 +215,8 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guar
         { 'Content-Type': P }
       );
     }
+    const guard = await translateGuard(c, ns);
+    if (guard instanceof Response) return guard;
     let imported = 0;
     let skippedEmpty = 0;
     for (const u of units) {

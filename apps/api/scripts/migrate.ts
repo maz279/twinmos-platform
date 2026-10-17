@@ -28,6 +28,21 @@ const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as {
 const tags = journal.entries.map((e) => e.tag);
 const migs = readMigrationFiles({ migrationsFolder });
 
+// PG-05: Journal integrity guard - verify strictly increasing timestamps and 1:1 files
+for (let i = 1; i < journal.entries.length; i++) {
+  if (journal.entries[i].when <= journal.entries[i - 1].when) {
+    console.error(`[migrate] Refusing: journal timestamps out of order: entry ${i} (${journal.entries[i].tag}: ${journal.entries[i].when}) <= entry ${i - 1} (${journal.entries[i - 1].tag}: ${journal.entries[i - 1].when}) (PG-05)`);
+    process.exit(4);
+  }
+}
+for (let i = 0; i < journal.entries.length; i++) {
+  const m = migs[i];
+  if (!m || !m.hash || m.sql.length === 0) {
+    console.error(`[migrate] Refusing: journal entry ${journal.entries[i].tag} has missing or empty SQL file/hash (PG-05)`);
+    process.exit(5);
+  }
+}
+
 const isPostgres = !!process.env.DATABASE_URL;
 
 if (isPostgres) {
@@ -42,47 +57,59 @@ if (isPostgres) {
     process.exit(2);
   }
 
-  await client.query('CREATE SCHEMA IF NOT EXISTS drizzle');
-  await client.query('CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint)');
+  // PG-05: Take PostgreSQL advisory lock so two runners cannot migrate concurrently
+  await client.query("SELECT pg_advisory_lock(hashtext('twinmos_db_migration'))");
 
-  const recordedRes = await client.query('SELECT created_at FROM drizzle.__drizzle_migrations');
-  const recorded = new Set(recordedRes.rows.map((r) => Number(r.created_at)));
-  const known = new Set(migs.map((m) => m.folderMillis));
-  const unknown = [...recorded].filter((x) => !known.has(x));
-  if (unknown.length > 0) {
-    console.error(`[migrate] Refusing: database records migrations not in this release: ${unknown.join(',')}`);
-    await client.end();
-    process.exit(3);
-  }
+  try {
+    await client.query('CREATE SCHEMA IF NOT EXISTS drizzle');
+    await client.query('CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint)');
 
-  const pending = migs.map((m, i) => ({ ...m, tag: tags[i] })).filter((m) => !recorded.has(m.folderMillis));
-  console.log(`[migrate] server ${serverVersion}; journal ${migs.length}; recorded ${recorded.size}; pending ${pending.length}${pending.length ? ': ' + pending.map((m) => m.tag).join(', ') : ''}`);
-
-  if (dryRun) {
-    await client.end();
-    process.exit(0);
-  }
-
-  for (const m of pending) {
-    await client.query('BEGIN');
-    try {
-      for (const statement of m.sql) {
-        if (statement.trim()) await client.query(statement);
-      }
-      await client.query('INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ($1, $2)', [m.hash, m.folderMillis]);
-      await client.query('COMMIT');
-    } catch (e: any) {
-      await client.query('ROLLBACK');
-      console.error(`[migrate] FAILED in ${m.tag}: ${e.message} (${e.code})`);
+    const recordedRes = await client.query('SELECT created_at FROM drizzle.__drizzle_migrations');
+    const recorded = new Set(recordedRes.rows.map((r) => Number(r.created_at)));
+    const known = new Set(migs.map((m) => m.folderMillis));
+    const unknown = [...recorded].filter((x) => !known.has(x));
+    if (unknown.length > 0) {
+      console.error(`[migrate] Refusing: database records migrations not in this release: ${unknown.join(',')}`);
+      await client.query("SELECT pg_advisory_unlock(hashtext('twinmos_db_migration'))");
       await client.end();
-      process.exit(1);
+      process.exit(3);
     }
-  }
 
-  const tableCount = (await client.query("SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public'")).rows[0].n;
-  const colCount = (await client.query("SELECT count(*)::int AS n FROM information_schema.columns WHERE table_schema='public'")).rows[0].n;
-  console.log(`[migrate] Postgres applied ${pending.length}; public tables ${tableCount}; columns ${colCount}`);
-  await client.end();
+    const pending = migs.map((m, i) => ({ ...m, tag: tags[i] })).filter((m) => !recorded.has(m.folderMillis));
+    console.log(`[migrate] server ${serverVersion}; journal ${migs.length}; recorded ${recorded.size}; pending ${pending.length}${pending.length ? ': ' + pending.map((m) => m.tag).join(', ') : ''}`);
+
+    if (dryRun) {
+      await client.query("SELECT pg_advisory_unlock(hashtext('twinmos_db_migration'))");
+      await client.end();
+      process.exit(0);
+    }
+
+    for (const m of pending) {
+      await client.query('BEGIN');
+      try {
+        for (const statement of m.sql) {
+          if (statement.trim()) await client.query(statement);
+        }
+        await client.query('INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ($1, $2)', [m.hash, m.folderMillis]);
+        await client.query('COMMIT');
+      } catch (e: any) {
+        await client.query('ROLLBACK');
+        console.error(`[migrate] FAILED in ${m.tag}: ${e.message} (${e.code})`);
+        await client.query("SELECT pg_advisory_unlock(hashtext('twinmos_db_migration'))");
+        await client.end();
+        process.exit(1);
+      }
+    }
+
+    const tableCount = (await client.query("SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public'")).rows[0].n;
+    const colCount = (await client.query("SELECT count(*)::int AS n FROM information_schema.columns WHERE table_schema='public'")).rows[0].n;
+    console.log(`[migrate] Postgres applied ${pending.length}; public tables ${tableCount}; columns ${colCount}`);
+  } finally {
+    try {
+      await client.query("SELECT pg_advisory_unlock(hashtext('twinmos_db_migration'))");
+    } catch {}
+    await client.end();
+  }
 } else {
   // PGlite dev/test path
   const db = createDb();

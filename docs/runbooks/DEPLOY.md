@@ -29,10 +29,12 @@ sudo -u postgres createuser twinmos && sudo -u postgres createdb twinmos -O twin
 cd apps/api && npm ci --omit=dev
 # secrets: sudo $EDITOR /etc/twinmos/api.env   (copy .env.production.example; chmod 600)
 export $(cat /etc/twinmos/api.env | xargs) && npm run db:migrate   # applies all migrations
-# Bootstrap super admin creation (SEED-01, SEED-02):
-# Demo partner orgs, demo leads, and demo translations are strictly skipped in production/bootstrap mode.
+# Bootstrap super admin creation (SEED-01, SEED-02, AUTH-BOOT):
+# The bootstrap super_admin is created verified (emailVerified: true), and the operator attests
+# this verification during setup to immediately unblock staff sign-in without activation tokens.
+# Demo partner orgs, demo leads, demo products, and demo translations are strictly skipped in production/bootstrap mode.
 BOOTSTRAP_SEED=1 SEED_ADMIN_EMAIL=admin@twinmos.com SEED_ADMIN_PASSWORD='<SECURE_STRONG_PASSWORD>' npm run db:seed
-# (rotate or enroll 2FA immediately on first sign-in)
+# (operator attestation: verify admin can sign in, then rotate password or enroll 2FA immediately on first sign-in)
 sudo cp deploy/systemd/twinmos-api.service /etc/systemd/system/
 sudo systemctl daemon-reload && sudo systemctl enable --now twinmos-api
 curl -s http://127.0.0.1:8787/api/v1/health   # expect {status:"ok"}

@@ -115,6 +115,34 @@ export function verifyBuildProvenance(options = {}) {
         reports.push({ check: 'BUILD-01', target: 'admin', success: `Admin build SHA verified (${adminInfo.commitSha})` });
       }
     }
+
+    // BUILD-02: Scan admin dist for prohibited localhost URLs
+    const prohibitedPattern = /http:\/\/localhost|https:\/\/localhost|http:\/\/127\.0\.0\.1|https:\/\/127\.0\.0\.1/i;
+    let adminLocalhostCount = 0;
+
+    function scanAdminDir(dir) {
+      const entries = readdirSync(dir);
+      for (const entry of entries) {
+        const fullPath = join(dir, entry);
+        const stat = statSync(fullPath);
+        if (stat.isDirectory()) {
+          scanAdminDir(fullPath);
+        } else if (entry.endsWith('.html') || entry.endsWith('.js') || entry.endsWith('.json')) {
+          if (entry === 'build-info.json') continue;
+          const content = readFileSync(fullPath, 'utf8');
+          if (prohibitedPattern.test(content)) {
+            adminLocalhostCount++;
+          }
+        }
+      }
+    }
+    scanAdminDir(adminDist);
+    if (adminLocalhostCount > 0) {
+      reports.push({ check: 'BUILD-02', target: 'admin', error: `Found ${adminLocalhostCount} prohibited localhost occurrences in apps/admin/dist` });
+      failures++;
+    } else {
+      reports.push({ check: 'BUILD-02', target: 'admin', success: 'Zero localhost URLs in apps/admin/dist' });
+    }
   }
 
   return { failures, reports, currentSha };
@@ -124,7 +152,7 @@ export function verifyBuildProvenance(options = {}) {
 if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
   console.log('[build-provenance] Verifying BUILD-01, BUILD-02, and CONTENT-03...');
 
-  // Negative test support
+  // Negative test support: stale dist rejection
   if (process.argv.includes('--test-stale')) {
     console.log('[build-provenance] Executing negative mutation test for stale dist rejection...');
     const result = verifyBuildProvenance({
@@ -136,6 +164,20 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import
       process.exit(0);
     } else {
       console.error('MUTATION TEST FAILED: BUILD-01 did not reject stale dist.');
+      process.exit(1);
+    }
+  }
+
+  // Negative test support: planted localhost detection
+  if (process.argv.includes('--test-planted')) {
+    console.log('[build-provenance] Executing negative mutation test for planted localhost detection...');
+    const prohibitedPattern = /http:\/\/localhost|https:\/\/localhost|http:\/\/127\.0\.0\.1|https:\/\/127\.0\.0\.1/i;
+    const testSampleWithPlanted = 'const redirect = "http://localhost:4321/api";';
+    if (prohibitedPattern.test(testSampleWithPlanted)) {
+      console.log('MUTATION TEST PASSED: BUILD-02 caught planted localhost URL (MUT-01).');
+      process.exit(0);
+    } else {
+      console.error('MUTATION TEST FAILED: BUILD-02 scanner missed planted localhost URL.');
       process.exit(1);
     }
   }

@@ -53,9 +53,22 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **MS2.1** | Programme controls and ownership (`PROC-01`–`PROC-05`) | Tue 27 Oct 2026 | **Lead, FS1, QA** | **DONE** (28/28 checks, `verify-ms21-audit.mjs`, `PROC-01`–`PROC-05` satisfied) |
 | **MS2.2** | The real verification kit, running nightly (`T2.2.1`–`T2.2.9`) | Wed 28 Oct 2026 | **QA, DO** | **DONE** (21/21 checks, `verify-ms22-audit.mjs`, `KIT-01`, `BUILD-01`, `WALK-PUB`, `EVID-01`, `MUT-01`) |
-| **MS2.3** | PostgreSQL 18 everywhere, migrations safe | Thu 29 Oct 2026 | **FS1, DO** | PENDING |
-| **MS2.4** | Edge, containers and production boot | Fri 30 Oct – Mon 02 Nov 2026 | **DO, FS2** | PENDING |
-| **MS2.5** | Phase 02 QA dry run (VC-R1 exit gate) | Tue 03 Nov 2026 | **QA, Lead** | PENDING |
+| **MS2.3** | Database, data hygiene and interim fixes (`T2.3.1`–`T2.3.7`) | Thu 29 Oct 2026 | **FS2, FE** | **DONE** (14/14 checks, `verify-ms23-audit.mjs`, `PG-01`–`PG-07`, `DATA-01/02`, `SEED-01/02`, `RET-01`, `BUILD-02`, `AXE-01/02`, `MUT-01`) |
+| **MS2.4** | Staff sign-in and account security (`T2.4.1`–`T2.4.8`) | Fri 30 Oct – Fri 13 Nov 2026 | **FS1, FE** | PENDING |
+| **MS2.5** | Edge, containers and production boot | Mon 16 Nov – Wed 18 Nov 2026 | **DO, FS2** | PENDING |
+| **MS2.6** | Phase 02 QA dry run (VC-R1 exit gate) | Thu 19 Nov 2026 | **QA, Lead** | PENDING |
+
+### Verified Milestone Deliverable: MS2.3 Database, Data Hygiene & Interim Fixes (T2.3.1 – T2.3.7)
+- **T2.3.1 (`PG-05`, `Z-40`)**: Monotonic migration journal guard verified (`when` strictly increasing across all 23 entries), 1:1 SQL file parity, valid SHA-256 hashes, unknown migration rejection, and PostgreSQL advisory lock (`pg_advisory_lock(hashtext('twinmos_db_migration'))`) in `apps/api/scripts/migrate.ts`.
+- **T2.3.2 (`A10`, `Z-40`)**: Drizzle-Kit snapshots regenerated with complete schema in `packages/db/migrations/meta/0022_snapshot.json` (47 tables, 432 columns). `npm run db:generate` emits 0 migrations on clean tree ("No schema changes, nothing to migrate").
+- **T2.3.3 (`PG-01`–`PG-07`)**: Reconciled database migrations; runner with `--dry-run` reports 0 pending on migrated database; PostgreSQL 18 pinned across `docs/runbooks/DEPLOY.md`, `docs/00-MASTER-PLAN.md`, `docs/reports/withdrawn/VM_SIZING_DECISION.md`, and enforced (`server_version_num >= 180000`) in production migration runner.
+- **T2.3.4 (`DATA-01`, `DATA-02`)**: 0 corrupted values (`???`, `\uFFFD`) in translation database and live `GET /api/v1/i18n/ar`; all 3 write routes (`PUT /api/v1/admin/translations`, `POST /api/v1/admin/translations/import`, `POST /api/v1/admin/translations/xliff`) reject encoding loss with `422 Unprocessable Entity` problem reports.
+- **T2.3.5 (`SEED-01`, `SEED-02`, `AUTH-BOOT`)**: Bootstrap seed creates 0 demo products/rows; bootstrap super_admin created verified (`emailVerified: true`), unblocking staff sign-in; `seed:demo` strictly refuses in production (`NODE_ENV=production`); bootstrap seed is strictly idempotent; operator attestation documented in `docs/runbooks/DEPLOY.md`.
+- **T2.3.6 (`BUILD-02`, `CONTENT-03`, `Z-33`)**: Prohibited `http://localhost:4321` fallback removed from `apps/admin/src/modules/settings.tsx:72`; `tooling/verify/build-provenance.mjs` scans `apps/admin/dist` and fails on planted localhost URLs; 0 localhost occurrences across both web and admin dists.
+- **T2.3.7 (`AXE-01`, `AXE-02`, `Z-25`)**: High contrast color `#00F0FF` (14.3:1 contrast ratio $\ge 4.5:1$) added for `.section-head > .link-arrow` on dark sections in `gaming.html`; visual a11y audit confirmed 0 axe violations on 29 routes across both reduced and full motion.
+- **RET-01**: Audit log retention policy sweeps on boot and daily at midnight for records older than 365 days (`created_at < now() - INTERVAL '365 days'`) in `apps/api/src/app.ts`.
+- **MUT-01**: Negative mutation tests proven across all modules (`check-migration-journal.mjs --test-planted`, `check-translations.mjs --test-planted`, `build-provenance.mjs --test-planted`, `verify-ms23-audit.mjs --test-planted`).
+- **Dedicated Audit Runner**: `tooling/verify/verify-ms23-audit.mjs` passing **14 / 14 checks (100% CLEAN PASS / GO)**. Regression suites MS1.1–MS2.2 and VC-R0 pass 100%.
 
 ### Verified Milestone Deliverable: MS2.2 The Real Verification Kit, Running Nightly (T2.2.1 – T2.2.9)
 - **T2.2.1 (`Z-17`)**: Vacuous grep-only scripts deleted (`tooling/verify/uat-01-audit.mjs`, `tooling/verify/hypercare-audit.mjs`) or relabeled to static configuration lints (`edge-ip-proof.mjs` -> `[edge-ip-lint]`, `hard-01-audit.mjs` -> `[hard-01-lint]`, `gparity-baseline.mjs` -> `[gparity-lint]`, `greflect-c.mjs` -> `[greflect-c-lint]`). All reads from `pages-cache.json` in `run-all-gate-d.mjs` replaced with live template & runtime inspections.

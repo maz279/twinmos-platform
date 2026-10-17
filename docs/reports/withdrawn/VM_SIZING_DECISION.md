@@ -31,7 +31,7 @@ This document establishes the production infrastructure VM sizing and capacity a
 | **Nginx Edge Ingress** | Event-driven (epoll) | ~60 MB | ~5% of 1 core |
 | **TwinMOS API (Hono)** | Single-process Node.js 20 | ~220 MB | ~25% of 1 core |
 | **Astro SSR Frontend** | Standalone Node.js server | ~260 MB | ~30% of 1 core |
-| **PostgreSQL 16 DB** | Relational engine | ~1,536 MB (`shared_buffers`) | ~20% of 1 core |
+| **PostgreSQL 18 DB** | Relational engine | ~1,536 MB (`shared_buffers`) | ~20% of 1 core |
 | **OS, PM2, Cron, Tools** | Ubuntu 24.04 LTS kernel | ~500 MB | ~5% |
 | **Buffer/Page Cache** | OS filesystem cache for NVMe | ~3,000 MB | N/A |
 | **Total Allocation** | Combined | **~5.6 GB** | **~85% of 1 core** |

@@ -69,7 +69,7 @@ function Redirects({ canManage }: { canManage: boolean }) {
     catch (e) { setError(e); } finally { setBusy(false); }
   }
 
-  const WEB = (import.meta.env.VITE_API_URL ?? '').replace(/\/api\/v1$/, '') || 'http://localhost:4321';
+  const WEB = (import.meta.env.VITE_API_URL ?? '').replace(/\/api\/v1$/, '') || '';
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '0 0 10px', flexWrap: 'wrap' }}>
