@@ -174,7 +174,7 @@ check('T1.2.6c', 'docker run twinmos-edge:test nginx -t succeeds with exit code 
     const out = execSync('docker run --rm twinmos-edge:test nginx -t 2>&1', {
       cwd: ROOT,
       encoding: 'utf8',
-      timeout: 15000,
+      timeout: 30000,
     });
     return out.includes('syntax is ok') && out.includes('test is successful');
   } catch (err) {

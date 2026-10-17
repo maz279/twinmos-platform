@@ -39,7 +39,13 @@
 | **MS1.3** | Emergency security fixes | Wed 21 – Thu 22 Oct 2026 | **FS1, FS2** | **DONE** (44/44 checks, `verify-ms13-audit.mjs`, probes P6/P6b/P7/P8/P8b/X4/X5) |
 | **MS1.4** | Stop silent data changes on edit | Thu 22 Oct 2026 | **FS2, FE** | **DONE** (52/52 checks, `verify-ms14-audit.mjs`, probes X1/X3/X3b, `DATA-PATCH`) |
 | **MS1.5** | Public-site stop-gap: working catalogue, consent & CSP | Fri 23 Oct 2026 | **FE, QA** | **DONE** (26/26 checks, `verify-ms15-audit.mjs`, `SITE-FUNC (stop-gap)`, `CONSENT-CSP`) |
-| **MS1.6** | Stop-the-line review & QA dry run (VC-R0 exit gate) | Mon 26 Oct 2026 | **QA, Lead** | Next |
+| **MS1.6** | Stop-the-line review & QA dry run (VC-R0 exit gate) | Mon 26 Oct 2026 | **QA, Lead** | **DONE** (47/47 checks, `verify-vc-r0-audit.mjs`, Exit Gate VC-R0 CLEAN PASS / GO) |
+
+### Phase 01 Completion & VC-R0 Gate Status
+> **Phase 01 Status:** **COMPLETE (100%)** — All milestones MS1.1 through MS1.6 verified with zero regressions.
+> **Exit Gate VC-R0 Verdict:** **CLEAN PASS / GO** (47/47 checks verified in `verify-vc-r0-audit.mjs`).
+> **Gate Authority:** External Zero-Trust QA Lead & Steering Committee. Formal Exit Report committed at `docs/reports/VC_R0_EXIT_REPORT.md`.
+> **Phase 02 Status:** **UNLOCKED** — Proceeding to **Phase 02 · Stop-ship close-out** (MS2.1 · Programme controls and ownership).
 
 ### Verified Milestone Deliverable: MS1.3 Emergency Security Fixes (T1.3.1 – T1.3.8)
 - **T1.3.1 (`SEC-PREVIEW`)**: Token minting locked down to staff sessions (`author`+). Capped at 3,600s TTL. Cryptographically bound to `entityType`, `entityId`, `slug`, and `locale`. Boot guard mandates `PREVIEW_SIGNING_KEY` >= 32 chars in production. Probes P6 and P6b pass cleanly.
@@ -63,6 +69,20 @@
 - **T1.5.3 (`CONSENT-CSP` / Honored Decline & Revocation UI)**: Cookie banner copy cleansed of inaccurate "analytics cookies" claims. Clicking "Decline" (`#cookieDecline`) persists `false` to `localStorage['twinmos_cookie_consent']` and immediately hides banner. Re-opening consent bar via `#cookiePreferencesBtn` restores banner for preference adjustment. External `consent.js` handles all events without inline handlers.
 - **T1.5.4 (Service Worker Scope Hardening)**: `sw.js` explicitly excludes `/api/` and `/internal/` endpoints from caching. Respects HTTP `Cache-Control: private` and `no-store` response directives. Service worker activation immediately purges stale caches outside the canonical cache version.
 - **T1.5.5 (Automated Test Suite & Live E2E Audit)**: `apps/api/test/consent-csp.test.ts` passing 11/11 tests. Dedicated audit runner `tooling/verify/verify-ms15-audit.mjs` passing 26/26 checks (100%). Playwright manual E2E test suite passing all public visitor flows. Full visual and WCAG 2.2 AA audit (`tooling/verify/visual-a11y-audit.mjs`) passing with 0 axe violations across all 29 routes.
+
+### Verified Milestone Deliverable: MS1.6 Phase 01 Verification & Exit Gate VC-R0 (T1.6.1 – T1.6.4)
+- **T1.6.1 (QA Dry Run Across Probes P1–P10, X1–X5, `cms_to_site`)**: Full QA dry run executed against running edge, API daemon, and database. All Phase 01 probes pass cleanly: P2, P3, P4, P5, P6, P6b, P7, P8, P8b, P10, X1, X2, X3, X3b, X4, X5. As documented in Roadmap §3.4 and §VC-R0, probes P1 (unflagged bootstrap super_admin sign-in), P9b (invited staff activation without mailer), and `cms_to_site` (instant headless reflection) remain red as designed, scheduled for resolution in Phase 02 (MS2.4) and Phase 03 (MS3.2/MS3.5).
+- **T1.6.2 (Verification Suites & Parity Baselines)**: All milestone verification runners executed with 100% pass rates:
+  - MS1.1: 16/16 checks (`verify-ms11-audit.mjs`)
+  - MS1.2: 20/20 checks (`verify-ms12-audit.mjs`)
+  - MS1.3: 44/44 checks (`verify-ms13-audit.mjs`)
+  - MS1.4: 52/52 checks (`verify-ms14-audit.mjs`)
+  - MS1.5: 26/26 checks (`verify-ms15-audit.mjs`)
+  - Probes X1–X3b: 30/30 checks (`verify-x1-x3.mjs`)
+  - Admin walk: 15 modules verified, 0 CSP errors (`walk-admin.mjs`)
+  - Vitest Security Pack: 15/15 tests passing (`apps/api/test/security-pack.e2e.test.ts`)
+- **T1.6.3 (A11y & Visual Parity Standards)**: Automated Playwright + axe-core audit (`tooling/verify/visual-a11y-audit.mjs`) verified 0 violations across all 29 public routes (AXE-01 and AXE-02 passed). 6 full-page high-resolution visual evidence captures archived in `evidence/`. Manual browser validation (`tooling/verify/manual-test-suite.mjs`) passed 4/4 end-to-end visitor scenarios.
+- **T1.6.4 (Exit Gate VC-R0 Clean Pass & Formal Exit Report)**: Master verification runner `tooling/verify/verify-vc-r0-audit.mjs` executed cleanly: **47 / 47 checks PASSED (100% CLEAN PASS / GO)** covering all 15 success criteria in Roadmap §3.4. Formal report authored and committed at `docs/reports/VC_R0_EXIT_REPORT.md` certifying unblocking of Phase 02 · Stop-ship close-out.
 
 
 

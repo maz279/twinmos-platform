@@ -12,7 +12,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const MIGRATIONS = resolve(dirname(fileURLToPath(import.meta.url)), '../../../packages/db/migrations');
 
 const TMP = mkdtempSync(join(tmpdir(), 'twinmos-sec-pack-'));
 process.env.PGLITE_DATA = join(TMP, 'db');
@@ -30,7 +33,7 @@ mkdirSync(process.env.MAIL_OUTBOX_DIR!, { recursive: true });
 
 const db = createDb();
 await db.$client.exec('CREATE SCHEMA IF NOT EXISTS drizzle');
-await migrate(db, { migrationsFolder: '../../packages/db/migrations' });
+await migrate(db, { migrationsFolder: MIGRATIONS });
 const app = buildApp(db);
 
 let memberCookie = '';
