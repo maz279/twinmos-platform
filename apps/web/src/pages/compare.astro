@@ -11,8 +11,23 @@ const desc = page?.seoDescription ?? "Side-by-side TwinMOS product comparison wi
 const blocks = page?.blocks ?? [];
 ---
 
-<Layout title={title} desc={desc} >
+<Layout title={title} desc={desc}>
   <main id="main">
-    <BlockDispatcher blocks={blocks} />
+    {blocks.length > 0 ? (
+      <BlockDispatcher blocks={blocks} />
+    ) : (
+      <>
+        <div class="page-hero">
+          <div class="wrap">
+            <span class="eyebrow">Decision tool</span>
+            <h1 class="h1">Compare products</h1>
+            <p class="lede">Add up to four products from the catalog using the ⇄ button on any product card. Differences are highlighted automatically, and your tray persists between visits.</p>
+          </div>
+        </div>
+        <section style="padding-top:clamp(22px,3vw,36px)">
+          <div class="wrap" id="cmpMount"></div>
+        </section>
+      </>
+    )}
   </main>
 </Layout>

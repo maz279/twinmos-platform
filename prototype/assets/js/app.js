@@ -134,11 +134,11 @@ var TM = window.TM || {};
           if (v === 'ar') {
             document.documentElement.setAttribute('dir', 'rtl');
             document.documentElement.setAttribute('lang', 'ar');
-            toast('Arabic (RTL) layout enabled — full localization ships with the production i18n pipeline', 'ok');
+            toast('Arabic (RTL) layout enabled', 'ok');
           } else {
             document.documentElement.setAttribute('dir', 'ltr');
             document.documentElement.setAttribute('lang', 'en');
-            if (v !== 'en') toast('Locale "' + v.toUpperCase() + '" stored — content stays on the English base in this prototype', 'ok');
+            if (v !== 'en') toast('Locale "' + v.toUpperCase() + '" stored', 'ok');
           }
           try { localStorage.setItem('tm_locale', v); } catch (e) {}
         });
@@ -640,13 +640,13 @@ var TM = window.TM || {};
             '<div class="grid g3">' + portables.map(function (p) { return productCard(p); }).join('') + '</div>'
           : '') +
         (!mems.length && !ssds.length && !portables.length
-          ? '<div class="empty-state"><p>No catalog match for this platform in the prototype database \u2014 <a href="contact.html">ask support</a> and we will confirm compatibility.</p></div>'
+          ? '<div class="empty-state"><p>No catalog match for this platform in the database \u2014 <a href="contact.html">ask support</a> and we will confirm compatibility.</p></div>'
           : '') +
         '<div class="card card-pad" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:20px;background:var(--bg-tint)">' +
         '<div><b>Can\u2019t find your device?</b><p class="form-note" style="margin:2px 0 0">Our support team verifies compatibility manually \u2014 send the exact model and we\u2019ll confirm the right upgrade.</p></div>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-ghost btn-sm" href="contact.html">Ask support</a>' +
         '<a class="btn btn-ghost btn-sm" href="where-to-buy.html">Where to buy</a></div></div>' +
-        '<p class="form-note" style="margin-top:14px">Demo compatibility database for the prototype \u2014 \u201cSpec-compatible\u201d never means incompatible. Always confirm against your device manual \u2014 see <a href="article.html?id=how-to-check-motherboard-ram-compatibility">How to check your motherboard and RAM compatibility</a>.</p>';
+        '<p class="form-note" style="margin-top:14px">Compatibility guidance \u2014 \u201cSpec-compatible\u201d never means incompatible. Always confirm against your device manual \u2014 see <a href="article.html?id=how-to-check-motherboard-ram-compatibility">How to check your motherboard and RAM compatibility</a>.</p>';
 
       // reason chips under memory cards
       $$('#compatOut [data-reason]').forEach(function (card) {

@@ -22,6 +22,21 @@ const blocks = page?.blocks ?? [];
 
 <Layout title={title} desc={desc} noindex={true}>
   <main id="main">
-    <BlockDispatcher blocks={blocks} />
+    {blocks.length > 0 ? (
+      <BlockDispatcher blocks={blocks} />
+    ) : (
+      <>
+        <div class="page-hero">
+          <div class="wrap">
+            <span class="eyebrow">Search</span>
+            <h1 class="h1">Results for "<span id="searchQ">{safeQuery}</span>"</h1>
+            <p class="lede">Searching all catalog products and the media &amp; articles library.</p>
+          </div>
+        </div>
+        <section style="padding-top:clamp(22px,3vw,36px)">
+          <div class="wrap" id="searchMount"></div>
+        </section>
+      </>
+    )}
   </main>
 </Layout>

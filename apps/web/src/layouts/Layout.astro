@@ -128,9 +128,7 @@ const OG_TYPE = path === '/' ? 'website' : 'article';
     {locale !== 'en' && <link rel="stylesheet" href="assets/css/rtl.css" />}
     <meta name="twinmos-api" content={import.meta.env.PUBLIC_API_URL ?? ''} />
     <meta name="turnstile-site-key" content={import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? ''} />
-    <script is:inline define:vars={{ turnstileSiteKey: import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '' }}>
-      window.TURNSTILE_SITE_KEY = turnstileSiteKey;
-    </script>
+
     <script type="application/ld+json" set:html={ORG_LD} />
     <script type="application/ld+json" set:html={SITE_LD} />
     {BREADCRUMB_LD && <script type="application/ld+json" set:html={BREADCRUMB_LD} />}

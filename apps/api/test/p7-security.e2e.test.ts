@@ -162,10 +162,15 @@ describe('P7: production anti-spam wiring (dist-gated)', () => {
   const maybeIt = hasDist ? it : it.skip;
   if (!hasDist) console.warn('[p7-security] apps/web/dist not built — Turnstile wiring assertion SKIPPED (run test:ci).');
 
-  maybeIt('built pages define window.TURNSTILE_SITE_KEY (Turnstile renders in production)', () => {
+  maybeIt('built pages define turnstile-site-key meta tag and layout-init sets window.TURNSTILE_SITE_KEY (Turnstile renders in production without CSP violation)', () => {
     const html = readFileSync(join(WEB, 'index.html'), 'utf8');
-    expect(html).toContain('window.TURNSTILE_SITE_KEY');
+    expect(html).toContain('name="turnstile-site-key"');
     // the injected value comes from PUBLIC_TURNSTILE_SITE_KEY (empty in dev builds — widget hidden)
-    expect(html).toMatch(/TURNSTILE_SITE_KEY = (turnstileSiteKey|"")/);
+    expect(html).toMatch(/<meta\s+name="turnstile-site-key"\s+content/);
+    const layoutInitPath = existsSync(join(WEB, 'client', 'assets', 'js', 'layout-init.js'))
+      ? join(WEB, 'client', 'assets', 'js', 'layout-init.js')
+      : join(WEB, 'assets', 'js', 'layout-init.js');
+    const layoutInit = readFileSync(layoutInitPath, 'utf8');
+    expect(layoutInit).toContain('window.TURNSTILE_SITE_KEY = turnstileMeta');
   });
 });

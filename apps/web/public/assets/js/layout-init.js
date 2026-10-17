@@ -51,6 +51,8 @@
 
   // App layer boots post-first-paint
   var files = [
+    'assets/js/consent.js',
+    'assets/js/catalog-data.js',
     'assets/js/app.js',
     'assets/js/img-dims.js',
     'assets/js/a11y.js',

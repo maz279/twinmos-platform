@@ -9,8 +9,9 @@
     "build:only": "astro build",
     "preview": "astro preview",
     "sitemap": "node ../../tooling/gen_sitemap.mjs",
-    "predev": "node ../../tooling/sync-prototype-assets.mjs",
-    "prebuild": "node ../../tooling/sync-prototype-assets.mjs && node ../../tooling/gen_sitemap.mjs",
+    "catalog:build": "node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts",
+    "predev": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts",
+    "prebuild": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts && node ../../tooling/gen_sitemap.mjs",
     "sync:proto": "node ../../tooling/sync-prototype-assets.mjs",
     "import:corpus": "node --experimental-strip-types --no-warnings ../../tooling/import-corpus.ts"
   },
