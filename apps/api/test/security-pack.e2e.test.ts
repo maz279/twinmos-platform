@@ -10,7 +10,7 @@
 // S-15: CORS origin restriction & ACAC hygiene
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +22,7 @@ process.env.PGLITE_DATA = join(TMP, 'db');
 process.env.MAIL_OUTBOX_DIR = join(TMP, 'outbox');
 process.env.API_ALLOW_NO_TURNSTILE = '1';
 process.env.NODE_ENV = 'test';
+process.env.TRUST_PROXY = '1';
 
 const { createDb, user, formSubmission }: any = await import('@twinmos/db');
 const { migrate } = await import('drizzle-orm/pglite/migrator');
@@ -416,7 +417,7 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     expect(verifiedSignIn.status).toBe(200);
   });
 
-  it('S-07 & S-09: Admin mutation enforces MFA when ENFORCE_MFA=1', async () => {
+  it('S-07: Admin mutation enforces MFA when ENFORCE_MFA=1', async () => {
     const prev = process.env.ENFORCE_MFA;
     try {
       process.env.ENFORCE_MFA = '1';
@@ -437,15 +438,142 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     }
   });
 
-  it('S-10: Forged X-Forwarded-For does not override real-IP', async () => {
-    // Both limitIp and Better Auth read x-real-ip and ignore x-forwarded-for
-    const res = await app.request('/api/v1/health', {
-      headers: {
-        'x-real-ip': '203.0.113.10',
-        'x-forwarded-for': '1.2.3.4, 5.6.7.8',
-      },
+  it('S-09: Two visitors behind Cloudflare get separate sign-in buckets (attacker throttled 429, staff on separate IP succeeds 200)', async () => {
+    const prev = process.env.TRUST_PROXY;
+    process.env.TRUST_PROXY = '1';
+    try {
+      const attackerIp = '203.0.113.10';
+      const staffIp = '198.51.100.20';
+      const attackerStatuses: number[] = [];
+
+      // Attacker attempts 4 sign-ins with bad password from 203.0.113.10
+      for (let i = 0; i < 4; i++) {
+        const res = await app.request('/api/v1/auth/sign-in/email', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-real-ip': attackerIp,
+          },
+          body: JSON.stringify({ email: 'sec-viewer@twinmos.test', password: 'bad-password-' + i }),
+        });
+        attackerStatuses.push(res.status);
+      }
+
+      // Attacker: attempts 1..3 return 401; 4th attempt is throttled with 429 Too Many Requests
+      expect(attackerStatuses.slice(0, 3)).toEqual([401, 401, 401]);
+      expect(attackerStatuses[3]).toBe(429);
+
+      // Staff signs in with correct password from 198.51.100.20 (independent bucket)
+      const staffRes = await app.request('/api/v1/auth/sign-in/email', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-real-ip': staffIp,
+        },
+        body: JSON.stringify({ email: 'sec-viewer@twinmos.test', password: 'TestSecPassword123!' }),
+      });
+      expect(staffRes.status).toBe(200);
+    } finally {
+      if (prev !== undefined) process.env.TRUST_PROXY = prev;
+      else delete process.env.TRUST_PROXY;
+    }
+  });
+
+  it('S-10: Rotating client-supplied headers straight at API does not evade limits and forged headers are ignored', async () => {
+    // 1. Direct access without proxy trust: rotating headers straight at API pins to socket address and limits
+    const prev = process.env.TRUST_PROXY;
+    delete process.env.TRUST_PROXY;
+    try {
+      const statuses: number[] = [];
+      for (let i = 0; i < 6; i++) {
+        const res = await app.request('/api/v1/auth/sign-in/email', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'cf-connecting-ip': `198.51.100.${i + 1}`,
+            'x-forwarded-for': `203.0.113.${i + 1}`,
+          },
+          body: JSON.stringify({ email: 'sec-viewer@twinmos.test', password: 'bad-password-' + i }),
+        });
+        statuses.push(res.status);
+      }
+      expect(statuses).toContain(429);
+    } finally {
+      if (prev !== undefined) process.env.TRUST_PROXY = prev;
+      else delete process.env.TRUST_PROXY;
+    }
+
+    // 2. Behind proxy: forged X-Forwarded-For does not override X-Real-IP
+    process.env.TRUST_PROXY = '1';
+    try {
+      const res = await app.request('/api/v1/health', {
+        headers: {
+          'x-real-ip': '203.0.113.10',
+          'x-forwarded-for': '1.2.3.4, 5.6.7.8',
+        },
+      });
+      expect(res.status).toBe(200);
+    } finally {
+      if (prev !== undefined) process.env.TRUST_PROXY = prev;
+      else delete process.env.TRUST_PROXY;
+    }
+  });
+
+  it('S-11: API binds HOST=127.0.0.1 by default and Docker Compose isolates port 8787 without host port binding', () => {
+    // 1. Verify default host in env template
+    const prodEnv = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../.env.production.example'), 'utf8');
+    expect(prodEnv).toContain('HOST=127.0.0.1');
+
+    // 2. Verify docker-compose.yml isolates API to internal network without host port mapping
+    const composeContent = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../deploy/compose/docker-compose.yml'), 'utf8');
+    expect(composeContent).toContain('HOST=0.0.0.0');
+    expect(composeContent).toContain('expose:');
+    expect(composeContent).toContain('- "8787"');
+    expect(composeContent).not.toContain('"8787:8787"');
+    expect(composeContent).not.toContain('8787:8787');
+  });
+
+  it('S-15: Upload limits enforce nginx >= API tier >= handler limit with dead tier removed', async () => {
+    const adminS15Cookie = await setupTestUser('sec-admin-s15@twinmos.test', 'admin');
+
+    // 1. Standard route rejects 2 MB JSON with 413
+    const oversized2MB = { data: 'x'.repeat(2 * 1024 * 1024) };
+    const stdRes = await app.request('/api/v1/admin/partner-orgs', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Cookie: adminS15Cookie },
+      body: JSON.stringify(oversized2MB),
     });
-    expect(res.status).toBe(200);
+    expect(stdRes.status).toBe(413);
+    const stdBody = await stdRes.json();
+    expect(stdBody.title).toContain('Payload Too Large');
+
+    // 2. Dead upload tier /api/v1/partner removed: 2 MB request rejected by standard 256 KB limit
+    const deadTierRes = await app.request('/api/v1/partner/test-endpoint', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Cookie: adminS15Cookie },
+      body: JSON.stringify(oversized2MB),
+    });
+    expect(deadTierRes.status).toBe(413);
+
+    // 3. Media endpoint tier is 12 MB (handler cap 10 MB, nginx 15 MB)
+    // Payload over 12 MB gets 413 from bodyLimit
+    const over12MB = { data: 'x'.repeat(13 * 1024 * 1024) };
+    const overMediaRes = await app.request('/api/v1/admin/media', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Cookie: adminS15Cookie },
+      body: JSON.stringify(over12MB),
+    });
+    expect(overMediaRes.status).toBe(413);
+
+    // 4. Partner assets tier is 28 MB (handler cap 25 MB, nginx 30 MB)
+    // Payload over 28 MB gets 413 from bodyLimit
+    const over28MB = { data: 'x'.repeat(29 * 1024 * 1024) };
+    const overPartnerRes = await app.request('/api/v1/admin/partner-orgs/org-1/assets', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Cookie: adminS15Cookie },
+      body: JSON.stringify(over28MB),
+    });
+    expect(overPartnerRes.status).toBe(413);
   });
 
   it('S-16a: Responses include secure baseline headers', async () => {

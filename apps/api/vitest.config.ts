@@ -9,6 +9,7 @@ export default defineConfig({
     fileParallelism: false, // isolated temp DBs, sequential keeps output readable
     env: {
       FORCE_PGLITE: '1',
+      TRUST_PROXY: '1',
     },
   },
 });

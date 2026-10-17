@@ -5,7 +5,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const TMP = mkdtempSync(join(tmpdir(), 'twinmos-p7-'));
 process.env.PGLITE_DATA = join(TMP, 'db');
@@ -14,8 +15,8 @@ process.env.FORMS_TO = 'security@twinmos.dev';
 process.env.API_ALLOW_NO_TURNSTILE = '1';
 process.env.NODE_ENV = 'test';
 
-// Repo root = parent of the workspace cwd (apps/api); no traversal literals.
-const MIGRATIONS = join(dirname(dirname(process.cwd())), 'packages', 'db', 'migrations');
+// Robust migration folder resolution independent of cwd
+const MIGRATIONS = resolve(dirname(fileURLToPath(import.meta.url)), '../../../packages/db/migrations');
 
 const { createDb }: any = await import('@twinmos/db');
 const { migrate } = await import('drizzle-orm/pglite/migrator');
@@ -130,16 +131,23 @@ describe('P7: clientIp trust policy (rate-limit spoofing guard)', () => {
   const fakeCtx = (headers: Record<string, string>, env: object = {}) =>
     ({ req: { header: (n: string) => headers[n] }, env }) as never;
 
-  it('honours forwarded headers when TRUST_PROXY=1 (dev/test/staging behind Cloudflare)', () => {
+  it('honours x-real-ip only when TRUST_PROXY=1 (behind edge reverse proxy)', () => {
     process.env.TRUST_PROXY = '1';
     try {
-      expect(clientIp(fakeCtx({ 'cf-connecting-ip': '203.0.113.9' }))).toBe('203.0.113.9');
-      expect(clientIp(fakeCtx({ 'x-forwarded-for': '198.51.100.7' }))).toBe('198.51.100.7');
+      expect(clientIp(fakeCtx({ 'x-real-ip': '203.0.113.9' }))).toBe('203.0.113.9');
+      // T2.5.2: drops spoofable cf-connecting-ip and x-forwarded-for fallbacks
+      expect(clientIp(fakeCtx({ 'cf-connecting-ip': '203.0.113.9' }))).toBe('local');
+      expect(clientIp(fakeCtx({ 'x-forwarded-for': '198.51.100.7' }))).toBe('local');
     } finally { delete process.env.TRUST_PROXY; }
   });
 
-  it('NON-production default keeps header trust (dev/test ergonomics)', () => {
-    expect(clientIp(fakeCtx({ 'x-forwarded-for': '198.51.100.1' }))).toBe('198.51.100.1');
+  it('WITHOUT TRUST_PROXY ignores all spoofable headers and falls back to socket address', () => {
+    delete process.env.TRUST_PROXY;
+    const ip = clientIp(fakeCtx({ 'x-real-ip': '6.6.6.6', 'x-forwarded-for': '6.6.6.6' }, {
+      incoming: { socket: { remoteAddress: '10.0.0.5' } },
+    }));
+    expect(ip).toBe('10.0.0.5');
+    expect(clientIp(fakeCtx({}))).toBe('unknown');
   });
 
   it('production WITHOUT TRUST_PROXY ignores spoofable headers', () => {

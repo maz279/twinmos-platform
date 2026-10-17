@@ -42,10 +42,17 @@ import type { Context } from 'hono';
  * fall back to the socket address, and tests keep working because they run
  * with TRUST_PROXY=1 (see p*-*.e2e.test.ts env blocks).
  */
+/**
+ * Real client IP resolution (T2.5.2 / S-10 / Z-28).
+ * When TRUST_PROXY=1 (behind edge reverse proxy), trusts ONLY the validated
+ * `x-real-ip` header written by nginx from trusted Cloudflare CIDRs.
+ * Drops all `cf-connecting-ip` and `x-forwarded-for` fallbacks so forged headers
+ * can never spoof the client key.
+ * In untrusted environments (TRUST_PROXY !== '1'), strictly uses TCP socket remote address.
+ */
 export function clientIp(c: Context): string {
-  const trustHeader = process.env.TRUST_PROXY === '1' || process.env.NODE_ENV !== 'production';
-  if (trustHeader) {
-    return c.req.header('x-real-ip') ?? c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'local';
+  if (process.env.TRUST_PROXY === '1') {
+    return c.req.header('x-real-ip') ?? 'local';
   }
   const addr = (c.env as { incoming?: { socket?: { remoteAddress?: string } } })?.incoming?.socket?.remoteAddress;
   return addr ?? 'unknown';
@@ -123,16 +130,19 @@ export function buildApp(db: DB) {
     alertManager.recordRequest(c.res.status, duration);
   });
 
-  // Tiered body limit middleware (NF-18, NEW-05, V-14)
+  // Tiered body limit middleware (NF-18, NEW-05, V-14, T2.5.5, Z-32)
+  // Ensures 3-layer tier agreement: nginx cap >= API tier >= handler limit.
+  // Handler limits: media 10 MB, serials 10 MB, partner assets 25 MB.
+  // API tiers provide headroom for multipart boundaries & headers.
   app.use('/api/v1/*', async (c, next) => {
     const p = c.req.path;
     let maxSize = 256 * 1024; // 256 KB default
     if (p.startsWith('/api/v1/admin/media') || p.startsWith('/api/v1/admin/serials/import')) {
-      maxSize = 10 * 1024 * 1024; // 10 MB media / serial CSV ingest
-    } else if (p.startsWith('/api/v1/partner') || (p.startsWith('/api/v1/admin/partner-orgs/') && p.endsWith('/assets'))) {
-      maxSize = 25 * 1024 * 1024; // 25 MB partner assets
+      maxSize = 12 * 1024 * 1024; // 12 MB (handler 10 MB + multipart/CSV overhead; nginx cap 15 MB)
+    } else if (p.startsWith('/api/v1/admin/partner-orgs/') && p.endsWith('/assets')) {
+      maxSize = 28 * 1024 * 1024; // 28 MB (handler 25 MB + multipart overhead; nginx cap 30 MB)
     } else if (p.startsWith('/api/v1/auth')) {
-      maxSize = 64 * 1024; // 64 KB auth
+      maxSize = 64 * 1024; // 64 KB auth (nginx cap 1 MB)
     }
 
     return bodyLimit({
@@ -195,6 +205,43 @@ export function buildApp(db: DB) {
       return c.json(problem(429, 'Too Many Requests', 'Limit is 10 serial checks per minute.'), 429, { 'Content-Type': 'application/problem+json' });
     }
     return next();
+  });
+
+  // ---- Sign-in rate limit: 3-5 requests / minute / client IP (S-09, S-10, T2.5.3, T2.5.4) ----
+  const SIGNIN_BUCKETS = new Map<string, { count: number; resetAt: number }>();
+  app.use('/api/v1/auth/sign-in/*', async (c, next) => {
+    const ip = clientIp(c);
+    const now = Date.now();
+    if (now > bucketSweepAt) {
+      bucketSweepAt = now + 60_000;
+      for (const [k, v] of SIGNIN_BUCKETS) {
+        if (v.resetAt < now) SIGNIN_BUCKETS.delete(k);
+      }
+    }
+    const limit = Number(process.env.AUTH_SIGNIN_LIMIT ?? 3);
+    const bucket = SIGNIN_BUCKETS.get(ip);
+    if (!bucket || bucket.resetAt < now) {
+      SIGNIN_BUCKETS.set(ip, { count: 1, resetAt: now + 60_000 });
+      await next();
+      if (c.res?.status === 200) {
+        SIGNIN_BUCKETS.delete(ip);
+      }
+      return;
+    }
+    bucket.count += 1;
+    if (bucket.count > limit) {
+      const waitSec = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
+      c.header('Retry-After', String(waitSec));
+      return c.json(
+        problem(429, 'Too Many Requests', `Sign-in limit exceeded. Limit is ${limit} attempts per minute.`),
+        429,
+        { 'Content-Type': 'application/problem+json' }
+      );
+    }
+    await next();
+    if (c.res?.status === 200) {
+      SIGNIN_BUCKETS.delete(ip);
+    }
   });
 
   // ---- error envelope: RFC 9457 problem+json on every API error ----
