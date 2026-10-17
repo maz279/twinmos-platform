@@ -12,6 +12,7 @@ process.env.MAIL_OUTBOX_DIR = join(TMP, 'outbox');
 process.env.FORMS_TO = 'console@twinmos.dev';
 process.env.API_ALLOW_NO_TURNSTILE = '1';
 process.env.NODE_ENV = 'test';
+process.env.ENFORCE_MFA = '0';
 
 const MIGRATIONS = join(dirname(dirname(process.cwd())), 'packages', 'db', 'migrations');
 
@@ -40,12 +41,13 @@ beforeAll(async () => {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email: 'r04-admin@twinmos.dev', password: 'R04-Admin-Password-2026!', name: 'R04 Admin' }),
   });
-  await db.update(user).set({ role: 'super_admin' }).where(eq(user.email, 'r04-admin@twinmos.dev'));
+  await db.update(user).set({ role: 'super_admin', emailVerified: true, twoFactorEnabled: false }).where(eq(user.email, 'r04-admin@twinmos.dev'));
   const res = await app.request('/api/v1/auth/sign-in/email', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email: 'r04-admin@twinmos.dev', password: 'R04-Admin-Password-2026!' }),
   });
+  await db.update(user).set({ twoFactorEnabled: true }).where(eq(user.email, 'r04-admin@twinmos.dev'));
   cookie = res.headers.getSetCookie().map((c: string) => c.split(';')[0]).join('; ');
 
   const [b] = await db.insert(brand).values({ slug: 'twinmos-brand', name: 'TwinMOS' }).returning();
