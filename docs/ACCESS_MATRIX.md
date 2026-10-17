@@ -46,7 +46,8 @@
 2. **Require Status Checks to Pass Before Merging**:
    - Status checks must be green prior to merge:
      - `build-and-verify` (CI Production Parity Pipeline: TypeScript compilation, lint, Vitest unit test suites, Astro SSR build, and gate checks).
-     - `test-postgres-integration` (PostgreSQL 18 A10 migration runner, schema verification, and API service health).
+     - `test-postgres-integration` (PostgreSQL 18 A10 migration runner, schema verification, API service health, and API test suites).
+     - `test-edge-config` (Edge Nginx Configuration Verification: Docker build, containerized `nginx -t`, and `edge-ip-proof.mjs`).
    - Require branches to be up to date before merging (`Strict` branch ordering).
 3. **Commit History & Integrity**:
    - Require linear history (Merge commits disabled; Squash or Rebase merge only).

@@ -132,6 +132,9 @@ jobs:
               });
           "
 
+      - name: Run API Integration Tests against Postgres 18
+        run: npm run test --workspace @twinmos/api
+
   test-edge-config:
     name: Edge Nginx Configuration Verification (EDGE-START, EDGE-01)
     runs-on: ubuntu-latest
