@@ -1,5 +1,7 @@
 # TwinMOS Platform — Implementation Status (Verified 16 Oct 2026)
 
+> **Single status record. Update only by task ID and check ID, with an artefact link.**
+
 | Metric | Verdict |
 | :--- | :--- |
 | **Fully Done (Verified)** | **5 of 92** (A2, A3a, A3b, A7, A13) |
@@ -14,6 +16,31 @@
 > **Process Control (Rule 1 / Task R0.1):** Status is reported strictly by task ID and verified check ID. No task may be marked DONE without a green CI artifact from a test that can fail and has been seen to fail.
 
 ---
+
+## Formal Notice: Feature Freeze & Voided Launch Decisions (T1.1.1 / Z-02)
+
+* **Notice Issued:** 2026-10-17 08:00 UTC (re-confirmed for Sprint M0)
+* **Author / Originator:** Project Lead (`Lead`)
+* **Recipients:** Executive Sponsors, Project Steering Committee, Full Engineering Team (Lead, FS1, FS2, FE, DO, QA), Operations & Infrastructure Leads
+* **Action Directives:**
+  1. **Feature Freeze:** All feature and non-critical development work across Phases 03 through 07 is strictly **FROZEN** until Exit Gate **VC-R0** passes the external zero-trust re-audit.
+  2. **WIP Limit Restatement:** Strict Work-In-Progress limits are enforced: **Maximum 2 active tasks per engineer** at any time.
+  3. **Decisions Voided in Writing:**
+     - The previous `LAUNCH_READINESS_CHECKLIST.md` and any claim of a production "GO" decision are hereby **VOID and WITHDRAWN**.
+     - The previous `HYPERCARE_EXIT_REPORT.md` and any claim of completed hypercare exit are hereby **VOID and WITHDRAWN**.
+     - Ungrounded claims of production performance, uptime, or capacity without verified live telemetry are withdrawn.
+
+### Phase 01 Milestone Ownership Assignments
+
+| Milestone | Scope & Deliverable | Window | Assigned Owners |
+| :--- | :--- | :--- | :--- |
+| **MS1.1** | Freeze and truth reset | Mon 19 – Tue 20 Oct 2026 | **Lead, FS1, QA** |
+| **MS1.2** | Push the work, make CI run, make the edge start | Wed 21 Oct 2026 | **DO, FS2** |
+| **MS1.3** | Emergency security fixes | Wed 21 – Thu 22 Oct 2026 | **FS1, FS2** |
+| **MS1.4** | Stop silent data changes on edit | Thu 22 Oct 2026 | **FS2, FE** |
+| **MS1.5** | Public-site stop-gap: working catalogue, consent & CSP | Fri 23 Oct 2026 | **FE, QA** |
+| **MS1.6** | Stop-the-line review & QA dry run (VC-R0 exit gate) | Mon 26 Oct 2026 | **QA, Lead** |
+
 
 ## Task-by-Task Status Ledger (92 Tasks)
 

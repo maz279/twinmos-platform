@@ -4,7 +4,7 @@
 
 TwinMOS employs a zero-downtime, layered rollback architecture:
 1. **Frontend Assets (`apps/web` & `apps/admin`)**: Retain the last 3 release builds in `/var/www/twinmos/releases/`. Atomic switchover via filesystem symlink.
-2. **API Backend (`apps/api`)**: Revert application code to previous release tag, install dependencies, and issue atomic graceful reload via systemd/PM2.
+2. **API Backend (`apps/api`)**: Revert application code to previous release tag, install dependencies, and issue atomic graceful reload via systemd (`systemctl restart twinmos-api`).
 3. **Database Migrations (`packages/db`)**: All migrations follow the **Expand / Contract pattern**. Schema additions must remain backwards-compatible with n-1 application code. If catastrophic corruption occurs, execute PITR restore via `deploy/restore.sh`.
 
 ---
