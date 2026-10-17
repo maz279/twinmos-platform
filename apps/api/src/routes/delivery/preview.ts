@@ -2,6 +2,12 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { previewTokenPayloadSchema, type PreviewTokenPayload, type DeliveryEntity } from '@twinmos/shared';
 
 function getSecret(): string {
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.PREVIEW_SIGNING_KEY || process.env.PREVIEW_SIGNING_KEY === 'dev-insecure-secret-twinmos-platform' || process.env.PREVIEW_SIGNING_KEY.length < 32) {
+      throw new Error('PREVIEW_SIGNING_KEY must be configured in production (>= 32 chars)');
+    }
+    return process.env.PREVIEW_SIGNING_KEY;
+  }
   return process.env.PREVIEW_SIGNING_KEY || process.env.BETTER_AUTH_SECRET || 'dev-insecure-secret-twinmos-platform';
 }
 

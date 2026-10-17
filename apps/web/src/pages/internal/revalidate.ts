@@ -5,8 +5,8 @@ import { invalidateRedirectsCache } from '../../lib/redirects.ts';
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
-  const expectedSecret = process.env.REVALIDATE_SECRET || process.env.REVALIDATION_SECRET || 'dev-revalidate-secret';
-  const headerSecret = request.headers.get('x-revalidate-secret') || request.headers.get('x-revalidation-secret');
+  const expectedSecret = process.env.REVALIDATE_SECRET || 'dev-revalidate-secret';
+  const headerSecret = request.headers.get('x-revalidate-secret');
 
   let body: any = {};
   try {

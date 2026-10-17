@@ -20,7 +20,7 @@ services:
     environment:
       - NODE_ENV=production
       - DELIVERY_API_URL=http://api:8787/api/v1/delivery
-      - REVALIDATION_SECRET=${REVALIDATION_SECRET:-prod-revalidation-secret-key-32ch}
+      - REVALIDATE_SECRET=${REVALIDATE_SECRET:-prod-revalidation-secret-key-32ch}
     depends_on:
       - api
     networks:
@@ -39,7 +39,7 @@ services:
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=https://www.twinmos.com
       - PREVIEW_SIGNING_KEY=${PREVIEW_SIGNING_KEY:-preview-hmac-sha256-signing-key-32chars}
-      - REVALIDATION_SECRET=${REVALIDATION_SECRET:-prod-revalidation-secret-key-32ch}
+      - REVALIDATE_SECRET=${REVALIDATE_SECRET:-prod-revalidation-secret-key-32ch}
     depends_on:
       postgres:
         condition: service_healthy

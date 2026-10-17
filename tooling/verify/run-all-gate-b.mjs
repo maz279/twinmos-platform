@@ -40,7 +40,7 @@ const checks = [
   {
     id: 'VC-B-07',
     name: 'REVAL-01: Dynamic On-Demand Revalidation Secret Verification',
-    cmd: 'node -e "const fs = require(\'fs\'); const code = fs.readFileSync(\'apps/web/src/pages/internal/revalidate.ts\', \'utf8\'); if (!code.includes(\'REVALIDATION_SECRET\') || !code.includes(\'403\')) process.exit(1);"',
+    cmd: 'node -e "const fs = require(\'fs\'); const code = fs.readFileSync(\'apps/web/src/pages/internal/revalidate.ts\', \'utf8\'); if (!code.includes(\'REVALIDATE_SECRET\') || !code.includes(\'403\')) process.exit(1);"',
   },
   {
     id: 'VC-B-08',

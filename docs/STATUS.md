@@ -30,16 +30,26 @@
      - The previous `HYPERCARE_EXIT_REPORT.md` and any claim of completed hypercare exit are hereby **VOID and WITHDRAWN**.
      - Ungrounded claims of production performance, uptime, or capacity without verified live telemetry are withdrawn.
 
-### Phase 01 Milestone Ownership Assignments
+### Phase 01 Milestone Ownership Assignments & Verified Progress
 
-| Milestone | Scope & Deliverable | Window | Assigned Owners |
-| :--- | :--- | :--- | :--- |
-| **MS1.1** | Freeze and truth reset | Mon 19 – Tue 20 Oct 2026 | **Lead, FS1, QA** |
-| **MS1.2** | Push the work, make CI run, make the edge start | Wed 21 Oct 2026 | **DO, FS2** |
-| **MS1.3** | Emergency security fixes | Wed 21 – Thu 22 Oct 2026 | **FS1, FS2** |
-| **MS1.4** | Stop silent data changes on edit | Thu 22 Oct 2026 | **FS2, FE** |
-| **MS1.5** | Public-site stop-gap: working catalogue, consent & CSP | Fri 23 Oct 2026 | **FE, QA** |
-| **MS1.6** | Stop-the-line review & QA dry run (VC-R0 exit gate) | Mon 26 Oct 2026 | **QA, Lead** |
+| Milestone | Scope & Deliverable | Window | Assigned Owners | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **MS1.1** | Freeze and truth reset | Mon 19 – Tue 20 Oct 2026 | **Lead, FS1, QA** | **DONE** (16/16 checks, `verify-ms11-audit.mjs`) |
+| **MS1.2** | Push the work, make CI run, make the edge start | Wed 21 Oct 2026 | **DO, FS2** | **DONE** (20/20 checks, `verify-ms12-audit.mjs`) |
+| **MS1.3** | Emergency security fixes | Wed 21 – Thu 22 Oct 2026 | **FS1, FS2** | **DONE** (44/44 checks, `verify-ms13-audit.mjs`, probes P6/P6b/P7/P8/P8b/X4/X5) |
+| **MS1.4** | Stop silent data changes on edit | Thu 22 Oct 2026 | **FS2, FE** | Next |
+| **MS1.5** | Public-site stop-gap: working catalogue, consent & CSP | Fri 23 Oct 2026 | **FE, QA** | Scheduled |
+| **MS1.6** | Stop-the-line review & QA dry run (VC-R0 exit gate) | Mon 26 Oct 2026 | **QA, Lead** | Scheduled |
+
+### Verified Milestone Deliverable: MS1.3 Emergency Security Fixes (T1.3.1 – T1.3.8)
+- **T1.3.1 (`SEC-PREVIEW`)**: Token minting locked down to staff sessions (`author`+). Capped at 3,600s TTL. Cryptographically bound to `entityType`, `entityId`, `slug`, and `locale`. Boot guard mandates `PREVIEW_SIGNING_KEY` >= 32 chars in production. Probes P6 and P6b pass cleanly.
+- **T1.3.2 (`REVALIDATE_SECRET`)**: Canonical name `REVALIDATE_SECRET` enforced across API, web, Compose (`docker-compose.yml`), and runbooks with zero remaining `REVALIDATION_SECRET` occurrences. Compares safely with `timingSafeEqual`.
+- **T1.3.3 (`DLV-LEAK`)**: `/api/v1/delivery/faqs` filters `status='published'` (Probe X4). `/api/v1/delivery/settings` enforces `PUBLIC_SETTING_KEYS` allowlist (Probe X5). `/forms/:type` strips internal `routingEmail`. All delivery and sitemap queries filter `deleted_at IS NULL`.
+- **T1.3.4 (`RESET-LOG`)**: `apps/api/src/auth.ts` lines 43-56 returns 503 without logging URLs or tokens to console.
+- **T1.3.5 (`LOCK-CT`)**: Form-encoded and multipart sign-in on `/api/v1/auth/*` rejected with HTTP 415. Account lockout returns generic 401 with `Retry-After` header.
+- **T1.3.6 (Deep Health / `P7`)**: `/api/v1/health/deep` requires `viewer`+ or internal secret with `timingSafeEqual`. Outbox queue depth parses `{rows}` correctly. Health degradation decoupled from alert firing count. Probe P7 passes.
+- **T1.3.7 (Newsletter / `FORMS-01` / `P8`, `P8b`)**: Double opt-in requires Turnstile captcha in production. Lowercases subscriber emails. JSON response never leaks `token` or `confirmUrl` (defeats self-confirmation). Unsubscribe strictly requires signed `token` (bare email returns 400). `List-Unsubscribe` headers attached.
+- **T1.3.8 (Production Probes)**: Probes P6, P6b, P7, P8, P8b, X4, X5 all pass against live API daemon in `tooling/verify/verify-ms13-audit.mjs`.
 
 
 ## Task-by-Task Status Ledger (92 Tasks)

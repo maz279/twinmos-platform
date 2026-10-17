@@ -47,7 +47,7 @@ All alerts emit structured JSON logs to `stderr` and are buffered in-memory for 
 ### `outbox.revalidation_failed`
 - **Severity**: Medium
 - **Description**: Triggered when asynchronous ISR outbox messages accumulate without being processed.
-- **Triage Action**: Check cron worker status for `/api/v1/admin/cron/dispatch-outbox`. Ensure `REVALIDATION_SECRET` is matching between API and Astro SSR.
+- **Triage Action**: Check cron worker status for `/api/v1/admin/cron/dispatch-outbox`. Ensure `REVALIDATE_SECRET` is matching between API and Astro SSR.
 
 ### `backup.stale_threshold_exceeded`
 - **Severity**: Critical

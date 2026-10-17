@@ -5,7 +5,7 @@
 // =============================================================================
 
 // Secret Rotation Automation & Validation Drill (HARD-01 / Task F3)
-// Implements zero-downtime dual-key rotation for BETTER_AUTH_SECRET and REVALIDATION_SECRET.
+// Implements zero-downtime dual-key rotation for BETTER_AUTH_SECRET and REVALIDATE_SECRET.
 import crypto from 'node:crypto';
 
 export function signWithSecret(payload, secret) {

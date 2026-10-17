@@ -2,6 +2,7 @@
 // Kept separate from index.ts (the server entry) so tests can boot the whole
 // API in-process with an isolated PGlite instance via app.request().
 import { Hono } from 'hono';
+import { timingSafeEqual } from 'node:crypto';
 import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
 import { bodyLimit } from 'hono/body-limit';
@@ -233,10 +234,18 @@ export function buildApp(db: DB) {
   app.get('/api/v1/health/deep', async (c) => {
     // Security (Roadmap R0.3 / Z-29 / P7): require viewer+ session or internal secret, else 401
     const internalSecret = c.req.header('x-internal-secret');
-    const isInternal = Boolean(
-      (internalSecret && process.env.REVALIDATE_SECRET && internalSecret === process.env.REVALIDATE_SECRET) ||
-      (internalSecret && internalSecret === 'internal-dev-check')
-    );
+    let isInternal = false;
+    if (internalSecret) {
+      if (internalSecret === 'internal-dev-check') {
+        isInternal = true;
+      } else if (process.env.REVALIDATE_SECRET) {
+        const provBuf = Buffer.from(internalSecret, 'utf8');
+        const expBuf = Buffer.from(process.env.REVALIDATE_SECRET, 'utf8');
+        if (provBuf.length === expBuf.length && timingSafeEqual(provBuf, expBuf)) {
+          isInternal = true;
+        }
+      }
+    }
 
     if (!isInternal) {
       const sess = await sessionFromRequest(c.req.raw);

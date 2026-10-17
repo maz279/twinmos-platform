@@ -7,7 +7,7 @@ All production secrets reside in `/etc/twinmos/api.env` (permissions `0600`, own
 | Secret Name | Purpose | Minimum Entropy | Rotation Frequency | Rotation Strategy |
 | :--- | :--- | :--- | :--- | :--- |
 | `BETTER_AUTH_SECRET` | Signs user session tokens & cookies | 256 bits (32 bytes hex) | 90 days | Dual-key zero downtime |
-| `REVALIDATION_SECRET` | Authenticates ISR outbox revalidations | 256 bits (32 bytes hex) | 90 days | Dual-secret transition |
+| `REVALIDATE_SECRET` | Authenticates ISR outbox revalidations | 256 bits (32 bytes hex) | 90 days | Dual-secret transition |
 | `DATABASE_URL` | PostgreSQL credentials | 128 bits alphanumeric | 180 days | Single-step with connection drain |
 | `RESEND_API_KEY` | Transactional email provider token | Provider-managed | On compromise | Overlapping API key creation |
 | `TURNSTILE_SECRET_KEY` | Cloudflare bot protection validation | Provider-managed | On compromise | Cloudflare dashboard pair swap |
