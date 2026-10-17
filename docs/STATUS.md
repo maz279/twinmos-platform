@@ -54,9 +54,21 @@
 | **MS2.1** | Programme controls and ownership (`PROC-01`–`PROC-05`) | Tue 27 Oct 2026 | **Lead, FS1, QA** | **DONE** (28/28 checks, `verify-ms21-audit.mjs`, `PROC-01`–`PROC-05` satisfied) |
 | **MS2.2** | The real verification kit, running nightly (`T2.2.1`–`T2.2.9`) | Wed 28 Oct 2026 | **QA, DO** | **DONE** (21/21 checks, `verify-ms22-audit.mjs`, `KIT-01`, `BUILD-01`, `WALK-PUB`, `EVID-01`, `MUT-01`) |
 | **MS2.3** | Database, data hygiene and interim fixes (`T2.3.1`–`T2.3.7`) | Thu 29 Oct 2026 | **FS2, FE** | **DONE** (14/14 checks, `verify-ms23-audit.mjs`, `PG-01`–`PG-07`, `DATA-01/02`, `SEED-01/02`, `RET-01`, `BUILD-02`, `AXE-01/02`, `MUT-01`) |
-| **MS2.4** | Staff sign-in and account security (`T2.4.1`–`T2.4.8`) | Fri 30 Oct – Fri 13 Nov 2026 | **FS1, FE** | PENDING |
+| **MS2.4** | Staff sign-in and account security (`T2.4.1`–`T2.4.9`) | Fri 30 Oct – Fri 13 Nov 2026 | **FS1, FE** | **DONE** (10/10 checks, `verify-ms24-audit.mjs`, `S-01`–`S-08`, `S-13`, `A-INVITE`, `AUTH-BOOT`, `LOCK-CT`, `RESET-LOG`, `AUTH-UI`, `AXE-ADM`) |
 | **MS2.5** | Edge, containers and production boot | Mon 16 Nov – Wed 18 Nov 2026 | **DO, FS2** | PENDING |
 | **MS2.6** | Phase 02 QA dry run (VC-R1 exit gate) | Thu 19 Nov 2026 | **QA, Lead** | PENDING |
+
+### Verified Milestone Deliverable: MS2.4 Staff Sign-In & Account Security (T2.4.1 – T2.4.9)
+- **T2.4.1 (`S-05`, `Z-03`)**: Email verification wired to transactional mailer (`sendVerificationEmail` using `sendMail`). In production mode, `requireEmailVerification` is active; unverified sign-in attempts return HTTP 403 with `code: 'EMAIL_NOT_VERIFIED'`.
+- **T2.4.2 (`A-INVITE`, `S-01`, `S-02`)**: Self-registration disabled. Staff (`users.invite`) and partner invitations (`partnerMember.add`) create users with `emailVerified: false` and dispatch email verification links. First-time sign-in (`accept-password`) requires an actual password change (`updatedAt > createdAt`) before clearing `mustChangePassword`.
+- **T2.4.3**: Database audit for unauthorized self-registered accounts completed and documented at `docs/reports/SELF_REGISTERED_ACCOUNTS_AUDIT.md`. Confirmed 0 rogue accounts; established IAM review runbook.
+- **T2.4.4 (`S-04`, `RESET-LOG`)**: Real password reset through mailer (`sendResetPassword`), replacing previous 503 stopgap. `revokeSessionsOnPasswordReset: true` terminates all active sessions on password change. Token TTL capped at 3,600s. Zero reset tokens or URLs logged to console (`RESET-LOG`).
+- **T2.4.5 (`S-06`, `LOCK-CT`)**: Durable database-backed account lockout implemented via migration `0023_durable_lockout.sql` (`failed_login_count`, `locked_until` on `user` table). Survives API process restarts. Enforces failure counting across case-variants and body encodings. Returns generic 401 with `Retry-After` header. Emits `alertManager.recordLockout` security alert.
+- **T2.4.6 (`S-07`, `S-09`)**: Mandatory MFA enforced for `editor`, `admin`, and `super_admin` on all `/admin` routes (including `GET` queries, returning HTTP 403 `MFA_REQUIRED`), with strict allowlisting only for password rotation endpoints.
+- **T2.4.7 (`S-08`, `S-13`)**: Production boot guard refuses missing `INTERNAL_WEB_URL` and refuses `ENFORCE_MFA === '0'`. Session cookies strictly configured with `__Secure-`, `Secure`, `HttpOnly`, and `SameSite: Lax`.
+- **T2.4.8 (`AUTH-BOOT`)**: Integration testing of production sign-in on PostgreSQL 18 verified in `security-pack.e2e.test.ts` (18/18 tests pass).
+- **T2.4.9 (`AUTH-UI`, `AXE-ADM`)**: Truthful account security UI in admin SPA. Removed deceptive copy in `forgot-password.tsx` and `reset-password.tsx`. Removed "Not now" bypass in `mfa.tsx` for required roles (`super_admin`, `admin`, `editor`). Added accessible `verify-email.tsx` landing view. Build succeeds cleanly with 0 axe violations.
+- **Dedicated Audit Runner**: `tooling/verify/verify-ms24-audit.mjs` passing **10 / 10 checks (100% CLEAN PASS / GO)**. Negative mutation test `verify-ms24-audit.mjs --test-planted` passing (`MUT-01`). Full regression suite passes 100%.
 
 ### Verified Milestone Deliverable: MS2.3 Database, Data Hygiene & Interim Fixes (T2.3.1 – T2.3.7)
 - **T2.3.1 (`PG-05`, `Z-40`)**: Monotonic migration journal guard verified (`when` strictly increasing across all 23 entries), 1:1 SQL file parity, valid SHA-256 hashes, unknown migration rejection, and PostgreSQL advisory lock (`pg_advisory_lock(hashtext('twinmos_db_migration'))`) in `apps/api/scripts/migrate.ts`.

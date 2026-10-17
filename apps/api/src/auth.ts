@@ -9,6 +9,7 @@ import * as schema from '@twinmos/db';
 import { eq } from 'drizzle-orm';
 import type { DB } from '@twinmos/db';
 import type { Role } from '@twinmos/shared';
+import { sendMail } from './mailer.ts';
 
 export function initAuth(db: DB) {
   const ac = createAccessControl(defaultStatements);
@@ -35,24 +36,58 @@ export function initAuth(db: DB) {
     trustedOrigins: (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? '')
       .split(',').map((s) => s.trim()).filter(Boolean),
     database: drizzleAdapter(db, { provider: 'pg', schema }),
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url, token }: any) => {
+        // Security (Roadmap R0.3 / Z-09 / RESET-LOG): never log verification URLs or tokens to console.
+        await sendMail({
+          to: user.email,
+          subject: 'TwinMOS Admin Portal — Verify your email',
+          text: [
+            `Hello ${user.name || user.email},`,
+            '',
+            'Please verify your email address to activate your TwinMOS account by visiting the link below:',
+            url,
+            '',
+            'This verification link is single-use and will expire in 1 hour.',
+            '',
+            'Regards,',
+            'TwinMOS Security Team',
+          ].join('\n'),
+          meta: { kind: 'email-verification', email: user.email },
+        });
+      },
+      sendOnSignUp: true,
+      autoSignInAfterVerification: false,
+    },
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 10,
       disableSignUp,
       requireEmailVerification: process.env.NODE_ENV === 'production' || process.env.REQUIRE_EMAIL_VERIFICATION === '1',
-      sendResetPassword: async ({ user }: any) => {
+      revokeSessionsOnPasswordReset: true,
+      resetPasswordTokenExpiresIn: 60 * 60, // 1 hour expiration
+      sendResetPassword: async ({ user, url, token }: any) => {
         // Security (Roadmap R0.3 / Z-09 / RESET-LOG): never log reset URLs or tokens to console.
-        const err: any = new Error('Password reset mailer is not configured');
-        err.status = 503;
-        err.statusCode = 503;
-        throw err;
-      },
-      sendVerificationEmail: async ({ user }: any) => {
-        // Security (Roadmap R0.3 / Z-09 / RESET-LOG): never log verification URLs or tokens to console.
-        const err: any = new Error('Verification email mailer is not configured');
-        err.status = 503;
-        err.statusCode = 503;
-        throw err;
+        await sendMail({
+          to: user.email,
+          subject: 'TwinMOS Admin Portal — Password Reset Request',
+          text: [
+            `Hello ${user.name || user.email},`,
+            '',
+            'A password reset was requested for your TwinMOS administration account.',
+            'You can reset your password by opening the link below:',
+            url,
+            '',
+            'This link is single-use and will expire in 1 hour.',
+            'All active sessions will be revoked upon successful password reset.',
+            '',
+            'If you did not make this request, you can safely ignore this email.',
+            '',
+            'Regards,',
+            'TwinMOS Security Team',
+          ].join('\n'),
+          meta: { kind: 'password-reset', email: user.email },
+        });
       },
     },
     disabledPaths: [

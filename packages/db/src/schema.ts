@@ -26,6 +26,8 @@ export const user = pgTable('user', {
   banned: boolean('banned').default(false),
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires', { withTimezone: true }),
+  failedLoginCount: integer('failed_login_count').notNull().default(0),
+  lockedUntil: timestamp('locked_until', { withTimezone: true }),
   createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

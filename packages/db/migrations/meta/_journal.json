@@ -162,6 +162,13 @@
       "when": 1791456000000,
       "tag": "0022_phase_d_search_and_subscribers",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791456100000,
+      "tag": "0023_durable_lockout",
+      "breakpoints": true
     }
   ]
 }

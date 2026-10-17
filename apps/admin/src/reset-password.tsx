@@ -77,28 +77,32 @@ export default function ResetPassword({
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#E6F8F4', color: CYAN, fontSize: 24, display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>✓</div>
           <p style={{ color: NAVY, fontWeight: 700, margin: '0 0 8px' }}>Password Updated</p>
           <p style={{ color: '#66748A', fontSize: 13, lineHeight: 1.5, margin: '0 0 24px' }}>
-            Your account password has been updated. All previous sessions have been revoked.
+            Your account password has been updated successfully. Active sessions have been revoked for your security.
           </p>
           <button type="button" onClick={onDone} style={{ ...btnMain, background: NAVY }}>Sign In Now</button>
         </div>
       ) : (
         <form onSubmit={submit}>
-          <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>New password</label>
+          <label htmlFor="reset-new-password" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>New password</label>
           <input
+            id="reset-new-password"
             className="tm-in"
             type="password"
             required
             autoFocus
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Minimum 10 characters"
             style={cardIn}
           />
-          <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Confirm password</label>
+          <label htmlFor="reset-confirm-password" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Confirm password</label>
           <input
+            id="reset-confirm-password"
             className="tm-in"
             type="password"
             required
+            autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             placeholder="Repeat new password"

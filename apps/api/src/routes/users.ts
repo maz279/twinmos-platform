@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import { and, count, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { problem, ROLES } from '@twinmos/shared';
-import { auditLog, session, user } from '@twinmos/db';
+import { account, auditLog, session, user } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 import type { Role } from '@twinmos/shared';
@@ -91,9 +91,32 @@ export function usersRoute(db: DB, deps: {
   r.post('/users/me/accept-password', async (c) => {
     const s = await sessionGuard(c);
     if (s instanceof Response) return s;
+    const [usr] = await db.select({
+      mustChangePassword: user.mustChangePassword,
+    }).from(user).where(eq(user.id, s.user.id)).limit(1);
+
+    // If rotation was required, verify that the account was updated after creation
+    const [acc] = await db.select({
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+    }).from(account).where(eq(account.userId, s.user.id)).limit(1);
+
+    if (usr?.mustChangePassword && acc && acc.updatedAt.getTime() <= acc.createdAt.getTime()) {
+      return c.json(
+        problem(400, 'Password change required', 'You must change your password using the password rotation flow before accepting.'),
+        400,
+        { 'Content-Type': P }
+      );
+    }
+
     // Clear only after Better Auth's change-password succeeded — the SPA calls
     // this right after POST /auth/change-password with the temporary credential.
-    await db.update(user).set({ mustChangePassword: false, updatedAt: new Date() }).where(eq(user.id, s.user.id));
+    await db.update(user).set({
+      mustChangePassword: false,
+      failedLoginCount: 0,
+      lockedUntil: null,
+      updatedAt: new Date(),
+    }).where(eq(user.id, s.user.id));
     await auditRow(c, s.user.id, 'user.password-rotated', s.user.id, { invitedRotation: true });
     return c.json({ ok: true });
   });
@@ -244,7 +267,13 @@ export function usersRoute(db: DB, deps: {
         },
       });
       const createdUser = res.user ?? res;
-      await db.update(user).set({ role: parsed.data.role, ...(generated ? { mustChangePassword: true } : {}) }).where(eq(user.id, createdUser.id));
+      await db.update(user).set({
+        role: parsed.data.role,
+        emailVerified: false,
+        failedLoginCount: 0,
+        lockedUntil: null,
+        ...(generated ? { mustChangePassword: true } : {}),
+      }).where(eq(user.id, createdUser.id));
       await auditRow(c, s.user.id, 'user.invite', createdUser.id, { email: parsed.data.email, role: parsed.data.role, name: parsed.data.name, generatedCredential: generated });
 
       // Dispatch staff invitation email containing login instructions and temporary credentials
@@ -255,8 +284,15 @@ export function usersRoute(db: DB, deps: {
         parsed.data.password ? undefined : tempPassword,
       );
 
+      // Dispatch email verification token so staff member receives verification in mailer/outbox
+      try {
+        if (deps.auth?.api?.sendVerificationEmail) {
+          await deps.auth.api.sendVerificationEmail({ body: { email: parsed.data.email } });
+        }
+      } catch { /* non-fatal verification email */ }
+
       return c.json({
-        user: { ...createdUser, role: parsed.data.role },
+        user: { ...createdUser, role: parsed.data.role, emailVerified: false },
         temporaryPassword: parsed.data.password ? undefined : tempPassword,
         emailSent,
       }, 201);

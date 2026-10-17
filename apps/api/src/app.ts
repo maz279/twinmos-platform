@@ -294,10 +294,11 @@ export function buildApp(db: DB) {
     }, isDegraded ? 503 : 200);
   });
 
-  // Per-account login lockout guard (S-07 / A4a / R0.3 / LOCK-CT):
-  // Tracks consecutive failed login attempts by email address. After 5 failures within 15 minutes,
-  // locks the account for 15 minutes, neutralizing rotating-IP brute force attacks.
-  const LOGIN_FAILURES = new Map<string, { count: number; lockedUntil: number }>();
+  // Per-account login lockout guard (T2.4.5 / S-06 / LOCK-CT / A4a):
+  // Tracks consecutive failed login attempts by email address in PostgreSQL (`failed_login_count`,
+  // `locked_until` on `user` table), surviving API process restarts. Non-existent accounts fall back
+  // to in-memory tracking to throttle enumeration without DB write amplification.
+  const MEMORY_LOGIN_FAILURES = new Map<string, { count: number; lockedUntil: number }>();
 
   // Reject non-JSON content types on /api/v1/auth/* POST routes (415) to eliminate lockout bypass
   app.post('/api/v1/auth/*', async (c, next) => {
@@ -321,10 +322,27 @@ export function buildApp(db: DB) {
     } catch { /* proceed */ }
 
     const now = Date.now();
+    let dbUser: { id: string; emailVerified: boolean; failedLoginCount: number; lockedUntil: Date | null } | undefined;
     if (email) {
-      const rec = LOGIN_FAILURES.get(email);
-      if (rec && rec.lockedUntil > now) {
-        const waitSec = Math.ceil((rec.lockedUntil - now) / 1000);
+      try {
+        const rows = await db.select({
+          id: user.id,
+          emailVerified: user.emailVerified,
+          failedLoginCount: user.failedLoginCount,
+          lockedUntil: user.lockedUntil,
+        }).from(user).where(eq(sql`lower(${user.email})`, email)).limit(1);
+        dbUser = rows[0];
+      } catch (err) {
+        console.warn('[auth.lockout] DB lookup error:', err);
+      }
+
+      const isDbLocked = dbUser?.lockedUntil && dbUser.lockedUntil.getTime() > now;
+      const memRec = MEMORY_LOGIN_FAILURES.get(email);
+      const isMemLocked = memRec && memRec.lockedUntil > now;
+
+      if (isDbLocked || isMemLocked) {
+        const lockExpiry = isDbLocked ? dbUser!.lockedUntil!.getTime() : memRec!.lockedUntil;
+        const waitSec = Math.max(1, Math.ceil((lockExpiry - now) / 1000));
         c.header('Retry-After', String(waitSec));
         return c.json(
           problem(401, 'Account Locked', 'Account is temporarily locked due to too many failed attempts. Try again later.'),
@@ -337,16 +355,58 @@ export function buildApp(db: DB) {
     const res = await auth.handler(c.req.raw);
     if (email) {
       if (res.status === 200) {
-        LOGIN_FAILURES.delete(email);
-      } else if (res.status === 401) {
-        const rec = LOGIN_FAILURES.get(email) ?? { count: 0, lockedUntil: 0 };
-        rec.count += 1;
-        if (rec.count >= 5) {
-          rec.lockedUntil = now + 15 * 60_000;
-          console.warn(`[auth] Account locked for ${email} after 5 failed attempts`);
-          alertManager.recordLockout(email, clientIp(c), rec.count);
+        // Successful sign-in: reset failure count and lockout in DB and memory
+        if (dbUser && (dbUser.failedLoginCount > 0 || dbUser.lockedUntil !== null)) {
+          try {
+            await db.update(user).set({
+              failedLoginCount: 0,
+              lockedUntil: null,
+              updatedAt: new Date(),
+            }).where(eq(user.id, dbUser.id));
+          } catch { /* non-fatal */ }
         }
-        LOGIN_FAILURES.set(email, rec);
+        MEMORY_LOGIN_FAILURES.delete(email);
+
+        // Security (Roadmap MS2.4 / T2.4.1 / S-05): unverified sign-in rejection
+        const requireEmailVerification = process.env.NODE_ENV === 'production' || process.env.REQUIRE_EMAIL_VERIFICATION === '1';
+        if (requireEmailVerification && dbUser && !dbUser.emailVerified) {
+          return c.json(
+            {
+              ...problem(403, 'Email Not Verified', 'Your email address has not been verified. Please check your inbox for the verification link.'),
+              code: 'EMAIL_NOT_VERIFIED',
+            },
+            403,
+            { 'Content-Type': 'application/problem+json' }
+          );
+        }
+      } else if (res.status === 401) {
+        if (dbUser) {
+          const newCount = (dbUser.failedLoginCount ?? 0) + 1;
+          let newLockedUntil: Date | null = null;
+          if (newCount >= 5) {
+            newLockedUntil = new Date(now + 15 * 60_000);
+            console.warn(`[auth] Account locked for ${email} after ${newCount} failed attempts (persisted to DB)`);
+            alertManager.recordLockout(email, clientIp(c), newCount);
+          }
+          try {
+            await db.update(user).set({
+              failedLoginCount: newCount,
+              lockedUntil: newLockedUntil,
+              updatedAt: new Date(),
+            }).where(eq(user.id, dbUser.id));
+          } catch (err) {
+            console.warn('[auth.lockout] DB update error:', err);
+          }
+        } else {
+          const mem = MEMORY_LOGIN_FAILURES.get(email) ?? { count: 0, lockedUntil: 0 };
+          mem.count += 1;
+          if (mem.count >= 5) {
+            mem.lockedUntil = now + 15 * 60_000;
+            console.warn(`[auth] Non-existent account locked for ${email} after 5 failed attempts`);
+            alertManager.recordLockout(email, clientIp(c), mem.count);
+          }
+          MEMORY_LOGIN_FAILURES.set(email, mem);
+        }
       }
     }
     return res;
@@ -430,12 +490,13 @@ export function buildApp(db: DB) {
         { 'Content-Type': 'application/problem+json' },
       );
     }
-    // S-09 / A4a: MFA enforcement when ENFORCE_MFA=1 on non-GET administrative actions
-    if (process.env.ENFORCE_MFA === '1' && c.req.method !== 'GET') {
+    // S-07 / T2.4.6 / A4a: MFA enforcement on all /admin routes (including GET) for editor and above
+    const enforceMfa = process.env.NODE_ENV === 'production' || process.env.ENFORCE_MFA === '1';
+    if (enforceMfa) {
       if (!row?.mfa && ['super_admin', 'admin', 'editor'].includes(s.user.role)) {
         return c.json(
           {
-            ...problem(403, 'MFA Enrollment Required', 'Two-factor authentication must be enrolled before performing administrative mutations.'),
+            ...problem(403, 'MFA Enrollment Required', 'Two-factor authentication must be enrolled before accessing the administrative console.'),
             code: 'MFA_REQUIRED',
           },
           403,

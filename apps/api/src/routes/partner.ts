@@ -277,7 +277,7 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
           });
           const createdUser = res.user ?? res;
           userId = createdUser.id;
-          await db.update(user).set({ mustChangePassword: true, emailVerified: true }).where(eq(user.id, userId));
+          await db.update(user).set({ mustChangePassword: true, emailVerified: false }).where(eq(user.id, userId));
           autoProvisioned = true;
         } catch {
           // fallback to direct insertion
@@ -290,7 +290,7 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
           email: normalizedEmail,
           name: normalizedEmail.split('@')[0],
           role: 'member',
-          emailVerified: true,
+          emailVerified: false,
           mustChangePassword: true,
         }).returning({ id: user.id });
         userId = newUser.id;
@@ -301,7 +301,8 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
         await sendMail({
           to: normalizedEmail,
           subject: 'TwinMOS Partner Portal Invitation',
-          text: `You have been added to the TwinMOS Partner Portal. Your temporary password is: ${tempPassword}\nPlease sign in and set your new password immediately.`,
+          text: `You have been added to the TwinMOS Partner Portal. Your temporary password is: ${tempPassword}\nPlease verify your email and set your new password immediately.`,
+          meta: { kind: 'partner-invite', email: normalizedEmail },
         });
       } catch (err) {
         console.warn('[partner] invitation mail failed:', err);

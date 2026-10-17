@@ -69,6 +69,16 @@ export function bootConfigErrors(env: Record<string, string | undefined> = proce
     errs.push('REVALIDATE_SECRET is required in production, must not be default, and must be at least 32 characters');
   }
 
+  // Internal Web URL for edge delivery and cache invalidation (Roadmap MS2.4 / T2.4.7 / S-08)
+  if (!env.INTERNAL_WEB_URL) {
+    errs.push('INTERNAL_WEB_URL is required in production');
+  }
+
+  // Staff MFA must never be disabled in production (Roadmap MS2.4 / T2.4.7 / S-08, S-13)
+  if (env.ENFORCE_MFA === '0') {
+    errs.push('ENFORCE_MFA must not be disabled (0) in production');
+  }
+
   return errs;
 }
 

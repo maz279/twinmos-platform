@@ -11,6 +11,7 @@ import type { Me } from './login';
 import ForcePasswordChange from './force-password';
 import MfaSetup from './mfa';
 import ResetPassword from './reset-password';
+import VerifyEmail from './verify-email';
 import { MODULES, visibleModules } from './nav';
 import type { NavOpen, TabCtx } from './nav';
 import { Shell } from './shell';
@@ -237,9 +238,9 @@ function App() {
           const ps = await apiGet<{ mustChangePassword: boolean }>('/admin/users/me/password-state');
           if (ps?.mustChangePassword) { setState('must-change'); return; }
         } catch { /* state endpoint unavailable (pre-migration API) — proceed */ }
-        // signed-in staff without MFA get a one-time enrollment offer (skippable);
-        // suppressed in dev while iterating so the console opens without friction
-        const offerMfa = d.user.role !== 'viewer' && !d.user.twoFactorEnabled && !import.meta.env.DEV;
+        // P7+ / MS2.4: staff without MFA get enrolled; for editor and above MFA is mandatory
+        const isMfaMandatory = ['super_admin', 'admin', 'editor'].includes(d.user.role);
+        const offerMfa = (isMfaMandatory || d.user.role !== 'viewer') && !d.user.twoFactorEnabled && !import.meta.env.DEV;
         setState(offerMfa ? 'mfa-setup' : 'authed');
       } catch { setState('anon'); }
     })();
@@ -251,6 +252,11 @@ function App() {
       const ps = await apiGet<{ mustChangePassword: boolean }>('/admin/users/me/password-state');
       if (ps?.mustChangePassword) { setState('must-change'); return; }
     } catch { /* proceed */ }
+    const isMfaMandatory = ['super_admin', 'admin', 'editor'].includes(d.user.role);
+    if (isMfaMandatory && !d.user.twoFactorEnabled && !import.meta.env.DEV) {
+      setState('mfa-setup');
+      return;
+    }
     setState('authed');
   }).catch(() => { setState('anon'); });
   const resetToken = typeof window !== 'undefined'
@@ -259,6 +265,21 @@ function App() {
         ? new URLSearchParams(window.location.hash.replace(/^#reset\??/, '')).get('token')
         : null))
     : null;
+
+  const verifyToken = typeof window !== 'undefined'
+    ? (new URLSearchParams(window.location.search).get('verify-token')
+      || (window.location.hash.startsWith('#verify-email')
+        ? new URLSearchParams(window.location.hash.replace(/^#verify-email\??/, '')).get('token')
+        : null))
+    : null;
+
+  if (verifyToken) {
+    return (
+      <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 32, background: '#0F1720' }}>
+        <VerifyEmail token={verifyToken} onDone={() => { window.location.href = window.location.pathname; }} />
+      </main>
+    );
+  }
 
   if (resetToken) {
     return (
@@ -272,9 +293,14 @@ function App() {
   if (state === 'anon') return <Login onDone={refreshMe} />;
   if (state === 'must-change') return <ForcePasswordChange email={me?.user?.email ?? ''} onDone={refreshMe} />;
   if (state === 'mfa-setup') {
+    const isMfaMandatory = me?.user?.role ? ['super_admin', 'admin', 'editor'].includes(me.user.role) : false;
     return (
       <div style={{ minHeight: '100vh', background: '#F2F4F6' }}>
-        <MfaSetup onEnrolled={refreshMe} onSkip={() => setState('authed')} />
+        <MfaSetup
+          required={isMfaMandatory}
+          onEnrolled={refreshMe}
+          onSkip={isMfaMandatory ? undefined : () => setState('authed')}
+        />
       </div>
     );
   }

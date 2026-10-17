@@ -62,18 +62,20 @@ export default function ForgotPassword({ onBack }: { onBack: () => void }) {
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#E6F8F4', color: CYAN, fontSize: 24, display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>✓</div>
           <p style={{ color: NAVY, fontWeight: 700, margin: '0 0 8px' }}>Instructions Dispatched</p>
           <p style={{ color: '#66748A', fontSize: 13, lineHeight: 1.5, margin: '0 0 24px' }}>
-            If an authorised account exists for <b>{email}</b>, an email has been sent with link credentials valid for 1 hour.
+            If an account is associated with <b>{email}</b>, password reset instructions have been dispatched. The secure link is valid for 1 hour.
           </p>
           <button type="button" onClick={onBack} style={{ ...btnMain, background: NAVY }}>Return to Sign-in</button>
         </div>
       ) : (
         <form onSubmit={submit}>
-          <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Email address</label>
+          <label htmlFor="forgot-email" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Email address</label>
           <input
+            id="forgot-email"
             className="tm-in"
             type="email"
             required
             autoFocus
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@twinmos.com"

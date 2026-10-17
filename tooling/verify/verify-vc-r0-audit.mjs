@@ -238,10 +238,12 @@ async function run() {
   // Criterion 8: RESET-LOG (Clean Auth Logging)
   // -----------------------------------------------------------------------------
   console.log('\n--- Criterion 8: RESET-LOG (Keep Tokens Out of Auth Logs) ---');
-  check('CRIT-08a', 'apps/api/src/auth.ts returns 503 without logging tokens to stdout/stderr', () => {
+  check('CRIT-08a', 'apps/api/src/auth.ts dispatches reset via mailer without logging tokens to stdout/stderr', () => {
     const code = readFileSync(resolve(ROOT, 'apps/api/src/auth.ts'), 'utf8');
-    return code.includes('Password reset mailer is not configured') &&
-           !code.includes('console.log(`[auth] sendResetPassword');
+    return (code.includes('Password reset mailer is not configured') || code.includes('sendResetPassword:')) &&
+           !code.includes('console.log(`[auth] sendResetPassword') &&
+           !code.includes('console.log(token)') &&
+           !code.includes('console.log(url)');
   });
 
   // -----------------------------------------------------------------------------

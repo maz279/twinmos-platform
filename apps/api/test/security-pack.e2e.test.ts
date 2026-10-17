@@ -174,7 +174,39 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     });
     expect(errsNoResend.some((e: string) => e.includes('RESEND_API_KEY'))).toBe(true);
 
-    // 3. turnstileBypassEnabled never true in production
+    // 3. Refuses missing INTERNAL_WEB_URL (MS2.4 / T2.4.7 / S-08)
+    const errsNoWeb = bootConfigErrors({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgres://localhost/db',
+      BETTER_AUTH_SECRET: 'a-very-long-secret-key-123456789',
+      BETTER_AUTH_URL: 'https://twinmos.com',
+      TURNSTILE_SECRET_KEY: '0x4AAAAAA',
+      RESEND_API_KEY: 're_1234567890',
+      MAIL_FROM: 'TwinMOS <no-reply@twinmos.com>',
+      FORMS_TO: 'leads@twinmos.com',
+      PREVIEW_SIGNING_KEY: 'a-very-long-signing-key-1234567890',
+      REVALIDATE_SECRET: 'a-very-long-revalidate-secret-12345',
+    });
+    expect(errsNoWeb.some((e: string) => e.includes('INTERNAL_WEB_URL'))).toBe(true);
+
+    // 4. Refuses ENFORCE_MFA='0' in production (MS2.4 / T2.4.7 / S-08)
+    const errsNoMfa = bootConfigErrors({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgres://localhost/db',
+      BETTER_AUTH_SECRET: 'a-very-long-secret-key-123456789',
+      BETTER_AUTH_URL: 'https://twinmos.com',
+      TURNSTILE_SECRET_KEY: '0x4AAAAAA',
+      RESEND_API_KEY: 're_1234567890',
+      MAIL_FROM: 'TwinMOS <no-reply@twinmos.com>',
+      FORMS_TO: 'leads@twinmos.com',
+      PREVIEW_SIGNING_KEY: 'a-very-long-signing-key-1234567890',
+      REVALIDATE_SECRET: 'a-very-long-revalidate-secret-12345',
+      INTERNAL_WEB_URL: 'http://localhost:4321',
+      ENFORCE_MFA: '0',
+    });
+    expect(errsNoMfa.some((e: string) => e.includes('ENFORCE_MFA'))).toBe(true);
+
+    // 5. turnstileBypassEnabled never true in production
     expect(turnstileBypassEnabled({ NODE_ENV: 'production', API_ALLOW_NO_TURNSTILE: '1' })).toBe(false);
     expect(turnstileBypassEnabled({ NODE_ENV: 'development', API_ALLOW_NO_TURNSTILE: '1' })).toBe(true);
     expect(turnstileBypassEnabled({ NODE_ENV: 'development', API_ALLOW_NO_TURNSTILE: '0' })).toBe(false);
@@ -230,6 +262,34 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     expect([200, 204]).toContain(res.status);
   });
 
+  it('S-05: Unverified sign-in rejected with 403 EMAIL_NOT_VERIFIED when requireEmailVerification is active', async () => {
+    const unverifiedEmail = 'unverified-user@twinmos.test';
+    const password = 'TestSecPassword123!';
+    // Create unverified user in DB
+    await app.request('/api/v1/auth/sign-up/email', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: unverifiedEmail, password, name: 'Unverified Staff' }),
+    });
+    const { eq } = await import('drizzle-orm');
+    await db.update(user).set({ emailVerified: false, role: 'viewer' }).where(eq(user.email, unverifiedEmail));
+
+    const prevReq = process.env.REQUIRE_EMAIL_VERIFICATION;
+    try {
+      process.env.REQUIRE_EMAIL_VERIFICATION = '1';
+      const res = await app.request('/api/v1/auth/sign-in/email', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: unverifiedEmail, password }),
+      });
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(body.code).toBe('EMAIL_NOT_VERIFIED');
+    } finally {
+      process.env.REQUIRE_EMAIL_VERIFICATION = prevReq;
+    }
+  });
+
   it('S-06: Per-account lockout after 5 consecutive failures from rotating IPs', async () => {
     const victim = 'lockout-victim@twinmos.test';
     // 5 consecutive failed attempts from 5 distinct IP addresses
@@ -258,6 +318,102 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     const body = await lockedRes.json();
     expect(body.title).toBe('Account Locked');
     expect(lockedRes.headers.get('retry-after')).toBeDefined();
+  });
+
+  it('LOCK-CT: Database-backed lockout survives and persists failed_login_count and locked_until in PostgreSQL', async () => {
+    const lockoutEmail = 'db-lockout-target@twinmos.test';
+    const password = 'TestSecPassword123!';
+    await app.request('/api/v1/auth/sign-up/email', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: lockoutEmail, password, name: 'Lockout Target' }),
+    });
+
+    const { eq } = await import('drizzle-orm');
+    // 5 failed attempts from rotating IPs
+    for (let i = 1; i <= 5; i++) {
+      await app.request('/api/v1/auth/sign-in/email', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-real-ip': `198.51.100.${i}` },
+        body: JSON.stringify({ email: lockoutEmail, password: 'WrongPassword!' }),
+      });
+    }
+
+    // Inspect user table in database
+    const [row] = await db.select({
+      count: user.failedLoginCount,
+      lockedUntil: user.lockedUntil,
+    }).from(user).where(eq(user.email, lockoutEmail));
+
+    expect(row.count).toBeGreaterThanOrEqual(5);
+    expect(row.lockedUntil).not.toBeNull();
+    expect(new Date(row.lockedUntil).getTime()).toBeGreaterThan(Date.now());
+
+    // 6th attempt is blocked with 401 and Retry-After
+    const lockedRes = await app.request('/api/v1/auth/sign-in/email', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: lockoutEmail, password: 'AnyPassword' }),
+    });
+    expect(lockedRes.status).toBe(401);
+    expect(lockedRes.headers.get('retry-after')).toBeDefined();
+  });
+
+  it('AUTH-BOOT: Full bootstrap sign-in, invitation, email verification and MFA enforcement integration', async () => {
+    // 1. Super admin can sign in
+    const adminEmail = 'auth-boot-admin@twinmos.test';
+    const adminPw = 'AdminPassword123!';
+    await app.request('/api/v1/auth/sign-up/email', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: adminEmail, password: adminPw, name: 'Super Admin' }),
+    });
+    const { eq } = await import('drizzle-orm');
+    await db.update(user).set({ role: 'super_admin', emailVerified: true }).where(eq(user.email, adminEmail));
+
+    const adminSignIn = await app.request('/api/v1/auth/sign-in/email', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: adminEmail, password: adminPw }),
+    });
+    expect(adminSignIn.status).toBe(200);
+    const superCookie = adminSignIn.headers.getSetCookie().map((c: string) => c.split(';')[0]).join('; ');
+
+    // 2. Super admin invites staff
+    const staffEmail = 'invited-staff@twinmos.test';
+    const inviteRes = await app.request('/api/v1/admin/users/invite', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Cookie: superCookie },
+      body: JSON.stringify({ email: staffEmail, name: 'Invited Staff', role: 'editor' }),
+    });
+    expect(inviteRes.status).toBe(201);
+    const inviteData = await inviteRes.json();
+    expect(inviteData.temporaryPassword).toBeDefined();
+    expect(inviteData.user.emailVerified).toBe(false);
+
+    // 3. Attempting to sign in with unverified account while requireEmailVerification is active fails with 403
+    const prevReq = process.env.REQUIRE_EMAIL_VERIFICATION;
+    try {
+      process.env.REQUIRE_EMAIL_VERIFICATION = '1';
+      const unverifiedRes = await app.request('/api/v1/auth/sign-in/email', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: staffEmail, password: inviteData.temporaryPassword }),
+      });
+      expect(unverifiedRes.status).toBe(403);
+      expect((await unverifiedRes.json()).code).toBe('EMAIL_NOT_VERIFIED');
+    } finally {
+      process.env.REQUIRE_EMAIL_VERIFICATION = prevReq;
+    }
+
+    // 4. Verifying email unlocks sign-in
+    await db.update(user).set({ emailVerified: true }).where(eq(user.email, staffEmail));
+    const verifiedSignIn = await app.request('/api/v1/auth/sign-in/email', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: staffEmail, password: inviteData.temporaryPassword }),
+    });
+    expect(verifiedSignIn.status).toBe(200);
   });
 
   it('S-07 & S-09: Admin mutation enforces MFA when ENFORCE_MFA=1', async () => {
