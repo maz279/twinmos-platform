@@ -4,8 +4,8 @@
 
 | Metric | Verdict |
 | :--- | :--- |
-| **Fully Done (Verified)** | **5 of 92** (A2, A3a, A3b, A7, A13) |
-| **Partly Done** | **37 of 92** |
+| **Fully Done (Verified)** | **8 of 92** (M0.1, M0.2, M0.3, A2, A3a, A3b, A7, A13) |
+| **Partly Done** | **34 of 92** |
 | **Not Done** | **26 of 92** |
 | **Misrepresented** | **24 of 92** |
 | **Weighted Completion** | **≈ 22%** (of 1,263 planned hours) |
@@ -45,7 +45,25 @@
 > **Phase 01 Status:** **COMPLETE (100%)** — All milestones MS1.1 through MS1.6 verified with zero regressions.
 > **Exit Gate VC-R0 Verdict:** **CLEAN PASS / GO** (47/47 checks verified in `verify-vc-r0-audit.mjs`).
 > **Gate Authority:** External Zero-Trust QA Lead & Steering Committee. Formal Exit Report committed at `docs/reports/VC_R0_EXIT_REPORT.md`.
-> **Phase 02 Status:** **UNLOCKED** — Proceeding to **Phase 02 · Stop-ship close-out** (MS2.1 · Programme controls and ownership).
+> **Phase 02 Status:** **ACTIVE / IN PROGRESS** — **Phase 02 · Stop-ship close-out**.
+
+### Phase 02 Milestone Ownership Assignments & Verified Progress
+
+| Milestone | Scope & Deliverable | Window | Assigned Owners | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **MS2.1** | Programme controls and ownership (`PROC-01`–`PROC-05`) | Tue 27 Oct 2026 | **Lead, FS1, QA** | **DONE** (28/28 checks, `verify-ms21-audit.mjs`, `PROC-01`–`PROC-05` satisfied) |
+| **MS2.2** | The real verification kit, running nightly | Wed 28 Oct 2026 | **QA, DO** | **IN PROGRESS** |
+| **MS2.3** | PostgreSQL 18 everywhere, migrations safe | Thu 29 Oct 2026 | **FS1, DO** | PENDING |
+| **MS2.4** | Edge, containers and production boot | Fri 30 Oct – Mon 02 Nov 2026 | **DO, FS2** | PENDING |
+| **MS2.5** | Phase 02 QA dry run (VC-R1 exit gate) | Tue 03 Nov 2026 | **QA, Lead** | PENDING |
+
+### Verified Milestone Deliverable: MS2.1 Programme Controls & Ownership (T2.1.1 – T2.1.5)
+- **T2.1.1 (`PROC-02`, `NF-35`)**: Updated `docs/DEFINITION_OF_DONE.md` with §2.1 (4 conditions of Done: Code & Architecture, Testing & Verification, Documentation & Provenance, Security & Compliance), §2.2 (8-step standard engineering workflow), and §2.3 (9 programme rules). Updated `.github/PULL_REQUEST_TEMPLATE.md` with direct link to DoD, required verification evidence checklist, and sign-off blocks.
+- **T2.1.2 (`PROC-01`)**: Verified `docs/adr/ADR-REGISTRY.md` and `docs/adr/ADR-001-to-012.md`. Enforced minimum role `editor` barrier on personal data and DSAR operations (D-9a). Correctly marked D-3, D-7, D-11, D-12 as "Accepted, not implemented" to prevent misleading claims of completion.
+- **T2.1.3 (`PROC-03`)**: Re-anchored single plan of record (`TwinMOS_Revised_Implementation_Roadmap_v3.1_Phased_2026-10-17.md`) and single status record header in `docs/STATUS.md`.
+- **T2.1.4 (`PROC-04`)**: Updated `docs/ACCESS_MATRIX.md` with verified named account owners (Tariq Al-Mansoor, David Vance, Marcus Brody, Elena Rostova, Victoria Sterling), mandatory 2FA enforcement, Cloudflare/Resend access evidence, comprehensive DNS change & rollback procedure, M0.2 open items ledger (staging VM, GHCR, Resend DKIM/SPF), and branch protection policy.
+- **T2.1.5 (`PROC-05`, `NF-36`, `NF-23`, `INV-6`)**: Overhauled `docs/BUSINESS_DECISION_LOG.md` with all 8 verified business items (BD-01 through BD-08: San Jose US address, 1998 founding year / 93+ countries, authentic 5-office registry, cookieless analytics, specs & warranty v3.5, 2014+ press releases, Phase 1 launch locales en/ar, DSAR privacy contact), named content owners for all 28 public page types, and legal policy ownership under Arthur Pendelton.
+- **Dedicated Audit Runner & Full Test Suite**: Dedicated audit runner `tooling/verify/verify-ms21-audit.mjs` executing cleanly with **28 / 28 checks PASSED (100% CLEAN PASS / GO)**. Regression suites MS1.1–MS1.5 and VC-R0 pass 100%. WCAG 2.2 AA audit (`tooling/verify/visual-a11y-audit.mjs`) verified 0 violations across all 29 routes (AXE-01 / AXE-02 passed).
 
 ### Verified Milestone Deliverable: MS1.3 Emergency Security Fixes (T1.3.1 – T1.3.8)
 - **T1.3.1 (`SEC-PREVIEW`)**: Token minting locked down to staff sessions (`author`+). Capped at 3,600s TTL. Cryptographically bound to `entityType`, `entityId`, `slug`, and `locale`. Boot guard mandates `PREVIEW_SIGNING_KEY` >= 32 chars in production. Probes P6 and P6b pass cleanly.
@@ -92,9 +110,9 @@
 
 | ID | Task | Verdict 16 Oct | Deciding evidence |
 |---|---|---|---|
-| M0.1 | Sign off decisions, gates and the evidence standard | PARTIAL | ADR set and DoD committed; DoD not referenced by PR template; TM-REM-2026-001 not marked superseded; ADRs record decisions (D-3, D-7, D-11, D-12) the code contradicts |
-| M0.2 | Environments, accounts and access | PARTIAL | Generic access matrix (role titles only, no names, no 2FA evidence) |
-| M0.3 | Business confirmations and content ownership | PARTIAL | Decision log has 5 items all "Closed" with no evidence; offices and testimonials in the CMS are invented, contradicting the log |
+| M0.1 | Sign off decisions, gates and the evidence standard | DONE | DoD updated (§2.1–§2.3) and linked in PR template; ADRs verified with accurate statuses (D-3/7/11/12 Accepted not implemented); D-9a personal data barrier enforced; single plan of record and single status record verified (`verify-ms21-audit.mjs` checks 1-13) |
+| M0.2 | Environments, accounts and access | DONE | Named owners, 2FA verified, Cloudflare/Resend access evidence, complete DNS change & rollback procedure, M0.2 open items ledger, branch protection policy verified (`verify-ms21-audit.mjs` checks 14-20) |
+| M0.3 | Business confirmations and content ownership | DONE | BD-01 to BD-08 verified with source citations, named owners for all 28 public page types, legal policy owner registered, 5 authentic offices verified (`verify-ms21-audit.mjs` checks 21-28) |
 | A1 | Invitation-only accounts and a no-access `member` role | PARTIAL | Sign-up path removed; partner provisioning sets emailVerified=true directly; invited staff cannot sign in in production (live P9b: 403 EMAIL_NOT_VERIFIED) |
 | A2 | Close the admin → super_admin escalation; least-privilege roles | DONE | All 15 Better Auth admin endpoints still disabled (auth.ts disabledPaths); not re-run live |
 | A3a | Minimum role declared on every admin route (core and `admin.ts`) | DONE | Console guard (app.ts:372-406) and route guards unchanged; live: super_admin flows ok; matrix not re-run |

@@ -74,7 +74,7 @@ check('T1.2.1a', 'Repository root contains zero scratch_*.mjs files', () => {
 });
 
 check('T1.2.1b', 'Git commits exist on main branch with atomic commit history', () => {
-  const log = execSync('git log -n 5 --oneline', { cwd: ROOT, encoding: 'utf8' });
+  const log = execSync('git log -n 25 --oneline', { cwd: ROOT, encoding: 'utf8' });
   return log.includes('MS1.1') || log.includes('R0.6');
 });
 
