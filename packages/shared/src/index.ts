@@ -114,11 +114,11 @@ export const productBaseSchema = z.object({
   gallery: z.array(z.number().int().positive()).max(12),
   datasheets: z.array(z.object({ label: z.string().trim().min(1).max(80), url: z.url().max(500) })).max(6),
   badges: z.array(z.string().max(40)).max(8),
-  featured: z.boolean().default(false),
+  featured: z.boolean(),
   launchDate: z.string().datetime().nullable().optional(),
-  isComingSoon: z.boolean().default(false),
+  isComingSoon: z.boolean(),
   warrantyTier: z.enum(['standard', 'extended', 'lifetime', 'limited_lifetime', '1_year', '2_year', '3_year', '5_year', '10_year']).or(z.string()).nullable().optional(),
-  specsDictionary: z.record(z.string(), z.unknown()).default({}),
+  specsDictionary: z.record(z.string(), z.unknown()),
   version: z.number().int().optional(),
 });
 
@@ -148,7 +148,7 @@ export const productUpdateSchema = productBaseSchema.partial();
 // 3.1 product variants — hardware attributes + per-variant pricing/inventory.
 // Pricing & stock live inside the variant's jsonb attrs (the table's designed
 // dumping ground), so no migration is required.
-export const variantCreateSchema = z.object({
+export const variantBaseSchema = z.object({
   attrs: z.object({
     capacity: z.string().trim().min(1).max(20),            // e.g. 16GB / 32GB / 1TB
     speed: z.string().trim().min(1).max(20).optional(),     // e.g. 6000MT/s
@@ -156,17 +156,22 @@ export const variantCreateSchema = z.object({
     lighting: z.enum(['RGB', 'Non-RGB']).optional(),
   }),
   sku: z.string().trim().regex(/^[A-Z0-9-]{3,40}$/),
+  priceUsd: z.number().nonnegative().max(9_999_999).nullable(),
+  status: z.enum(['active', 'discontinued']),
+  stock: z.number().int().min(0).max(9_999_999),
+});
+export const variantCreateSchema = variantBaseSchema.extend({
   priceUsd: z.number().nonnegative().max(9_999_999).nullable().default(null),
   status: z.enum(['active', 'discontinued']).default('active'),
   stock: z.number().int().min(0).max(9_999_999).default(0),
 });
 export const variantUpdateSchema = z.object({
   // partial INSIDE attrs too — a PATCH may touch only e.g. finish or stock
-  attrs: variantCreateSchema.shape.attrs.partial(),
-  sku: variantCreateSchema.shape.sku,
-  priceUsd: variantCreateSchema.shape.priceUsd,
-  status: variantCreateSchema.shape.status,
-  stock: variantCreateSchema.shape.stock,
+  attrs: variantBaseSchema.shape.attrs.partial(),
+  sku: variantBaseSchema.shape.sku,
+  priceUsd: variantBaseSchema.shape.priceUsd,
+  status: variantBaseSchema.shape.status,
+  stock: variantBaseSchema.shape.stock,
 }).partial();
 export type VariantInput = z.infer<typeof variantCreateSchema>;
 
@@ -176,14 +181,26 @@ export const COMPAT_MEMORY_GENS = ['DDR4', 'DDR5'] as const;
 export const COMPAT_FORM_FACTORS = ['U-DIMM', 'SO-DIMM', 'M.2 2280 NVMe'] as const;
 // 0017: finder hierarchy groups — the public compatibility page's type tabs.
 export const COMPAT_DEVICE_TYPES = ['laptop', 'desktop', 'diy', 'minipc'] as const;
-export const compatibilityCreateSchema = z.object({
+export const compatibilityBaseSchema = z.object({
   deviceBrand: z.string().trim().min(1).max(40),
   deviceModel: z.string().trim().min(1).max(80),
+  memoryGen: z.enum(COMPAT_MEMORY_GENS).nullable(),
+  formFactor: z.enum(COMPAT_FORM_FACTORS).nullable(),
+  maxGb: z.number().int().positive().max(1024).nullable(),
+  notes: z.string().trim().max(500).nullable(),
+  // 0017 finder contract — slots/speed/SSD upgrade + recommendation categories
+  deviceType: z.enum(COMPAT_DEVICE_TYPES),
+  slots: z.number().int().positive().max(16).nullable(),
+  speed: z.string().trim().max(30).nullable(),
+  cats: z.array(z.string().trim().min(1).max(40)).max(8),
+  ssdNote: z.string().trim().max(120).nullable(),
+  ssdCats: z.array(z.string().trim().min(1).max(40)).max(8),
+});
+export const compatibilityCreateSchema = compatibilityBaseSchema.extend({
   memoryGen: z.enum(COMPAT_MEMORY_GENS).nullable().default(null),
   formFactor: z.enum(COMPAT_FORM_FACTORS).nullable().default(null),
   maxGb: z.number().int().positive().max(1024).nullable().default(null),
   notes: z.string().trim().max(500).nullable().default(null),
-  // 0017 finder contract — slots/speed/SSD upgrade + recommendation categories
   deviceType: z.enum(COMPAT_DEVICE_TYPES).default('laptop'),
   slots: z.number().int().positive().max(16).nullable().default(null),
   speed: z.string().trim().max(30).nullable().default(null),
@@ -191,7 +208,7 @@ export const compatibilityCreateSchema = z.object({
   ssdNote: z.string().trim().max(120).nullable().default(null),
   ssdCats: z.array(z.string().trim().min(1).max(40)).max(8).default([]),
 });
-export const compatibilityUpdateSchema = compatibilityCreateSchema.partial();
+export const compatibilityUpdateSchema = compatibilityBaseSchema.partial();
 export type CompatibilityInput = z.infer<typeof compatibilityCreateSchema>;
 
 // ---- 0020: where-to-buy directory (public locator) ----
@@ -205,22 +222,31 @@ export const DISTRIBUTOR_STATUSES = ['hub', 'authorized', 'expanding', 'seeking'
 export const DISTRIBUTOR_STATUS_LABELS = {
   hub: 'TwinMOS hub', authorized: 'Authorized distribution', expanding: 'Expanding coverage', seeking: 'Seeking distributors',
 } as const;
-export const distributorCreateSchema = z.object({
+export const distributorBaseSchema = z.object({
   name: z.string().trim().min(2).max(120),            // country card title (e.g. "United Arab Emirates")
   country: z.string().trim().min(2).max(60),
   region: z.enum(DISTRIBUTOR_REGIONS),
+  status: z.enum(DISTRIBUTOR_STATUSES),
+  cities: z.array(z.string().trim().min(1).max(60)).max(20),
+  contact: z.record(z.string(), z.string().max(300)), // {email, phone, website, tag}
+  note: z.string().trim().max(1000).nullable(),
+});
+export const distributorCreateSchema = distributorBaseSchema.extend({
   status: z.enum(DISTRIBUTOR_STATUSES).default('authorized'),
   cities: z.array(z.string().trim().min(1).max(60)).max(20).default([]),
-  contact: z.record(z.string(), z.string().max(300)).default({}), // {email, phone, website, tag}
+  contact: z.record(z.string(), z.string().max(300)).default({}),
   note: z.string().trim().max(1000).nullable().default(null),
 });
-export const distributorUpdateSchema = distributorCreateSchema.partial();
-export const marketplaceListingCreateSchema = z.object({
+export const distributorUpdateSchema = distributorBaseSchema.partial();
+export const marketplaceListingBaseSchema = z.object({
   platform: z.string().trim().min(2).max(40),
   url: z.url().max(500),
+  country: z.string().trim().max(60).nullable(),
+});
+export const marketplaceListingCreateSchema = marketplaceListingBaseSchema.extend({
   country: z.string().trim().max(60).nullable().default(null),
 });
-export const marketplaceListingUpdateSchema = marketplaceListingCreateSchema.partial();
+export const marketplaceListingUpdateSchema = marketplaceListingBaseSchema.partial();
 
 // 3.3 bulk import envelope — the CSV text is parsed/validated server-side.
 export const productImportSchema = z.object({
@@ -337,7 +363,7 @@ export const newsUpdateSchema = newsBaseSchema.partial();
 export const pageBaseSchema = z.object({
   slug: slugField.optional(),
   path: z.string().trim().regex(/^\/[a-zA-Z0-9_\-\/]*$/, 'Must start with /').nullable().optional(),
-  template: z.enum(['default', 'landing', 'full_width', 'legal', 'category', 'product_detail', 'support_portal']).default('default'),
+  template: z.enum(['default', 'landing', 'full_width', 'legal', 'category', 'product_detail', 'support_portal']),
   parentId: z.number().int().positive().nullable().optional(),
   translationGroup: z.string().trim().nullable().optional(),
   title: z.string().trim().min(2).max(200),
@@ -347,9 +373,9 @@ export const pageBaseSchema = z.object({
   seoTitle: z.string().trim().max(160).nullable().optional(),
   seoDescription: z.string().trim().max(320).nullable().optional(),
   ogMediaId: z.number().int().positive().nullable().optional(),
-  noindex: z.boolean().default(false),
-  legacyPaths: z.array(z.string()).default([]),
-  status: z.enum(CONTENT_STATUS).default('draft'),
+  noindex: z.boolean(),
+  legacyPaths: z.array(z.string()),
+  status: z.enum(CONTENT_STATUS),
   version: z.number().int().optional(),
 });
 export const pageCreateSchema = pageBaseSchema.extend({
@@ -365,6 +391,7 @@ export const pageCreateSchema = pageBaseSchema.extend({
   ogMediaId: z.number().int().positive().nullable().optional().default(null),
   noindex: z.boolean().default(false),
   legacyPaths: z.array(z.string()).default([]),
+  status: z.enum(CONTENT_STATUS).default('draft'),
   version: z.number().int().default(1),
 });
 export const pageUpdateSchema = pageBaseSchema.partial();
@@ -448,10 +475,19 @@ export const JOB_LOCATIONS = ['Taipei', 'Dubai', 'Cologne', 'San Jose', 'Remote'
 export const JOB_TYPES = ['full-time', 'part-time', 'contract', 'internship'] as const;
 export const JOB_LEVELS = ['entry', 'mid', 'senior', 'lead', 'executive'] as const;
 export const JOB_POSTING_STATUSES = ['draft', 'published', 'closed', 'archived'] as const;
-export const jobPostingCreateSchema = z.object({
+export const jobPostingBaseSchema = z.object({
   title: z.string().trim().min(2).max(160),
   dept: z.enum(JOB_DEPARTMENTS),
   location: z.enum(JOB_LOCATIONS),
+  type: z.enum(JOB_TYPES),
+  level: z.enum(JOB_LEVELS),
+  status: z.enum(JOB_POSTING_STATUSES),
+  body: z.string().trim().max(20_000),
+  applyBy: z.string().datetime().nullable(),
+  salaryBand: z.string().trim().max(80).nullable(),
+  equalOpportunity: z.boolean(),
+});
+export const jobPostingCreateSchema = jobPostingBaseSchema.extend({
   type: z.enum(JOB_TYPES).default('full-time'),
   level: z.enum(JOB_LEVELS).default('mid'),
   status: z.enum(JOB_POSTING_STATUSES).default('draft'),
@@ -460,7 +496,7 @@ export const jobPostingCreateSchema = z.object({
   salaryBand: z.string().trim().max(80).nullable().default(null),
   equalOpportunity: z.boolean().default(true),
 });
-export const jobPostingUpdateSchema = jobPostingCreateSchema.partial();
+export const jobPostingUpdateSchema = jobPostingBaseSchema.partial();
 export type JobPostingInput = z.infer<typeof jobPostingCreateSchema>;
 
 // ---- P5: partner portal + anti-counterfeit ----

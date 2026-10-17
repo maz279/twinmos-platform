@@ -222,7 +222,18 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
     }
   });
 
-  r.patch('/content/:entity/:id', async (c) => {
+  function prunePatch<T extends Record<string, any>>(raw: any, parsed: T): Partial<T> {
+    const out: any = {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+    for (const k of Object.keys(parsed)) {
+      if (Object.prototype.hasOwnProperty.call(raw, k)) {
+        out[k] = (parsed as any)[k];
+      }
+    }
+    return out;
+  }
+
+  const updateContent = async (c: any) => {
     const guard = await authorGuard(c);
     if (guard instanceof Response) return guard;
     const entity = resolveEntity(c);
@@ -247,8 +258,10 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
       return c.json(problem(409, 'Conflict', 'Version conflict: this item was modified by someone else.'), 409, { 'Content-Type': P });
     }
 
-    if (entity === 'page' && Array.isArray((parsed.data as any).blocks) && (parsed.data as any).blocks.length > 0) {
-      const v = validateBlocks((parsed.data as any).blocks);
+    const patchData = prunePatch(rawJson, parsed.data as Record<string, unknown>);
+
+    if (entity === 'page' && Array.isArray((patchData as any).blocks) && (patchData as any).blocks.length > 0) {
+      const v = validateBlocks((patchData as any).blocks);
       if (!v.success) {
         return c.json(
           problem(422, 'Block Validation Failed', 'One or more page blocks failed validation.', Object.entries(v.errors).map(([idx, errs]: [string, string[]]) => ({ path: ['blocks', Number(idx)], message: errs.join(', ') }))),
@@ -258,21 +271,21 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
       }
     }
 
-    const patch: Record<string, unknown> = { ...parsed.data, updatedAt: new Date() };
+    const patch: Record<string, unknown> = { ...patchData, updatedAt: new Date() };
     if (existing.version !== undefined) {
       patch.version = (existing.version ?? 1) + 1;
     }
-    if ((parsed.data as any).eventDate !== undefined) patch.eventDate = (parsed.data as any).eventDate ? new Date((parsed.data as any).eventDate) : null;
+    if ((patchData as any).eventDate !== undefined) patch.eventDate = (patchData as any).eventDate ? new Date((patchData as any).eventDate) : null;
 
     // Phase C (CMS-E4): automated 301 redirect on page path change
-    if (entity === 'page' && (parsed.data as any).path && existing.path && (parsed.data as any).path !== existing.path) {
+    if (entity === 'page' && (patchData as any).path && existing.path && (patchData as any).path !== existing.path) {
       await db.insert(redirect).values({
         from: existing.path,
-        to: (parsed.data as any).path,
+        to: (patchData as any).path,
         code: 301,
       }).onConflictDoUpdate({
         target: [redirect.from],
-        set: { to: (parsed.data as any).path, code: 301 },
+        set: { to: (patchData as any).path, code: 301 },
       });
       const leg = Array.isArray(existing.legacyPaths) ? [...existing.legacyPaths] : [];
       if (!leg.includes(existing.path)) {
@@ -282,9 +295,12 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
     }
 
     const rows = await (db.update(tableOf(entity)) as any).set(patch).where(eq(tableOf(entity).id, id)).returning();
-    await auditRow(c, guard.user.id, `${entity}.update`, entity, String(id), parsed.data);
+    await auditRow(c, guard.user.id, `${entity}.update`, entity, String(id), patchData);
     return c.json(row0(rows));
-  });
+  };
+
+  r.patch('/content/:entity/:id', updateContent);
+  r.put('/content/:entity/:id', updateContent);
 
   // soft delete (admin+ per RBAC matrix)
   r.delete('/content/:entity/:id', async (c) => {

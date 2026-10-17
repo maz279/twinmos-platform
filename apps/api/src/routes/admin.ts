@@ -63,6 +63,17 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     });
   }
 
+  function prunePatch<T extends Record<string, any>>(raw: any, parsed: T): Partial<T> {
+    const out: any = {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+    for (const k of Object.keys(parsed)) {
+      if (Object.prototype.hasOwnProperty.call(raw, k)) {
+        out[k] = (parsed as any)[k];
+      }
+    }
+    return out;
+  }
+
   r.use('*', async (c, next) => {
     const s = await deps.sessionFromRequest(c.req.raw);
     if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': P });
@@ -170,7 +181,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     return c.json(rows[0], 201);
   });
 
-  r.patch('/products/:id', async (c) => {
+  const updateProduct = async (c: any) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
@@ -189,16 +200,19 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     if (rawJson.version !== undefined && current.version !== undefined && rawJson.version !== current.version) {
       return c.json(problem(409, 'Conflict', 'Version conflict: this product was modified by someone else.'), 409, { 'Content-Type': P });
     }
-    const updatePayload: Record<string, unknown> = { ...productValues(parsed.data), updatedAt: new Date() };
+    const patchData = prunePatch(rawJson, parsed.data);
+    const updatePayload: Record<string, unknown> = { ...productValues(patchData), updatedAt: new Date() };
     if (current.version !== undefined) {
       updatePayload.version = (current.version ?? 1) + 1;
     }
     const rows = await db.update(product).set(updatePayload as any)
       .where(eq(product.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
-    await auditRow(c, guard.user.id, 'product.update', 'product', String(id), parsed.data);
+    await auditRow(c, guard.user.id, 'product.update', 'product', String(id), patchData);
     return c.json(rows[0]);
-  });
+  };
+  r.patch('/products/:id', updateProduct);
+  r.put('/products/:id', updateProduct);
 
   // ==================== Phase 3.1: product variants ====================
   // Variants carry hardware attributes (capacity/speed/finish/lighting) plus
@@ -247,16 +261,16 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     }
   });
 
-  r.patch('/products/:id/variants/:varId', async (c) => {
+  const updateVariant = async (c: any) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
     const varId = Number(c.req.param('varId'));
-    const parsed = variantUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = variantUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
-    // narrow the partial() inference to an explicit shape (nested attrs makes
-    // the inferred union awkward to index)
-    const data = parsed.data as Partial<{ attrs: Partial<Record<'capacity' | 'speed' | 'finish' | 'lighting', string>>; sku: string; priceUsd: number | null; status: 'active' | 'discontinued'; stock: number }>;
+    const patchData = prunePatch(rawJson, parsed.data);
+    const data = patchData as Partial<{ attrs: Partial<Record<'capacity' | 'speed' | 'finish' | 'lighting', string>>; sku: string; priceUsd: number | null; status: 'active' | 'discontinued'; stock: number }>;
     const existing = (await db.select().from(productVariant).where(and(eq(productVariant.id, varId), eq(productVariant.productId, id))).limit(1))[0];
     if (!existing) return c.json(problem(404, 'Variant not found'), 404, { 'Content-Type': P });
     const merged: Record<string, unknown> = { ...(existing.attrs as Record<string, unknown>) };
@@ -268,7 +282,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       const rows = await db.update(productVariant)
         .set({ ...(data.sku !== undefined ? { sku: data.sku } : {}), attrs: merged })
         .where(and(eq(productVariant.id, varId), eq(productVariant.productId, id))).returning();
-      await auditRow(c, guard.user.id, 'product.variant.update', 'product_variant', String(varId), data);
+      await auditRow(c, guard.user.id, 'product.variant.update', 'product_variant', String(varId), patchData);
       return c.json(rows[0]);
     } catch (e) {
       if (isUniqueViolation(e)) {
@@ -276,7 +290,9 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       }
       throw e;
     }
-  });
+  };
+  r.patch('/products/:id/variants/:varId', updateVariant);
+  r.put('/products/:id/variants/:varId', updateVariant);
 
   r.delete('/products/:id/variants/:varId', async (c) => {
     const guard = await editorGuard(c);
@@ -318,17 +334,21 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     return c.json(rows[0], 201);
   });
 
-  r.patch('/compatibility/:id', async (c) => {
+  const updateCompatibility = async (c: any) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = compatibilityUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = compatibilityUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
-    const rows = await db.update(compatibilityRule).set(parsed.data).where(eq(compatibilityRule.id, id)).returning();
+    const patchData = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(compatibilityRule).set(patchData).where(eq(compatibilityRule.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Compatibility rule not found'), 404, { 'Content-Type': P });
-    await auditRow(c, guard.user.id, 'compatibility.update', 'compatibility_rule', String(id), parsed.data);
+    await auditRow(c, guard.user.id, 'compatibility.update', 'compatibility_rule', String(id), patchData);
     return c.json(rows[0]);
-  });
+  };
+  r.patch('/compatibility/:id', updateCompatibility);
+  r.put('/compatibility/:id', updateCompatibility);
 
   r.delete('/compatibility/:id', async (c) => {
     const guard = await editorGuard(c);
@@ -987,16 +1007,18 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     return c.json({ ...sub, assigneeEmail: assigneeEmail ?? null, slaState: slaState(sub), notes });
   });
 
-  r.patch('/submissions/:id', async (c) => {
+  const updateSubmission = async (c: any) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = submissionUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = submissionUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
     const existing = await db.select().from(formSubmission).where(eq(formSubmission.id, id)).limit(1);
     if (!existing[0]) return c.json(problem(404, 'Submission not found'), 404, { 'Content-Type': P });
+    const patchData = prunePatch(rawJson, parsed.data);
     // P6: server-enforced lead state machine (same discipline as the RMA board)
-    let status = parsed.data.status;
+    let status = patchData.status;
     if (status && status !== existing[0].status) {
       const legal = SUBMISSION_TRANSITIONS[existing[0].status as keyof typeof SUBMISSION_TRANSITIONS] ?? [];
       if (!legal.includes(status)) {
@@ -1004,17 +1026,19 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       }
     }
     // assigning an unowned NEW lead advances it to 'assigned' (workflow intent)
-    if (!status && parsed.data.assigneeId && existing[0].status === 'new') status = 'assigned';
+    if (!status && patchData.assigneeId && existing[0].status === 'new') status = 'assigned';
     const rows = await db.update(formSubmission)
       .set({
         ...(status ? { status } : {}),
-        ...(parsed.data.assigneeId !== undefined ? { assigneeId: parsed.data.assigneeId } : {}),
-        ...(parsed.data.priority ? { priority: parsed.data.priority } : {}),
+        ...(patchData.assigneeId !== undefined ? { assigneeId: patchData.assigneeId } : {}),
+        ...(patchData.priority ? { priority: patchData.priority } : {}),
       })
       .where(eq(formSubmission.id, id)).returning();
-    await auditRow(c, guard.user.id, 'submission.update', 'form_submission', String(id), parsed.data);
+    await auditRow(c, guard.user.id, 'submission.update', 'form_submission', String(id), patchData);
     return c.json({ ...rows[0], slaState: slaState(rows[0]) });
-  });
+  };
+  r.patch('/submissions/:id', updateSubmission);
+  r.put('/submissions/:id', updateSubmission);
 
   /** P6: internal note on a lead (editor+; collaboration trail, audited). */
   r.post('/submissions/:id/notes', async (c) => {
@@ -1331,25 +1355,28 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     return c.json(rows[0], 201);
   });
 
-  r.patch('/job-postings/:id', async (c) => {
+  const updateJobPosting = async (c: any) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = jobPostingUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = jobPostingUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
-    const d = parsed.data as Record<string, unknown>;
+    const patchData = prunePatch(rawJson, parsed.data) as Record<string, unknown>;
     const patch: Record<string, unknown> = {};
     for (const k of ['title', 'dept', 'location', 'type', 'level', 'body', 'salaryBand', 'equalOpportunity'] as const) {
-      if (d[k] !== undefined) patch[k] = d[k];
+      if (patchData[k] !== undefined) patch[k] = patchData[k];
     }
-    if (d.status !== undefined) patch.status = d.status;
-    if (d.applyBy !== undefined) patch.applyBy = d.applyBy ? new Date(String(d.applyBy)) : null;
+    if (patchData.status !== undefined) patch.status = patchData.status;
+    if (patchData.applyBy !== undefined) patch.applyBy = patchData.applyBy ? new Date(String(patchData.applyBy)) : null;
     if (!Object.keys(patch).length) return c.json(problem(422, 'Validation Failed', 'Nothing to update.'), 422, { 'Content-Type': P });
     const rows = await db.update(jobPosting).set(patch).where(and(eq(jobPosting.id, id), isNull(jobPosting.deletedAt))).returning();
     if (!rows[0]) return c.json(problem(404, 'Job posting not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'job_posting.update', 'job_posting', String(id), patch);
     return c.json(rows[0]);
-  });
+  };
+  r.patch('/job-postings/:id', updateJobPosting);
+  r.put('/job-postings/:id', updateJobPosting);
 
   r.delete('/job-postings/:id', async (c) => {
     const guard = await editorGuard(c);
@@ -1389,17 +1416,21 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     return c.json({ items: rows, total: Number(total) });
   });
 
-  r.patch('/job-applications/:id', async (c) => {
+  const updateJobApplication = async (c: any) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = jobApplicationUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = jobApplicationUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
-    const rows = await db.update(jobApplication).set({ status: parsed.data.status }).where(eq(jobApplication.id, id)).returning();
+    const patchData = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(jobApplication).set({ status: patchData.status }).where(eq(jobApplication.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Application not found'), 404, { 'Content-Type': P });
-    await auditRow(c, guard.user.id, 'job_application.update', 'job_application', String(id), parsed.data);
+    await auditRow(c, guard.user.id, 'job_application.update', 'job_application', String(id), patchData);
     return c.json(rows[0]);
-  });
+  };
+  r.patch('/job-applications/:id', updateJobApplication);
+  r.put('/job-applications/:id', updateJobApplication);
 
   /** 0022: reply to a candidate — the missing communication piece (ATS
    *  candidate-experience practice). Sends via the mailer, sets the

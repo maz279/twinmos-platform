@@ -163,6 +163,17 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; s
     return c.json({ key: parsed.data.key, stored: true, secret: isSecret });
   });
 
+  function prunePatch<T extends Record<string, any>>(raw: any, parsed: T): Partial<T> {
+    const out: any = {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+    for (const k of Object.keys(parsed)) {
+      if (Object.prototype.hasOwnProperty.call(raw, k)) {
+        out[k] = (parsed as any)[k];
+      }
+    }
+    return out;
+  }
+
   // ---------- redirects ----------
   r.get('/redirects', async (c) => {
     const a = await authed(c);
@@ -194,27 +205,31 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; s
     }
   });
 
-  r.patch('/redirects/:id', async (c) => {
+  const updateRedirect = async (c: any) => {
     const guard = await roleGuard(c, 'super_admin');
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = redirectUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = redirectUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
     
     const existing = await db.select().from(redirect);
     const targetRow = existing.find(r => r.id === id);
     if (!targetRow) return c.json(problem(404, 'Redirect not found'), 404, { 'Content-Type': P });
 
-    const newFrom = parsed.data.from ?? targetRow.from;
-    const newTo = parsed.data.to ?? targetRow.to;
+    const patchData = prunePatch(rawJson, parsed.data);
+    const newFrom = patchData.from ?? targetRow.from;
+    const newTo = patchData.to ?? targetRow.to;
     const err = validateRedirectRules(newFrom, newTo, existing, id);
     if (err) return c.json(problem(422, 'Invalid Redirect', err), 422, { 'Content-Type': P });
 
-    const rows = await db.update(redirect).set(parsed.data).where(eq(redirect.id, id)).returning();
-    await auditRow(c, guard.user.id, 'redirect.update', 'redirect', String(id), parsed.data);
+    const rows = await db.update(redirect).set(patchData).where(eq(redirect.id, id)).returning();
+    await auditRow(c, guard.user.id, 'redirect.update', 'redirect', String(id), patchData);
     await syncNginxRedirectMap(db);
     return c.json(rows[0]);
-  });
+  };
+  r.patch('/redirects/:id', updateRedirect);
+  r.put('/redirects/:id', updateRedirect);
 
   r.delete('/redirects/:id', async (c) => {
     const guard = await roleGuard(c, 'super_admin');

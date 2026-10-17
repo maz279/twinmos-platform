@@ -12,9 +12,13 @@ import { recordOutboxEvent } from '../services/outbox.ts';
 type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
 
-const menuCreateSchema = z.object({
+const menuBaseSchema = z.object({
   code: z.string().trim().min(2).max(40).regex(/^[a-z0-9_-]+$/, 'Letters, digits, dash, underscore only'),
   title: z.string().trim().min(1).max(100),
+  locale: z.string().trim(),
+});
+
+const menuCreateSchema = menuBaseSchema.extend({
   locale: z.string().trim().default('en'),
 });
 
@@ -23,19 +27,25 @@ const menuUpdateSchema = z.object({
   locale: z.string().trim().optional(),
 });
 
-const itemCreateSchema = z.object({
+const itemBaseSchema = z.object({
   parentId: z.number().int().positive().nullable().optional(),
   title: z.string().trim().min(1).max(100),
-  targetType: z.enum(['url', 'page', 'category', 'product', 'article']).default('url'),
+  targetType: z.enum(['url', 'page', 'category', 'product', 'article']),
   targetUrl: z.string().trim().nullable().optional(),
   targetId: z.string().trim().nullable().optional(),
-  sort: z.number().int().default(0),
-  metadata: z.record(z.string(), z.unknown()).default({}),
+  sort: z.number().int(),
+  metadata: z.record(z.string(), z.unknown()),
   icon: z.string().trim().nullable().optional(),
   badge: z.string().trim().nullable().optional(),
 });
 
-const itemUpdateSchema = itemCreateSchema.partial();
+const itemCreateSchema = itemBaseSchema.extend({
+  targetType: z.enum(['url', 'page', 'category', 'product', 'article']).default('url'),
+  sort: z.number().int().default(0),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+});
+
+const itemUpdateSchema = itemBaseSchema.partial();
 
 const reorderSchema = z.object({
   items: z.array(z.object({
@@ -159,25 +169,38 @@ export function navigationRoute(
   r.post('/navigation/menus', createMenu);
   r.post('/menus', createMenu);
 
+function prunePatch<T extends Record<string, any>>(raw: any, parsed: T): Partial<T> {
+  const out: any = {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  for (const k of Object.keys(parsed)) {
+    if (Object.prototype.hasOwnProperty.call(raw, k)) {
+      out[k] = (parsed as any)[k];
+    }
+  }
+  return out;
+}
+
   // --- 4. Update Menu ---
   const updateMenu = async (c: any) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
 
     const id = Number(c.req.param('id'));
-    const parsed = menuUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = menuUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
+    const patchData = prunePatch(rawJson, parsed.data);
     const rows = await db
       .update(navMenu)
-      .set({ ...parsed.data, updatedAt: new Date() })
+      .set({ ...patchData, updatedAt: new Date() })
       .where(eq(navMenu.id, id))
       .returning();
 
     const updated = rows[0];
     if (!updated) return c.json(problem(404, 'Menu not found'), 404, { 'Content-Type': P });
 
-    await auditRow(c, guard.user.id, 'nav_menu.update', String(id), parsed.data);
+    await auditRow(c, guard.user.id, 'nav_menu.update', String(id), patchData);
     await recordOutboxEvent(db, 'nav.change', {
       action: 'update',
       menuId: updated.id,
@@ -188,7 +211,9 @@ export function navigationRoute(
     return c.json(updated);
   };
   r.put('/navigation/menus/:id', updateMenu);
+  r.patch('/navigation/menus/:id', updateMenu);
   r.put('/menus/:id', updateMenu);
+  r.patch('/menus/:id', updateMenu);
 
   // --- 5. Delete Menu ---
   const deleteMenu = async (c: any) => {
@@ -250,18 +275,20 @@ export function navigationRoute(
     if (guard instanceof Response) return guard;
 
     const id = Number(c.req.param('id'));
-    const parsed = itemUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = itemUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
     const existingRows = await db.select().from(navItem).where(eq(navItem.id, id)).limit(1);
     const existing = existingRows[0];
     if (!existing) return c.json(problem(404, 'Item not found'), 404, { 'Content-Type': P });
 
-    const rows = await db.update(navItem).set(parsed.data).where(eq(navItem.id, id)).returning();
+    const patchData = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(navItem).set(patchData).where(eq(navItem.id, id)).returning();
     const updated = rows[0];
 
     const menuRows = await db.select().from(navMenu).where(eq(navMenu.id, existing.menuId)).limit(1);
-    await auditRow(c, guard.user.id, 'nav_item.update', String(id), parsed.data);
+    await auditRow(c, guard.user.id, 'nav_item.update', String(id), patchData);
     await recordOutboxEvent(db, 'nav.change', {
       action: 'item_update',
       menuId: existing.menuId,
@@ -272,7 +299,9 @@ export function navigationRoute(
     return c.json(updated);
   };
   r.put('/navigation/items/:id', updateItem);
+  r.patch('/navigation/items/:id', updateItem);
   r.put('/items/:id', updateItem);
+  r.patch('/items/:id', updateItem);
 
   // --- 8. Delete Item ---
   const deleteItem = async (c: any) => {

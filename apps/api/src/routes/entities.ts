@@ -21,76 +21,114 @@ type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
 
 // --- Validation Schemas ---
-const glossaryCreateSchema = z.object({
+const glossaryBaseSchema = z.object({
   term: z.string().trim().min(1).max(200),
   definition: z.string().trim().min(1),
   letter: z.string().trim().min(1).max(2).optional(),
   explainerSlug: z.string().trim().nullable().optional(),
-  locale: z.string().trim().default('en'),
+  locale: z.string().trim(),
   translationGroup: z.string().trim().optional(),
 });
-const glossaryUpdateSchema = glossaryCreateSchema.partial();
+const glossaryCreateSchema = glossaryBaseSchema.extend({
+  locale: z.string().trim().default('en'),
+});
+const glossaryUpdateSchema = glossaryBaseSchema.partial();
 
-const officeCreateSchema = z.object({
+const officeBaseSchema = z.object({
   role: z.string().trim().min(1).max(60),
   title: z.string().trim().min(1),
   entity: z.string().trim().min(1),
   address: z.string().trim().min(1),
   flag: z.string().trim().nullable().optional(),
   note: z.string().trim().nullable().optional(),
+  sort: z.number().int(),
+  locale: z.string().trim(),
+});
+const officeCreateSchema = officeBaseSchema.extend({
   sort: z.number().int().default(0),
   locale: z.string().trim().default('en'),
 });
-const officeUpdateSchema = officeCreateSchema.partial();
+const officeUpdateSchema = officeBaseSchema.partial();
 
-const testimonialCreateSchema = z.object({
+const testimonialBaseSchema = z.object({
   quote: z.string().trim().min(1),
   author: z.string().trim().min(1),
   role: z.string().trim().nullable().optional(),
   context: z.string().trim().nullable().optional(),
+  sort: z.number().int(),
+  permissionFlag: z.boolean(),
+  locale: z.string().trim(),
+});
+const testimonialCreateSchema = testimonialBaseSchema.extend({
   sort: z.number().int().default(0),
   permissionFlag: z.boolean().default(true),
   locale: z.string().trim().default('en'),
 });
-const testimonialUpdateSchema = testimonialCreateSchema.partial();
+const testimonialUpdateSchema = testimonialBaseSchema.partial();
 
-const policyCreateSchema = z.object({
+const policyBaseSchema = z.object({
   slug: z.string().trim().min(1).max(120),
   title: z.string().trim().min(1),
-  version: z.string().trim().default('1.0'),
-  status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']).default('draft'),
+  version: z.string().trim(),
+  status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']),
   effectiveDate: z.string().datetime().nullable().optional(),
   summary: z.string().trim().nullable().optional(),
+  body: z.string(),
+  cookieCategories: z.array(z.string()),
+  locale: z.string().trim(),
+  translationGroup: z.string().trim().optional(),
+});
+const policyCreateSchema = policyBaseSchema.extend({
+  version: z.string().trim().default('1.0'),
+  status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']).default('draft'),
   body: z.string().default(''),
   cookieCategories: z.array(z.string()).default([]),
   locale: z.string().trim().default('en'),
-  translationGroup: z.string().trim().optional(),
 });
-const policyUpdateSchema = policyCreateSchema.partial();
+const policyUpdateSchema = policyBaseSchema.partial();
 
-const formDefCreateSchema = z.object({
+const formDefBaseSchema = z.object({
   type: z.string().trim().min(1).max(40),
   title: z.string().trim().min(1),
   description: z.string().trim().nullable().optional(),
   successMessage: z.string().trim().nullable().optional(),
   routingEmail: z.string().email().nullable().optional(),
   privacyNotice: z.string().trim().nullable().optional(),
+  isActive: z.boolean(),
+});
+const formDefCreateSchema = formDefBaseSchema.extend({
   isActive: z.boolean().default(true),
 });
-const formDefUpdateSchema = formDefCreateSchema.partial();
+const formDefUpdateSchema = formDefBaseSchema.partial();
 
-const formFieldCreateSchema = z.object({
+const formFieldBaseSchema = z.object({
   name: z.string().trim().min(1).max(60),
   label: z.string().trim().min(1),
-  type: z.enum(['text', 'email', 'textarea', 'select', 'checkbox', 'radio', 'file', 'tel']).default('text'),
+  type: z.enum(['text', 'email', 'textarea', 'select', 'checkbox', 'radio', 'file', 'tel']),
   placeholder: z.string().trim().nullable().optional(),
   helpText: z.string().trim().nullable().optional(),
+  required: z.boolean(),
+  options: z.array(z.string()),
+  sort: z.number().int(),
+  validationRegex: z.string().trim().nullable().optional(),
+});
+const formFieldCreateSchema = formFieldBaseSchema.extend({
+  type: z.enum(['text', 'email', 'textarea', 'select', 'checkbox', 'radio', 'file', 'tel']).default('text'),
   required: z.boolean().default(false),
   options: z.array(z.string()).default([]),
   sort: z.number().int().default(0),
-  validationRegex: z.string().trim().nullable().optional(),
 });
-const formFieldUpdateSchema = formFieldCreateSchema.partial();
+const formFieldUpdateSchema = formFieldBaseSchema.partial();
+
+function prunePatch<T extends Record<string, unknown>>(rawJson: Record<string, unknown>, parsedData: T): Record<string, unknown> {
+  const patch: Record<string, unknown> = { updatedAt: new Date() };
+  for (const key of Object.keys(rawJson)) {
+    if (key in parsedData && (parsedData as any)[key] !== undefined) {
+      patch[key] = (parsedData as any)[key];
+    }
+  }
+  return patch;
+}
 
 export function entitiesRoute(
   db: DB,
@@ -182,11 +220,12 @@ export function entitiesRoute(
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = glossaryUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = glossaryUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
-    const patch: any = { ...parsed.data, updatedAt: new Date() };
-    if (parsed.data.term && !parsed.data.letter) {
+    const patch: any = prunePatch(rawJson, parsed.data);
+    if (rawJson.term && !rawJson.letter && parsed.data.term) {
       patch.letter = parsed.data.term.charAt(0).toUpperCase();
     }
 
@@ -199,6 +238,8 @@ export function entitiesRoute(
   };
   r.put('/entities/glossary/:id', updateGlossary);
   r.put('/glossary/:id', updateGlossary);
+  r.patch('/entities/glossary/:id', updateGlossary);
+  r.patch('/glossary/:id', updateGlossary);
 
   const deleteGlossary = async (c: any) => {
     const guard = await editorGuard(c);
@@ -246,10 +287,12 @@ export function entitiesRoute(
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = officeUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = officeUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
-    const rows = await db.update(office).set({ ...parsed.data, updatedAt: new Date() }).where(eq(office.id, id)).returning();
+    const patch: any = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(office).set(patch).where(eq(office.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Office not found'), 404, { 'Content-Type': P });
 
     await auditRow(c, guard.user.id, 'office.update', 'office', String(id), parsed.data);
@@ -258,6 +301,8 @@ export function entitiesRoute(
   };
   r.put('/entities/offices/:id', updateOffice);
   r.put('/offices/:id', updateOffice);
+  r.patch('/entities/offices/:id', updateOffice);
+  r.patch('/offices/:id', updateOffice);
 
   const deleteOffice = async (c: any) => {
     const guard = await editorGuard(c);
@@ -305,10 +350,12 @@ export function entitiesRoute(
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = testimonialUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = testimonialUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
-    const rows = await db.update(testimonial).set({ ...parsed.data, updatedAt: new Date() }).where(eq(testimonial.id, id)).returning();
+    const patch: any = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(testimonial).set(patch).where(eq(testimonial.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Testimonial not found'), 404, { 'Content-Type': P });
 
     await auditRow(c, guard.user.id, 'testimonial.update', 'testimonial', String(id), parsed.data);
@@ -317,6 +364,8 @@ export function entitiesRoute(
   };
   r.put('/entities/testimonials/:id', updateTestimonial);
   r.put('/testimonials/:id', updateTestimonial);
+  r.patch('/entities/testimonials/:id', updateTestimonial);
+  r.patch('/testimonials/:id', updateTestimonial);
 
   const deleteTestimonial = async (c: any) => {
     const guard = await editorGuard(c);
@@ -377,11 +426,12 @@ export function entitiesRoute(
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = policyUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = policyUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
-    const patch: any = { ...parsed.data, updatedAt: new Date() };
-    if (parsed.data.effectiveDate !== undefined) {
+    const patch: any = prunePatch(rawJson, parsed.data);
+    if (rawJson.effectiveDate !== undefined && parsed.data.effectiveDate !== undefined) {
       patch.effectiveDate = parsed.data.effectiveDate ? new Date(parsed.data.effectiveDate) : null;
     }
 
@@ -395,6 +445,8 @@ export function entitiesRoute(
   };
   r.put('/entities/policies/:id', updatePolicy);
   r.put('/policies/:id', updatePolicy);
+  r.patch('/entities/policies/:id', updatePolicy);
+  r.patch('/policies/:id', updatePolicy);
 
   const deletePolicy = async (c: any) => {
     const guard = await editorGuard(c);
@@ -472,10 +524,12 @@ export function entitiesRoute(
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = formDefUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = formDefUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
-    const rows = await db.update(formDefinition).set({ ...parsed.data, updatedAt: new Date() }).where(eq(formDefinition.id, id)).returning();
+    const patch: any = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(formDefinition).set(patch).where(eq(formDefinition.id, id)).returning();
     const updated = rows[0];
     if (!updated) return c.json(problem(404, 'Form definition not found'), 404, { 'Content-Type': P });
 
@@ -485,6 +539,8 @@ export function entitiesRoute(
   };
   r.put('/entities/forms/:id', updateForm);
   r.put('/forms/:id', updateForm);
+  r.patch('/entities/forms/:id', updateForm);
+  r.patch('/forms/:id', updateForm);
 
   const deleteForm = async (c: any) => {
     const guard = await editorGuard(c);
@@ -526,12 +582,13 @@ export function entitiesRoute(
   const updateFormField = async (c: any) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
-    const fieldId = Number(c.req.param('id') || c.req.param('fieldId'));
-
-    const parsed = formFieldUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const fieldId = Number(c.req.param('fieldId') || c.req.param('id'));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = formFieldUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
-    const rows = await db.update(formField).set(parsed.data).where(eq(formField.id, fieldId)).returning();
+    const patch: any = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(formField).set(patch).where(eq(formField.id, fieldId)).returning();
     const updated = rows[0];
     if (!updated) return c.json(problem(404, 'Form field not found'), 404, { 'Content-Type': P });
 
@@ -540,13 +597,19 @@ export function entitiesRoute(
     await recordOutboxEvent(db, 'form.change', { action: 'field_update', type: formRows[0]?.type ?? 'custom', tags: ['forms'] });
     return c.json(updated);
   };
+  r.put('/entities/forms/:formId/fields/:fieldId', updateFormField);
+  r.put('/forms/:formId/fields/:fieldId', updateFormField);
   r.put('/entities/forms/fields/:fieldId', updateFormField);
   r.put('/forms/fields/:id', updateFormField);
+  r.patch('/entities/forms/:formId/fields/:fieldId', updateFormField);
+  r.patch('/forms/:formId/fields/:fieldId', updateFormField);
+  r.patch('/entities/forms/fields/:fieldId', updateFormField);
+  r.patch('/forms/fields/:id', updateFormField);
 
   const deleteFormField = async (c: any) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
-    const fieldId = Number(c.req.param('id') || c.req.param('fieldId'));
+    const fieldId = Number(c.req.param('fieldId') || c.req.param('id'));
 
     const rows = await db.delete(formField).where(eq(formField.id, fieldId)).returning();
     const deleted = rows[0];
@@ -557,6 +620,8 @@ export function entitiesRoute(
     await recordOutboxEvent(db, 'form.change', { action: 'field_delete', type: formRows[0]?.type ?? 'custom', tags: ['forms'] });
     return c.json({ deleted: true });
   };
+  r.delete('/entities/forms/:formId/fields/:fieldId', deleteFormField);
+  r.delete('/forms/:formId/fields/:fieldId', deleteFormField);
   r.delete('/entities/forms/fields/:fieldId', deleteFormField);
   r.delete('/forms/fields/:id', deleteFormField);
 

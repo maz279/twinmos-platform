@@ -174,6 +174,17 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
   }
 
 
+  function prunePatch<T extends Record<string, any>>(raw: any, parsed: T): Partial<T> {
+    const out: any = {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+    for (const k of Object.keys(parsed)) {
+      if (Object.prototype.hasOwnProperty.call(raw, k)) {
+        out[k] = (parsed as any)[k];
+      }
+    }
+    return out;
+  }
+
   // ---------- admin: orgs ----------
   r.get('/partner-orgs', async (c) => {
     const guard = await adminGuard(c);
@@ -205,17 +216,21 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     return c.json(rows[0], 201);
   });
 
-  r.patch('/partner-orgs/:id', async (c) => {
+  const updatePartnerOrg = async (c: any) => {
     const guard = await adminGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = partnerOrgUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = partnerOrgUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
-    const rows = await db.update(partnerOrg).set(parsed.data).where(eq(partnerOrg.id, id)).returning();
+    const patchData = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(partnerOrg).set(patchData).where(eq(partnerOrg.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Organization not found'), 404, { 'Content-Type': P });
-    await auditRow(c, guard.user.id, 'partnerOrg.update', String(id), parsed.data);
+    await auditRow(c, guard.user.id, 'partnerOrg.update', String(id), patchData);
     return c.json(rows[0]);
-  });
+  };
+  r.patch('/partner-orgs/:id', updatePartnerOrg);
+  r.put('/partner-orgs/:id', updatePartnerOrg);
 
   /** 0020: org deletion — admin+, refused while members exist (empty-delete
    *  guard, same discipline as media folders). Assets cascade via FK. */
@@ -431,17 +446,21 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     return c.json(rows[0], 201);
   });
 
-  r.patch('/distributors/:id', async (c) => {
+  const updateDistributor = async (c: any) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = distributorUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = distributorUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
-    const rows = await db.update(distributor).set(parsed.data as any).where(eq(distributor.id, id)).returning();
+    const patchData = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(distributor).set(patchData as any).where(eq(distributor.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Distributor not found'), 404, { 'Content-Type': P });
-    await auditRow(c, guard.user.id, 'distributor.update', String(id), parsed.data);
+    await auditRow(c, guard.user.id, 'distributor.update', String(id), patchData);
     return c.json(rows[0]);
-  });
+  };
+  r.patch('/distributors/:id', updateDistributor);
+  r.put('/distributors/:id', updateDistributor);
 
   r.delete('/distributors/:id', async (c) => {
     const guard = await editorGuard(c);
@@ -545,6 +564,22 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     await auditRow(c, guard.user.id, 'marketplace.create', String(rows[0].id), parsed.data);
     return c.json(rows[0], 201);
   });
+
+  const updateMarketplaceListing = async (c: any) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = marketplaceListingUpdateSchema.safeParse(rawJson);
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const patchData = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(marketplaceListing).set(patchData as any).where(eq(marketplaceListing.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Listing not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'marketplace.update', String(id), patchData);
+    return c.json(rows[0]);
+  };
+  r.patch('/marketplace-listings/:id', updateMarketplaceListing);
+  r.put('/marketplace-listings/:id', updateMarketplaceListing);
 
   r.delete('/marketplace-listings/:id', async (c) => {
     const guard = await editorGuard(c);
