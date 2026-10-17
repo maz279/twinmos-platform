@@ -41,7 +41,7 @@ let memberCookie = '';
 let viewerCookie = '';
 let editorCookie = '';
 
-async function setupTestUser(email: string, role: string) {
+async function setupTestUser(email: string, role: string, mfaEnabled = true) {
   const password = 'TestSecPassword123!';
   // Directly insert user to simulate pre-existing or invited account
   const { eq } = await import('drizzle-orm');
@@ -50,12 +50,15 @@ async function setupTestUser(email: string, role: string) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password, name: `Sec ${role}` }),
   });
-  await db.update(user).set({ role }).where(eq(user.email, email));
+  await db.update(user).set({ role, emailVerified: true, twoFactorEnabled: false }).where(eq(user.email, email));
   const res = await app.request('/api/v1/auth/sign-in/email', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
+  if (mfaEnabled) {
+    await db.update(user).set({ twoFactorEnabled: true }).where(eq(user.email, email));
+  }
   return res.headers.getSetCookie().map((c: string) => c.split(';')[0]).join('; ');
 }
 
@@ -260,7 +263,9 @@ describe('Security Regression Pack (S-01…S-16)', () => {
         redirectTo: 'http://localhost:5173/admin/reset-password',
       }),
     });
-    expect([200, 204]).toContain(res.status);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe(true);
   });
 
   it('S-05: Unverified sign-in rejected with 403 EMAIL_NOT_VERIFIED when requireEmailVerification is active', async () => {
@@ -318,7 +323,8 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     expect(lockedRes.status).toBe(401);
     const body = await lockedRes.json();
     expect(body.title).toBe('Account Locked');
-    expect(lockedRes.headers.get('retry-after')).toBeDefined();
+    expect(lockedRes.headers.get('retry-after')).toMatch(/^\d+$/);
+    expect(Number(lockedRes.headers.get('retry-after'))).toBeGreaterThan(0);
   });
 
   it('LOCK-CT: Database-backed lockout survives and persists failed_login_count and locked_until in PostgreSQL', async () => {
@@ -357,7 +363,8 @@ describe('Security Regression Pack (S-01…S-16)', () => {
       body: JSON.stringify({ email: lockoutEmail, password: 'AnyPassword' }),
     });
     expect(lockedRes.status).toBe(401);
-    expect(lockedRes.headers.get('retry-after')).toBeDefined();
+    expect(lockedRes.headers.get('retry-after')).toMatch(/^\d+$/);
+    expect(Number(lockedRes.headers.get('retry-after'))).toBeGreaterThan(0);
   });
 
   it('AUTH-BOOT: Full bootstrap sign-in, invitation, email verification and MFA enforcement integration', async () => {
@@ -370,7 +377,7 @@ describe('Security Regression Pack (S-01…S-16)', () => {
       body: JSON.stringify({ email: adminEmail, password: adminPw, name: 'Super Admin' }),
     });
     const { eq } = await import('drizzle-orm');
-    await db.update(user).set({ role: 'super_admin', emailVerified: true }).where(eq(user.email, adminEmail));
+    await db.update(user).set({ role: 'super_admin', emailVerified: true, twoFactorEnabled: false }).where(eq(user.email, adminEmail));
 
     const adminSignIn = await app.request('/api/v1/auth/sign-in/email', {
       method: 'POST',
@@ -379,6 +386,7 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     });
     expect(adminSignIn.status).toBe(200);
     const superCookie = adminSignIn.headers.getSetCookie().map((c: string) => c.split(';')[0]).join('; ');
+    await db.update(user).set({ twoFactorEnabled: true }).where(eq(user.email, adminEmail));
 
     // 2. Super admin invites staff
     const staffEmail = 'invited-staff@twinmos.test';
@@ -417,25 +425,28 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     expect(verifiedSignIn.status).toBe(200);
   });
 
-  it('S-07: Admin mutation enforces MFA when ENFORCE_MFA=1', async () => {
-    const prev = process.env.ENFORCE_MFA;
-    try {
-      process.env.ENFORCE_MFA = '1';
-      // Editor without 2FA attempts to create a product
-      const res = await app.request('/api/v1/admin/products', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          Cookie: editorCookie,
-        },
-        body: JSON.stringify({ title: 'Test Product', categoryId: 'cat-1' }),
-      });
-      expect(res.status).toBe(403);
-      const body = await res.json();
-      expect(body.code).toBe('MFA_REQUIRED');
-    } finally {
-      process.env.ENFORCE_MFA = prev;
-    }
+  it('S-07: Admin routes enforce MFA for editor and above on all routes including GET', async () => {
+    // Un-enrolled editor (twoFactorEnabled: false) attempts to access /admin/products (GET)
+    const unMfaEditorCookie = await setupTestUser('sec-no-mfa-editor@twinmos.test', 'editor', false);
+    const getRes = await app.request('/api/v1/admin/products', {
+      headers: { Cookie: unMfaEditorCookie },
+    });
+    expect(getRes.status).toBe(403);
+    const getBody = await getRes.json();
+    expect(getBody.code).toBe('MFA_REQUIRED');
+
+    // Un-enrolled editor attempts mutation (POST)
+    const postRes = await app.request('/api/v1/admin/products', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        Cookie: unMfaEditorCookie,
+      },
+      body: JSON.stringify({ title: 'Test Product', categoryId: 'cat-1' }),
+    });
+    expect(postRes.status).toBe(403);
+    const postBody = await postRes.json();
+    expect(postBody.code).toBe('MFA_REQUIRED');
   });
 
   it('S-09: Two visitors behind Cloudflare get separate sign-in buckets (attacker throttled 429, staff on separate IP succeeds 200)', async () => {

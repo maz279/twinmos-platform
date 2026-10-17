@@ -37,9 +37,9 @@ export async function runSecurityProbes(opts = {}) {
     passed: true
   };
 
-  // 1. Oversized JSON body on standard endpoint (2 MB > 256 KB limit -> 413 Payload Too Large)
+  // 1. Oversized JSON body on standard endpoint (350 KB > 256 KB limit -> 413 Payload Too Large)
   try {
-    const oversizeJson = JSON.stringify({ data: 'x'.repeat(2 * 1024 * 1024) });
+    const oversizeJson = JSON.stringify({ data: 'x'.repeat(350 * 1024) });
     const r1 = await fetch(`${API_URL}/api/v1/admin/partner-orgs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Connection': 'close' },

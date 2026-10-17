@@ -538,7 +538,7 @@ export function buildApp(db: DB) {
       );
     }
     // S-07 / T2.4.6 / A4a: MFA enforcement on all /admin routes (including GET) for editor and above
-    const enforceMfa = process.env.NODE_ENV === 'production' || process.env.ENFORCE_MFA === '1';
+    const enforceMfa = process.env.NODE_ENV === 'production' || process.env.ENFORCE_MFA !== '0';
     if (enforceMfa) {
       if (!row?.mfa && ['super_admin', 'admin', 'editor'].includes(s.user.role)) {
         return c.json(
