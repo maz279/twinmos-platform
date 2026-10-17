@@ -94,6 +94,8 @@ async function main() {
         description: dbP.description || pr.description || '',
         featured: Boolean(dbP.featured ?? pr.featured),
         isNew: Boolean(pr.isNew),
+        priceUsd: dbP.priceUsd != null ? Number(dbP.priceUsd) : (pr.priceUsd != null ? Number(pr.priceUsd) : null),
+        currency: dbP.currency || pr.currency || 'USD',
         search: `${dbP.name || pr.name} ${pr.catLabel || ''} ${pr.search || ''} ${JSON.stringify(dbP.specs || {})}`.slice(0, 500),
         imgC: imgC,
         galleryC: galleryC,
@@ -158,6 +160,8 @@ async function main() {
             if (dbP.specs && Object.keys(dbP.specs).length > 0) cur.specs = dbP.specs;
             if (dbP.warranty) cur.warranty = dbP.warranty;
             if (dbP.description) cur.description = dbP.description;
+            if (dbP.priceUsd != null) cur.priceUsd = Number(dbP.priceUsd);
+            if (dbP.currency) cur.currency = dbP.currency;
           } else {
             var item = {
               id: slug,
@@ -173,6 +177,8 @@ async function main() {
               specs: dbP.specs || {},
               description: dbP.description || '',
               featured: Boolean(dbP.featured),
+              priceUsd: dbP.priceUsd != null ? Number(dbP.priceUsd) : null,
+              currency: dbP.currency || 'USD',
               img: (Array.isArray(dbP.gallery) && typeof dbP.gallery[0] === 'string' && (dbP.gallery[0].indexOf('/') !== -1 || dbP.gallery[0].indexOf('.') !== -1)) ? dbP.gallery[0] : 'assets/img/prodrive-1.webp',
               gallery: (Array.isArray(dbP.gallery) && dbP.gallery.length > 0 && typeof dbP.gallery[0] === 'string' && (dbP.gallery[0].indexOf('/') !== -1 || dbP.gallery[0].indexOf('.') !== -1)) ? dbP.gallery : ['assets/img/prodrive-1.webp'],
               variants: ['Standard'],
