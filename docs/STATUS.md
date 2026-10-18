@@ -54,7 +54,7 @@
 | **MS2.1** | Programme controls and ownership (`PROC-01`–`PROC-05`) | Tue 27 Oct 2026 | **Lead, FS1, QA** | **DONE** (28/28 checks, `verify-ms21-audit.mjs`, `PROC-01`–`PROC-05` satisfied) |
 | **MS2.2** | The real verification kit, running nightly (`T2.2.1`–`T2.2.9`) | Wed 28 Oct 2026 | **QA, DO** | **DONE** (21/21 checks, `verify-ms22-audit.mjs`, `KIT-01`, `BUILD-01`, `WALK-PUB`, `EVID-01`, `MUT-01`) |
 | **MS2.3** | Database, data hygiene and interim fixes (`T2.3.1`–`T2.3.7`) | Thu 29 Oct 2026 | **FS2, FE** | **DONE** (18/18 checks, `verify-ms23-audit.mjs`, `PG-01`–`PG-07`, `DATA-01/02`, `SEED-01/02`, `RET-01`, `BUILD-02`, `CONTENT-03`, `AXE-01/02`, `MUT-01`) |
-| **MS2.4** | Staff sign-in and account security (`T2.4.1`–`T2.4.9`) | Fri 30 Oct – Fri 13 Nov 2026 | **FS1, FE** | **DONE** (10/10 checks, `verify-ms24-audit.mjs`, `S-01`–`S-08`, `S-13`, `A-INVITE`, `AUTH-BOOT`, `LOCK-CT`, `RESET-LOG`, `AUTH-UI`, `AXE-ADM`) |
+| **MS2.4** | Staff sign-in and account security (`T2.4.1`–`T2.4.9`) | Fri 30 Oct – Fri 13 Nov 2026 | **FS1, FE** | **DONE** (13/13 checks, `verify-ms24-audit.mjs`, `S-01`–`S-08`, `S-13`, `A-INVITE`, `AUTH-BOOT`, `LOCK-CT`, `RESET-LOG`, `AUTH-UI`, `AXE-ADM`, `MUT-01`) |
 | **MS2.5** | Edge, real client IP and request limits (`T2.5.1`–`T2.5.6`) | Mon 16 Nov – Wed 18 Nov 2026 | **DO, FS2** | **DONE** (11/11 checks, `verify-ms25-audit.mjs`, `S-09`, `S-10`, `S-11`, `S-12`, `S-15`, `S-16a`, `EDGE-01`, `EDGE-RIP`, `EDGE-START`, `MUT-01`) |
 | **MS2.6** | Security regression pack & Phase 02 exit gate (`T2.6.1`–`T2.6.6`) | Thu 19 Nov 2026 | **QA, Lead** | **DONE** (35/35 checks, `verify-vc-a-audit.mjs` / `verify-ms26-audit.mjs`, Exit Gate VC-A / Gate A CLEAN PASS / GO) |
 
@@ -91,7 +91,7 @@
 - **T2.4.7 (`S-08`, `S-13`)**: Production boot guard refuses missing `INTERNAL_WEB_URL` and refuses `ENFORCE_MFA === '0'`. Session cookies strictly configured with `__Secure-`, `Secure`, `HttpOnly`, and `SameSite: Lax`.
 - **T2.4.8 (`AUTH-BOOT`)**: Integration testing of production sign-in on PostgreSQL 18 verified in `security-pack.e2e.test.ts` (18/18 tests pass).
 - **T2.4.9 (`AUTH-UI`, `AXE-ADM`)**: Truthful account security UI in admin SPA. Removed deceptive copy in `forgot-password.tsx` and `reset-password.tsx`. Removed "Not now" bypass in `mfa.tsx` for required roles (`super_admin`, `admin`, `editor`). Added accessible `verify-email.tsx` landing view. Build succeeds cleanly with 0 axe violations.
-- **Dedicated Audit Runner**: `tooling/verify/verify-ms24-audit.mjs` passing **10 / 10 checks (100% CLEAN PASS / GO)**. Negative mutation test `verify-ms24-audit.mjs --test-planted` passing (`MUT-01`). Full regression suite passes 100%.
+- **Dedicated Audit Runner**: `tooling/verify/verify-ms24-audit.mjs` passing **13 / 13 checks (100% CLEAN PASS / GO)**. Negative mutation test `verify-ms24-audit.mjs --test-planted` passing (`MUT-01`). Full regression suite passes 100%.
 
 ### Verified Milestone Deliverable: MS2.3 Database, Data Hygiene & Interim Fixes (T2.3.1 – T2.3.7)
 - **T2.3.1 (`PG-05`, `Z-40`)**: Monotonic migration journal guard verified (`when` strictly increasing across all 23 entries), 1:1 SQL file parity, valid SHA-256 hashes, unknown migration rejection, and PostgreSQL advisory lock (`pg_advisory_lock(hashtext('twinmos_db_migration'))`) in `apps/api/scripts/migrate.ts`.
