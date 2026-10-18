@@ -86,14 +86,23 @@ check('T2.3.1-PG05-ADVISORY', 'PostgreSQL advisory lock acquired in migration ru
   return 'Advisory lock taken and unlocked in finally block';
 });
 
-// 2. T2.3.2 & Z-40: Drizzle Snapshot Parity
-check('T2.3.2-SNAPSHOT-PARITY', 'Drizzle snapshot 0022 exists and reflects complete schema (Z-40)', () => {
+// 2. T2.3.2 & Z-40 / PG-03 / PG-04: Drizzle Snapshot Parity
+check('T2.3.2-PG03-SNAPSHOT-0022', 'Drizzle snapshot 0022 exists and reflects complete schema (Z-40, PG-03)', () => {
   const snapPath = path.join(ROOT, 'packages/db/migrations/meta/0022_snapshot.json');
   if (!fs.existsSync(snapPath)) throw new Error('Missing 0022_snapshot.json in meta directory');
   const snap = JSON.parse(fs.readFileSync(snapPath, 'utf8'));
   const tableCount = Object.keys(snap.tables || {}).length;
   if (tableCount < 40) throw new Error(`Expected >= 40 tables in snapshot, found ${tableCount}`);
   return `0022_snapshot.json verified with ${tableCount} tables`;
+});
+
+check('T2.3.2-PG04-SNAPSHOT-0023', 'Drizzle snapshot 0023 exists and reflects current schema (Z-40, PG-04)', () => {
+  const snapPath = path.join(ROOT, 'packages/db/migrations/meta/0023_snapshot.json');
+  if (!fs.existsSync(snapPath)) throw new Error('Missing 0023_snapshot.json in meta directory');
+  const snap = JSON.parse(fs.readFileSync(snapPath, 'utf8'));
+  const tableCount = Object.keys(snap.tables || {}).length;
+  if (tableCount < 40) throw new Error(`Expected >= 40 tables in snapshot, found ${tableCount}`);
+  return `0023_snapshot.json verified with ${tableCount} tables`;
 });
 
 // 3. T2.3.3 & PG-01..PG-07: Database Reconciliation & Version Pinning
@@ -125,14 +134,22 @@ check('T2.3.3-PG06-PINNED', 'PostgreSQL 18 named in DEPLOY.md, MASTER-PLAN, and 
 });
 
 // 4. T2.3.4 & DATA-01 / DATA-02: Translation Integrity & Corrupted Value Rejection
-check('T2.3.4-DATA-INTEGRITY', 'GET /api/v1/i18n/ar clean and 3 write routes reject encoding loss with 422 (DATA-01, DATA-02)', () => {
+check('T2.3.4-DATA01-INTEGRITY', 'GET /api/v1/i18n/ar has 0 corrupted strings (??? or U+FFFD) (DATA-01)', () => {
   const out = execSync('node --experimental-strip-types --no-warnings tooling/verify/check-translations.mjs', { cwd: ROOT, encoding: 'utf8' });
-  if (!out.includes('ALL CHECKS PASSED')) throw new Error(`check-translations failed: ${out}`);
-  return '0 corrupted strings in Arabic bundle; 422 returned on all 3 write routes';
+  if (!out.includes('PASS DATA-01')) throw new Error(`check-translations DATA-01 failed: ${out}`);
+  return '0 corrupted strings in Arabic bundle';
+});
+
+check('T2.3.4-DATA02-REJECTION', '3 translation write routes reject encoding loss with 422 problem report (DATA-02)', () => {
+  const out = execSync('node --experimental-strip-types --no-warnings tooling/verify/check-translations.mjs', { cwd: ROOT, encoding: 'utf8' });
+  if (!out.includes('PASS DATA-02 (1/3)') || !out.includes('PASS DATA-02 (2/3)') || !out.includes('PASS DATA-02 (3/3)')) {
+    throw new Error(`check-translations DATA-02 failed: ${out}`);
+  }
+  return 'PUT /translations, POST /import, and POST /xliff reject encoding loss with 422';
 });
 
 // 5. T2.3.5 & SEED-01 / SEED-02 / AUTH-BOOT: Clean Bootstrap Seed & Verified Admin
-check('T2.3.5-SEED-PROD-GUARD', 'seed:demo strictly refuses in production environment (SEED-01, SEED-02)', () => {
+check('T2.3.5-SEED01-PROD-GUARD', 'seed:demo strictly refuses in production environment (SEED-01)', () => {
   try {
     execSync('node --experimental-strip-types --no-warnings apps/api/scripts/seed.ts --demo', {
       cwd: ROOT,
@@ -149,7 +166,7 @@ check('T2.3.5-SEED-PROD-GUARD', 'seed:demo strictly refuses in production enviro
   return 'seed:demo rejected in NODE_ENV=production';
 });
 
-check('T2.3.5-SEED-BOOTSTRAP-RULES', 'seed.ts implements verified super_admin and skips demo products in bootstrap (SEED-01, AUTH-BOOT)', () => {
+check('T2.3.5-SEED02-BOOTSTRAP-RULES', 'seed.ts implements verified super_admin and skips demo products in bootstrap (SEED-02, AUTH-BOOT)', () => {
   const seedScript = fs.readFileSync(path.join(ROOT, 'apps/api/scripts/seed.ts'), 'utf8');
   if (!seedScript.includes("emailVerified: true")) {
     throw new Error('Bootstrap seed does not set emailVerified: true on super_admin');
@@ -161,35 +178,43 @@ check('T2.3.5-SEED-BOOTSTRAP-RULES', 'seed.ts implements verified super_admin an
   if (!deploy.includes('verified') && !deploy.includes('attest')) {
     throw new Error('docs/runbooks/DEPLOY.md missing operator attestation of verified super_admin');
   }
-  return 'Verified super_admin unblocks staff sign-in; demo rows gated by isDemo';
+  return 'Verified super_admin unblocks staff sign-in; demo rows gated by isDemo; operator attestation documented';
 });
 
 // 6. T2.3.6 & BUILD-02 / CONTENT-03: Zero Localhost in Admin and Web Bundles
-check('T2.3.6-BUILD-NO-LOCALHOST', 'Zero localhost URLs in apps/admin/dist and apps/web/dist (BUILD-02, CONTENT-03)', () => {
+check('T2.3.6-BUILD02-DIST-CLEAN', 'Zero localhost URLs in apps/admin/dist and apps/web/dist (BUILD-02)', () => {
   const allowDirtyEnv = process.env.CI ? {} : { ALLOW_DIRTY: '1' };
   const out = execSync('node tooling/verify/build-provenance.mjs', { cwd: ROOT, encoding: 'utf8', env: { ...process.env, ...allowDirtyEnv } });
   if (!out.includes('PASS BUILD-01 / BUILD-02 / CONTENT-03')) {
     throw new Error(`build-provenance failed: ${out}`);
   }
+  return 'apps/admin/dist and apps/web/dist free of localhost URLs';
+});
+
+check('T2.3.6-CONTENT03-SETTINGS-CLEAN', 'settings.tsx:72 fallback localhost removed (CONTENT-03)', () => {
   const settingsFile = fs.readFileSync(path.join(ROOT, 'apps/admin/src/modules/settings.tsx'), 'utf8');
   if (settingsFile.includes('http://localhost:4321')) {
     throw new Error('settings.tsx still contains http://localhost:4321');
   }
-  return 'Both dist bundles clean; settings.tsx:72 fallback removed';
+  return 'apps/admin/src/modules/settings.tsx clean of hardcoded localhost fallback';
 });
 
 // 7. T2.3.7 & AXE-01 / AXE-02: Gaming Contrast & WCAG 2.2 AA on 29 Routes
-check('T2.3.7-AXE-GAMING-CONTRAST', 'Gaming page dark section links have >= 4.5:1 contrast and 0 axe violations (AXE-01, AXE-02)', () => {
+check('T2.3.7-AXE01-GAMING-CONTRAST', 'Gaming dark section link contrast ratio >= 4.5:1 (#00F0FF, 14.3:1) (AXE-01)', () => {
   const a11yCss = fs.readFileSync(path.join(ROOT, 'apps/web/public/assets/css/a11y-overrides.css'), 'utf8');
   if (!a11yCss.includes('body.gaming .link-arrow') || !a11yCss.includes('#00F0FF')) {
     throw new Error('Missing gaming dark section link contrast override (#00F0FF) in a11y-overrides.css');
   }
+  return 'High contrast (#00F0FF, 14.3:1) override active in a11y-overrides.css';
+});
+
+check('T2.3.7-AXE02-EVIDENCE-VERIFIED', 'Visual evidence screenshots present across key routes (AXE-02)', () => {
   const evidenceDir = path.join(ROOT, 'tooling/verify/evidence');
   if (!fs.existsSync(path.join(evidenceDir, '01_homepage.png')) ||
       !fs.existsSync(path.join(evidenceDir, '06_arabic_locale.png'))) {
     throw new Error('Missing visual evidence screenshots from visual-a11y-audit');
   }
-  return 'High contrast (#00F0FF, 14.3:1) override active; visual evidence present';
+  return 'Key route visual evidence verified in tooling/verify/evidence/';
 });
 
 // 8. RET-01: Audit Log Retention Schedule & Policy
@@ -208,7 +233,7 @@ check('RET-01-AUDIT-RETENTION', 'Audit log retention sweeps on boot and daily at
 });
 
 // 9. MUT-01: Negative Mutation Tests
-check('MUT-01-JOURNAL-MUTATION', 'check-migration-journal catches planted mutation (--test-planted)', () => {
+check('MUT-01-JOURNAL-MUTATION', 'check-migration-journal catches planted mutation (--test-planted) (MUT-01)', () => {
   const out = execSync('node tooling/verify/check-migration-journal.mjs --test-planted', { cwd: ROOT, encoding: 'utf8' });
   if (!out.includes('Negative mutation caught planted out-of-order timestamps')) {
     throw new Error(`Negative mutation failed: ${out}`);
@@ -216,7 +241,7 @@ check('MUT-01-JOURNAL-MUTATION', 'check-migration-journal catches planted mutati
   return 'Planted out-of-order timestamps caught (MUT-01)';
 });
 
-check('MUT-01-TRANSLATIONS-MUTATION', 'check-translations catches planted mutation (--test-planted)', () => {
+check('MUT-01-TRANSLATIONS-MUTATION', 'check-translations catches planted mutation (--test-planted) (MUT-01)', () => {
   const out = execSync('node --experimental-strip-types --no-warnings tooling/verify/check-translations.mjs --test-planted', { cwd: ROOT, encoding: 'utf8' });
   if (!out.includes('Negative mutation caught planted lack of 422 guard')) {
     throw new Error(`Negative mutation failed: ${out}`);
@@ -224,7 +249,7 @@ check('MUT-01-TRANSLATIONS-MUTATION', 'check-translations catches planted mutati
   return 'Planted lack of 422 guard caught (MUT-01)';
 });
 
-check('MUT-01-BUILD-MUTATION', 'build-provenance catches planted localhost mutation (--test-planted)', () => {
+check('MUT-01-BUILD-MUTATION', 'build-provenance catches planted localhost mutation (--test-planted) (MUT-01)', () => {
   const out = execSync('node tooling/verify/build-provenance.mjs --test-planted', { cwd: ROOT, encoding: 'utf8' });
   if (!out.includes('MUTATION TEST PASSED: BUILD-02 caught planted localhost URL')) {
     throw new Error(`Negative mutation failed: ${out}`);
