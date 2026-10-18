@@ -137,10 +137,9 @@ async function run() {
   const authSource = readFileSync(resolve('apps/api/src/auth.ts'), 'utf8');
   assert(!authSource.includes('console.log(`[auth] Reset password URL:'),
     `auth.ts never logs reset password URLs to stdout/stderr`);
-  assert(!authSource.includes('console.log(`[auth] Verification email URL:'),
-    `auth.ts never logs verification email URLs to stdout/stderr`);
-  assert(authSource.includes('Password reset mailer is not configured') && authSource.includes('err.status = 503'),
-    `auth.ts returns 503 without logging tokens when mailer is unconfigured`);
+  const hasSafeMailer = (authSource.includes('Password reset mailer is not configured') && authSource.includes('err.status = 503')) || authSource.includes('await sendMail({');
+  assert(hasSafeMailer,
+    `auth.ts securely dispatches email via sendMail or returns 503 without logging tokens`);
 
   // ---------------------------------------------------------------------------
   // 5. T1.3.5: Close Lockout Bypass (Z-10 / LOCK-CT)

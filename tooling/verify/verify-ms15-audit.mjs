@@ -360,6 +360,7 @@ async function runAudit() {
     });
 
     await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
+    await page.waitForSelector('#cookieBar', { state: 'visible', timeout: 3000 }).catch(() => {});
     const initialBar = await page.evaluate(() => {
       const b = document.getElementById('cookieBar');
       return b && window.getComputedStyle(b).display !== 'none';
