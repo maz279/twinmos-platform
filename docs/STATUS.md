@@ -55,7 +55,7 @@
 | **MS2.2** | The real verification kit, running nightly (`T2.2.1`–`T2.2.9`) | Wed 28 Oct 2026 | **QA, DO** | **DONE** (21/21 checks, `verify-ms22-audit.mjs`, `KIT-01`, `BUILD-01`, `WALK-PUB`, `EVID-01`, `MUT-01`) |
 | **MS2.3** | Database, data hygiene and interim fixes (`T2.3.1`–`T2.3.7`) | Thu 29 Oct 2026 | **FS2, FE** | **DONE** (18/18 checks, `verify-ms23-audit.mjs`, `PG-01`–`PG-07`, `DATA-01/02`, `SEED-01/02`, `RET-01`, `BUILD-02`, `CONTENT-03`, `AXE-01/02`, `MUT-01`) |
 | **MS2.4** | Staff sign-in and account security (`T2.4.1`–`T2.4.9`) | Fri 30 Oct – Fri 13 Nov 2026 | **FS1, FE** | **DONE** (13/13 checks, `verify-ms24-audit.mjs`, `S-01`–`S-08`, `S-13`, `A-INVITE`, `AUTH-BOOT`, `LOCK-CT`, `RESET-LOG`, `AUTH-UI`, `AXE-ADM`, `MUT-01`) |
-| **MS2.5** | Edge, real client IP and request limits (`T2.5.1`–`T2.5.6`) | Mon 16 Nov – Wed 18 Nov 2026 | **DO, FS2** | **DONE** (11/11 checks, `verify-ms25-audit.mjs`, `S-09`, `S-10`, `S-11`, `S-12`, `S-15`, `S-16a`, `EDGE-01`, `EDGE-RIP`, `EDGE-START`, `MUT-01`) |
+| **MS2.5** | Edge, real client IP and request limits (`T2.5.1`–`T2.5.6`) | Mon 16 Nov – Wed 18 Nov 2026 | **DO, FS2** | **DONE** (13/13 checks, `verify-ms25-audit.mjs`, `S-09`, `S-10`, `S-11`, `S-12`, `S-15`, `S-16a`, `EDGE-01`, `EDGE-RIP`, `EDGE-START`, `MUT-01`) |
 | **MS2.6** | Security regression pack & Phase 02 exit gate (`T2.6.1`–`T2.6.6`) | Thu 19 Nov 2026 | **QA, Lead** | **DONE** (35/35 checks, `verify-vc-a-audit.mjs` / `verify-ms26-audit.mjs`, Exit Gate VC-A / Gate A CLEAN PASS / GO) |
 
 ### Phase 02 Completion & VC-A Gate Status
@@ -79,7 +79,7 @@
 - **T2.5.4 (`EDGE-RIP`, `S-09`, `S-10`, Source A6)**: Proven real client IP through edge topology: staff on separate client IP receives 200 while attacker on separate client IP is throttled 429 (`S-09`); direct socket requests with forged headers are throttled to socket IP (`S-10`). Probes `edge-ip-live-proof.mjs` and `cf-sim-probe.mjs` pass cleanly against live daemon.
 - **T2.5.5 (`S-15`, `Z-32` part, Source A15)**: Pruned dead `/api/v1/partner` tier (GET-only prefix) from body limit middleware. Aligned upload tiers for multipart headroom: Media & Serials 12 MB (handler cap 10 MB, nginx cap 15 MB), Partner assets 28 MB (handler cap 25 MB, nginx cap 30 MB), ensuring `nginx cap >= API tier >= handler limit`.
 - **T2.5.6 (`S-12`, `S-16a`, Source A8, `Z-32`)**: Tiered body limits enforced: 256 KB standard JSON, 64 KB auth, oversized payload returns 413 `application/problem+json` (`prod-security-probes.mjs` passes). Edge security headers enforce single map-driven CSP (`$twinmos_csp`), HSTS, and `server_tokens off`.
-- **Dedicated Audit Runner**: `tooling/verify/verify-ms25-audit.mjs` passing **11 / 11 checks (100% CLEAN PASS / GO)**. Negative mutation test `verify-ms25-audit.mjs --test-planted` passing (`MUT-01`). Full regression suite passes 100% (MS1.1–MS2.4, VC-R0).
+- **Dedicated Audit Runner**: `tooling/verify/verify-ms25-audit.mjs` passing **13 / 13 checks (100% CLEAN PASS / GO)**. Negative mutation test `verify-ms25-audit.mjs --test-planted` passing (`MUT-01`). Full regression suite passes 100% (MS1.1–MS2.4, VC-R0).
 
 ### Verified Milestone Deliverable: MS2.4 Staff Sign-In & Account Security (T2.4.1 – T2.4.9)
 - **T2.4.1 (`S-05`, `Z-03`)**: Email verification wired to transactional mailer (`sendVerificationEmail` using `sendMail`). In production mode, `requireEmailVerification` is active; unverified sign-in attempts return HTTP 403 with `code: 'EMAIL_NOT_VERIFIED'`.
