@@ -4,7 +4,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const TMP = mkdtempSync(join(tmpdir(), 'twinmos-r04-test-'));
 process.env.PGLITE_DATA = join(TMP, 'db');
@@ -14,7 +15,7 @@ process.env.API_ALLOW_NO_TURNSTILE = '1';
 process.env.NODE_ENV = 'test';
 process.env.ENFORCE_MFA = '0';
 
-const MIGRATIONS = join(dirname(dirname(process.cwd())), 'packages', 'db', 'migrations');
+const MIGRATIONS = resolve(dirname(fileURLToPath(import.meta.url)), '../../../packages/db/migrations');
 
 const {
   createDb, user, brand, category, product, productVariant, compatibilityRule,

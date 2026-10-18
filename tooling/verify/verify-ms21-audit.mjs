@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');
+const isPlanted = process.argv.includes('--test-planted');
 
 let totalChecks = 0;
 let passedChecks = 0;
@@ -44,6 +45,9 @@ console.log('===================================================================
 console.log('       TWINMOS MILESTONE MS2.1 PROGRAMME CONTROLS & OWNERSHIP AUDIT');
 console.log('       Roadmap: Phase 02 · Stop-Ship Close-Out · Milestone MS2.1');
 console.log('       Evaluating PROC-01 through PROC-05 (Tasks T2.1.1 - T2.1.5)');
+if (isPlanted) {
+  console.log('       [MUT-01 ACTIVE: Negative Mutation Testing Enabled]');
+}
 console.log('========================================================================\n');
 
 // -----------------------------------------------------------------------------
@@ -52,6 +56,9 @@ console.log('===================================================================
 console.log('--- Task T2.1.1 / Criterion PROC-02: Definition of Done & PR Template ---');
 
 check('PROC-02a', 'docs/DEFINITION_OF_DONE.md exists', () => {
+  if (isPlanted) {
+    return existsSync(resolve(ROOT, 'docs/PLANTED_NONEXISTENT_DEFECT.md'));
+  }
   return existsSync(resolve(ROOT, 'docs/DEFINITION_OF_DONE.md'));
 });
 
@@ -323,6 +330,16 @@ check('PROC-05k', 'Assigns legal owner Arthur Pendelton to regulatory and legal 
 console.log('\n========================================================================');
 console.log(`TwinMOS MS2.1 Summary: ${passedChecks} checks PASSED, ${failedChecks} checks FAILED out of ${totalChecks}.`);
 console.log('========================================================================\n');
+
+if (isPlanted) {
+  if (failedChecks > 0) {
+    console.log('[verify-ms21-audit] MUT-01 PASS: Planted mutation successfully caught.');
+    process.exit(0);
+  } else {
+    console.error('[verify-ms21-audit] MUT-01 FAIL: Planted mutation was NOT caught!');
+    process.exit(1);
+  }
+}
 
 if (failedChecks === 0) {
   console.log('[MS2.1 VERDICT: CLEAN PASS / GO]');
