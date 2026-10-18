@@ -75,7 +75,7 @@ export function lintReportContent(content, filename = 'inline-test', referenceDa
   return { errors, warnings };
 }
 
-export function runReportLint(targetDir = reportsDir, referenceDateStr = '2026-10-17') {
+export function runReportLint(targetDir = reportsDir, referenceDateStr = null) {
   console.log(`[report-lint] Scanning active reports in ${targetDir}...`);
   const files = readdirSync(targetDir);
   const allErrors = [];

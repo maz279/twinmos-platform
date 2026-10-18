@@ -8,7 +8,8 @@ const ROOT = resolve(__dirname, '../..');
 const EVIDENCE_DIR = resolve(__dirname, 'evidence');
 mkdirSync(EVIDENCE_DIR, { recursive: true });
 
-const WEB_URL = 'http://localhost:4321';
+const WEB_PORT = process.env.LIVE_INSPECT_PORT ?? '4322';
+const WEB_URL = `http://localhost:${WEB_PORT}`;
 
 async function runLiveInspection() {
   console.log('================================================================');

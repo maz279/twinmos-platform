@@ -74,21 +74,21 @@ In Phase 01 (`VC-R0`), probes **P1** and **P9b** were legitimately exempt pendin
 | Probe ID | Scope / Target | Phase 01 Status | Phase 02 Status | Resolution Evidence |
 |:---|:---|:---|:---|:---|
 | **P1** | SuperAdmin sign-in from bootstrap seed | EXEMPT (RED) | **PASSED** | Bootstrap seeds SuperAdmin with `emailVerified: true`; sign-in succeeds immediately without manual DB update (`AUTH-BOOT`). |
-| **P1b** | Sign-in after verification flag | PASSED | **PASSED** | HTTP 200, valid session cookie set with secure attributes. |
-| **P2** | MFA enforcement on admin endpoints | PASSED | **PASSED** | Un-enrolled staff receive HTTP 403 `MFA_REQUIRED` on all routes including GET; bypass impossible. |
-| **P3** | Password reset email delivery | PASSED | **PASSED** | Mailer generates single-use reset token; revocable session; 0 tokens logged. |
-| **P4** | Lockout after 5 consecutive failed logins | PASSED | **PASSED** | Durable lockout persisted in PostgreSQL (`failed_login_count`, `locked_until`); survives daemon restart. |
-| **P4b** | Lockout bypass with form-urlencoded | PASSED | **PASSED** | HTTP 415 Unsupported Media Type strictly enforced. |
-| **P5** | Rate limiting direct to API | PASSED | **PASSED** | IP-isolated rate limiter mounted on `/api/v1/auth/sign-in/*` with RFC 7231 `Retry-After`. |
-| **P6** | Anonymous preview token minting | PASSED | **PASSED** | HTTP 401 Unauthorized; timing-safe secret validation. |
-| **P6b** | Draft product leak | PASSED | **PASSED** | HTTP 404 Not Found; delivery filters enforce `status='published'`. |
-| **P7** | Anonymous deep health endpoint | PASSED | **PASSED** | HTTP 401 Unauthorized; timing-safe internal secret required. |
-| **P8** | Newsletter subscribe without captcha | PASSED | **PASSED** | HTTP 400 Bad Request; Turnstile token required in production. |
-| **P8b** | Newsletter self-confirmation | PASSED | **PASSED** | Response strictly omits token and confirmUrl; signed token required. |
-| **P9** | Staff user invitation | PASSED | **PASSED** | SuperAdmin dispatches invitation via Resend mailer. |
+| **P1b** | Sign-in after verification flag | `PASSED` | **PASSED** | HTTP 200, valid session cookie set with secure attributes (`S-08`). |
+| **P2** | MFA enforcement on admin endpoints | `PASSED` | **PASSED** | Un-enrolled staff receive HTTP 403 `MFA_REQUIRED` on all routes including GET; bypass impossible (`S-07`). |
+| **P3** | Password reset email delivery | `PASSED` | **PASSED** | Mailer generates single-use reset token; revocable session; 0 tokens logged (`S-04`). |
+| **P4** | Lockout after 5 consecutive failed logins | `PASSED` | **PASSED** | Durable lockout persisted in PostgreSQL (`failed_login_count`, `locked_until`); survives daemon restart (`S-06`). |
+| **P4b** | Lockout bypass with form-urlencoded | `PASSED` | **PASSED** | HTTP 415 Unsupported Media Type strictly enforced (`LOCK-CT`). |
+| **P5** | Rate limiting direct to API | `PASSED` | **PASSED** | IP-isolated rate limiter mounted on `/api/v1/auth/sign-in/*` with RFC 7231 `Retry-After` (`S-09`). |
+| **P6** | Anonymous preview token minting | `PASSED` | **PASSED** | HTTP 401 Unauthorized; timing-safe secret validation (`SEC-PREVIEW`). |
+| **P6b** | Draft product leak | `PASSED` | **PASSED** | HTTP 404 Not Found; delivery filters enforce `status='published'` (`DLV-LEAK`). |
+| **P7** | Anonymous deep health endpoint | `PASSED` | **PASSED** | HTTP 401 Unauthorized; timing-safe internal secret required (`P7`). |
+| **P8** | Newsletter subscribe without captcha | `PASSED` | **PASSED** | HTTP 400 Bad Request; Turnstile token required in production (`FORMS-01`). |
+| **P8b** | Newsletter self-confirmation | `PASSED` | **PASSED** | Response strictly omits token and confirmUrl; signed token required (`FORMS-01`). |
+| **P9** | Staff user invitation | `PASSED` | **PASSED** | SuperAdmin dispatches invitation via Resend mailer (`A-INVITE`). |
 | **P9b** | Invited staff member sign-in | EXEMPT (RED) | **PASSED** | Invited partner/staff member receives email with verification link; unverified account rejected with 403; verified account signs in cleanly (`A-INVITE`). |
-| **P10**| Delivery API excludes draft entities | PASSED | **PASSED** | Soft-deleted, archived, and draft entities excluded. |
-| **X1**–**X5** | Data patch idempotency & entity filters | PASSED | **PASSED** | All partial update schemas verified; 0 data clobbering. |
+| **P10**| Delivery API excludes draft entities | `PASSED` | **PASSED** | Soft-deleted, archived, and draft entities excluded (`DLV-LEAK`). |
+| **X1**–**X5** | Data patch idempotency & entity filters | `PASSED` | **PASSED** | All partial update schemas verified; 0 data clobbering (`DATA-PATCH`). |
 
 ---
 
