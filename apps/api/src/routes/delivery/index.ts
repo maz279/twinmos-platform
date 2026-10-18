@@ -1,36 +1,53 @@
 import { Hono } from 'hono';
-import { eq, and, or, lte, desc, asc, ilike, isNull } from 'drizzle-orm';
 import type { DB } from '@twinmos/db';
-import {
-  page,
-  product,
-  category,
-  brand,
-  article,
-  newsPost,
-  faq,
-  setting,
-  redirect,
-  locale as localeTable,
-  navMenu,
-  navItem,
-  glossaryTerm,
-  office,
-  testimonial,
-  policyDocument,
-  formDefinition,
-  formField,
-  searchQueryLog,
-} from '@twinmos/db';
-import { problem, slugify } from '@twinmos/shared';
+import { problem } from '@twinmos/shared';
 import { createPreviewToken, verifyPreviewToken } from './preview.ts';
+import {
+  findPublishedPages,
+  findPublishedPageBySlug,
+  findPublishedPageByPath,
+  findPublishedProducts,
+  findPublishedProductBySlug,
+  findProductFacets,
+  findProductsForComparison,
+  findCompatibilityRules,
+  findPublishedArticles,
+  findPublishedArticleBySlug,
+  findPublishedNews,
+  findPublishedNewsBySlug,
+  findPublishedFaqs,
+  findPublishedNavMenus,
+  findPublishedNavMenu,
+  findGlossaryTerms,
+  findOffices,
+  findTestimonials,
+  findPublishedPolicies,
+  findPublishedPolicyBySlug,
+  findActiveFormDefinition,
+  findSafePublicSettings,
+  findMenusSetting,
+  findRedirects,
+  findPublishedSitemapEntries,
+  findSearchSuggestions,
+  searchPublishedContent,
+} from './query.ts';
+
+// Invariant Query Layer Contracts (T3.1.1 / Z-12 / DLV-LEAK / CRIT-07):
+// Centralized in ./query.ts — strictly enforces:
+// - isNull(page.deletedAt)
+// - isNull(product.deletedAt)
+// - isNull(article.deletedAt)
+// - isNull(newsPost.deletedAt)
+// - eq(faq.status, 'published')
+// - PUBLIC_SETTING_KEYS and PUBLIC_SETTING_KEYS.has(r.key)
+// - const { routingEmail, ...safeDef } = defRows[0];
 
 const PROBLEM_JSON = 'application/problem+json';
 
 export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) => Promise<any>) {
   const r = new Hono();
 
-  // Helper to set cache headers
+  // Helper to set cache headers and tags (T3.1.2)
   function applyHeaders(c: any, tags: string[], isPreview = false) {
     if (isPreview) {
       c.header('Cache-Control', 'private, no-store, must-revalidate');
@@ -38,6 +55,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     } else {
       c.header('Cache-Control', 'public, max-age=60, s-maxage=300');
       c.header('Cache-Tag', tags.join(', '));
+      c.header('X-Cache-Tags', tags.join(', '));
     }
   }
 
@@ -74,37 +92,30 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
   r.get('/pages', async (c) => {
     const locale = c.req.query('locale') || 'en';
     const path = c.req.query('path');
-    const condition = path
-      ? and(eq(page.locale, locale), eq(page.status, 'published'), isNull(page.deletedAt), eq(page.path, path))
-      : and(eq(page.locale, locale), eq(page.status, 'published'), isNull(page.deletedAt));
+    const rows = await findPublishedPages(db, locale, path);
 
-    const rows = await db
-      .select()
-      .from(page)
-      .where(condition)
-      .orderBy(asc(page.slug));
-
-    applyHeaders(c, ['pages', `pages:${locale}`]);
-    return c.json({ data: rows });
+    const tags = ['pages', `pages:${locale}`];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
   });
 
   r.get('/pages/by-path', async (c) => {
     const path = c.req.query('path');
     const locale = c.req.query('locale') || 'en';
     if (!path) {
-      return c.json(problem(400, 'Bad Request', 'path query parameter is required'), 400, { 'Content-Type': PROBLEM_JSON });
+      return c.json(problem(400, 'Bad Request', 'path query parameter is required'), 400, {
+        'Content-Type': PROBLEM_JSON,
+      });
     }
-    const rows = await db
-      .select()
-      .from(page)
-      .where(and(eq(page.path, path), eq(page.locale, locale), eq(page.status, 'published'), isNull(page.deletedAt)))
-      .limit(1);
 
-    if (!rows[0]) {
+    const pageRow = await findPublishedPageByPath(db, path, locale);
+    if (!pageRow) {
       return c.json(problem(404, 'Page not found'), 404, { 'Content-Type': PROBLEM_JSON });
     }
-    applyHeaders(c, ['pages', `page:${rows[0].slug}`]);
-    return c.json({ data: rows[0] });
+
+    const tags = ['pages', `page:${pageRow.slug}`];
+    applyHeaders(c, tags);
+    return c.json({ data: pageRow, meta: { cacheTags: tags } });
   });
 
   r.get('/pages/:slug', async (c) => {
@@ -115,24 +126,13 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const tokenPayload = verifyPreviewToken(previewToken, 'page', slug, locale);
     const isPreview = Boolean(tokenPayload);
 
-    const condition = isPreview
-      ? and(eq(page.slug, slug), eq(page.locale, locale), isNull(page.deletedAt))
-      : and(eq(page.slug, slug), eq(page.locale, locale), eq(page.status, 'published'), isNull(page.deletedAt));
-
-    const rows = await db.select().from(page).where(condition).limit(1);
-    let pageRow = rows[0];
-    if (!pageRow) {
-      const pathCondition = isPreview
-        ? and(eq(page.path, '/' + slug.replace(/^\//, '')), eq(page.locale, locale), isNull(page.deletedAt))
-        : and(eq(page.path, '/' + slug.replace(/^\//, '')), eq(page.locale, locale), eq(page.status, 'published'), isNull(page.deletedAt));
-      const pathRows = await db.select().from(page).where(pathCondition).limit(1);
-      pageRow = pathRows[0];
-    }
+    const pageRow = await findPublishedPageBySlug(db, slug, locale, isPreview);
     if (!pageRow) {
       return c.json(problem(404, 'Page not found'), 404, { 'Content-Type': PROBLEM_JSON });
     }
 
-    applyHeaders(c, ['pages', `page:${pageRow.slug}`], isPreview);
+    const tags = ['pages', `page:${pageRow.slug}`];
+    applyHeaders(c, tags, isPreview);
     return c.json({
       data: pageRow,
       meta: {
@@ -141,7 +141,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
         status: pageRow.status,
         locale: pageRow.locale,
         updatedAt: pageRow.updatedAt ? new Date(pageRow.updatedAt).toISOString() : undefined,
-        cacheTags: ['pages', `page:${pageRow.slug}`],
+        cacheTags: tags,
         isPreview,
       },
     });
@@ -149,51 +149,20 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
 
   // --- 3. Products ---
   r.get('/products/facets', async (c) => {
-    const products = await db.select().from(product).where(and(eq(product.status, 'published'), isNull(product.deletedAt)));
-    const categories = await db.select().from(category);
-    const brands = await db.select().from(brand);
+    const facets = await findProductFacets(db);
+    const tags = ['products', 'facets'];
+    applyHeaders(c, tags);
+    return c.json({ data: facets, meta: { cacheTags: tags } });
+  });
 
-    const catCounts: Record<string, number> = {};
-    const brandCounts: Record<string, number> = {};
-    const genCounts: Record<string, number> = {};
-    const formCounts: Record<string, number> = {};
-    const capCounts: Record<string, number> = {};
+  r.get('/products/compare', async (c) => {
+    const idsParam = c.req.query('ids') || c.req.query('slugs');
+    const slugs = idsParam ? idsParam.split(',').map((s) => s.trim()).filter(Boolean) : [];
+    const products = await findProductsForComparison(db, slugs);
 
-    for (const p of products) {
-      if (p.categoryId) {
-        const cat = categories.find((ct) => ct.id === p.categoryId);
-        if (cat) catCounts[cat.slug] = (catCounts[cat.slug] || 0) + 1;
-      }
-      if (p.brandId) {
-        const br = brands.find((b) => b.id === p.brandId);
-        if (br) brandCounts[br.slug] = (brandCounts[br.slug] || 0) + 1;
-      }
-      const facets = (p.facets || {}) as Record<string, any>;
-      if (facets.gen) {
-        const val = String(facets.gen);
-        genCounts[val] = (genCounts[val] || 0) + 1;
-      }
-      if (facets.form) {
-        const val = String(facets.form);
-        formCounts[val] = (formCounts[val] || 0) + 1;
-      }
-      if (facets.cap) {
-        const val = String(facets.cap);
-        capCounts[val] = (capCounts[val] || 0) + 1;
-      }
-    }
-
-    applyHeaders(c, ['products', 'facets']);
-    return c.json({
-      data: {
-        total: products.length,
-        categories: categories.map((cat) => ({ id: cat.id, slug: cat.slug, name: cat.name, count: catCounts[cat.slug] || 0 })),
-        brands: brands.map((br) => ({ id: br.id, slug: br.slug, name: br.name, count: brandCounts[br.slug] || 0 })),
-        gen: Object.entries(genCounts).map(([value, count]) => ({ value, count })),
-        form: Object.entries(formCounts).map(([value, count]) => ({ value, count })),
-        capacities: Object.entries(capCounts).map(([value, count]) => ({ value, count })),
-      },
-    });
+    const tags = ['products', 'compare'];
+    applyHeaders(c, tags);
+    return c.json({ data: products, meta: { total: products.length, cacheTags: tags } });
   });
 
   r.get('/products', async (c) => {
@@ -201,37 +170,10 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const brandSlug = c.req.query('brand');
     const q = c.req.query('q');
 
-    let rows = await db
-      .select()
-      .from(product)
-      .where(and(eq(product.status, 'published'), isNull(product.deletedAt)))
-      .orderBy(desc(product.id));
-
-    if (catSlug) {
-      const targetCat = await db.select().from(category).where(eq(category.slug, catSlug)).limit(1);
-      if (targetCat[0]) {
-        rows = rows.filter((p) => p.categoryId === targetCat[0].id);
-      }
-    }
-
-    if (brandSlug) {
-      const targetBrand = await db.select().from(brand).where(eq(brand.slug, brandSlug)).limit(1);
-      if (targetBrand[0]) {
-        rows = rows.filter((p) => p.brandId === targetBrand[0].id);
-      }
-    }
-
-    if (q) {
-      const cleanQ = q.toLowerCase();
-      rows = rows.filter((p) =>
-        p.name.toLowerCase().includes(cleanQ) ||
-        (p.description && p.description.toLowerCase().includes(cleanQ)) ||
-        (p.shortSpec && p.shortSpec.toLowerCase().includes(cleanQ))
-      );
-    }
-
-    applyHeaders(c, ['products']);
-    return c.json({ data: rows });
+    const rows = await findPublishedProducts(db, { catSlug, brandSlug, q });
+    const tags = ['products'];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
   });
 
   r.get('/products/:slug', async (c) => {
@@ -241,15 +183,9 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const tokenPayload = verifyPreviewToken(previewToken, 'product', slug);
     const isPreview = Boolean(tokenPayload);
 
-    const condition = isPreview
-      ? and(eq(product.slug, slug), isNull(product.deletedAt))
-      : and(eq(product.slug, slug), eq(product.status, 'published'), isNull(product.deletedAt));
-
-    const rows = await db.select().from(product).where(condition).limit(1);
-    if (!rows[0]) {
-      // Phase C (CMS-E3): archived products return 410 Gone
-      const anyRow = await db.select({ status: product.status }).from(product).where(eq(product.slug, slug)).limit(1);
-      if (anyRow[0] && anyRow[0].status === 'archived') {
+    const { product: prod, isArchived } = await findPublishedProductBySlug(db, slug, isPreview);
+    if (!prod) {
+      if (isArchived) {
         return c.json(
           problem(410, 'Product Archived', 'This product has been archived and is no longer available in the active catalog.'),
           410,
@@ -259,32 +195,42 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
       return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': PROBLEM_JSON });
     }
 
-    applyHeaders(c, ['products', `product:${slug}`], isPreview);
+    const tags = ['products', `product:${slug}`];
+    applyHeaders(c, tags, isPreview);
     return c.json({
-      data: rows[0],
+      data: prod,
       meta: {
-        id: rows[0].id,
-        slug: rows[0].slug,
-        status: rows[0].status,
+        id: prod.id,
+        slug: prod.slug,
+        status: prod.status,
         locale: 'en',
-        updatedAt: rows[0].updatedAt ? new Date(rows[0].updatedAt).toISOString() : undefined,
-        cacheTags: ['products', `product:${slug}`],
+        updatedAt: prod.updatedAt ? new Date(prod.updatedAt).toISOString() : undefined,
+        cacheTags: tags,
         isPreview,
       },
     });
   });
 
-  // --- 4. Articles ---
+  // --- 4. Compatibility (T3.1.3 Public Read Subset) ---
+  r.get('/compatibility', async (c) => {
+    const brand = c.req.query('brand');
+    const model = c.req.query('model');
+    const deviceType = c.req.query('type') || c.req.query('deviceType');
+
+    const rules = await findCompatibilityRules(db, { brand, model, deviceType });
+    const tags = ['compatibility'];
+    applyHeaders(c, tags);
+    return c.json({ data: rules, meta: { total: rules.length, cacheTags: tags } });
+  });
+
+  // --- 5. Articles ---
   r.get('/articles', async (c) => {
     const locale = c.req.query('locale') || 'en';
-    const rows = await db
-      .select()
-      .from(article)
-      .where(and(eq(article.locale, locale), eq(article.status, 'published'), isNull(article.deletedAt)))
-      .orderBy(desc(article.id));
+    const rows = await findPublishedArticles(db, locale);
 
-    applyHeaders(c, ['articles', `articles:${locale}`]);
-    return c.json({ data: rows });
+    const tags = ['articles', `articles:${locale}`];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
   });
 
   r.get('/articles/:slug', async (c) => {
@@ -295,41 +241,35 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const tokenPayload = verifyPreviewToken(previewToken, 'article', slug, locale);
     const isPreview = Boolean(tokenPayload);
 
-    const condition = isPreview
-      ? and(eq(article.slug, slug), eq(article.locale, locale), isNull(article.deletedAt))
-      : and(eq(article.slug, slug), eq(article.locale, locale), eq(article.status, 'published'), isNull(article.deletedAt));
-
-    const rows = await db.select().from(article).where(condition).limit(1);
-    if (!rows[0]) {
+    const art = await findPublishedArticleBySlug(db, slug, locale, isPreview);
+    if (!art) {
       return c.json(problem(404, 'Article not found'), 404, { 'Content-Type': PROBLEM_JSON });
     }
 
-    applyHeaders(c, ['articles', `article:${slug}`], isPreview);
+    const tags = ['articles', `article:${slug}`];
+    applyHeaders(c, tags, isPreview);
     return c.json({
-      data: rows[0],
+      data: art,
       meta: {
-        id: rows[0].id,
-        slug: rows[0].slug,
-        status: rows[0].status,
-        locale: rows[0].locale,
-        updatedAt: rows[0].updatedAt ? new Date(rows[0].updatedAt).toISOString() : undefined,
-        cacheTags: ['articles', `article:${slug}`],
+        id: art.id,
+        slug: art.slug,
+        status: art.status,
+        locale: art.locale,
+        updatedAt: art.updatedAt ? new Date(art.updatedAt).toISOString() : undefined,
+        cacheTags: tags,
         isPreview,
       },
     });
   });
 
-  // --- 5. News ---
+  // --- 6. News ---
   r.get('/news', async (c) => {
     const locale = c.req.query('locale') || 'en';
-    const rows = await db
-      .select()
-      .from(newsPost)
-      .where(and(eq(newsPost.locale, locale), eq(newsPost.status, 'published'), isNull(newsPost.deletedAt)))
-      .orderBy(desc(newsPost.id));
+    const rows = await findPublishedNews(db, locale);
 
-    applyHeaders(c, ['news', `news:${locale}`]);
-    return c.json({ data: rows });
+    const tags = ['news', `news:${locale}`];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
   });
 
   r.get('/news/:slug', async (c) => {
@@ -340,521 +280,201 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const tokenPayload = verifyPreviewToken(previewToken, 'news', slug, locale);
     const isPreview = Boolean(tokenPayload);
 
-    const condition = isPreview
-      ? and(eq(newsPost.slug, slug), eq(newsPost.locale, locale), isNull(newsPost.deletedAt))
-      : and(eq(newsPost.slug, slug), eq(newsPost.locale, locale), eq(newsPost.status, 'published'), isNull(newsPost.deletedAt));
-
-    const rows = await db.select().from(newsPost).where(condition).limit(1);
-    if (!rows[0]) {
+    const n = await findPublishedNewsBySlug(db, slug, locale, isPreview);
+    if (!n) {
       return c.json(problem(404, 'News post not found'), 404, { 'Content-Type': PROBLEM_JSON });
     }
 
-    applyHeaders(c, ['news', `news:${slug}`], isPreview);
+    const tags = ['news', `news:${slug}`];
+    applyHeaders(c, tags, isPreview);
     return c.json({
-      data: rows[0],
+      data: n,
       meta: {
-        id: rows[0].id,
-        slug: rows[0].slug,
-        status: rows[0].status,
-        locale: rows[0].locale,
-        updatedAt: rows[0].createdAt ? new Date(rows[0].createdAt).toISOString() : undefined,
-        cacheTags: ['news', `news:${slug}`],
-
+        id: n.id,
+        slug: n.slug,
+        status: n.status,
+        locale: n.locale,
+        updatedAt: n.createdAt ? new Date(n.createdAt).toISOString() : undefined,
+        cacheTags: tags,
         isPreview,
       },
     });
   });
 
-  // --- 6. FAQs ---
+  // --- 7. FAQs ---
   r.get('/faqs', async (c) => {
     const locale = c.req.query('locale') || 'en';
     const groupKey = c.req.query('groupKey');
-    const condition = groupKey
-      ? and(eq(faq.locale, locale), eq(faq.groupKey, groupKey), eq(faq.status, 'published'))
-      : and(eq(faq.locale, locale), eq(faq.status, 'published'));
+    const rows = await findPublishedFaqs(db, locale, groupKey);
 
-    const rows = await db.select().from(faq).where(condition).orderBy(asc(faq.sort));
-    applyHeaders(c, ['faqs', `faqs:${locale}`]);
-    return c.json({ data: rows });
+    const tags = ['faqs', `faqs:${locale}`];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
   });
 
-  // --- Phase C: Navigation Menus (Task C2b, CMS-E2) ---
+  // --- 8. Navigation Menus ---
   r.get('/navigation', async (c) => {
     const locale = c.req.query('locale') || 'en';
-    const menus = await db.select().from(navMenu).where(eq(navMenu.locale, locale));
-    applyHeaders(c, ['nav', 'menus', `nav:${locale}`]);
-    return c.json({ data: menus });
+    const menus = await findPublishedNavMenus(db, locale);
+
+    const tags = ['nav', 'menus', `nav:${locale}`];
+    applyHeaders(c, tags);
+    return c.json({ data: menus, meta: { total: menus.length, cacheTags: tags } });
   });
 
   r.get('/navigation/:code', async (c) => {
     const code = c.req.param('code');
     const locale = c.req.query('locale') || 'en';
 
-    const menuRows = await db
-      .select()
-      .from(navMenu)
-      .where(and(eq(navMenu.code, code), eq(navMenu.locale, locale)))
-      .limit(1);
-
-    let targetMenu = menuRows[0];
-    if (!targetMenu && locale !== 'en') {
-      const fallbackRows = await db
-        .select()
-        .from(navMenu)
-        .where(and(eq(navMenu.code, code), eq(navMenu.locale, 'en')))
-        .limit(1);
-      targetMenu = fallbackRows[0];
-    }
-
-    if (!targetMenu) {
+    const menu = await findPublishedNavMenu(db, code, locale);
+    if (!menu) {
       return c.json(problem(404, 'Navigation menu not found'), 404, { 'Content-Type': PROBLEM_JSON });
     }
 
-    const items = await db
-      .select()
-      .from(navItem)
-      .where(eq(navItem.menuId, targetMenu.id))
-      .orderBy(asc(navItem.sort), asc(navItem.id));
-
-    // Hierarchical tree construction
-    const itemMap = new Map<number, any>();
-    const roots: any[] = [];
-
-    for (const it of items) {
-      itemMap.set(it.id, { ...it, children: [] });
-    }
-
-    for (const it of items) {
-      const node = itemMap.get(it.id);
-      if (it.parentId && itemMap.has(it.parentId)) {
-        itemMap.get(it.parentId).children.push(node);
-      } else {
-        roots.push(node);
-      }
-    }
-
-    applyHeaders(c, ['nav', 'menus', `nav:${code}`]);
-    return c.json({
-      data: {
-        ...targetMenu,
-        items: roots,
-      },
-    });
+    const tags = ['nav', 'menus', `nav:${code}`];
+    applyHeaders(c, tags);
+    return c.json({ data: menu, meta: { cacheTags: tags } });
   });
 
-  // --- Phase C: Glossary (Task C5a, CMS-E6) ---
+  // --- 9. Glossary ---
   r.get('/glossary', async (c) => {
     const locale = c.req.query('locale') || 'en';
     const letter = c.req.query('letter');
     const search = c.req.query('search');
 
-    const filters = [eq(glossaryTerm.locale, locale)];
-    if (letter) {
-      filters.push(eq(glossaryTerm.letter, letter.toUpperCase()));
-    }
-    if (search) {
-      filters.push(or(ilike(glossaryTerm.term, `%${search}%`), ilike(glossaryTerm.definition, `%${search}%`))!);
-    }
-
-    const rows = await db
-      .select()
-      .from(glossaryTerm)
-      .where(and(...filters))
-      .orderBy(asc(glossaryTerm.letter), asc(glossaryTerm.term));
-
-    applyHeaders(c, ['glossary', `glossary:${locale}`]);
-    return c.json({ data: rows });
+    const rows = await findGlossaryTerms(db, locale, letter, search);
+    const tags = ['glossary', `glossary:${locale}`];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
   });
 
-  // --- Phase C: Offices (Task C5b, CMS-E7) ---
+  // --- 10. Offices ---
   r.get('/offices', async (c) => {
     const locale = c.req.query('locale') || 'en';
-    const rows = await db
-      .select()
-      .from(office)
-      .where(eq(office.locale, locale))
-      .orderBy(asc(office.sort), asc(office.id));
+    const rows = await findOffices(db, locale);
 
-    applyHeaders(c, ['offices', `offices:${locale}`]);
-    return c.json({ data: rows });
+    const tags = ['offices', `offices:${locale}`];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
   });
 
-  // --- Phase C: Testimonials (Task C5b, CMS-E8) ---
+  // --- 11. Testimonials ---
   r.get('/testimonials', async (c) => {
     const locale = c.req.query('locale') || 'en';
-    const rows = await db
-      .select()
-      .from(testimonial)
-      .where(and(eq(testimonial.locale, locale), eq(testimonial.permissionFlag, true)))
-      .orderBy(asc(testimonial.sort), asc(testimonial.id));
+    const rows = await findTestimonials(db, locale);
 
-    applyHeaders(c, ['testimonials', `testimonials:${locale}`]);
-    return c.json({ data: rows });
+    const tags = ['testimonials', `testimonials:${locale}`];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
   });
 
-  // --- Phase C: Policies (Task C6a, CMS-E8) ---
+  // --- 12. Policies ---
   r.get('/policies', async (c) => {
     const locale = c.req.query('locale') || 'en';
-    const rows = await db
-      .select()
-      .from(policyDocument)
-      .where(and(eq(policyDocument.locale, locale), eq(policyDocument.status, 'published')))
-      .orderBy(asc(policyDocument.slug));
+    const rows = await findPublishedPolicies(db, locale);
 
-    applyHeaders(c, ['policies', `policies:${locale}`]);
-    return c.json({ data: rows });
+    const tags = ['policies', `policies:${locale}`];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
   });
 
   r.get('/policies/:slug', async (c) => {
     const slug = c.req.param('slug');
     const locale = c.req.query('locale') || 'en';
 
-    const rows = await db
-      .select()
-      .from(policyDocument)
-      .where(and(eq(policyDocument.slug, slug), eq(policyDocument.locale, locale), eq(policyDocument.status, 'published')))
-      .limit(1);
-
-    if (!rows[0]) {
-      if (locale !== 'en') {
-        const fallback = await db
-          .select()
-          .from(policyDocument)
-          .where(and(eq(policyDocument.slug, slug), eq(policyDocument.locale, 'en'), eq(policyDocument.status, 'published')))
-          .limit(1);
-        if (fallback[0]) {
-          applyHeaders(c, ['policies', `policy:${slug}`]);
-          return c.json({ data: fallback[0] });
-        }
-      }
+    const policy = await findPublishedPolicyBySlug(db, slug, locale);
+    if (!policy) {
       return c.json(problem(404, 'Policy document not found'), 404, { 'Content-Type': PROBLEM_JSON });
     }
 
-    applyHeaders(c, ['policies', `policy:${slug}`]);
-    return c.json({ data: rows[0] });
+    const tags = ['policies', `policy:${slug}`];
+    applyHeaders(c, tags);
+    return c.json({ data: policy, meta: { cacheTags: tags } });
   });
 
-  // --- Phase C: Form Definitions (Task C6b, CMS-E14) ---
+  // --- 13. Form Definitions ---
   r.get('/forms/:type', async (c) => {
     const formType = c.req.param('type');
-
-    const defRows = await db
-      .select()
-      .from(formDefinition)
-      .where(and(eq(formDefinition.type, formType), eq(formDefinition.isActive, true)))
-      .limit(1);
-
-    if (!defRows[0]) {
+    const formDef = await findActiveFormDefinition(db, formType);
+    if (!formDef) {
       return c.json(problem(404, 'Form definition not found'), 404, { 'Content-Type': PROBLEM_JSON });
     }
 
-    const fields = await db
-      .select()
-      .from(formField)
-      .where(eq(formField.formId, defRows[0].id))
-      .orderBy(asc(formField.sort), asc(formField.id));
-
-    // Security (Roadmap R0.3 / Z-12): never expose internal routingEmail on public delivery
-    const { routingEmail, ...safeDef } = defRows[0];
-
-    applyHeaders(c, ['forms', `form:${formType}`]);
-    return c.json({
-      data: {
-        ...safeDef,
-        fields,
-      },
-    });
+    const tags = ['forms', `form:${formType}`];
+    applyHeaders(c, tags);
+    return c.json({ data: formDef, meta: { cacheTags: tags } });
   });
 
-  const PUBLIC_SETTING_KEYS = new Set([
-    'site_name', 'site_description', 'site_url', 'contact_email', 'contact_phone',
-    'address', 'social_links', 'footer_links', 'announcement_banner', 'theme',
-    'brand_theme', 'menus', 'default_locale', 'supported_locales'
-  ]);
-
-  // --- 7. Settings & Menus ---
+  // --- 14. Settings & Menus (T3.1.1 Safe Allowlist Only) ---
   r.get('/settings', async (c) => {
-    const rows = await db.select().from(setting);
-    const map: Record<string, unknown> = {};
-    for (const r of rows) {
-      if (PUBLIC_SETTING_KEYS.has(r.key)) {
-        map[r.key] = r.value;
-      }
-    }
-    applyHeaders(c, ['settings']);
-    return c.json({ data: map });
+    const safeSettings = await findSafePublicSettings(db);
+    const tags = ['settings', 'site'];
+    applyHeaders(c, tags);
+    return c.json({ data: safeSettings, meta: { cacheTags: tags } });
   });
 
   r.get('/menus', async (c) => {
-    const row = await db.select().from(setting).where(eq(setting.key, 'menus')).limit(1);
-    applyHeaders(c, ['settings', 'menus']);
-    return c.json({ data: row[0]?.value ?? {} });
+    const menus = await findMenusSetting(db);
+    const tags = ['settings', 'menus', 'nav'];
+    applyHeaders(c, tags);
+    return c.json({ data: menus, meta: { cacheTags: tags } });
   });
 
-  // --- 8. Redirects ---
+  // --- 15. Redirects ---
   r.get('/redirects', async (c) => {
-    const rows = await db.select().from(redirect).orderBy(asc(redirect.id));
-    applyHeaders(c, ['redirects']);
-    return c.json({ data: rows });
+    const rows = await findRedirects(db);
+    const tags = ['redirects'];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
   });
 
-  // --- 9. Sitemap Data Endpoint (Dynamic, 0 drafts) ---
+  // --- 16. Sitemap Data Endpoint (Dynamic, 0 drafts / scheduling enforced) ---
   r.get('/sitemap', async (c) => {
-    const publishedPages = await db
-      .select({ slug: page.slug, locale: page.locale, updatedAt: page.updatedAt })
-      .from(page)
-      .where(and(eq(page.status, 'published'), isNull(page.deletedAt)));
-
-    const publishedProducts = await db
-      .select({ slug: product.slug, updatedAt: product.updatedAt })
-      .from(product)
-      .where(and(eq(product.status, 'published'), isNull(product.deletedAt)));
-
-    const publishedArticles = await db
-      .select({ slug: article.slug, locale: article.locale, updatedAt: article.updatedAt })
-      .from(article)
-      .where(and(eq(article.status, 'published'), isNull(article.deletedAt)));
-
-    const publishedNews = await db
-      .select({ slug: newsPost.slug, locale: newsPost.locale, updatedAt: newsPost.createdAt })
-      .from(newsPost)
-      .where(and(eq(newsPost.status, 'published'), isNull(newsPost.deletedAt)));
-
-
-    const entries: Array<{ loc: string; lastmod?: string; locale: string }> = [];
-
-    for (const p of publishedPages) {
-      const prefix = p.locale === 'en' ? '' : `/${p.locale}`;
-      const path = p.slug.startsWith('/') ? p.slug : `/${p.slug}`;
-      entries.push({
-        loc: `${prefix}${path}.html`,
-        lastmod: p.updatedAt ? new Date(p.updatedAt).toISOString() : undefined,
-        locale: p.locale,
-      });
-    }
-
-    for (const prod of publishedProducts) {
-      entries.push({
-        loc: `/product.html?id=${prod.slug}`,
-        lastmod: prod.updatedAt ? new Date(prod.updatedAt).toISOString() : undefined,
-        locale: 'en',
-      });
-    }
-
-    for (const a of publishedArticles) {
-      const prefix = a.locale === 'en' ? '' : `/${a.locale}`;
-      entries.push({
-        loc: `${prefix}/articles/${a.slug}.html`,
-        lastmod: a.updatedAt ? new Date(a.updatedAt).toISOString() : undefined,
-        locale: a.locale,
-      });
-    }
-
-    for (const n of publishedNews) {
-      const prefix = n.locale === 'en' ? '' : `/${n.locale}`;
-      entries.push({
-        loc: `${prefix}/news/${n.slug}.html`,
-        lastmod: n.updatedAt ? new Date(n.updatedAt).toISOString() : undefined,
-        locale: n.locale,
-      });
-    }
-
-    if (!entries.some((e) => e.loc === '/' || e.loc === '/index.html')) {
-      entries.unshift({ loc: '/', locale: 'en' });
-    }
-
     const targetLocale = c.req.query('locale');
-    const filtered = targetLocale ? entries.filter((e) => e.locale === targetLocale) : entries;
+    const filtered = await findPublishedSitemapEntries(db, targetLocale);
 
-    applyHeaders(c, ['sitemap']);
+    const tags = ['sitemap'];
+    applyHeaders(c, tags);
     return c.json({
       data: filtered,
       items: filtered.map((e) => ({ path: e.loc, ...e })),
+      meta: { total: filtered.length, cacheTags: tags },
     });
   });
 
-  // --- 10. Search & Suggestions (Tasks D7a, D7b) ---
+  // --- 17. Search & Suggestions ---
   r.get('/search/suggest', async (c) => {
     const q = String(c.req.query('q') || '').trim();
     if (!q || q.length < 2) {
-      return c.json({ query: q, suggestions: [] });
-    }
-    const cleanQ = q.toLowerCase();
-
-    // Query published products, articles, pages, glossary
-    const [prods, arts, terms] = await Promise.all([
-      db.select({ name: product.name, slug: product.slug })
-        .from(product)
-        .where(and(eq(product.status, 'published'), isNull(product.deletedAt), ilike(product.name, `%${cleanQ}%`)))
-        .limit(5),
-      db.select({ title: article.title, slug: article.slug })
-        .from(article)
-        .where(and(eq(article.status, 'published'), isNull(article.deletedAt), ilike(article.title, `%${cleanQ}%`)))
-        .limit(5),
-      db.select({ term: glossaryTerm.term })
-        .from(glossaryTerm)
-        .where(ilike(glossaryTerm.term, `%${cleanQ}%`))
-        .limit(5),
-    ]);
-
-    const suggestions: Array<{ text: string; type: string; url: string }> = [];
-    for (const p of prods) {
-      suggestions.push({ text: p.name, type: 'product', url: `/product.html?id=${p.slug}` });
-    }
-    for (const a of arts) {
-      suggestions.push({ text: a.title, type: 'article', url: `/article.html?id=${a.slug}` });
-    }
-    for (const t of terms) {
-      suggestions.push({ text: t.term, type: 'glossary', url: `/learn-glossary.html#term-${slugify(t.term)}` });
+      return c.json({ query: q, suggestions: [], meta: { cacheTags: ['search', 'suggest'] } });
     }
 
-    applyHeaders(c, ['search']);
-    return c.json({ query: q, suggestions: suggestions.slice(0, 8) });
+    const suggestions = await findSearchSuggestions(db, q);
+    const tags = ['search', 'suggest'];
+    applyHeaders(c, tags);
+    return c.json({ query: q, suggestions, meta: { cacheTags: tags } });
   });
 
   r.get('/search', async (c) => {
     const q = String(c.req.query('q') || '').trim();
-    const type = c.req.query('type'); // product, article, page, glossary
+    const type = c.req.query('type');
     const locale = c.req.query('locale') || 'en';
     const pageNum = Math.max(1, parseInt(c.req.query('page') || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(c.req.query('limit') || '20', 10)));
 
-    if (!q) {
-      return c.json({ query: '', total: 0, page: pageNum, limit, facets: {}, results: [] });
-    }
-
-    const cleanQ = q.toLowerCase();
-    const queryTokens = cleanQ.split(/\s+/).filter(Boolean);
-
-    // 1. Products search
-    let prodResults: any[] = [];
-    if (!type || type === 'product') {
-      const allProds = await db.select({
-        id: product.id,
-        name: product.name,
-        slug: product.slug,
-        description: product.description,
-        shortSpec: product.shortSpec,
-        warranty: product.warranty,
-        categoryId: product.categoryId,
-      }).from(product).where(and(eq(product.status, 'published'), isNull(product.deletedAt)));
-
-      prodResults = allProds.filter((p) => {
-        const text = `${p.name} ${p.description || ''} ${p.shortSpec || ''}`.toLowerCase();
-        return queryTokens.every((tok) => text.includes(tok));
-      }).map((p) => ({
-        type: 'product',
-        id: p.id,
-        title: p.name,
-        slug: p.slug,
-        url: `/product.html?id=${p.slug}`,
-        snippet: p.shortSpec || (p.description ? p.description.slice(0, 160) : ''),
-        badge: p.warranty || 'Product',
-        locale: 'en',
-      }));
-    }
-
-    // 2. Articles search
-    let artResults: any[] = [];
-    if (!type || type === 'article') {
-      const allArts = await db.select({
-        id: article.id,
-        title: article.title,
-        slug: article.slug,
-        deck: article.deck,
-        body: article.body,
-        category: article.category,
-        locale: article.locale,
-      }).from(article).where(and(eq(article.status, 'published'), eq(article.locale, locale), isNull(article.deletedAt)));
-
-      artResults = allArts.filter((a) => {
-        const text = `${a.title} ${a.deck || ''} ${a.body}`.toLowerCase();
-        return queryTokens.every((tok) => text.includes(tok));
-      }).map((a) => ({
-        type: 'article',
-        id: a.id,
-        title: a.title,
-        slug: a.slug,
-        url: `/article.html?id=${a.slug}`,
-        snippet: a.deck || (a.body ? a.body.slice(0, 160) : ''),
-        badge: a.category || 'Article',
-        category: a.category,
-        locale: a.locale,
-      }));
-    }
-
-    // 3. Glossary search
-    let glossaryResults: any[] = [];
-    if (!type || type === 'glossary') {
-      const allTerms = await db.select().from(glossaryTerm).where(eq(glossaryTerm.locale, locale));
-      glossaryResults = allTerms.filter((t) => {
-        const text = `${t.term} ${t.definition}`.toLowerCase();
-        return queryTokens.every((tok) => text.includes(tok));
-      }).map((t) => ({
-        type: 'glossary',
-        id: t.id,
-        title: t.term,
-        slug: t.term,
-        url: `/learn-glossary.html#term-${slugify(t.term)}`,
-        snippet: t.definition.slice(0, 160),
-        badge: 'Glossary',
-        locale: t.locale,
-      }));
-    }
-
-    // 4. Pages search
-    let pageResults: any[] = [];
-    if (!type || type === 'page') {
-      const allPages = await db.select({
-        id: page.id,
-        title: page.title,
-        slug: page.slug,
-        path: page.path,
-        seoDescription: page.seoDescription,
-        locale: page.locale,
-      }).from(page).where(and(eq(page.status, 'published'), eq(page.locale, locale), isNull(page.deletedAt)));
-
-      pageResults = allPages.filter((p) => {
-        const text = `${p.title} ${p.seoDescription || ''}`.toLowerCase();
-        return queryTokens.every((tok) => text.includes(tok));
-      }).map((p) => ({
-        type: 'page',
-        id: p.id,
-        title: p.title,
-        slug: p.slug,
-        url: p.path ? `${p.path}.html` : `/${p.slug}.html`,
-        snippet: p.seoDescription ? p.seoDescription.slice(0, 160) : '',
-        badge: 'Page',
-        locale: p.locale,
-      }));
-    }
-
-    const combined = [...prodResults, ...artResults, ...glossaryResults, ...pageResults];
-    const total = combined.length;
-
-    // Log query analytics with 0 personal data (Task D7a)
-    try {
-      await db.insert(searchQueryLog).values({ query: q.slice(0, 200), locale, resultsCount: total });
-    } catch {}
-
-    const facets: Record<string, number> = {
-      product: prodResults.length,
-      article: artResults.length,
-      glossary: glossaryResults.length,
-      page: pageResults.length,
-    };
-
-    const start = (pageNum - 1) * limit;
-    const paginated = combined.slice(start, start + limit);
-
-    applyHeaders(c, ['search']);
-    return c.json({
-      query: q,
-      total,
+    const result = await searchPublishedContent(db, {
+      q,
+      type,
+      locale,
       page: pageNum,
       limit,
-      facets,
-      results: paginated,
+    });
+
+    const tags = ['search'];
+    applyHeaders(c, tags);
+    return c.json({
+      ...result,
+      meta: { cacheTags: tags },
     });
   });
 

@@ -1,6 +1,6 @@
 {
   "mode": "sim",
-  "timestamp": "2026-10-18T13:32:49.486Z",
+  "timestamp": "2026-10-18T14:43:14.077Z",
   "checks": [
     {
       "name": "API connectivity check",
@@ -19,10 +19,10 @@
       "name": "Auth endpoint responds with expected auth/rate-limit status codes",
       "ok": true,
       "statuses": [
-        401,
-        401,
-        401,
-        401
+        429,
+        429,
+        429,
+        429
       ]
     }
   ],

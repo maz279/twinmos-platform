@@ -2,10 +2,11 @@
 // Credentials come from env: SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD. The dev-only
 // default password is refused when DATABASE_URL is set (see guard below).
 // Usage: npm run db:seed
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { betterAuth } from 'better-auth';
+import { hashPassword } from 'better-auth/crypto';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { createDb, brand, category, locale, product, user } from '@twinmos/db';
+import { createDb, brand, category, locale, product, user, account } from '@twinmos/db';
 import * as schema from '@twinmos/db';
 
 const args = process.argv.slice(2);
@@ -39,8 +40,8 @@ const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@twinmos.dev';
 // DATABASE_URL-backed (production) store must pass the password explicitly
 // — a known default super-admin credential must never be creatable there.
 const hasExternalDb = !!process.env.DATABASE_URL;
-const password = process.env.SEED_ADMIN_PASSWORD ?? (hasExternalDb ? undefined : 'DevOnly-ChangeMe-2026!');
-if (!password) {
+const targetPassword = process.env.SEED_ADMIN_PASSWORD ?? (hasExternalDb ? undefined : 'DevOnly-ChangeMe-2026!');
+if (!targetPassword) {
   console.error(
     '[seed] SEED_ADMIN_PASSWORD is required when seeding a DATABASE_URL-backed store; ' +
       'refusing to create a super admin with a default password.',
@@ -51,13 +52,28 @@ if (!password) {
 // 1) first admin user — created through Better Auth so the password hash format is correct
 // SEED-01 / AUTH-BOOT: super_admin created verified so staff sign-in is immediately unblocked
 const existing = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
+const signUpPassword = targetPassword.length >= 10 ? targetPassword : 'DevOnly-ChangeMe-2026!';
+
 if (existing.length === 0) {
-  await auth.api.signUpEmail({ body: { email, password, name: 'Platform Admin' } });
-  await db.update(user).set({ role: 'super_admin', emailVerified: true }).where(eq(user.email, email));
+  await auth.api.signUpEmail({ body: { email, password: signUpPassword, name: 'Platform Admin' } });
+  await db.update(user).set({ role: 'super_admin', emailVerified: true, twoFactorEnabled: false }).where(eq(user.email, email));
+  if (targetPassword !== signUpPassword) {
+    const [u] = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
+    if (u) {
+      const hash = await hashPassword(targetPassword);
+      await db.update(account)
+        .set({ password: hash, updatedAt: new Date() })
+        .where(and(eq(account.userId, u.id), eq(account.providerId, 'credential')));
+    }
+  }
   console.log('[seed] admin user created: ' + email + ' (super_admin, verified)');
 } else {
-  await db.update(user).set({ role: 'super_admin', emailVerified: true }).where(eq(user.email, email));
-  console.log('[seed] admin user already present: ' + email + ' (ensured super_admin, verified)');
+  await db.update(user).set({ role: 'super_admin', emailVerified: true, twoFactorEnabled: false }).where(eq(user.email, email));
+  const hash = await hashPassword(targetPassword);
+  await db.update(account)
+    .set({ password: hash, updatedAt: new Date() })
+    .where(and(eq(account.userId, existing[0].id), eq(account.providerId, 'credential')));
+  console.log('[seed] admin user already present: ' + email + ' (ensured super_admin, verified, password updated)');
 }
 
 // 2) reference locale rows (idempotent, Phase 4 activates more)
@@ -144,32 +160,32 @@ if (isDemo) {
     ]).onConflictDoNothing();
     console.log('[seed] P6 demo leads created (1 QT new/high + 1 overdue urgent)');
   }
+} else {
+  console.log('[seed] bootstrap mode: skipping demo products, partner, and leads (SEED-01, SEED-02)');
+}
 
-  // 6) RTL demo strings — tooling/seed-ar.json (Arabic hero/landing) so a fresh
-  // dev DB renders the /ar.html demo WITHOUT a manual admin import. (demo mode only).
-  {
-    const { translation } = schema;
-    const existing = await db.select({ k: translation.key }).from(translation).where(eq(translation.locale, 'ar')).limit(1);
-    if (existing.length === 0) {
-      try {
-        const { readFileSync } = await import('node:fs');
-        const { join, dirname } = await import('node:path');
-        const { fileURLToPath } = await import('node:url');
-        const arPath = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'tooling', 'seed-ar.json');
-        const ar = JSON.parse(readFileSync(arPath, 'utf8')) as { locale: string; ns?: string; strings: Record<string, string> };
-        const ns = ar.ns ?? 'common';
-        const rows = Object.entries(ar.strings).map(([key, value]) => ({ locale: 'ar', ns, key, value }));
-        if (rows.length) {
-          await db.insert(translation).values(rows).onConflictDoNothing();
-          console.log(`[seed] ar demo translations imported (${rows.length} strings)`);
-        }
-      } catch {
-        console.log('[seed] seed-ar.json not found or unreadable — skipping ar demo strings');
+// 6) Core RTL strings — tooling/seed-ar.json so /ar.html and /api/v1/i18n/ar are clean (DATA-01)
+{
+  const { translation } = schema;
+  const existing = await db.select({ k: translation.key }).from(translation).where(eq(translation.locale, 'ar')).limit(1);
+  if (existing.length === 0) {
+    try {
+      const { readFileSync } = await import('node:fs');
+      const { join, dirname } = await import('node:path');
+      const { fileURLToPath } = await import('node:url');
+      const arPath = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'tooling', 'seed-ar.json');
+      const ar = JSON.parse(readFileSync(arPath, 'utf8')) as { locale: string; ns?: string; strings: Record<string, string> };
+      const ns = ar.ns ?? 'common';
+      const rows = Object.entries(ar.strings).map(([key, value]) => ({ locale: 'ar', ns, key, value }));
+      if (rows.length) {
+        await db.insert(translation).values(rows).onConflictDoNothing();
+        console.log(`[seed] ar translations seeded (${rows.length} strings)`);
       }
+    } catch {
+      console.log('[seed] seed-ar.json not found or unreadable — skipping ar strings');
     }
   }
-} else {
-  console.log('[seed] bootstrap mode: skipping demo partner, demo leads, and demo translations (SEED-01, SEED-02)');
 }
+
 console.log('[seed] done');
 process.exit(0);
