@@ -110,7 +110,7 @@ async function run() {
 
   check('CRIT-03b', 'CI tests against postgres:18-alpine service container', () => {
     const ci = readFileSync(resolve(ROOT, '.github/workflows/ci.yml'), 'utf8');
-    return ci.includes('image: postgres:18-alpine');
+    return /image: ([\w.-]+\/)*postgres:18-alpine/.test(ci);
   });
 
   check('CRIT-03c', 'apps/web/src/lib/delivery.ts uses exception-safe dynamic cache fallback', () => {

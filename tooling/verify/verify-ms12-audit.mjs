@@ -141,7 +141,7 @@ check('T1.2.4a', 'packages/db/src/index.ts exports createPgliteDb and respects F
 });
 
 check('T1.2.4b', 'ci.yml declares PostgreSQL 18 alpine service container', () => {
-  return ci.includes('image: postgres:18-alpine') &&
+  return /image: ([\w.-]+\/)*postgres:18-alpine/.test(ci) &&
          ci.includes('POSTGRES_USER:') &&
          ci.includes('POSTGRES_DB:');
 });

@@ -3,7 +3,7 @@
 // cookie flags, preflight shape, no server banner, and the clientIp
 // trust-proxy policy (rate-limit spoofing protection).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -166,15 +166,28 @@ describe('P7: clientIp trust policy (rate-limit spoofing guard)', () => {
 
 describe('P7: production anti-spam wiring (dist-gated)', () => {
   const WEB = join(dirname(dirname(process.cwd())), 'apps', 'web', 'dist');
-  const hasDist = existsSync(join(WEB, 'index.html'));
+  // SSR builds have no dist/index.html; the page HTML is rendered by the
+  // server bundle at request time, so inspect the server entry + chunks.
+  const SERVER_ENTRY = join(WEB, 'server', 'entry.mjs');
+  const hasDist = existsSync(SERVER_ENTRY);
   const maybeIt = hasDist ? it : it.skip;
-  if (!hasDist) console.warn('[p7-security] apps/web/dist not built — Turnstile wiring assertion SKIPPED (run test:ci).');
+  if (!hasDist) console.warn('[p7-security] apps/web/dist/server/entry.mjs not built — Turnstile wiring assertion SKIPPED (run test:ci).');
 
   maybeIt('built pages define turnstile-site-key meta tag and layout-init sets window.TURNSTILE_SITE_KEY (Turnstile renders in production without CSP violation)', () => {
-    const html = readFileSync(join(WEB, 'index.html'), 'utf8');
-    expect(html).toContain('name="turnstile-site-key"');
-    // the injected value comes from PUBLIC_TURNSTILE_SITE_KEY (empty in dev builds — widget hidden)
-    expect(html).toMatch(/<meta\s+name="turnstile-site-key"\s+content/);
+    const serverDir = join(WEB, 'server');
+    const chunks = [SERVER_ENTRY];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir, { withFileTypes: true })) {
+        const p = join(dir, name.name);
+        if (name.isDirectory()) walk(p);
+        else if (name.name.endsWith('.mjs') || name.name.endsWith('.js')) chunks.push(p);
+      }
+    };
+    walk(join(serverDir, 'chunks'));
+    const bundle = chunks.map((p) => readFileSync(p, 'utf8')).join(String.fromCharCode(10));
+    // Astro compiles the component template into the server bundle; the
+    // literal must survive so every SSR response carries the meta tag.
+    expect(bundle).toContain('turnstile-site-key');
     const layoutInitPath = existsSync(join(WEB, 'client', 'assets', 'js', 'layout-init.js'))
       ? join(WEB, 'client', 'assets', 'js', 'layout-init.js')
       : join(WEB, 'assets', 'js', 'layout-init.js');

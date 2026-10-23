@@ -159,15 +159,20 @@ describe('Delivery API (Phase B Task B3 -> DLV-01)', () => {
   });
 
   it('responds with p95 < 50ms for single entity delivery reads', async () => {
+    // Warm-up requests keep the first-request JIT cost out of the tail
+    // percentiles; 50 samples make p95 stable on a loaded dev machine.
+    for (let i = 0; i < 5; i++) {
+      await app.request('/api/v1/delivery/pages/test-delivery-published');
+    }
     const timings: number[] = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 50; i++) {
       const start = performance.now();
       const res = await app.request('/api/v1/delivery/pages/test-delivery-published');
       expect(res.status).toBe(200);
       timings.push(performance.now() - start);
     }
     timings.sort((a, b) => a - b);
-    const p95 = timings[Math.floor(timings.length * 0.95)];
+    const p95 = timings[Math.ceil(timings.length * 0.95) - 1];
     expect(p95).toBeLessThan(50);
   });
 });

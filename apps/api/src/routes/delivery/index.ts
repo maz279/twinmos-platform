@@ -37,8 +37,8 @@ import {
   findSpecDictionary,
   findSpecTemplates,
   findDeviceTypeLabels,
+  findActiveLocales,
 } from './query.ts';
-import { and, eq } from 'drizzle-orm';
 
 // Invariant Query Layer Contracts (T3.1.1 / Z-12 / DLV-LEAK / CRIT-07):
 // Centralized in ./query.ts — strictly enforces:
@@ -325,24 +325,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
   // required set (core pages + common strings + menus) is complete AND the
   // row is flagged active in the locale table.
   r.get('/locales', async (c) => {
-    const { locale: localeTable, translation: translationTable, navMenu, page: pageTable } = await import('@twinmos/db');
-    const [rows, enPages, menus] = await Promise.all([
-      db.select().from(localeTable),
-      db.select({ id: pageTable.id }).from(pageTable).where(and(eq(pageTable.locale, 'en'), eq(pageTable.status, 'published'))),
-      db.select({ code: navMenu.code }).from(navMenu).where(eq(navMenu.locale, 'en')),
-    ]);
-    const locales = [];
-    for (const row of rows) {
-      if (row.code === 'en') { locales.push({ ...row, complete: true, active: true }); continue; }
-      const strings = await db.select({ id: translationTable.id })
-        .from(translationTable)
-        .where(and(eq(translationTable.locale, row.code), eq(translationTable.ns, 'common')));
-      const translatedMenus = await db.select({ code: navMenu.code }).from(navMenu).where(eq(navMenu.locale, row.code));
-      const complete =
-        enPages.length === 0 ||
-        (strings.length >= 8 && translatedMenus.length >= 3);
-      locales.push({ ...row, complete, active: row.active && complete });
-    }
+    const locales = await findActiveLocales(db);
     const tags = ['settings'];
     applyHeaders(c, tags);
     return c.json({ data: locales.filter((l) => l.code === 'en' || l.active), meta: { total: locales.length, cacheTags: tags } });

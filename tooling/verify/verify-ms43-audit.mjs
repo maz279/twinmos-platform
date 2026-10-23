@@ -228,6 +228,10 @@ async function runMasterAudit() {
         legalApproved: false,
         body: 'Placeholder',
         locale: 'en',
+        // Provenance supplied so this probe isolates the LEGAL gate (T4.3.4)
+        // rather than tripping the provenance gate (T4.7.2) first.
+        source: 'docs/BUSINESS_DECISION_LOG.md §3 (legal sign-off)',
+        approver: 'Arthur Pendelton',
       }),
     });
     const attemptJson = await attempt.json();

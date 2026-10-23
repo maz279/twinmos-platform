@@ -1,6 +1,6 @@
 # Entity Truth Register
 
-**Generated:** 2026-10-23T09:47:33.350Z  
+**Generated:** 2026-10-23T14:48:19.585Z  
 **Generator:** `tooling/verify/generate-entity-truth.mjs`  
 **Rows covered:** 121 published truth-bearing rows.
 
@@ -139,5 +139,5 @@ This register is generated from the CMS rows; each line records the row's source
 
 ---
 
-**Register SHA-256:** `2292e9913b2df7062baac59f2641c137e545c589b7164de676a6ea9c1cd92a33`  
-**HMAC-SHA256 signature:** `926d2430c259254259e4d96ab5e3c5db6e378b743ae3ad4674949e82c8538796`
+**Register SHA-256:** `6ab050bce476d338e7aabce35c44173ae4f0837533b701fcacbbf424c2f8a056`  
+**HMAC-SHA256 signature:** `ab72f059dc7377fc3ca5e2d61e62ae1e423e6ccd85be60aa36bc46b8c1297bbd`

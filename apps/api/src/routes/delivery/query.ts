@@ -1438,6 +1438,30 @@ export async function findSpecTemplates(db: DB, categoryId?: number) {
     .orderBy(asc(specTemplate.name));
 }
 
+/**
+ * T4.7.5 locale activation gate: a locale is active only when its required
+ * set (common strings + translated menus) is complete AND the row is flagged
+ * active. English is always served.
+ */
+export async function findActiveLocales(db: DB) {
+  const { locale: localeTable, translation: translationTable, navMenu, page: pageTable } = await import('@twinmos/db');
+  const [rows, enPages] = await Promise.all([
+    db.select().from(localeTable),
+    db.select({ id: pageTable.id }).from(pageTable).where(and(eq(pageTable.locale, 'en'), eq(pageTable.status, 'published'))),
+  ]);
+  const locales = [];
+  for (const row of rows) {
+    if (row.code === 'en') { locales.push({ ...row, complete: true, active: true }); continue; }
+    const strings = await db.select({ id: translationTable.id })
+      .from(translationTable)
+      .where(and(eq(translationTable.locale, row.code), eq(translationTable.ns, 'common')));
+    const translatedMenus = await db.select({ code: navMenu.code }).from(navMenu).where(eq(navMenu.locale, row.code));
+    const complete = enPages.length === 0 || (strings.length >= 8 && translatedMenus.length >= 3);
+    locales.push({ ...row, complete, active: row.active && complete });
+  }
+  return locales;
+}
+
 export async function findDeviceTypeLabels(db: DB) {
   return await db.select().from(deviceTypeLabel).orderBy(asc(deviceTypeLabel.sort));
 }

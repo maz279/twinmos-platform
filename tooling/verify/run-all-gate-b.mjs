@@ -15,22 +15,22 @@ const checks = [
   {
     id: 'VC-B-02',
     name: 'DLV-01: Delivery API Published-Only & Draft 404 Isolation',
-    cmd: 'npx vitest run apps/api/test/delivery.e2e.test.ts -t published',
+    cmd: 'npm test --workspace @twinmos/api -- test/delivery.e2e.test.ts -t published',
   },
   {
     id: 'VC-B-03',
     name: 'DLV-PREVIEW: HMAC-SHA256 Signed Preview Token Generator & Validator',
-    cmd: 'npx vitest run apps/api/test/delivery.e2e.test.ts -t preview',
+    cmd: 'npm test --workspace @twinmos/api -- test/delivery.e2e.test.ts -t preview',
   },
   {
     id: 'VC-B-04',
     name: 'DLV-TAGS: Delivery API Cache Tags Metadata Attribution',
-    cmd: 'npx vitest run apps/api/test/delivery.e2e.test.ts -t Cache-Tag',
+    cmd: 'npm test --workspace @twinmos/api -- test/delivery.e2e.test.ts -t Cache-Tag',
   },
   {
     id: 'VC-B-05',
     name: 'DLV-PERF: Delivery API In-Memory Warm P95 Latency < 50ms',
-    cmd: 'npx vitest run apps/api/test/delivery.e2e.test.ts -t p95',
+    cmd: 'npm test --workspace @twinmos/api -- test/delivery.e2e.test.ts -t p95',
   },
   {
     id: 'VC-B-06',
@@ -60,7 +60,7 @@ const checks = [
   {
     id: 'VC-B-11',
     name: 'CMS-E1: Redirect Loop, Multi-Hop Chain & Live Route Rejection',
-    cmd: 'npx vitest run apps/api/test/redirects.test.ts',
+    cmd: 'npm test --workspace @twinmos/api -- test/redirects.test.ts',
   },
   {
     id: 'VC-B-12',

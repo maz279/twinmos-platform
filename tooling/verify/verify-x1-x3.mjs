@@ -54,6 +54,8 @@ async function run() {
       body: 'Original content markdown',
       status: 'published',
       locale: 'en',
+      source: 'docs/BUSINESS_DECISION_LOG.md (content ownership matrix)',
+      approver: 'Victoria Sterling',
     }),
   });
   assert(createPageRes.status === 201, `Created test page (HTTP ${createPageRes.status})`);

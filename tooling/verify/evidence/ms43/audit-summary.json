@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-22T18:19:33.673Z",
+  "timestamp": "2026-10-23T14:42:26.919Z",
   "milestone": "MS4.3 · Glossary and versioned policies",
   "allPassed": true,
   "totalChecks": 12,
@@ -75,7 +75,7 @@
       "id": "MS43-CHK-12",
       "title": "Public SSR Legal page renders operative warranty & draft notices (GREF-C)",
       "passed": true,
-      "details": "HTTP 200, size=30739 bytes, has Operative=true, Version1.1=true, Drafts=false"
+      "details": "HTTP 200, size=32138 bytes, has Operative=true, Version1.1=true, Drafts=false"
     }
   ]
 }
