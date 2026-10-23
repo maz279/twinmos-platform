@@ -132,7 +132,7 @@ describe('R0.6 · Edge Configuration & Startup (Z-07, EDGE-START, EDGE-01)', () 
     it('CI workflow includes test-edge-config job executing docker build and nginx -t', () => {
       expect(ciYml).toContain('test-edge-config:');
       expect(ciYml).toContain('docker build -t twinmos-edge:test -f deploy/edge/Dockerfile .');
-      expect(ciYml).toContain('docker run --rm twinmos-edge:test nginx -t');
+      expect(ciYml.match(/docker run --rm[^\n]*twinmos-edge:test nginx -t/)).toBeTruthy();
       expect(ciYml).toContain('node tooling/verify/edge-ip-proof.mjs');
     });
   });

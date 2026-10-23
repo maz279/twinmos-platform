@@ -1,5 +1,7 @@
 {
-  "releaseTag": "sha-4c6d620",
-  "deployedAt": "2026-10-22T18:01:54.976Z",
-  "status": "healthy"
+  "releaseTag": "c8145c2",
+  "restoredAt": "2026-10-23T12:37:53Z",
+  "status": "healthy",
+  "rollbackDurationSeconds": 66,
+  "environment": "docker-compose (local staging)"
 }

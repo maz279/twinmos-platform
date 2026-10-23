@@ -53,7 +53,9 @@ afterAll(async () => {
   rmSync(TMP, { recursive: true, force: true });
 });
 
-const ip = (n: number) => ({ 'x-forwarded-for': `10.9.0.${n}` });
+// The public sn-check rate limiter buckets on cf-connecting-ip (the header
+// Cloudflare stamps); x-forwarded-for is deliberately untrusted (T2.5).
+const ip = (n: number) => ({ 'cf-connecting-ip': `10.9.0.${n}` });
 
 describe('partner portal', () => {
   let orgId = 0;

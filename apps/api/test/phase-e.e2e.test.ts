@@ -107,8 +107,8 @@ describe('Phase E: SEO, i18n, Accessibility & Privacy Compliance (VC-D/E)', () =
 
       const paths = data.items.map((i: any) => i.path);
       expect(paths).toContain('/');
-      expect(paths).toContain('/about.html');
-      expect(paths).toContain('/product.html?id=nvme-ssd-2tb');
+      expect(paths).toContain('/about');
+      expect(paths).toContain('/products/nvme-ssd-2tb');
     });
 
     it('GET /api/v1/delivery/sitemap?locale=ar filters by locale prefix', async () => {
@@ -118,7 +118,7 @@ describe('Phase E: SEO, i18n, Accessibility & Privacy Compliance (VC-D/E)', () =
       expect(Array.isArray(data.items)).toBe(true);
 
       for (const item of data.items) {
-        expect(item.path.startsWith('/ar/')).toBe(true);
+        expect(item.path === '/ar' || item.path.startsWith('/ar/')).toBe(true);
       }
     });
   });
@@ -147,11 +147,12 @@ describe('Phase E: SEO, i18n, Accessibility & Privacy Compliance (VC-D/E)', () =
       expect(sec).toContain('Policy: https://www.twinmos.com/legal.html#security');
     });
 
-    it('apps/web/public/humans.txt and robots.txt exist', () => {
+    it('apps/web/public/humans.txt and the dynamic robots route exist', () => {
+      // robots.txt is generated per-request (robots.txt.ts), not a static file.
       const humansPath = join(dirname(dirname(process.cwd())), 'apps', 'web', 'public', 'humans.txt');
-      const robotsPath = join(dirname(dirname(process.cwd())), 'apps', 'web', 'public', 'robots.txt');
+      const robotsRoute = join(dirname(dirname(process.cwd())), 'apps', 'web', 'src', 'pages', 'robots.txt.ts');
       expect(existsSync(humansPath)).toBe(true);
-      expect(existsSync(robotsPath)).toBe(true);
+      expect(existsSync(robotsRoute)).toBe(true);
     });
   });
 

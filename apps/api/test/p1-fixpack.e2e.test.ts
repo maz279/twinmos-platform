@@ -72,8 +72,8 @@ describe('P1.2: sanitized markdown in server-rendered content', () => {
     const prev = await app.request('/api/v1/admin/content/article/' + row.id + '/preview', {
       method: 'POST', headers: { 'content-type': 'application/json', cookie: ck }, body: '{}',
     });
-    const { previewUrl } = await prev.json();
-    const page = await app.request(previewUrl.replace(/^https?:\/\/[^/]+/, ''));
+    const { token } = await prev.json();
+    const page = await app.request(`/api/v1/preview/${token}`);
     const html = await page.text();
     expect(html).toContain('Title');
     expect(html).not.toMatch(/<script>/);

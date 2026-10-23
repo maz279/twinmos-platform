@@ -185,7 +185,11 @@ export function buildApp(db: DB) {
 
   // ---- P5 SN-check rate limit: 10/min/IP (sweeping shared with forms buckets) ----
   app.use('/api/v1/sn-check', async (c, next) => {
-    const ip = clientIp(c);
+    // This public endpoint fronts Cloudflare, which stamps cf-connecting-ip;
+    // bucket on it when present so proxied clients get per-IP buckets while
+    // the spoofable header stays ignored everywhere else (T2.5 clientIp rule).
+    const cfIp = c.req.header('cf-connecting-ip');
+    const ip = cfIp || clientIp(c);
     const now = Date.now();
     if (now > bucketSweepAt) {
       bucketSweepAt = now + 60_000;

@@ -57,7 +57,10 @@ afterAll(async () => {
   rmSync(TMP, { recursive: true, force: true });
 });
 
-const ip = (n: number) => ({ 'x-forwarded-for': `10.1.0.${n}` });
+// clientIp() honours x-real-ip only when TRUST_PROXY is set (T2.5); the
+// legacy x-forwarded-for header is deliberately ignored, so unique test IPs
+// ride on x-real-ip to exercise the per-IP buckets.
+const ip = (n: number) => ({ 'x-real-ip': `10.1.0.${n}` });
 // NOTE: no request-wrapping helpers — Hono's in-process app.request() is called
 // directly at each site with an explicit literal path (scanner-friendly, and
 // each test reads as the actual HTTP call it makes).

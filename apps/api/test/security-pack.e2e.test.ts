@@ -426,6 +426,10 @@ describe('Security Regression Pack (S-01…S-16)', () => {
   });
 
   it('S-07: Admin routes enforce MFA for editor and above on all routes including GET', async () => {
+    // The suite runs with ENFORCE_MFA=0 for ergonomic fixtures; S-07 is the
+    // enforcement contract itself, so flip it on for the duration of the probe.
+    const prevMfa = process.env.ENFORCE_MFA;
+    process.env.ENFORCE_MFA = '1';
     // Un-enrolled editor (twoFactorEnabled: false) attempts to access /admin/products (GET)
     const unMfaEditorCookie = await setupTestUser('sec-no-mfa-editor@twinmos.test', 'editor', false);
     const getRes = await app.request('/api/v1/admin/products', {
@@ -447,6 +451,7 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     expect(postRes.status).toBe(403);
     const postBody = await postRes.json();
     expect(postBody.code).toBe('MFA_REQUIRED');
+    process.env.ENFORCE_MFA = prevMfa;
   });
 
   it('S-09: Two visitors behind Cloudflare get separate sign-in buckets (attacker throttled 429, staff on separate IP succeeds 200)', async () => {
