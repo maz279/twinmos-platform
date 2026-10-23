@@ -1,25 +1,33 @@
-# TwinMOS Monorepo CODEOWNERS (PROC-01)
-# Enforces PR review approval requirements across monorepo boundaries
+# TwinMOS Monorepo CODEOWNERS (PROC-01, T3.6.4, REPO-01)
+# Closes Z-36: Uses resolving owner handle @maz279 for personal repository context
+# (GitHub does not resolve @twinmos/* team handles on user-owned repositories).
 
-*                   @twinmos/platform-core
+*                   @maz279
 
-# Edge and deployment infrastructure
-/deploy/            @twinmos/devops-team @twinmos/platform-core
-/.github/workflows/ @twinmos/devops-team @twinmos/platform-core
-/Dockerfile*        @twinmos/devops-team
-/.dockerignore      @twinmos/devops-team
+# Auth critical paths (T3.6.4)
+/apps/api/src/auth.ts            @maz279
+/apps/api/src/routes/users.ts    @maz279
+/apps/admin/src/pages/Login.tsx  @maz279
+
+# Database schemas & migrations (T3.6.4)
+/packages/db/                    @maz279
+
+# Edge, CI & deployment infrastructure (T3.6.4)
+/deploy/nginx/                   @maz279
+/deploy/compose/                 @maz279
+/.github/workflows/              @maz279
+/deploy/                         @maz279
+/Dockerfile*                     @maz279
+/.dockerignore                   @maz279
 
 # Web frontend (Astro SSR)
-/apps/web/          @twinmos/frontend-team @twinmos/platform-core
+/apps/web/                       @maz279
 
 # Admin console SPA
-/apps/admin/        @twinmos/admin-team @twinmos/platform-core
+/apps/admin/                     @maz279
 
 # Core API backend
-/apps/api/          @twinmos/backend-team @twinmos/platform-core
-
-# Database schemas & migrations
-/packages/db/       @twinmos/database-team @twinmos/platform-core
+/apps/api/                       @maz279
 
 # Shared contracts and schemas
-/packages/shared/   @twinmos/platform-core
+/packages/shared/                @maz279

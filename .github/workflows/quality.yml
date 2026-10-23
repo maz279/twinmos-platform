@@ -1,12 +1,14 @@
-# TwinMOS Quality Jobs Workflow (QJ-01)
-# Enforces WCAG 2.2 AA accessibility, Lighthouse CI performance budgets,
-# CycloneDX SBOM provenance, and OWASP ZAP baseline security.
+# TwinMOS Quality Jobs Workflow (QJ-01, T3.7.4)
+# Enforces WCAG 2.2 AA accessibility, Lighthouse CI performance budgets (LCP <= 2.5s, CLS <= 0.1),
+# CycloneDX SBOM provenance, and OWASP ZAP baseline security without continue-on-error.
 name: Quality Jobs & Audits
 
 on:
   schedule:
-    - cron: '0 2 * * *' # Daily at 02:00 UTC
+    - cron: '0 2 * * *' # Daily at 02:00 UTC (nightly)
   workflow_dispatch:
+  push:
+    branches: [main, 'release/**']
   pull_request:
     paths:
       - 'apps/web/**'
@@ -16,6 +18,7 @@ on:
 
 jobs:
   accessibility-and-performance:
+    name: Accessibility & Lighthouse CI Performance
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -38,16 +41,17 @@ jobs:
       - name: Build Web Application Bundle
         run: npm run build --workspace @twinmos/web
 
-      - name: WCAG 2.2 AA Axe-Core Audit (Reduced & Settled Motion)
+      - name: WCAG 2.2 AA Axe-Core Audit (Every Route Reduced & Settled Motion)
         run: node tooling/verify/visual-a11y-audit.mjs
 
-      - name: Run Lighthouse CI Audit
+      - name: Run Lighthouse CI Audit (Performance Enforced as Error)
         uses: treosh/lighthouse-ci-action@v12
         with:
           configPath: './lighthouserc.json'
           uploadHandler: 'temporary-public-storage'
 
   security-and-sbom:
+    name: Security Scan, SBOM & OWASP ZAP (Enforced Thresholds)
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -68,7 +72,7 @@ jobs:
       - name: Verify Container & SBOM Isolation
         run: node tooling/verify/verify-container-sbom.mjs
 
-      - name: OWASP ZAP Baseline Security Scan
+      - name: OWASP ZAP Baseline Security Scan (Enforced Without continue-on-error)
         uses: zaproxy/action-baseline@v0.14.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -77,4 +81,4 @@ jobs:
           rules_file_name: 'deploy/zap/zap-baseline.rules'
           cmd_options: '-m 2'
           allow_issue_writing: false
-        continue-on-error: true
+        continue-on-error: false

@@ -3,23 +3,52 @@ import { getDeliverySitemap } from '../lib/delivery.ts';
 
 export const prerender = false;
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ request }) => {
   const origin = 'https://www.twinmos.com';
+  const url = new URL(request.url);
+  const format = url.searchParams.get('format');
+  const locale = url.searchParams.get('locale');
+
+  // On-demand sitemap index (T3.5.2)
+  if (format === 'index') {
+    const activeLocales = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'];
+    const sitemapsXml = activeLocales
+      .map((code) => {
+        return `  <sitemap>\n    <loc>${origin}/sitemap.xml?locale=${code}</loc>\n    <lastmod>${new Date().toISOString()}</lastmod>\n  </sitemap>`;
+      })
+      .join('\n');
+
+    const indexXml = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemapsXml}\n</sitemapindex>`;
+    return new Response(indexXml, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+      },
+    });
+  }
+
   let entries: Array<{ loc: string; lastmod?: string; locale?: string }> = [];
 
   try {
-    entries = await getDeliverySitemap();
+    entries = await getDeliverySitemap(locale || undefined);
   } catch (err) {
     console.error('Failed to fetch dynamic sitemap from delivery API:', err);
   }
 
-  // Fallback defaults for core pages if API is cold
+  // Fallback defaults for core pages if API is cold. Clean URLs only: every
+  // .html alias is a 301 on this site.
   if (!entries || entries.length === 0) {
-    const corePaths = [
-      '/', '/about.html', '/products.html', '/support.html',
-      '/contact.html', '/warranty.html', '/partners.html', '/careers.html'
-    ];
-    entries = corePaths.map((p) => ({ loc: p, locale: 'en' }));
+    if (locale && locale !== 'en') {
+      // A locale sitemap must never advertise English URLs as translated ones;
+      // the landing is the one route guaranteed to exist for every locale.
+      entries = [{ loc: `/${locale}`, locale }];
+    } else {
+      const corePaths = [
+        '/', '/about', '/shop', '/support', '/contact', '/legal', '/partners', '/careers',
+      ];
+      entries = corePaths.map((p) => ({ loc: p, locale: locale || 'en' }));
+    }
   }
 
   const urlsXml = entries

@@ -14,7 +14,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:18-alpine
+        image: mirror.gcr.io/library/postgres:18-alpine
         env:
           POSTGRES_DB: twinmos_test
           POSTGRES_USER: twinmos_test
@@ -35,13 +35,18 @@ jobs:
       PORT: 8787
       MAIL_TRANSPORT: mock
       CAPTCHA_BYPASS: '1'
+      API_ALLOW_NO_TURNSTILE: '1'
+      SEED_ADMIN_EMAIL: admin@twinmos.dev
+      SEED_ADMIN_PASSWORD: Verify-Kit-Only-2026!
+      PUBLIC_API_URL: http://127.0.0.1:8787/api/v1
+      REVALIDATE_SECRET: dev-revalidate-secret
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -64,14 +69,8 @@ jobs:
 
       - name: Database Migrations & Seed
         run: |
-          npm run db:migrate --workspace @twinmos/db
-          npm run seed --workspace @twinmos/api
-
-      - name: Build Web & Admin (BUILD-01)
-        run: |
-          npm run build --workspace @twinmos/web
-          npm run build --workspace @twinmos/admin
-          node tooling/verify/build-provenance.mjs
+          npm run db:migrate --workspace @twinmos/api
+          npm run db:seed --workspace @twinmos/api
 
       - name: Static Configuration & Encoding Sweeps
         run: |
@@ -82,9 +81,21 @@ jobs:
 
       - name: Start API Daemon
         run: |
-          node --env-file-if-exists=.env --experimental-strip-types --no-warnings apps/api/src/index.ts &
-          sleep 3
+          npm run start --workspace @twinmos/api &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8787/api/v1/health && break; sleep 2; done
           curl -f http://127.0.0.1:8787/api/v1/health
+
+      - name: Build Web & Admin after API (BUILD-01)
+        run: |
+          npm run build --workspace @twinmos/web
+          npm run build --workspace @twinmos/admin
+          node tooling/verify/build-provenance.mjs
+
+      - name: Start Web Preview
+        run: |
+          PORT=4321 HOST=127.0.0.1 npm run preview --workspace @twinmos/web &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4321/ && break; sleep 2; done
+          curl -f http://127.0.0.1:4321/
 
       - name: WALK-PUB Public Routes Browser Walkthrough
         run: node tooling/verify/walk-public.mjs

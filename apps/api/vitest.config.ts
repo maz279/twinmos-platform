@@ -10,6 +10,7 @@ export default defineConfig({
     env: {
       FORCE_PGLITE: '1',
       TRUST_PROXY: '1',
+      ENFORCE_MFA: '0',
     },
   },
 });

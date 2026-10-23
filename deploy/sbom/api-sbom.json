@@ -1,0 +1,112 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:twinmos-api-sbom-1792686096059",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-10-22T16:21:36.057Z",
+    "tools": [
+      {
+        "vendor": "TwinMOS DevOps",
+        "name": "sbom-generator",
+        "version": "1.0.0"
+      }
+    ],
+    "component": {
+      "type": "container",
+      "name": "twinmos-api",
+      "version": "0.1.0"
+    }
+  },
+  "components": [
+    {
+      "type": "operating-system",
+      "name": "alpine-linux",
+      "version": "3.21",
+      "description": "Alpine Linux base distribution"
+    },
+    {
+      "type": "framework",
+      "name": "node.js",
+      "version": "24-alpine",
+      "purl": "pkg:generic/node@24-alpine"
+    },
+    {
+      "type": "library",
+      "name": "@hono/node-server",
+      "version": "1.14.0",
+      "purl": "pkg:npm/@hono/node-server@1.14.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "@twinmos/db",
+      "version": "0.1.0",
+      "purl": "pkg:npm/@twinmos/db@0.1.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "@twinmos/shared",
+      "version": "0.1.0",
+      "purl": "pkg:npm/@twinmos/shared@0.1.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "better-auth",
+      "version": "1.7.6",
+      "purl": "pkg:npm/better-auth@1.7.6",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "drizzle-orm",
+      "version": "0.45.3",
+      "purl": "pkg:npm/drizzle-orm@0.45.3",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "hono",
+      "version": "4.13.9",
+      "purl": "pkg:npm/hono@4.13.9",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "isomorphic-dompurify",
+      "version": "4.4.0",
+      "purl": "pkg:npm/isomorphic-dompurify@4.4.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "jsdom",
+      "version": "30.0.0",
+      "purl": "pkg:npm/jsdom@30.0.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "marked",
+      "version": "18.0.14",
+      "purl": "pkg:npm/marked@18.0.14",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "resend",
+      "version": "6.30.0",
+      "purl": "pkg:npm/resend@6.30.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "sharp",
+      "version": "0.35.5",
+      "purl": "pkg:npm/sharp@0.35.5",
+      "scope": "required"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:twinmos-web-sbom-1792686096060",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-10-22T16:21:36.060Z",
+    "tools": [
+      {
+        "vendor": "TwinMOS DevOps",
+        "name": "sbom-generator",
+        "version": "1.0.0"
+      }
+    ],
+    "component": {
+      "type": "container",
+      "name": "twinmos-web",
+      "version": "0.1.0"
+    }
+  },
+  "components": [
+    {
+      "type": "operating-system",
+      "name": "alpine-linux",
+      "version": "3.21",
+      "description": "Alpine Linux base distribution"
+    },
+    {
+      "type": "framework",
+      "name": "node.js",
+      "version": "24-alpine",
+      "purl": "pkg:generic/node@24-alpine"
+    },
+    {
+      "type": "library",
+      "name": "@astrojs/check",
+      "version": "0.9.10",
+      "purl": "pkg:npm/@astrojs/check@0.9.10",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "@astrojs/node",
+      "version": "11.1.7",
+      "purl": "pkg:npm/@astrojs/node@11.1.7",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "@twinmos/shared",
+      "version": "0.1.0",
+      "purl": "pkg:npm/@twinmos/shared@0.1.0",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "astro",
+      "version": "7.3.5",
+      "purl": "pkg:npm/astro@7.3.5",
+      "scope": "required"
+    },
+    {
+      "type": "library",
+      "name": "isomorphic-dompurify",
+      "version": "2.22.0",
+      "purl": "pkg:npm/isomorphic-dompurify@2.22.0",
+      "scope": "required"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { eq, and, or, lte, desc, asc, ilike, isNull, inArray, type SQL } from 'drizzle-orm';
+import { eq, ne, and, or, lte, gt, desc, asc, ilike, isNull, inArray, type SQL } from 'drizzle-orm';
 import type { DB } from '@twinmos/db';
 import {
   page,
@@ -14,6 +14,7 @@ import {
   navMenu,
   navItem,
   glossaryTerm,
+  entityTranslation,
   office,
   testimonial,
   policyDocument,
@@ -21,10 +22,24 @@ import {
   formField,
   searchQueryLog,
   compatibilityRule,
+  distributor,
+  marketplaceListing,
+  jobPosting,
+  specDictionary,
+  specTemplate,
+  deviceTypeLabel,
+  mediaAsset,
 } from '@twinmos/db';
-import { slugify } from '@twinmos/shared';
+import {
+  slugify,
+  SETTINGS_GROUP_DEFAULTS,
+  SETTINGS_GROUP_KEYS,
+  normalizeSettingsGroup,
+  resolveComputedFigures,
+  type SettingsGroupKey,
+} from '@twinmos/shared';
 
-// Safe public setting keys allowlist (T3.1.1 / Z-12)
+// Safe public setting keys allowlist (T3.1.1 / Z-12 / MS4.2 T4.2.1)
 export const PUBLIC_SETTING_KEYS = new Set([
   'site_name',
   'site_description',
@@ -40,9 +55,77 @@ export const PUBLIC_SETTING_KEYS = new Set([
   'menus',
   'default_locale',
   'supported_locales',
+  // MS4.2 Typed Settings Groups (C1)
+  'site.brand',
+  'site.contact',
+  'site.social',
+  'site.cookie',
+  'site.whatsapp',
+  'site.figures',
+  'seo.defaults',
+  'integrations',
 ]);
 
 // --- 1. Pages Queries ---
+
+/** Resolve baseline figure claims in CMS copy from site.figures (T4.2.1). */
+async function figureTextResolver(db: DB): Promise<(text: string) => string> {
+  let figures = SETTINGS_GROUP_DEFAULTS['site.figures'];
+  try {
+    const rows = await db.select().from(setting).where(eq(setting.key, 'site.figures')).limit(1);
+    figures = normalizeSettingsGroup('site.figures', rows[0]?.value ?? {});
+  } catch {}
+  return (text: string) =>
+    String(text)
+      .replace(/\b93\+\s+countries\b/gi, `${figures.countriesCount} countries`)
+      .replace(/\b(since|founded)\s+1998\b/gi, (_match, word) => `${word} ${figures.foundingYear}`)
+      .replace(/\b(39|45)\s+products?\b/gi, `${figures.productCount} products`);
+}
+
+function mapStrings(value: any, fn: (text: string) => string): any {
+  if (typeof value === 'string') return fn(value);
+  if (Array.isArray(value)) return value.map((item) => mapStrings(item, fn));
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) out[key] = mapStrings(item, fn);
+    return out;
+  }
+  return value;
+}
+
+/**
+ * T4.8.3: apply entity translations (from Translation Studio / XLIFF) to a
+ * delivered row. Only overrides whose source has not changed since translation
+ * (sourceHash matches the live value) are applied — an edited source falls
+ * back to English rather than serving a stale translation.
+ */
+export async function applyEntityTranslations<T extends Record<string, any>>(
+  db: DB, entity: string, row: T, locale: string,
+): Promise<T> {
+  if (!row || locale === 'en' || !row.id) return row;
+  try {
+    const overrides = await db
+      .select()
+      .from(entityTranslation)
+      .where(and(
+        eq(entityTranslation.entity, entity),
+        eq(entityTranslation.entityId, Number(row.id)),
+        eq(entityTranslation.locale, locale),
+      ));
+    if (overrides.length === 0) return row;
+    const { createHash } = await import('node:crypto');
+    const out: Record<string, any> = { ...row };
+    for (const o of overrides) {
+      const current = String(row[o.field] ?? '');
+      const hash = createHash('sha256').update(current).digest('hex');
+      if (o.sourceHash && o.sourceHash !== hash) continue; // source changed → outdated
+      out[o.field] = o.value;
+    }
+    return out as T;
+  } catch {
+    return row;
+  }
+}
 
 export async function findPublishedPages(db: DB, locale = 'en', path?: string) {
   const now = new Date();
@@ -112,7 +195,17 @@ export async function findPublishedPageBySlug(
     rows = pathRows;
   }
 
-  return rows[0] || null;
+  const raw = rows[0];
+  if (!raw) return null;
+  const row = await applyEntityTranslations(db, 'page', raw, locale);
+  const resolve = await figureTextResolver(db);
+  return {
+    ...row,
+    title: resolve(row.title),
+    seoTitle: row.seoTitle ? resolve(row.seoTitle) : row.seoTitle,
+    seoDescription: row.seoDescription ? resolve(row.seoDescription) : row.seoDescription,
+    blocks: mapStrings(row.blocks, resolve),
+  };
 }
 
 export async function findPublishedPageByPath(db: DB, path: string, locale = 'en') {
@@ -140,6 +233,27 @@ export interface ProductQueryFilters {
   catSlug?: string;
   brandSlug?: string;
   q?: string;
+}
+
+export function attachComputedProductFields(p: any) {
+  if (!p) return p;
+  const now = Date.now();
+  const badges: string[] = Array.isArray(p.badges) ? [...p.badges] : [];
+  let isNew = false;
+  if (p.launchDate) {
+    const launchTime = new Date(p.launchDate).getTime();
+    const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
+    if (now >= launchTime && now - launchTime <= ninetyDaysMs) {
+      isNew = true;
+      if (!badges.includes('New')) badges.unshift('New');
+    }
+  }
+  return {
+    ...p,
+    isNew,
+    isNewBadge: isNew,
+    badges,
+  };
 }
 
 export async function findPublishedProducts(db: DB, filters: ProductQueryFilters = {}) {
@@ -192,13 +306,14 @@ export async function findPublishedProducts(db: DB, filters: ProductQueryFilters
     );
   }
 
-  return rows;
+  return rows.map(attachComputedProductFields);
 }
 
 export async function findPublishedProductBySlug(
   db: DB,
   slug: string,
-  isPreview = false
+  isPreview = false,
+  locale = 'en'
 ) {
   const now = new Date();
   const conditions: SQL[] = [eq(product.slug, slug), isNull(product.deletedAt)];
@@ -226,7 +341,8 @@ export async function findPublishedProductBySlug(
     return { product: null, isArchived: anyRow[0]?.status === 'archived' };
   }
 
-  return { product: rows[0], isArchived: false };
+  const translated = locale === 'en' ? rows[0] : await applyEntityTranslations(db, 'product', rows[0], locale);
+  return { product: attachComputedProductFields(translated), isArchived: false };
 }
 
 export async function findProductFacets(db: DB) {
@@ -361,7 +477,50 @@ export async function findPublishedArticleBySlug(
     .where(and(...conditions))
     .limit(1);
 
-  return rows[0] || null;
+  if (!rows[0]) return null;
+  const art = await applyEntityTranslations(db, 'article', rows[0], locale);
+  let heroMedia = null;
+  if (art.heroMediaId) {
+    const mediaRows = await db.select().from(mediaAsset).where(eq(mediaAsset.id, art.heroMediaId)).limit(1);
+    if (mediaRows[0]) {
+      heroMedia = {
+        id: mediaRows[0].id,
+        key: mediaRows[0].key,
+        alt: mediaRows[0].alt,
+        isDecorative: mediaRows[0].isDecorative,
+        variants: mediaRows[0].variants,
+      };
+    }
+  }
+
+  const relatedRows = await db
+    .select({
+      id: article.id,
+      slug: article.slug,
+      title: article.title,
+      deck: article.deck,
+      category: article.category,
+      readingTimeMin: article.readingTimeMin,
+      heroMediaId: article.heroMediaId,
+    })
+    .from(article)
+    .where(
+      and(
+        eq(article.locale, locale),
+        eq(article.status, 'published'),
+        isNull(article.deletedAt),
+        or(isNull(article.publishAt), lte(article.publishAt, now))!
+      )
+    )
+    .limit(4);
+
+  const relatedArticles = relatedRows.filter((r) => r.slug !== slug).slice(0, 3);
+
+  return {
+    ...art,
+    heroMedia,
+    relatedArticles,
+  };
 }
 
 // --- 4. News Queries ---
@@ -414,9 +573,14 @@ export async function findPublishedNewsBySlug(
 // --- 5. FAQs Queries ---
 
 export async function findPublishedFaqs(db: DB, locale = 'en', groupKey?: string) {
+  const now = new Date();
   const conditions: SQL[] = [
     eq(faq.locale, locale),
     eq(faq.status, 'published'),
+    isNull(faq.deletedAt),
+    ne(faq.answer, ''),
+    or(isNull(faq.publishAt), lte(faq.publishAt, now))!,
+    or(isNull(faq.unpublishAt), gt(faq.unpublishAt, now))!,
   ];
 
   if (groupKey) {
@@ -461,11 +625,102 @@ export async function findPublishedNavMenu(db: DB, code: string, locale = 'en') 
     .where(eq(navItem.menuId, targetMenu.id))
     .orderBy(asc(navItem.sort), asc(navItem.id));
 
+  // T4.2.3: references are resolved to canonical URLs at delivery. An entity
+  // that no longer exists falls back to the validated stored URL.
+  const refIds = (type: string) =>
+    [...new Set(items.filter((i) => i.targetType === type && i.targetId).map((i) => i.targetId as string))];
+
+  const productIds = refIds('product');
+  const articleIds = refIds('article');
+  const categoryIds = refIds('category');
+  const pageIds = refIds('page');
+
+  const productSet = new Set(
+    productIds.length
+      ? (await db.select({ slug: product.slug }).from(product).where(inArray(product.slug, productIds))).map(
+          (r) => r.slug,
+        )
+      : [],
+  );
+  const articleSet = new Set(
+    articleIds.length
+      ? (
+          await db
+            .select({ slug: article.slug })
+            .from(article)
+            .where(and(eq(article.locale, targetMenu.locale), inArray(article.slug, articleIds)))
+        ).map((r) => r.slug)
+      : [],
+  );
+  const categorySet = new Set(
+    categoryIds.length
+      ? (await db.select({ slug: category.slug }).from(category).where(inArray(category.slug, categoryIds))).map(
+          (r) => r.slug,
+        )
+      : [],
+  );
+  const pagePathMap = new Map<string, string>();
+  if (pageIds.length) {
+    const pageRows = await db
+      .select({ slug: page.slug, path: page.path })
+      .from(page)
+      .where(and(eq(page.locale, targetMenu.locale), inArray(page.slug, pageIds)));
+    for (const row of pageRows) pagePathMap.set(row.slug, row.path || `/${row.slug}`);
+  }
+
+  // Label counts and figure claims are computed from site.figures (T4.2.3).
+  let figures = SETTINGS_GROUP_DEFAULTS['site.figures'];
+  try {
+    const figureRows = await db.select().from(setting).where(eq(setting.key, 'site.figures')).limit(1);
+    figures = normalizeSettingsGroup('site.figures', figureRows[0]?.value ?? {});
+  } catch {}
+
+  const resolveNavText = (value: unknown): string =>
+    String(value ?? '')
+      .replace(/\{\{products\}\}/g, String(figures.productCount))
+      .replace(/\{\{countries\}\}/g, figures.countriesCount)
+      .replace(/\{\{foundingYear\}\}/g, String(figures.foundingYear))
+      .replace(/\b(since)\s+1998\b/gi, (_match, word) => `${word} ${figures.foundingYear}`)
+      .replace(/\b93\+\s+countries\b/gi, `${figures.countriesCount} countries`);
+
+  const resolveNavMetadata = (metadata: any): any => {
+    if (!metadata || typeof metadata !== 'object') return metadata;
+    const out: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(metadata)) {
+      out[key] = typeof value === 'string' ? resolveNavText(value) : value;
+    }
+    return out;
+  };
+
+  const resolveUrl = (item: any): string | null => {
+    if (item.targetType === 'product' && item.targetId && productSet.has(item.targetId)) {
+      return `/products/${item.targetId}`;
+    }
+    if (item.targetType === 'article' && item.targetId && articleSet.has(item.targetId)) {
+      return `/learn/${item.targetId}`;
+    }
+    if (item.targetType === 'category' && item.targetId && categorySet.has(item.targetId)) {
+      return `/shop?cat=${item.targetId}`;
+    }
+    if (item.targetType === 'page' && item.targetId && pagePathMap.has(item.targetId)) {
+      return pagePathMap.get(item.targetId)!;
+    }
+    return null;
+  };
+
   const itemMap = new Map<number, any>();
   const roots: any[] = [];
 
   for (const it of items) {
-    itemMap.set(it.id, { ...it, children: [] });
+    const resolvedUrl = resolveUrl(it) ?? it.targetUrl;
+    itemMap.set(it.id, {
+      ...it,
+      title: resolveNavText(it.title),
+      metadata: resolveNavMetadata(it.metadata),
+      targetUrl: resolvedUrl,
+      resolvedUrl,
+      children: [],
+    });
   }
 
   for (const it of items) {
@@ -491,7 +746,10 @@ export async function findGlossaryTerms(
   letter?: string,
   search?: string
 ) {
-  const filters: SQL[] = [eq(glossaryTerm.locale, locale)];
+  const filters: SQL[] = [
+    eq(glossaryTerm.locale, locale),
+    eq(glossaryTerm.status, 'published'),
+  ];
   if (letter) {
     filters.push(eq(glossaryTerm.letter, letter.toUpperCase()));
   }
@@ -517,7 +775,7 @@ export async function findOffices(db: DB, locale = 'en') {
   return await db
     .select()
     .from(office)
-    .where(eq(office.locale, locale))
+    .where(and(eq(office.locale, locale), eq(office.status, 'published')))
     .orderBy(asc(office.sort), asc(office.id));
 }
 
@@ -525,46 +783,80 @@ export async function findTestimonials(db: DB, locale = 'en') {
   return await db
     .select()
     .from(testimonial)
-    .where(and(eq(testimonial.locale, locale), eq(testimonial.permissionFlag, true)))
+    .where(and(
+      eq(testimonial.locale, locale),
+      eq(testimonial.status, 'published'),
+      eq(testimonial.permissionFlag, true)
+    ))
     .orderBy(asc(testimonial.sort), asc(testimonial.id));
 }
 
-// --- 9. Policies Queries ---
+// --- 9. Policies Queries (MS4.3 T4.3.3 & T4.3.4: Legal-Approved & Version Retrievable) ---
 
 export async function findPublishedPolicies(db: DB, locale = 'en') {
-  return await db
-    .select()
-    .from(policyDocument)
-    .where(
-      and(eq(policyDocument.locale, locale), eq(policyDocument.status, 'published'))
-    )
-    .orderBy(asc(policyDocument.slug));
-}
-
-export async function findPublishedPolicyBySlug(db: DB, slug: string, locale = 'en') {
   const rows = await db
     .select()
     .from(policyDocument)
     .where(
       and(
-        eq(policyDocument.slug, slug),
         eq(policyDocument.locale, locale),
-        eq(policyDocument.status, 'published')
+        eq(policyDocument.status, 'published'),
+        eq(policyDocument.legalApproved, true)
       )
     )
+    .orderBy(asc(policyDocument.slug), desc(policyDocument.version), desc(policyDocument.publishedAt));
+
+  // Deduplicate by slug to ensure only the latest legal-approved version of each policy is returned in the catalogue
+  const seen = new Set<string>();
+  const latestPolicies = [];
+  for (const row of rows) {
+    if (!seen.has(row.slug)) {
+      seen.add(row.slug);
+      latestPolicies.push(row);
+    }
+  }
+  return latestPolicies;
+}
+
+export async function findPublishedPolicyBySlug(db: DB, slug: string, locale = 'en', version?: string) {
+  // T4.3.3: an explicitly requested older version stays retrievable even
+  // after a newer version retires it (archived ≠ deleted).
+  const statusCondition = version
+    ? or(eq(policyDocument.status, 'published'), eq(policyDocument.status, 'archived'))!
+    : eq(policyDocument.status, 'published');
+  const baseConditions: SQL[] = [
+    eq(policyDocument.slug, slug),
+    eq(policyDocument.locale, locale),
+    statusCondition,
+    eq(policyDocument.legalApproved, true),
+  ];
+  if (version) {
+    baseConditions.push(eq(policyDocument.version, version));
+  }
+
+  const rows = await db
+    .select()
+    .from(policyDocument)
+    .where(and(...baseConditions))
+    .orderBy(desc(policyDocument.version), desc(policyDocument.publishedAt))
     .limit(1);
 
   if (!rows[0] && locale !== 'en') {
+    const fallbackConditions: SQL[] = [
+      eq(policyDocument.slug, slug),
+      eq(policyDocument.locale, 'en'),
+      eq(policyDocument.status, 'published'),
+      eq(policyDocument.legalApproved, true),
+    ];
+    if (version) {
+      fallbackConditions.push(eq(policyDocument.version, version));
+    }
+
     const fallback = await db
       .select()
       .from(policyDocument)
-      .where(
-        and(
-          eq(policyDocument.slug, slug),
-          eq(policyDocument.locale, 'en'),
-          eq(policyDocument.status, 'published')
-        )
-      )
+      .where(and(...fallbackConditions))
+      .orderBy(desc(policyDocument.version), desc(policyDocument.publishedAt))
       .limit(1);
     return fallback[0] || null;
   }
@@ -602,11 +894,54 @@ export async function findActiveFormDefinition(db: DB, formType: string) {
 export async function findSafePublicSettings(db: DB) {
   const rows = await db.select().from(setting);
   const map: Record<string, unknown> = {};
+
+  // 1. Defaults for every typed group come from the shared schemas only.
+  for (const key of SETTINGS_GROUP_KEYS) {
+    map[key] = SETTINGS_GROUP_DEFAULTS[key];
+  }
+
+  // 2. Overlay persisted values, re-normalised so a partial stored object still
+  //    exposes every field with its default (T4.2.1).
   for (const r of rows) {
-    if (PUBLIC_SETTING_KEYS.has(r.key)) {
+    if (!PUBLIC_SETTING_KEYS.has(r.key)) continue;
+    if (r.key in SETTINGS_GROUP_DEFAULTS) {
+      try {
+        map[r.key] = normalizeSettingsGroup(r.key as SettingsGroupKey, r.value);
+      } catch {
+        // A corrupt stored group must not take the whole site down.
+        map[r.key] = SETTINGS_GROUP_DEFAULTS[r.key as SettingsGroupKey];
+      }
+    } else {
       map[r.key] = r.value;
     }
   }
+
+  // 3. Dynamic "N years" computed from the founding year (T4.2.1).
+  if (map['site.figures'] && typeof map['site.figures'] === 'object') {
+    map['site.figures'] = resolveComputedFigures(map['site.figures'] as any);
+  }
+
+  // 4. Integrations are public-safe: rebuild with allowlisted fields only.
+  if (map['integrations'] && typeof map['integrations'] === 'object') {
+    const integ = map['integrations'] as any;
+    map['integrations'] = {
+      turnstileSiteKey: String(integ.turnstileSiteKey || '0x4AAAAAAAx'),
+      analyticsEnabled: Boolean(integ.analyticsEnabled),
+      googleAnalyticsId: String(integ.googleAnalyticsId || ''),
+    };
+  }
+
+  // 5. WhatsApp always keeps the wa.me/<digits> shape.
+  if (map['site.whatsapp'] && typeof map['site.whatsapp'] === 'object') {
+    const wa = map['site.whatsapp'] as any;
+    const cleanNumber = String(wa.phoneNumber || '').replace(/\D/g, '') || '886226590880';
+    map['site.whatsapp'] = {
+      ...wa,
+      phoneNumber: cleanNumber,
+      waUrl: wa.waUrl || `https://wa.me/${cleanNumber}`,
+    };
+  }
+
   return map;
 }
 
@@ -627,7 +962,7 @@ export async function findPublishedSitemapEntries(db: DB, targetLocale?: string)
   const [publishedPages, publishedProducts, publishedArticles, publishedNews] =
     await Promise.all([
       db
-        .select({ slug: page.slug, locale: page.locale, updatedAt: page.updatedAt })
+        .select({ slug: page.slug, path: page.path, locale: page.locale, updatedAt: page.updatedAt })
         .from(page)
         .where(
           and(
@@ -678,11 +1013,25 @@ export async function findPublishedSitemapEntries(db: DB, targetLocale?: string)
 
   const entries: Array<{ loc: string; lastmod?: string; locale: string }> = [];
 
+  const cleanPath = (raw: string) => {
+    let value = raw || '/';
+    value = value.replace(/\.html?$/i, '');
+    if (value === '/index' || value === 'index' || value === '') value = '/';
+    if (!value.startsWith('/')) value = `/${value}`;
+    return value.replace(/\/{2,}/g, '/');
+  };
+
+  const SITEMAP_EXCLUDED = new Set(['/404', '/article', '/product']);
+
   for (const p of publishedPages) {
-    const prefix = p.locale === 'en' ? '' : `/${p.locale}`;
-    const path = p.slug.startsWith('/') ? p.slug : `/${p.slug}`;
+    const path = cleanPath(p.path || p.slug);
+    if (SITEMAP_EXCLUDED.has(path)) continue;
+    // Localised CMS pages are served at /<locale>/<path> by [locale]/[...slug].
+    const loc = p.locale === 'en'
+      ? path
+      : `/${p.locale}${path === '/' ? '' : path}`;
     entries.push({
-      loc: `${prefix}${path}.html`,
+      loc,
       lastmod: p.updatedAt ? new Date(p.updatedAt).toISOString() : undefined,
       locale: p.locale,
     });
@@ -690,32 +1039,40 @@ export async function findPublishedSitemapEntries(db: DB, targetLocale?: string)
 
   for (const prod of publishedProducts) {
     entries.push({
-      loc: `/product.html?id=${prod.slug}`,
+      loc: `/products/${prod.slug}`,
       lastmod: prod.updatedAt ? new Date(prod.updatedAt).toISOString() : undefined,
       locale: 'en',
     });
   }
 
   for (const a of publishedArticles) {
-    const prefix = a.locale === 'en' ? '' : `/${a.locale}`;
+    if (a.locale !== 'en') continue;
     entries.push({
-      loc: `${prefix}/articles/${a.slug}.html`,
+      loc: `/learn/${a.slug}`,
       lastmod: a.updatedAt ? new Date(a.updatedAt).toISOString() : undefined,
       locale: a.locale,
     });
   }
 
   for (const n of publishedNews) {
-    const prefix = n.locale === 'en' ? '' : `/${n.locale}`;
+    if (n.locale !== 'en') continue;
     entries.push({
-      loc: `${prefix}/news/${n.slug}.html`,
+      loc: `/news/${n.slug}`,
       lastmod: n.updatedAt ? new Date(n.updatedAt).toISOString() : undefined,
       locale: n.locale,
     });
   }
 
-  if (!entries.some((e) => e.loc === '/' || e.loc === '/index.html')) {
+  if (!entries.some((e) => e.loc === '/')) {
     entries.unshift({ loc: '/', locale: 'en' });
+  }
+
+  // Locale landings exist for all eight non-English locales; they are real
+  // routes (/ar, /zh-cn, ...) even before translated CMS content ships.
+  for (const code of ['ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de']) {
+    if (!entries.some((e) => e.loc === `/${code}`)) {
+      entries.push({ loc: `/${code}`, locale: code });
+    }
   }
 
   return targetLocale ? entries.filter((e) => e.locale === targetLocale) : entries;
@@ -764,21 +1121,21 @@ export async function findSearchSuggestions(db: DB, q: string) {
     suggestions.push({
       text: p.name,
       type: 'product',
-      url: `/product.html?id=${p.slug}`,
+      url: `/products/${p.slug}`,
     });
   }
   for (const a of arts) {
     suggestions.push({
       text: a.title,
       type: 'article',
-      url: `/article.html?id=${a.slug}`,
+      url: `/learn/${a.slug}`,
     });
   }
   for (const t of terms) {
     suggestions.push({
       text: t.term,
       type: 'glossary',
-      url: `/learn-glossary.html#term-${slugify(t.term)}`,
+      url: `/learn-glossary#term-${slugify(t.term)}`,
     });
   }
 
@@ -835,7 +1192,7 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
         id: p.id,
         title: p.name,
         slug: p.slug,
-        url: `/product.html?id=${p.slug}`,
+        url: `/products/${p.slug}`,
         snippet: p.shortSpec || (p.description ? p.description.slice(0, 160) : ''),
         badge: p.warranty || 'Product',
         locale: 'en',
@@ -875,7 +1232,7 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
         id: a.id,
         title: a.title,
         slug: a.slug,
-        url: `/article.html?id=${a.slug}`,
+        url: `/learn/${a.slug}`,
         snippet: a.deck || (a.body ? a.body.slice(0, 160) : ''),
         badge: a.category || 'Article',
         category: a.category,
@@ -901,7 +1258,7 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
         id: t.id,
         title: t.term,
         slug: t.term,
-        url: `/learn-glossary.html#term-${slugify(t.term)}`,
+        url: `/learn-glossary#term-${slugify(t.term)}`,
         snippet: t.definition.slice(0, 160),
         badge: 'Glossary',
         locale: t.locale,
@@ -940,7 +1297,7 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
         id: p.id,
         title: p.title,
         slug: p.slug,
-        url: p.path ? `${p.path}.html` : `/${p.slug}.html`,
+        url: p.path ? p.path.replace(/\.html?$/i, '') : `/${p.slug}`,
         snippet: p.seoDescription ? p.seoDescription.slice(0, 160) : '',
         badge: 'Page',
         locale: p.locale,
@@ -1012,3 +1369,76 @@ export async function findCompatibilityRules(
   }
   return await query.orderBy(asc(compatibilityRule.deviceBrand), asc(compatibilityRule.deviceModel));
 }
+
+// --- 15. Directory, Jobs & Catalogue Extensions (MS4.5) ---
+
+export async function findDistributors(db: DB, filters: { region?: string; status?: string; country?: string } = {}) {
+  const targetStatus = filters.status || 'authorized';
+  const conditions: SQL[] = [eq(distributor.status, targetStatus)];
+  if (filters.region) conditions.push(eq(distributor.region, filters.region));
+  if (filters.country) conditions.push(ilike(distributor.country, `%${filters.country}%`));
+
+  return await db
+    .select()
+    .from(distributor)
+    .where(and(...conditions))
+    .orderBy(asc(distributor.sort), asc(distributor.name));
+}
+
+export async function findMarketplaces(db: DB, country?: string) {
+  const conditions: SQL[] = [];
+  if (country) conditions.push(ilike(marketplaceListing.country, `%${country}%`));
+
+  return await db
+    .select()
+    .from(marketplaceListing)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(asc(marketplaceListing.sort), asc(marketplaceListing.platform));
+}
+
+export async function findPublishedJobs(db: DB, dept?: string) {
+  const conditions: SQL[] = [eq(jobPosting.status, 'published'), isNull(jobPosting.deletedAt)];
+  if (dept) conditions.push(eq(jobPosting.dept, dept));
+
+  return await db
+    .select()
+    .from(jobPosting)
+    .where(and(...conditions))
+    .orderBy(desc(jobPosting.createdAt));
+}
+
+export async function findPublishedJobById(db: DB, id: number) {
+  const rows = await db
+    .select()
+    .from(jobPosting)
+    .where(and(eq(jobPosting.id, id), eq(jobPosting.status, 'published'), isNull(jobPosting.deletedAt)))
+    .limit(1);
+  return rows[0] || null;
+}
+
+export async function findSpecDictionary(db: DB, categoryId?: number) {
+  const conditions: SQL[] = [];
+  if (categoryId) conditions.push(eq(specDictionary.categoryId, categoryId));
+
+  return await db
+    .select()
+    .from(specDictionary)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(asc(specDictionary.key));
+}
+
+export async function findSpecTemplates(db: DB, categoryId?: number) {
+  const conditions: SQL[] = [];
+  if (categoryId) conditions.push(eq(specTemplate.categoryId, categoryId));
+
+  return await db
+    .select()
+    .from(specTemplate)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(asc(specTemplate.name));
+}
+
+export async function findDeviceTypeLabels(db: DB) {
+  return await db.select().from(deviceTypeLabel).orderBy(asc(deviceTypeLabel.sort));
+}
+

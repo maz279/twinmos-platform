@@ -552,6 +552,7 @@ describe('Phase 1.2: Forensic Audit Currency Compliance Fix', () => {
         brandId: 1,
         categoryId: 1,
         currency: 'BDT',
+        source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
       }),
     });
     expect(bdtRes.status).toBe(422);
@@ -568,6 +569,7 @@ describe('Phase 1.2: Forensic Audit Currency Compliance Fix', () => {
           brandId: 1,
           categoryId: 1,
           currency: badCur,
+          source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
         }),
       });
       expect(res.status).toBe(422);
@@ -590,6 +592,7 @@ describe('Phase 1.2: Forensic Audit Currency Compliance Fix', () => {
           categoryId: 1,
           priceUsd: 149.99,
           currency: cur,
+          source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
         }),
       });
       expect(res.status).toBe(201);
@@ -609,6 +612,7 @@ describe('Phase 1.2: Forensic Audit Currency Compliance Fix', () => {
         brandId: 1,
         categoryId: 1,
         currency: 'EUR',
+        source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
       }),
     });
     expect(createRes.status).toBe(201);
@@ -647,6 +651,7 @@ describe('Phase 1.2: Forensic Audit Currency Compliance Fix', () => {
         currency: 'AED',
         badges: ['Flagship', 'PCIe5'],
         specs: { Interface: 'PCIe 5.0 x4', FormFactor: 'M.2 2280' },
+        source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
       }),
     });
     expect(createRes.status).toBe(201);

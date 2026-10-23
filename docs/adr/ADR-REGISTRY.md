@@ -16,3 +16,5 @@
 | **D-11** | Edge security: Cloudflare Origin CA, Authenticated Origin Pulls, host firewall | Accepted, not implemented | 2026-10-12 | [`ADR-001-to-012.md`](ADR-001-to-012.md#d-11-edge-security--host-firewall) |
 | **D-12** | Production observability stack (Pino JSON stdout, Sentry, Prometheus) | Accepted, not implemented | 2026-10-12 | [`ADR-001-to-012.md`](ADR-001-to-012.md#d-12-production-observability-stack) |
 | **ADR-009** | P6 Commerce: harden quote/lead flow; defer Medusa/Stripe | Accepted | 2026-09-27 | [`ADR-009-commerce-quote-vs-medusa.md`](ADR-009-commerce-quote-vs-medusa.md) |
+| **ADR-007** | Repository history decision & `workspace/` exclusion (T3.6.3 / REPO-01) | Accepted | 2026-10-20 | [`ADR-007-repository-history-decision.md`](ADR-007-repository-history-decision.md) |
+

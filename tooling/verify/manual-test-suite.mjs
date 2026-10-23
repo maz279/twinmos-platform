@@ -37,20 +37,34 @@ async function runManualTests() {
   console.log('       Phase A Detailed Manual & Interactive Test Suite');
   console.log('================================================================\n');
 
-  console.log('[*] Booting API server (PGlite scratch store)...');
-  const apiProc = spawn('npm', ['run', 'start', '--workspace', '@twinmos/api'], {
-    cwd: ROOT,
-    shell: true,
-    env: { ...process.env, PORT: '8787', NODE_ENV: 'test', TRUST_PROXY: '1' },
-    stdio: 'ignore'
-  });
+  let apiProc = null;
+  let adminProc = null;
+  try {
+    const res = await fetch(`${API_URL}/api/v1/health`);
+    if (res.ok) console.log('  [+] API server already running.');
+    else throw new Error('API not healthy');
+  } catch {
+    console.log('[*] Booting API server (PGlite scratch store)...');
+    apiProc = spawn('npm', ['run', 'start', '--workspace', '@twinmos/api'], {
+      cwd: ROOT,
+      shell: true,
+      env: { ...process.env, PORT: '8787', NODE_ENV: 'test', TRUST_PROXY: '1' },
+      stdio: 'ignore'
+    });
+  }
 
-  console.log('[*] Booting Admin SPA (Vite dev server)...');
-  const adminProc = spawn('npm', ['run', 'dev', '--workspace', '@twinmos/admin', '--', '--port', '5173'], {
-    cwd: ROOT,
-    shell: true,
-    stdio: 'ignore'
-  });
+  try {
+    const res = await fetch(`${ADMIN_URL}/`);
+    if (res.ok) console.log('  [+] Admin SPA already running.');
+    else throw new Error('Admin not running');
+  } catch {
+    console.log('[*] Booting Admin SPA (Vite dev server)...');
+    adminProc = spawn('npm', ['run', 'dev', '--workspace', '@twinmos/admin', '--', '--port', '5173'], {
+      cwd: ROOT,
+      shell: true,
+      stdio: 'ignore'
+    });
+  }
 
   try {
     await waitForHttp(`${API_URL}/api/v1/health`, 25000);

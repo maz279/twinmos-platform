@@ -347,10 +347,23 @@ export function mediaRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const bytes = new Uint8Array(await file.arrayBuffer());
     const sniffed = sniffMime(bytes) ?? (ext === '.svg' ? 'image/svg+xml' : null);
     if (!sniffed) return c.json(problem(422, 'Validation Failed', 'File content does not look like an allowed media type.'), 422, { 'Content-Type': P });
+
+    // Polyglot & MIME spoofing check: file extension must match sniffed type
+    const expectedMime = MIME_BY_EXT[ext];
+    if (expectedMime && sniffed && expectedMime !== sniffed && !(ext === '.jpeg' && sniffed === 'image/jpeg')) {
+      return c.json(problem(422, 'Validation Failed', `File extension "${ext}" does not match sniffed MIME type "${sniffed}" (polyglot rejected).`), 422, { 'Content-Type': P });
+    }
+
     if (ext === '.svg') {
       const text = new TextDecoder().decode(bytes).toLowerCase();
-      if (text.includes('<script') || text.includes('onload=')) {
+      if (text.includes('<script') || text.includes('onload=') || text.includes('onerror=') || text.includes('onclick=') || text.includes('javascript:') || text.includes('<foreignobject')) {
         return c.json(problem(422, 'Validation Failed', 'SVG contains active content and was rejected.'), 422, { 'Content-Type': P });
+      }
+    } else {
+      // Check for HTML/script tags disguised inside binary files (polyglots)
+      const sample = new TextDecoder('latin1').decode(bytes.slice(0, Math.min(bytes.length, 65536))).toLowerCase();
+      if (sample.includes('<script') || sample.includes('<?php') || sample.includes('<html') || sample.includes('javascript:')) {
+        return c.json(problem(422, 'Validation Failed', 'File rejected: suspicious polyglot content detected.'), 422, { 'Content-Type': P });
       }
     }
     const kind = sniffed.startsWith('video/') ? 'video' : sniffed === 'application/pdf' ? 'document' : 'image';

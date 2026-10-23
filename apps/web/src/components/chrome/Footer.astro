@@ -1,16 +1,51 @@
 ---
-// Footer.astro — Server-rendered footer with clean dynamic metadata and no prototype copy.
-// Tasks D1b, D8c / CONTENT-01 compliant.
+// Footer.astro — Server-rendered footer. Columns and the legal bar come from
+// the CMS footer menu (MS5.1 T5.1.3); brand, contact, social, figures and
+// WhatsApp come from site settings (MS4.2 T4.2.1-T4.2.2).
+interface NavItem {
+  id?: number;
+  title: string;
+  targetUrl?: string | null;
+  metadata?: Record<string, any>;
+  children?: NavItem[];
+}
+
+interface Props {
+  brand?: { name?: string; tagline?: string; logoUrl?: string; foundingYear?: number };
+  contact?: { email?: string; salesEmail?: string; phone?: string; address?: string; country?: string };
+  social?: Record<string, string | undefined>;
+  figures?: { foundingYear?: number; countriesCount?: string; productCount?: number; years?: number };
+  whatsapp?: { phoneNumber?: string; waUrl?: string; defaultMessage?: string };
+  menu?: { items?: NavItem[] } | null;
+}
+
+const { brand = {}, contact = {}, social = {}, figures = {}, whatsapp = {}, menu = null } = Astro.props;
 const currentYear = new Date().getFullYear();
+const brandName = brand.name || 'TwinMOS Technologies';
+const logoUrl = brand.logoUrl || '/assets/img/logo.webp';
+const foundingYear = figures.foundingYear || brand.foundingYear || 1998;
+const countries = figures.countriesCount || '93+';
+const address = contact.address || 'Taipei, Taiwan';
+const salesEmail = contact.salesEmail || contact.email || 'sales@twinmos.com';
+const phone = contact.phone || '+886 2 2659 0880';
+const waUrl = whatsapp.waUrl || 'https://wa.me/886226590880';
+
+const hrefOf = (item: NavItem) => item.targetUrl || '#';
+const groups: NavItem[] = menu?.items ?? [];
+const columns = groups.filter((group: NavItem) => group.metadata?.kind === 'column');
+const contactGroup = groups.find((group: NavItem) => /contact/i.test(group.title));
+const legalGroup = groups.find((group: NavItem) => /legal/i.test(group.title));
+const quoteLink = contactGroup?.children?.[0];
+const legalLinks = legalGroup?.children ?? [];
 ---
 
 <footer class="site-footer">
   <div class="wrap">
     <div class="footer-grid">
       <div>
-        <img src="assets/img/logo.webp?v=219974299b" alt="TwinMOS" />
+        <img src={logoUrl} alt={brandName} />
         <p style="font-size:13.5px;max-width:34ch">
-          Legendary memory brand since 1998. Memory modules, SSDs, portable storage and accessories for customers in 93+ countries.
+          {brand.tagline || 'Legendary memory brand'} since {foundingYear}. Memory modules, SSDs, portable storage and accessories for customers in {countries} countries.
         </p>
 
         <form id="nlForm" class="newsletter" action="/api/v1/forms/newsletter/subscribe" method="post" style="max-width:320px">
@@ -19,82 +54,64 @@ const currentYear = new Date().getFullYear();
         </form>
 
         <div class="social-row">
-          <a href="https://www.facebook.com/twinmos.tech" aria-label="Facebook" target="_blank" rel="noopener">f</a>
-          <a href="https://instagram.com/twinmos.tech" aria-label="Instagram" target="_blank" rel="noopener">&#9678;</a>
-          <a href="https://www.linkedin.com/company/twinmos-technologies/" aria-label="LinkedIn" target="_blank" rel="noopener">in</a>
-          <a href="https://x.com/twinmos" aria-label="X (Twitter)" target="_blank" rel="noopener">&#120143;</a>
-          <a href="https://www.youtube.com/c/TwinMOStech" aria-label="YouTube" target="_blank" rel="noopener">&#9654;</a>
-          <a href="https://www.pinterest.com/twinmos" aria-label="Pinterest" target="_blank" rel="noopener">P</a>
+          {social.facebook && <a href={social.facebook} aria-label="Facebook" target="_blank" rel="noopener">f</a>}
+          {social.instagram && <a href={social.instagram} aria-label="Instagram" target="_blank" rel="noopener">&#9678;</a>}
+          {social.linkedin && <a href={social.linkedin} aria-label="LinkedIn" target="_blank" rel="noopener">in</a>}
+          {social.x && <a href={social.x} aria-label="X (Twitter)" target="_blank" rel="noopener">&#120143;</a>}
+          {social.youtube && <a href={social.youtube} aria-label="YouTube" target="_blank" rel="noopener">&#9654;</a>}
+          {social.pinterest && <a href={social.pinterest} aria-label="Pinterest" target="_blank" rel="noopener">P</a>}
         </div>
       </div>
 
-      <div>
-        <h4>Products</h4>
-        <a href="shop.html?cat=dram-gaming">Gaming DRAM</a>
-        <a href="shop.html?cat=dram-desktop">Desktop DRAM</a>
-        <a href="shop.html?cat=dram-notebook">Notebook DRAM</a>
-        <a href="shop.html?cat=ssd-nvme">NVMe SSD</a>
-        <a href="shop.html?cat=ssd-sata">SATA SSD</a>
-        <a href="shop.html?cat=portable-ssd">Portable SSD</a>
-        <a href="shop.html?cat=portable-hdd">Portable HDD</a>
-        <a href="shop.html?cat=flash">USB Flash Drive</a>
-        <a href="shop.html?cat=microsd">MicroSD Card</a>
-        <a href="shop.html?cat=psu">Power Supply</a>
-        <a href="shop.html?cat=hub">USB HUB</a>
-      </div>
-
-      <div>
-        <h4>Company</h4>
-        <a href="about.html">About Us</a>
-        <a href="about.html#quality">Quality Assurance</a>
-        <a href="technology.html">Technology &amp; R&amp;D</a>
-        <a href="news.html">News &amp; Events</a>
-        <a href="careers.html">Careers</a>
-        <a href="partners.html">Partners</a>
-        <a href="contact.html">Contact</a>
-      </div>
-
-      <div>
-        <h4>Support</h4>
-        <a href="support.html">Support Center</a>
-        <a href="rma.html">Warranty &amp; RMA</a>
-        <a href="learn.html">Knowledge Hub</a>
-        <a href="learn-guides.html">Buying guides</a>
-        <a href="learn-explained.html">Technology explainers</a>
-        <a href="learn-glossary.html">Glossary A&ndash;Z</a>
-        <a href="support.html#faq">FAQ</a>
-        <a href="legal.html#warranty">Warranty Policy</a>
-        <a href="legal.html#terms">Terms of Use</a>
-        <a href="legal.html#privacy">Privacy Policy</a>
-        <a href="legal.html#eol">EOL Product List</a>
-      </div>
+      {columns.map((column: NavItem) => (
+        <div>
+          <h4>{column.title}</h4>
+          {(column.children ?? []).map((link: NavItem) => (
+            <a href={hrefOf(link)}>{link.title}</a>
+          ))}
+        </div>
+      ))}
 
       <div class="footer-contact">
         <h4 style="display:flex;align-items:center;gap:8px">
-          <img class="ilog" src="assets/img/logo.webp?v=219974299b" alt="TwinMOS" style="height:17px;width:auto" loading="lazy" />
-          Technologies Ltd.
+          <img class="ilog" src={logoUrl} alt="" style="height:17px;width:auto" loading="lazy" />
+          {brandName}
         </h4>
-        5F.-5, No. 29, Sec. 1, Minsheng E. Rd.,<br />
-        Zhongshan Dist., Taipei City 104619, Taiwan<br />
-        <b>sales@twinmos.com</b><br />
-        <b>+886-970 368 077</b><br />
+        {address}<br />
+        <b>{salesEmail}</b><br />
+        <b>{phone}</b><br />
         Mon&ndash;Fri: 9am&ndash;5pm
         <div style="margin-top:10px">
-          <a class="btn btn-accent btn-sm" href="quote.html">Request a quote</a>
+          <a class="btn btn-accent btn-sm" href={quoteLink ? hrefOf(quoteLink) : 'quote.html'}>
+            {quoteLink?.title || 'Request a quote'}
+          </a>
         </div>
+        {waUrl && (
+          <div style="margin-top:8px;font-size:13px">
+            <a href={waUrl} target="_blank" rel="noopener" class="link-arrow">Chat on WhatsApp</a>
+          </div>
+        )}
       </div>
     </div>
 
     <div class="footer-bar">
       <span style="display:inline-flex;align-items:center;gap:6px">
-        <img class="ilog" src="assets/img/logo.webp?v=219974299b" alt="TwinMOS" style="height:13px;width:auto" loading="lazy" />
-        Technologies &copy; {currentYear}. All rights reserved.
+        <img class="ilog" src={logoUrl} alt="" style="height:13px;width:auto" loading="lazy" />
+        {brandName} &copy; {currentYear}. All rights reserved.
       </span>
       <span>
-        <a href="legal.html#terms" style="display:inline">Terms</a> &middot;
-        <a href="legal.html#privacy" style="display:inline">Privacy</a> &middot;
-        <button id="cookiePreferencesBtn" type="button" style="background:none;border:none;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer;display:inline">Cookie Preferences</button> &middot;
-        <a href="sitemap.html" style="display:inline">Sitemap</a>
+        {legalLinks.map((link: NavItem, idx: number) => (
+          <>
+            {idx > 0 && ' \u00b7 '}
+            {idx === legalLinks.length - 1 && (
+              <>
+                <button id="cookiePreferencesBtn" type="button" style="background:none;border:none;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer;display:inline">Cookie Preferences</button>
+                {' \u00b7 '}
+              </>
+            )}
+            <a href={hrefOf(link)} style="display:inline">{link.title}</a>
+          </>
+        ))}
       </span>
     </div>
   </div>

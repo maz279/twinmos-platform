@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { article, newsPost, faq, product, productVariant, brand, category, compatibilityRule, distributor, marketplaceListing, jobPosting } from './db-bridge.ts';
+import { article, newsPost, faq, product, productVariant, brand, category, compatibilityRule, distributor, marketplaceListing, jobPosting, deviceTypeLabel } from './db-bridge.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url)); // .../twinmso_codebase/tooling
 const DATA_JS = join(HERE, '..', 'apps', 'web', 'public', 'assets', 'js', 'data.js');
@@ -104,7 +104,10 @@ export async function buildContentPayload(db: any, opts: { apiBase?: string } = 
     });
 
   const compatRules: AnyRow[] = await db.select().from(compatibilityRule);
-  const COMPAT_TYPE_LABELS: Record<string, string> = { laptop: 'Laptop', desktop: 'Desktop PC', diy: 'Motherboard (DIY build)', minipc: 'Mini PC / NUC' };
+  const typeLabelRows: AnyRow[] = await db.select().from(deviceTypeLabel).orderBy(deviceTypeLabel.sort);
+  const COMPAT_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+    typeLabelRows.map((r: AnyRow) => [r.deviceType, r.label])
+  );
   const slugify = (s: string) => String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const compatTree: AnyRow = { types: [] };
   for (const r of compatRules) {
@@ -121,18 +124,28 @@ export async function buildContentPayload(db: any, opts: { apiBase?: string } = 
       slots: r.slots ?? null, speed: r.speed ?? '',
       ssd: r.ssdNote ?? '', ssd_cats: r.ssdCats ?? [],
       note: r.notes ?? '',
+      qvl_status: r.qvlStatus ?? 'certified',
     });
   }
 
-  const distRows: AnyRow[] = await db.select().from(distributor);
-  const mkRows: AnyRow[] = await db.select().from(marketplaceListing);
+  const distRows: AnyRow[] = await db.select().from(distributor).orderBy(distributor.sort);
+  const mkRows: AnyRow[] = await db.select().from(marketplaceListing).orderBy(marketplaceListing.sort);
   const directory = {
     distributors: distRows.map((d) => ({
       name: d.name, country: d.country, region: d.region, status: d.status,
       cities: d.cities ?? [], note: d.note ?? '',
       website: d.contact?.website ?? '', email: d.contact?.email ?? '',
+      isoCountry: d.isoCountry ?? '',
+      tagline: d.tagline ?? '',
+      ctaConfig: d.ctaConfig ?? {},
+      sort: d.sort ?? 0,
     })),
-    marketplaces: mkRows.map((m) => ({ platform: m.platform, url: m.url, country: m.country ?? '' })),
+    marketplaces: mkRows.map((m) => ({
+      platform: m.platform, url: m.url, country: m.country ?? '',
+      description: m.description ?? '',
+      ctaLabel: m.ctaLabel ?? '',
+      sort: m.sort ?? 0,
+    })),
   };
 
   const jobRows: AnyRow[] = await db.select().from(jobPosting);
@@ -150,6 +163,7 @@ export async function buildContentPayload(db: any, opts: { apiBase?: string } = 
         salaryBand: j.salaryBand ?? '',
         applyBy: j.applyBy ? new Date(j.applyBy).toISOString().slice(0, 10) : '',
         summary: summary.replace(/[*_`]/g, '').slice(0, 160),
+        equalOpportunity: j.equalOpportunity ?? true,
       };
     });
 

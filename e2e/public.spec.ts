@@ -27,6 +27,8 @@ test.describe('public site', () => {
     });
   }
 
+  // MS5.2 page conversion: the CMS where-to-buy/quote/shop/search pages mount
+  // the prototype widgets (locator, product select, shop grid, search results).
   test('?region=africa activates the Africa chip (P2.5)', async ({ page }) => {
     await page.goto('where-to-buy.html?region=africa');
     await expect(page.locator('[data-rg="af"]')).toHaveClass(/on/);
@@ -80,11 +82,12 @@ test.describe('public site', () => {
     expect(body).not.toMatch(/warranty\s+warranty/i);
   });
 
-  test('mega menu shows the live catalog count, not the baked 39 (P2.6)', async ({ page }) => {
+  test('mega menu states the CMS product count (MS4.2 T4.2.3)', async ({ page, request }) => {
+    const API = process.env.E2E_API_URL ?? 'http://127.0.0.1:8787';
+    const settings = await request.get(`${API}/api/v1/delivery/settings/site.figures`);
+    const figures = (await settings.json()).data;
     await page.goto('index.html', { waitUntil: 'load', timeout: 30_000 });
-    // poll for the patched text — the count patch runs at app boot; poll
-    // avoids coupling to any one marker element
-    await expect.poll(async () => page.evaluate(() => document.body.textContent ?? ''), { timeout: 15_000 })
-      .not.toMatch(/\b39 products\b/);
+    await expect.poll(async () => page.locator('.mega-all').first().textContent(), { timeout: 15_000 })
+      .toContain(`${figures.productCount} products`);
   });
 });

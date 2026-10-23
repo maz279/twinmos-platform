@@ -72,7 +72,7 @@ function sendFile(res, filePath, status = 200) {
   const ext = extname(filePath).toLowerCase();
   res.writeHead(status, {
     'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://127.0.0.1:8787 https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com;"
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'sha256-87eOizNic1Cn2bOZLdJU+YBjCuVfdvW7WIeZC+HOMF8=' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://127.0.0.1:8787 https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com;"
   });
   createReadStream(filePath).pipe(res);
 }
@@ -102,9 +102,9 @@ async function startStaticServer(port = 4398) {
 
       const urlPath = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname);
       const clean = normalize(urlPath).replaceAll('..', '');
+      const cleanNormalized = clean.replaceAll('\\', '/');
       const candidate = join(SERVE_ROOT, clean);
       const rootCandidate = join(ROOT, clean);
-
       const tries = [
         candidate,
         join(SERVE_ROOT, clean, 'index.html'),
@@ -134,9 +134,9 @@ export async function runWalkPublic(baseUrl = null) {
   let activeBase = baseUrl;
 
   if (!activeBase) {
-    const s = await startStaticServer(4398);
-    serverInstance = s.server;
-    activeBase = `http://localhost:${s.port}`;
+    // Walk the real SSR server; the old static/prototype fallback could pass
+    // while the shipped site was broken.
+    activeBase = process.env.WEB_URL || 'http://localhost:4321';
   }
 
   console.log(`[walk-public] Starting browser walkthrough on ${activeBase}...`);

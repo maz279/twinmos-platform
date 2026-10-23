@@ -1,8 +1,9 @@
-// Page Builder block registry — the 13 TwinMOS page block types from the
-// Phase 2 plan (TWN-ADMIN-CMS-AUDIT-PLAN-2026-001 §2.1). Each type declares a
-// field schema; PageBuilder renders editors generically from these definitions
-// and BlockPreview renders the visual twin. Blocks persist into page.blocks
-// (jsonb) as plain objects — { type, ...fields }.
+// Page Builder block registry — Comprehensive 30-block registry aligned 1:1 with @twinmos/shared.
+// Tasks C4a..C4e, C12, T4.1.3, T4.1.5 (ADR D-4).
+// Each type declares a field schema; PageBuilder renders editors generically from these definitions
+// and preview renders the visual twin. Blocks persist into page.blocks (jsonb) as plain objects.
+import { BLOCK_TYPES } from '@twinmos/shared';
+import type { BlockType } from '@twinmos/shared';
 
 /** Recursive editor-field descriptor (schema-driven forms, no per-block code). */
 export type FieldDef =
@@ -14,7 +15,7 @@ export type FieldDef =
   | { k: 'list'; key: string; label: string; itemLabel: string; max?: number; defaultItem: Record<string, unknown>; itemFields: FieldDef[] };
 
 export type BlockDef = {
-  type: string;
+  type: BlockType;
   label: string;
   icon: string;
   desc: string;
@@ -27,348 +28,531 @@ const area = (key: string, label: string, placeholder?: string): FieldDef => ({ 
 const sel = (key: string, label: string, options: readonly string[]): FieldDef => ({ k: 'select', key, label, options });
 const media = (key: string, label: string): FieldDef => ({ k: 'media', key, label });
 
-const CTA_FIELDS: FieldDef[] = [
-  text('ctaLabel', 'CTA label', 'Buy now'),
-  text('ctaHref', 'CTA link', 'https://… or /where-to-buy'),
-];
-
 export const BLOCK_DEFS: BlockDef[] = [
+  // 1. Hero
   {
-    type: 'hero', label: 'Hero banner', icon: '🎬', desc: 'Full-width opening banner with headline, deck, background image and CTAs.',
+    type: 'hero', label: 'Hero banner', icon: '🎬', desc: 'Full-width opening banner with headline, lede, background image and CTAs.',
     fields: [
       text('eyebrow', 'Eyebrow tag', 'New generation'),
       text('title', 'Headline *', 'VOLTX DDR5 — built for gaming'),
-      area('subdeck', 'Sub-deck', 'One-line supporting copy under the headline.'),
-      media('bgMediaId', 'Background image'),
-      ...CTA_FIELDS,
-      text('ctaSecondaryLabel', 'Secondary CTA label'),
-      text('ctaSecondaryHref', 'Secondary CTA link'),
+      area('lede', 'Lede copy', 'One-line supporting copy under the headline.'),
+      media('bgMedia', 'Background media'),
     ],
-    make: () => ({ type: 'hero', eyebrow: '', title: 'New hero section', subdeck: '', bgMediaId: null, ctaLabel: '', ctaHref: '', ctaSecondaryLabel: '', ctaSecondaryHref: '' }),
+    make: () => ({
+      type: 'hero',
+      title: 'New hero section',
+      eyebrow: '',
+      lede: '',
+      chips: [],
+      trustStats: [],
+      jumpLinks: [],
+      ctas: [],
+      searchForm: false,
+    }),
   },
+  // 2. Slider
+  {
+    type: 'slider', label: 'Hero slider', icon: '🎠', desc: 'Carousel slider with auto-play, media slides and CTA buttons.',
+    fields: [
+      sel('autoplay', 'Auto-play', ['true', 'false']),
+      {
+        k: 'list', key: 'slides', label: 'Slides', itemLabel: 'Slide', max: 8,
+        defaultItem: { image: '/media/slide1.webp', alt: 'TwinMOS Banner', title: 'Slide Title', cta: 'Explore', link: '/products.html' },
+        itemFields: [text('image', 'Image Key/URL'), text('alt', 'Image Alt *'), text('title', 'Title'), text('cta', 'CTA label'), text('link', 'Target link')],
+      },
+    ],
+    make: () => ({
+      type: 'slider',
+      autoplay: true,
+      pauseControl: true,
+      intervalMs: 5000,
+      slides: [{ image: '/media/voltx-banner.webp', alt: 'TwinMOS VOLTX DDR5 Gaming Memory Banner', title: 'Next-Gen Performance', cta: 'Explore', link: '/products.html' }],
+    }),
+  },
+  // 3. Stats Counter
+  {
+    type: 'statsCounter', label: 'Stats counter', icon: '📈', desc: 'Numeric KPI tiles with unit and label.',
+    fields: [
+      text('title', 'Section title (optional)'),
+      {
+        k: 'list', key: 'stats', label: 'Stats', itemLabel: 'Stat', max: 6,
+        defaultItem: { value: '93', label: 'Countries served', prefix: '', suffix: '+' },
+        itemFields: [text('value', 'Value'), text('label', 'Label'), text('prefix', 'Prefix'), text('suffix', 'Suffix')],
+      },
+    ],
+    make: () => ({
+      type: 'statsCounter',
+      title: 'Proven Track Record',
+      stats: [{ value: '25+', label: 'Years of Memory Expertise' }, { value: '93+', label: 'Countries Served' }],
+      columns: 4,
+    }),
+  },
+  // 4. Feature Grid
+  {
+    type: 'featureGrid', label: 'Feature grid', icon: '🧱', desc: '2–4 columns of feature cards with icon, title and description.',
+    fields: [
+      text('title', 'Section title'),
+      text('subtitle', 'Section subtitle'),
+      sel('variant', 'Variant', ['cards', 'minimal', 'bordered']),
+      {
+        k: 'list', key: 'items', label: 'Feature cards', itemLabel: 'Card', max: 12,
+        defaultItem: { icon: '⚡', title: 'Feature', description: '', link: '' },
+        itemFields: [text('icon', 'Icon (emoji)'), text('title', 'Title'), area('description', 'Description'), text('link', 'Link')],
+      },
+    ],
+    make: () => ({
+      type: 'featureGrid',
+      title: 'Key Features',
+      columns: 3,
+      variant: 'cards',
+      items: [{ icon: '⚡', title: 'Extreme Speed', description: 'Overclocked performance for power users.' }],
+    }),
+  },
+  // 5. Bento Grid
+  {
+    type: 'bentoGrid', label: 'Bento grid', icon: '🍱', desc: 'Modern asymmetric feature tiles with variable spans.',
+    fields: [
+      text('title', 'Section title'),
+      text('subtitle', 'Section subtitle'),
+      {
+        k: 'list', key: 'items', label: 'Bento items', itemLabel: 'Item', max: 12,
+        defaultItem: { title: 'Feature', description: '', size: 'medium' },
+        itemFields: [text('title', 'Title'), area('description', 'Description'), sel('size', 'Size', ['small', 'medium', 'large', 'tall', 'wide'])],
+      },
+    ],
+    make: () => ({
+      type: 'bentoGrid',
+      title: 'Engineered for Dominance',
+      items: [{ title: 'Speed Unleashed', description: 'Speeds up to 7200MT/s with Intel XMP 3.0.', size: 'large' }],
+    }),
+  },
+  // 6. CTA Banner
+  {
+    type: 'ctaBanner', label: 'CTA banner', icon: '🎯', desc: 'Full-width colored or image-backed call-to-action banner.',
+    fields: [
+      text('title', 'Banner title *'),
+      text('subtitle', 'Supporting subtitle'),
+      sel('variant', 'Variant', ['boxed', 'fullwidth', 'gradient', 'dark']),
+      {
+        k: 'list', key: 'ctas', label: 'CTAs', itemLabel: 'Button', max: 3,
+        defaultItem: { label: 'Explore', url: '/products.html', variant: 'primary' },
+        itemFields: [text('label', 'Label'), text('url', 'Target URL'), sel('variant', 'Style', ['primary', 'secondary', 'outline'])],
+      },
+    ],
+    make: () => ({
+      type: 'ctaBanner',
+      title: 'Upgrade Your Memory Today',
+      variant: 'boxed',
+      ctas: [{ label: 'Find a Retailer', url: '/where-to-buy.html', variant: 'primary' }],
+    }),
+  },
+  // 7. Split CTA
+  {
+    type: 'splitCta', label: 'Split dual CTA', icon: '⚡', desc: 'Side-by-side contrasting call to action boxes.',
+    fields: [
+      text('dividerText', 'Divider text (optional)'),
+    ],
+    make: () => ({
+      type: 'splitCta',
+      left: { title: 'For Gamers & Creators', description: 'Experience maximum memory performance', ctaText: 'Explore Gaming', ctaUrl: '/products.html?brand=voltx' },
+      right: { title: 'For Enterprises & OEMs', description: 'Scalable NAND storage and B2B pricing', ctaText: 'Partner with Us', ctaUrl: '/contact.html' },
+    }),
+  },
+  // 8. Timeline
+  {
+    type: 'timeline', label: 'Timeline', icon: '🗓️', desc: 'Milestone entries with year, title, and description.',
+    fields: [
+      text('title', 'Section title'),
+      text('subtitle', 'Section subtitle'),
+      {
+        k: 'list', key: 'milestones', label: 'Milestones', itemLabel: 'Milestone', max: 20,
+        defaultItem: { year: '2026', title: '', description: '' },
+        itemFields: [text('year', 'Year'), text('title', 'Title'), area('description', 'Description')],
+      },
+    ],
+    make: () => ({
+      type: 'timeline',
+      title: 'Our Heritage',
+      milestones: [{ year: '2026', title: 'VOLTX Series Launch', description: 'Next-generation memory built for DDR5 and PCIe 5.0.' }],
+    }),
+  },
+  // 9. Text Media
   {
     type: 'textMedia', label: 'Text + Media', icon: '🖼️', desc: '50/50 split of rich text beside an image (left or right).',
     fields: [
-      sel('layout', 'Media position', ['left', 'right']),
-      media('mediaId', 'Image'),
-      area('markdown', 'Text (markdown)'),
-      text('caption', 'Caption'),
-      text('badge', 'Badge'),
+      text('title', 'Title (optional)'),
+      text('eyebrow', 'Eyebrow (optional)'),
+      area('body', 'Body content (markdown) *'),
+      sel('mediaPosition', 'Media position', ['left', 'right', 'top', 'bottom']),
     ],
-    make: () => ({ type: 'textMedia', layout: 'right', mediaId: null, markdown: '', caption: '', badge: '' }),
+    make: () => ({
+      type: 'textMedia',
+      title: 'Text & Media',
+      body: 'TwinMOS high-performance hardware solutions.',
+      mediaPosition: 'right',
+    }),
   },
+  // 10. FAQ Accordion
   {
-    type: 'featureGrid', label: 'Feature grid', icon: '🧱', desc: '2–4 columns of feature cards with icon, title and link.',
+    type: 'faqAccordion', label: 'FAQ accordion', icon: '❓', desc: 'Expandable question-and-answer items.',
     fields: [
-      text('headline', 'Section headline'),
-      sel('columns', 'Columns', ['2', '3', '4']),
+      text('title', 'Section title'),
+      text('subtitle', 'Section subtitle'),
       {
-        k: 'list', key: 'items', label: 'Feature cards', itemLabel: 'Card', max: 12,
-        defaultItem: { icon: '⚡', title: 'Feature', desc: '', href: '' },
-        itemFields: [text('icon', 'Icon (emoji)'), text('title', 'Title'), area('desc', 'Description'), text('href', 'Link')],
+        k: 'list', key: 'items', label: 'Questions', itemLabel: 'Q&A', max: 20,
+        defaultItem: { question: '', answer: '' },
+        itemFields: [text('question', 'Question'), area('answer', 'Answer')],
       },
     ],
-    make: () => ({ type: 'featureGrid', headline: '', columns: '3', items: [{ icon: '⚡', title: 'Feature one', desc: '', href: '' }] }),
+    make: () => ({
+      type: 'faqAccordion',
+      title: 'Frequently Asked Questions',
+      items: [{ question: 'What is the warranty coverage?', answer: 'TwinMOS modules carry lifetime warranty support.' }],
+    }),
   },
+  // 11. Table
+  {
+    type: 'table', label: 'Data table', icon: '📋', desc: 'Structured tabular data with headers and cell rows.',
+    fields: [
+      text('title', 'Table title'),
+      text('caption', 'Table caption'),
+    ],
+    make: () => ({
+      type: 'table',
+      title: 'Technical Specifications',
+      caption: 'Specifications Overview',
+      headers: ['Parameter', 'Specification'],
+      rows: [['Form Factor', 'M.2 2280'], ['Interface', 'PCIe Gen4 x4']],
+      isSpecTable: false,
+    }),
+  },
+  // 12. Product Showcase
   {
     type: 'productShowcase', label: 'Product showcase', icon: '📦', desc: 'Highlighted products by SKU list with live spec chips.',
     fields: [
-      text('headline', 'Section headline'),
-      area('blurb', 'Intro copy'),
-      {
-        k: 'list', key: 'skus', label: 'Product SKUs', itemLabel: 'SKU', max: 8,
-        defaultItem: { sku: 'VLT-DDR5-16G' },
-        itemFields: [text('sku', 'SKU'), text('note', 'Badge note')],
-      },
+      text('title', 'Section title'),
+      text('subtitle', 'Section subtitle'),
+      sel('layout', 'Layout', ['grid', 'carousel']),
     ],
-    make: () => ({ type: 'productShowcase', headline: 'Featured memory', blurb: '', skus: [{ sku: '', note: '' }] }),
+    make: () => ({
+      type: 'productShowcase',
+      title: 'Featured Products',
+      layout: 'grid',
+      query: { limit: 8 },
+    }),
   },
+  // 13. Spec Comparison
   {
     type: 'specComparison', label: 'Spec comparison', icon: '📊', desc: 'Comparative technical specification table across products.',
     fields: [
       text('headline', 'Section headline'),
       {
-        k: 'list', key: 'rows', label: 'Specification rows', itemLabel: 'Row', max: 30,
-        defaultItem: { label: 'Capacity', values: '16GB | 32GB | 64GB' },
-        itemFields: [text('label', 'Spec label'), text('values', 'Values (one per column, | separated)')],
-      },
-      {
         k: 'list', key: 'columns', label: 'Product columns', itemLabel: 'Column', max: 4,
         defaultItem: { name: 'VOLTX DDR5' },
         itemFields: [text('name', 'Product name')],
       },
+      {
+        k: 'list', key: 'rows', label: 'Specification rows', itemLabel: 'Row', max: 30,
+        defaultItem: { label: 'Capacity', values: '16GB | 32GB | 64GB' },
+        itemFields: [text('label', 'Spec label'), text('values', 'Values (one per column, | separated)')],
+      },
     ],
-    make: () => ({ type: 'specComparison', headline: 'Compare the line-up', columns: [{ name: 'Product A' }, { name: 'Product B' }], rows: [{ label: 'Speed', values: '6000 MT/s | 6400 MT/s' }] }),
+    make: () => ({
+      type: 'specComparison',
+      headline: 'Compare the line-up',
+      columns: [{ name: 'Product A' }, { name: 'Product B' }],
+      rows: [{ label: 'Speed', values: '6000 MT/s | 6400 MT/s' }],
+    }),
   },
+  // 14. Where to Buy
   {
     type: 'whereToBuy', label: 'Where to buy', icon: '📍', desc: 'Distributor locator teaser with region links.',
     fields: [
-      text('headline', 'Section headline'),
-      area('blurb', 'Intro copy'),
-      {
-        k: 'list', key: 'regions', label: 'Regions', itemLabel: 'Region', max: 8,
-        defaultItem: { region: 'Middle East', href: '' },
-        itemFields: [text('region', 'Region name'), text('href', 'Locator link')],
-      },
+      text('title', 'Section title'),
+      text('subtitle', 'Section subtitle'),
+      text('defaultRegion', 'Default region', 'Middle East'),
     ],
-    make: () => ({ type: 'whereToBuy', headline: 'Where to buy', blurb: '', regions: [{ region: 'Region', href: '' }] }),
+    make: () => ({
+      type: 'whereToBuy',
+      title: 'Where to Buy',
+      defaultRegion: 'Middle East',
+      showDistributors: true,
+      showMarketplaces: true,
+    }),
   },
+  // 15. Download Datasheet
   {
     type: 'downloadDatasheet', label: 'Downloads', icon: '📥', desc: 'Datasheet / QVL / quick-start download cards.',
     fields: [
-      text('headline', 'Section headline'),
+      text('title', 'Section title'),
+      text('description', 'Description'),
       {
         k: 'list', key: 'files', label: 'Files', itemLabel: 'File', max: 12,
-        defaultItem: { label: 'Datasheet (PDF)', url: '' },
-        itemFields: [text('label', 'Label'), text('url', 'URL')],
+        defaultItem: { title: 'Datasheet (PDF)', fileKey: 'datasheet.pdf', format: 'PDF' },
+        itemFields: [text('title', 'Label'), text('fileKey', 'File Key'), text('format', 'Format')],
       },
     ],
-    make: () => ({ type: 'downloadDatasheet', headline: 'Downloads & resources', files: [{ label: 'Datasheet (PDF)', url: '' }] }),
+    make: () => ({
+      type: 'downloadDatasheet',
+      title: 'Downloads & Resources',
+      files: [{ title: 'VOLTX DDR5 Datasheet', fileKey: 'voltx-ddr5.pdf', format: 'PDF' }],
+    }),
   },
+  // 16. QVL Compatibility
   {
     type: 'qvlCompatibility', label: 'QVL widget', icon: '🔍', desc: 'Embedded compatibility-check widget section.',
     fields: [
-      text('headline', 'Section headline'),
-      area('blurb', 'Intro copy'),
-      text('ctaLabel', 'CTA label', 'Open compatibility finder'),
-      text('ctaHref', 'CTA link', '/compatibility'),
+      text('title', 'Section title'),
+      text('subtitle', 'Section subtitle'),
+      sel('defaultDeviceType', 'Default device', ['laptop', 'desktop', 'motherboard', 'server']),
     ],
-    make: () => ({ type: 'qvlCompatibility', headline: 'Is it compatible with your system?', blurb: '', ctaLabel: 'Open compatibility finder', ctaHref: '/compatibility' }),
+    make: () => ({
+      type: 'qvlCompatibility',
+      title: 'System Compatibility',
+      defaultDeviceType: 'laptop',
+      showFinder: true,
+    }),
   },
+  // 17. Testimonial
   {
-    type: 'testimonial', label: 'Testimonials', icon: '💬', desc: 'Customer quotes with attribution and verified badge.',
+    type: 'testimonial', label: 'Testimonials', icon: '💬', desc: 'Customer quote with attribution and rating.',
     fields: [
-      text('headline', 'Section headline'),
-      {
-        k: 'list', key: 'items', label: 'Quotes', itemLabel: 'Testimonial', max: 9,
-        defaultItem: { quote: '', author: '', company: '', avatarMediaId: null, verified: false },
-        itemFields: [area('quote', 'Quote'), text('author', 'Author'), text('company', 'Company'), { k: 'media', key: 'avatarMediaId', label: 'Avatar' }, { k: 'select', key: 'verified', label: 'Verified', options: ['no', 'yes'] }],
-      },
+      area('quote', 'Quote *'),
+      text('author', 'Author *'),
+      text('role', 'Role'),
+      text('company', 'Company'),
     ],
-    make: () => ({ type: 'testimonial', headline: 'Trusted by builders', items: [{ quote: '', author: '', company: '', avatarMediaId: null, verified: 'no' }] }),
+    make: () => ({
+      type: 'testimonial',
+      quote: 'TwinMOS DDR5 delivers exceptional stability for our workstations.',
+      author: 'Alex Chen',
+      role: 'Lead Architect',
+      company: 'Apex Systems',
+      rating: 5,
+      permissionFlag: true,
+    }),
   },
+  // 18. Badge Strip
   {
-    type: 'ctaBanner', label: 'CTA banner', icon: '🎯', desc: 'Full-width colored or image-backed call-to-action banner.',
+    type: 'badgeStrip', label: 'Badge strip', icon: '🎖️', desc: 'Horizontal strip of certification or warranty badges.',
     fields: [
-      text('title', 'Banner title'),
-      area('blurb', 'Supporting copy'),
-      sel('tone', 'Tone', ['brand', 'dark', 'light']),
-      media('bgMediaId', 'Background image (optional)'),
-      ...CTA_FIELDS,
-    ],
-    make: () => ({ type: 'ctaBanner', title: '', blurb: '', tone: 'brand', bgMediaId: null, ctaLabel: '', ctaHref: '' }),
-  },
-  {
-    type: 'faqAccordion', label: 'FAQ accordion', icon: '❓', desc: 'Expandable question-and-answer items.',
-    fields: [
-      text('headline', 'Section headline'),
-      {
-        k: 'list', key: 'items', label: 'Questions', itemLabel: 'Q&A', max: 20,
-        defaultItem: { q: '', a: '' },
-        itemFields: [text('q', 'Question'), area('a', 'Answer (markdown)')],
-      },
-    ],
-    make: () => ({ type: 'faqAccordion', headline: 'Frequently asked questions', items: [{ q: '', a: '' }] }),
-  },
-  {
-    type: 'statsCounter', label: 'Stats counter', icon: '📈', desc: 'Numeric KPI tiles with unit and label.',
-    fields: [
-      text('headline', 'Section headline'),
-      {
-        k: 'list', key: 'items', label: 'Stats', itemLabel: 'Stat', max: 6,
-        defaultItem: { value: '93', unit: '+', label: 'Countries served' },
-        itemFields: [text('value', 'Value'), text('unit', 'Unit'), text('label', 'Label')],
-      },
-    ],
-    make: () => ({ type: 'statsCounter', headline: '', items: [{ value: '25', unit: '+', label: 'Years of memory expertise' }] }),
-  },
-  {
-    type: 'timeline', label: 'Timeline', icon: '🗓️', desc: 'Milestone entries with date, title, description and media.',
-    fields: [
-      text('headline', 'Section headline'),
-      {
-        k: 'list', key: 'items', label: 'Milestones', itemLabel: 'Milestone', max: 20,
-        defaultItem: { date: '2026', title: '', desc: '', mediaId: null },
-        itemFields: [text('date', 'Date / year'), text('title', 'Title'), area('desc', 'Description'), { k: 'media', key: 'mediaId', label: 'Media' }],
-      },
-    ],
-    make: () => ({ type: 'timeline', headline: 'Our story', items: [{ date: '2026', title: '', desc: '', mediaId: null }] }),
-  },
-  {
-    type: 'slider', label: 'Hero slider', icon: '🎠', desc: 'Carousel slider with auto-play, media slides and CTA buttons.',
-    fields: [
-      sel('autoplay', 'Auto-play', ['yes', 'no']),
-      {
-        k: 'list', key: 'slides', label: 'Slides', itemLabel: 'Slide', max: 8,
-        defaultItem: { title: 'Slide title', subtitle: '', mediaId: null, ctaLabel: '', ctaHref: '' },
-        itemFields: [text('title', 'Title'), area('subtitle', 'Subtitle'), { k: 'media', key: 'mediaId', label: 'Background media' }, text('ctaLabel', 'CTA label'), text('ctaHref', 'CTA link')],
-      },
-    ],
-    make: () => ({ type: 'slider', autoplay: 'yes', slides: [{ title: 'Next-Gen Performance', subtitle: 'Built with TwinMOS VOLTX DDR5', mediaId: null, ctaLabel: 'Explore', ctaHref: '/products.html' }] }),
-  },
-  {
-    type: 'bentoGrid', label: 'Bento grid', icon: '🍱', desc: 'Modern asymmetric feature tiles with variable spans.',
-    fields: [
-      text('headline', 'Section headline'),
-      area('blurb', 'Supporting copy'),
-      {
-        k: 'list', key: 'tiles', label: 'Bento tiles', itemLabel: 'Tile', max: 12,
-        defaultItem: { colSpan: 1, rowSpan: 1, title: 'Feature', body: '', href: '' },
-        itemFields: [
-          { k: 'number', key: 'colSpan', label: 'Columns span (1-4)', min: 1, max: 4 },
-          { k: 'number', key: 'rowSpan', label: 'Rows span (1-2)', min: 1, max: 2 },
-          text('title', 'Title'), area('body', 'Body'), text('href', 'Link URL'),
-        ],
-      },
-    ],
-    make: () => ({ type: 'bentoGrid', headline: 'Engineered for dominance', blurb: '', tiles: [{ colSpan: 2, rowSpan: 1, title: 'Speed unleashed', body: 'Up to 7200MT/s', href: '' }] }),
-  },
-  {
-    type: 'splitCta', label: 'Split dual CTA', icon: '⚡', desc: 'Side-by-side contrasting call to action boxes.',
-    fields: [
-      text('leftTitle', 'Left title'), area('leftBody', 'Left body'), text('leftCtaLabel', 'Left CTA label'), text('leftCtaHref', 'Left CTA link'),
-      text('rightTitle', 'Right title'), area('rightBody', 'Right body'), text('rightCtaLabel', 'Right CTA label'), text('rightCtaHref', 'Right CTA link'),
-    ],
-    make: () => ({ type: 'splitCta', leftTitle: 'For Gamers & Creators', leftBody: 'Experience maximum memory performance', leftCtaLabel: 'Explore Gaming', leftCtaHref: '/products.html?brand=voltx', rightTitle: 'For Enterprises & OEMs', rightBody: 'Scalable NAND storage and B2B pricing', rightCtaLabel: 'Partner with Us', rightCtaHref: '/contact.html' }),
-  },
-  {
-    type: 'table', label: 'Data table', icon: '📋', desc: 'Structured tabular data with sortable headers and cells.',
-    fields: [
-      text('caption', 'Table caption'),
-      {
-        k: 'list', key: 'headers', label: 'Column headers', itemLabel: 'Header', max: 8,
-        defaultItem: { text: 'Column' },
-        itemFields: [text('text', 'Header title')],
-      },
-      {
-        k: 'list', key: 'rows', label: 'Rows', itemLabel: 'Row', max: 30,
-        defaultItem: { cells: 'Value 1 | Value 2' },
-        itemFields: [text('cells', 'Cells (| separated)')],
-      },
-    ],
-    make: () => ({ type: 'table', caption: 'Specifications Overview', headers: [{ text: 'Parameter' }, { text: 'Specification' }], rows: [{ cells: 'Form Factor | M.2 2280' }, { cells: 'Interface | PCIe Gen4 x4' }] }),
-  },
-  {
-    type: 'badgeStrip', label: 'Badge strip', icon: '🎖️', desc: 'Horizontal strip of certification, partner, or warranty badges.',
-    fields: [
-      text('headline', 'Section title (optional)'),
+      sel('layout', 'Layout', ['wrap', 'row']),
       {
         k: 'list', key: 'badges', label: 'Badges', itemLabel: 'Badge', max: 12,
         defaultItem: { label: 'ISO 9001', icon: '🛡️' },
         itemFields: [text('icon', 'Icon / Emoji'), text('label', 'Badge label')],
       },
     ],
-    make: () => ({ type: 'badgeStrip', headline: 'Certified Quality', badges: [{ icon: '🛡️', label: 'ISO 9001' }, { icon: '⚡', label: 'Intel XMP 3.0' }, { icon: '🚀', label: 'AMD EXPO' }, { icon: '🔒', label: '5-Year Warranty' }] }),
+    make: () => ({
+      type: 'badgeStrip',
+      layout: 'wrap',
+      badges: [{ icon: '🛡️', label: 'ISO 9001' }, { icon: '⚡', label: 'Intel XMP 3.0' }],
+    }),
   },
+  // 19. Steps
   {
     type: 'steps', label: 'Steps / Process', icon: '🔢', desc: 'Numbered step-by-step workflow or setup guide.',
     fields: [
-      text('headline', 'Section headline'),
+      text('title', 'Section title'),
+      text('subtitle', 'Section subtitle'),
       {
         k: 'list', key: 'steps', label: 'Step items', itemLabel: 'Step', max: 6,
-        defaultItem: { stepNumber: 1, title: 'Step 1', desc: '' },
-        itemFields: [{ k: 'number', key: 'stepNumber', label: 'Step #' }, text('title', 'Step title'), area('desc', 'Description')],
+        defaultItem: { stepNumber: 1, title: 'Step 1', description: '' },
+        itemFields: [{ k: 'number', key: 'stepNumber', label: 'Step #' }, text('title', 'Step title'), area('description', 'Description')],
       },
     ],
-    make: () => ({ type: 'steps', headline: 'How to claim your warranty', steps: [{ stepNumber: 1, title: 'Verify serial number', desc: 'Enter product serial on authenticity portal.' }, { stepNumber: 2, title: 'Submit RMA form', desc: 'Provide purchase details and defect description.' }] }),
+    make: () => ({
+      type: 'steps',
+      title: 'Warranty Claim Process',
+      steps: [
+        { stepNumber: 1, title: 'Verify serial number', description: 'Enter serial number on authenticity portal.' },
+        { stepNumber: 2, title: 'Submit RMA ticket', description: 'Provide invoice and description of defect.' },
+      ],
+    }),
   },
+  // 20. KPI Meters
   {
-    type: 'kpiMeters', label: 'KPI meters', icon: '📊', desc: 'Visual progress meters and percentage indicators.',
+    type: 'kpiMeters', label: 'KPI meters', icon: '📊', desc: 'Visual progress meters and performance indicators.',
     fields: [
-      text('headline', 'Section headline'),
+      text('title', 'Section title'),
       {
-        k: 'list', key: 'meters', label: 'Meters', itemLabel: 'Meter', max: 6,
-        defaultItem: { label: 'Read Throughput', value: 7400, max: 8000, unit: 'MB/s' },
-        itemFields: [text('label', 'Label'), { k: 'number', key: 'value', label: 'Value' }, { k: 'number', key: 'max', label: 'Max' }, text('unit', 'Unit')],
+        k: 'list', key: 'kpis', label: 'Meters', itemLabel: 'Meter', max: 6,
+        defaultItem: { label: 'Read Throughput', current: 7400, max: 8000, unit: 'MB/s' },
+        itemFields: [text('label', 'Label'), { k: 'number', key: 'current', label: 'Current' }, { k: 'number', key: 'max', label: 'Max' }, text('unit', 'Unit')],
       },
     ],
-    make: () => ({ type: 'kpiMeters', headline: 'Benchmark Speeds', meters: [{ label: 'Sequential Read', value: 7400, max: 8000, unit: 'MB/s' }, { label: 'Sequential Write', value: 6800, max: 8000, unit: 'MB/s' }] }),
+    make: () => ({
+      type: 'kpiMeters',
+      title: 'Performance Metrics',
+      kpis: [{ label: 'Sequential Read', current: 7400, max: 8000, unit: 'MB/s', status: 'optimal' }],
+    }),
   },
+  // 21. Callout
   {
     type: 'callout', label: 'Callout box', icon: '💡', desc: 'Prominent highlight box with colored border and icon.',
     fields: [
-      sel('tone', 'Tone', ['info', 'warning', 'success', 'accent']),
+      sel('variant', 'Tone', ['info', 'warning', 'success', 'tip']),
       text('title', 'Callout title'),
-      area('body', 'Callout body text'),
-      text('ctaLabel', 'CTA label (optional)'),
-      text('ctaHref', 'CTA link (optional)'),
+      area('message', 'Callout message *'),
     ],
-    make: () => ({ type: 'callout', tone: 'accent', title: 'Need Motherboard Compatibility Advice?', body: 'Consult our official QVL memory compatibility matrix before building your gaming rig.', ctaLabel: 'Check Compatibility', ctaHref: '/compatibility.html' }),
+    make: () => ({
+      type: 'callout',
+      variant: 'info',
+      title: 'System Compatibility Advice',
+      message: 'Consult the TwinMOS QVL matrix before finalizing your memory kit.',
+      cta: { label: 'Check Compatibility', url: '/compatibility.html' },
+    }),
   },
+  // 22. Link Chips
   {
     type: 'linkChips', label: 'Link chips', icon: '🏷️', desc: 'Pill-shaped quick navigation chips or filter tags.',
     fields: [
-      text('headline', 'Section headline'),
+      text('title', 'Section title'),
       {
         k: 'list', key: 'chips', label: 'Chips', itemLabel: 'Chip', max: 16,
-        defaultItem: { label: 'DDR5 Gaming', href: '/products.html' },
-        itemFields: [text('label', 'Label'), text('href', 'Target URL')],
+        defaultItem: { label: 'DDR5 Gaming', url: '/products.html' },
+        itemFields: [text('label', 'Label'), text('url', 'Target URL')],
       },
     ],
-    make: () => ({ type: 'linkChips', headline: 'Popular Categories', chips: [{ label: 'Gaming DRAM', href: '/products.html?cat=gaming-dram' }, { label: 'PCIe Gen5 SSDs', href: '/products.html?cat=nvme-ssd' }, { label: 'Where to Buy', href: '/where-to-buy.html' }] }),
+    make: () => ({
+      type: 'linkChips',
+      title: 'Quick Links',
+      chips: [
+        { label: 'Gaming DRAM', url: '/products.html?cat=gaming-dram', isExternal: false },
+        { label: 'Where to Buy', url: '/where-to-buy.html', isExternal: false },
+      ],
+    }),
   },
+  // 23. Anchor Nav (NEW)
+  {
+    type: 'anchorNav', label: 'Anchor navigation', icon: '⚓', desc: 'Sticky in-page jump navigation bar.',
+    fields: [
+      text('title', 'Navigation title'),
+      sel('sticky', 'Sticky bar', ['true', 'false']),
+      {
+        k: 'list', key: 'links', label: 'Jump links', itemLabel: 'Anchor', max: 8,
+        defaultItem: { label: 'Overview', targetId: 'overview' },
+        itemFields: [text('label', 'Label'), text('targetId', 'Target Section ID')],
+      },
+    ],
+    make: () => ({
+      type: 'anchorNav',
+      title: 'Page Navigation',
+      sticky: true,
+      links: [
+        { label: 'Overview', targetId: 'overview' },
+        { label: 'Specifications', targetId: 'specs' },
+      ],
+    }),
+  },
+  // 24. Category Tiles
   {
     type: 'categoryTiles', label: 'Category tiles', icon: '🗂️', desc: 'Visual cards linking to primary product taxonomy categories.',
     fields: [
-      text('headline', 'Section headline'),
-      {
-        k: 'list', key: 'tiles', label: 'Categories', itemLabel: 'Category', max: 8,
-        defaultItem: { title: 'Category', slug: 'dram', desc: '', href: '' },
-        itemFields: [text('title', 'Title'), text('slug', 'Slug'), area('desc', 'Description'), text('href', 'Link')],
-      },
+      text('title', 'Section title'),
+      text('subtitle', 'Section subtitle'),
     ],
-    make: () => ({ type: 'categoryTiles', headline: 'Explore Products', tiles: [{ title: 'Gaming Memory', slug: 'gaming-dram', desc: 'High-speed overclocked DDR5 & DDR4 modules', href: '/products.html?cat=gaming-dram' }] }),
+    make: () => ({
+      type: 'categoryTiles',
+      title: 'Product Categories',
+      categoryIds: [],
+      showCounts: true,
+    }),
   },
+  // 25. Policy Tabs
   {
     type: 'policyTabs', label: 'Policy tabs', icon: '📑', desc: 'Tabbed document viewer for multi-section policy documents.',
     fields: [
-      text('policySlug', 'Policy slug', 'privacy-policy'),
-      sel('showEffectiveDate', 'Show effective date', ['yes', 'no']),
+      text('title', 'Section title'),
+      text('defaultSlug', 'Policy slug', 'privacy-policy'),
     ],
-    make: () => ({ type: 'policyTabs', policySlug: 'privacy-policy', showEffectiveDate: 'yes' }),
+    make: () => ({
+      type: 'policyTabs',
+      title: 'Legal & Policies',
+      defaultSlug: 'privacy-policy',
+      showLastUpdated: true,
+    }),
   },
+  // 26. Form
   {
     type: 'form', label: 'Form embed', icon: '📝', desc: 'Interactive form widget mapped to form definition schema.',
     fields: [
-      sel('formType', 'Form type', ['contact', 'rma', 'b2b', 'distributor', 'partner', 'press', 'feedback']),
-      text('headline', 'Headline override (optional)'),
-      area('blurb', 'Intro copy (optional)'),
+      sel('formType', 'Form type', ['contact', 'support', 'rma', 'partner', 'careers', 'newsletter', 'custom']),
+      text('title', 'Headline override (optional)'),
+      area('description', 'Intro copy (optional)'),
     ],
-    make: () => ({ type: 'form', formType: 'contact', headline: '', blurb: '' }),
+    make: () => ({
+      type: 'form',
+      formType: 'contact',
+      title: 'Contact Us',
+      submitButtonText: 'Submit',
+    }),
   },
+  // 27. Office Cards
   {
     type: 'officeCards', label: 'Global office cards', icon: '🏢', desc: 'Dynamic cards rendering all corporate headquarters and regional hubs.',
     fields: [
-      text('headline', 'Section headline'),
-      area('blurb', 'Supporting copy'),
-      sel('layout', 'Grid layout', ['2-col', '3-col']),
+      text('title', 'Section title'),
+      text('subtitle', 'Section subtitle'),
     ],
-    make: () => ({ type: 'officeCards', headline: 'Global Presence', blurb: 'Headquartered in Dubai with technology hubs worldwide.', layout: '3-col' }),
+    make: () => ({
+      type: 'officeCards',
+      title: 'Global Offices',
+      showMap: false,
+    }),
   },
+  // 28. Article List
   {
     type: 'articleList', label: 'Article / News list', icon: '📰', desc: 'Dynamic list of recent articles or announcements.',
     fields: [
-      text('headline', 'Headline'),
-      text('category', 'Category filter (optional)'),
-      { k: 'number', key: 'limit', label: 'Max items', min: 1, max: 12 },
+      text('title', 'Section title'),
+      sel('displayStyle', 'Display style', ['grid', 'list', 'cards']),
     ],
-    make: () => ({ type: 'articleList', headline: 'Latest News & Guides', category: '', limit: 4 }),
+    make: () => ({
+      type: 'articleList',
+      title: 'Latest Articles',
+      query: { limit: 6, sort: 'latest' },
+      displayStyle: 'grid',
+      showDate: true,
+      showReadingTime: true,
+    }),
   },
+  // 29. Glossary Index
   {
     type: 'glossaryIndex', label: 'Glossary index', icon: '📖', desc: 'Full A-Z interactive glossary directory with search filter.',
     fields: [
-      text('headline', 'Section headline'),
-      area('blurb', 'Intro text'),
+      text('title', 'Section title'),
+      text('defaultLetter', 'Default letter (optional)'),
     ],
-    make: () => ({ type: 'glossaryIndex', headline: 'Hardware & Storage Glossary', blurb: 'Authoritative memory, NAND flash, and solid-state terminology guide.' }),
+    make: () => ({
+      type: 'glossaryIndex',
+      title: 'Glossary Index',
+      showLettersFilter: true,
+    }),
   },
+  // 30. App Embed
   {
     type: 'appEmbed', label: 'Interactive app embed', icon: '⚙️', desc: 'Embeddable interactive web application (e.g. SN Checker).',
     fields: [
-      sel('appId', 'Application ID', ['sn-checker', 'ram-configurator', 'ssd-selector']),
-      text('headline', 'App headline'),
+      sel('widgetType', 'Widget Type', [
+        'advisor',
+        'speed_visualizer',
+        'flagship',
+        'ram_configurator',
+        'power_calc',
+        'ssd_tier',
+        'roi_calc',
+        'sn_checker',
+        'rma_tracker',
+        'distributor_locator',
+        'glossary_filter',
+      ]),
     ],
-    make: () => ({ type: 'appEmbed', appId: 'sn-checker', headline: 'Check Product Authenticity' }),
+    make: () => ({
+      type: 'appEmbed',
+      widgetType: 'ram_configurator',
+      config: {},
+    }),
   },
 ];
 

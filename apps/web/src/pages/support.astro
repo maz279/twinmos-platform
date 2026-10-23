@@ -5,13 +5,19 @@ import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
-const page = await getDeliveryPage('support');
+const preview = Astro.url.searchParams.get('preview') ?? undefined;
+const page = await getDeliveryPage('support', 'en', preview);
+if (preview) {
+  Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+}
 const title = page?.title ?? "Support Center — TwinMOS";
 const desc = page?.seoDescription ?? "TwinMOS support: FAQ for DRAM, SSD, flash and accessories, warranty policy and RMA tracking.";
 const blocks = page?.blocks ?? [];
+const noindex = Boolean(preview) || Boolean(page?.noindex);
 ---
 
-<Layout title={title} desc={desc} >
+<Layout title={title} desc={desc} noindex={noindex}>
   <main id="main">
     <BlockDispatcher blocks={blocks} />
   </main>

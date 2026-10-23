@@ -111,7 +111,10 @@ async function run() {
   const leakedSettings = Object.keys(settingsData.data ?? {}).filter(k => 
     !['site_name', 'site_description', 'site_url', 'contact_email', 'contact_phone',
       'address', 'social_links', 'footer_links', 'announcement_banner', 'theme',
-      'brand_theme', 'menus', 'default_locale', 'supported_locales'].includes(k)
+      'brand_theme', 'menus', 'default_locale', 'supported_locales',
+      // MS4.2 typed settings groups (public by design)
+      'site.brand', 'site.contact', 'site.social', 'site.cookie', 'site.whatsapp',
+      'site.figures', 'seo.defaults', 'integrations'].includes(k)
   );
   assert(leakedSettings.length === 0,
     `[X5] GET /settings exposes only allow-listed public keys (leaked: ${leakedSettings.join(', ') || 'none'})`);
@@ -185,7 +188,7 @@ async function run() {
 
   // Internal access with x-internal-secret
   const resDeepInternal = await fetch(`${BASE}/api/v1/health/deep`, {
-    headers: { 'x-internal-secret': 'internal-dev-check' },
+    headers: { 'x-internal-secret': process.env.REVALIDATE_SECRET || 'dev-revalidate-secret' },
   });
   assert(resDeepInternal.status === 200,
     `Authorized GET /api/v1/health/deep with internal secret returns 200`);

@@ -136,7 +136,7 @@ async function run() {
   // 5. Visual Evidence & Accessibility Parity
   // ---------------------------------------------------------------------------
   console.log('\n--- 5. Visual Evidence & WCAG 2.2 AA Parity ---');
-  assert(existsSync('apps/web/dist/index.html'), 'Static web build exists (apps/web/dist/index.html)');
+  assert(existsSync('apps/web/dist/server/entry.mjs'), 'SSR web build exists (apps/web/dist/server/entry.mjs)');
   assert(existsSync('tooling/verify/evidence/01_homepage.png'), 'Evidence screenshot: 01_homepage.png exists');
   assert(existsSync('tooling/verify/evidence/02_shop_catalog.png'), 'Evidence screenshot: 02_shop_catalog.png exists');
   assert(existsSync('tooling/verify/evidence/03_pdp_voltx.png'), 'Evidence screenshot: 03_pdp_voltx.png exists');

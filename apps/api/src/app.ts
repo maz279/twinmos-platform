@@ -207,6 +207,20 @@ export function buildApp(db: DB) {
     return next();
   });
 
+
+  // Reject non-JSON content types on /api/v1/auth/* POST routes (415) to eliminate lockout bypass
+  app.post('/api/v1/auth/*', async (c, next) => {
+    const contentType = c.req.header('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return c.json(
+        problem(415, 'Unsupported Media Type', 'Content-Type must be application/json'),
+        415,
+        { 'Content-Type': 'application/problem+json' }
+      );
+    }
+    return next();
+  });
+
   // ---- Sign-in rate limit: 3-5 requests / minute / client IP (S-09, S-10, T2.5.3, T2.5.4) ----
   const SIGNIN_BUCKETS = new Map<string, { count: number; resetAt: number }>();
   app.use('/api/v1/auth/sign-in/*', async (c, next) => {
@@ -282,15 +296,12 @@ export function buildApp(db: DB) {
     // Security (Roadmap R0.3 / Z-29 / P7): require viewer+ session or internal secret, else 401
     const internalSecret = c.req.header('x-internal-secret');
     let isInternal = false;
-    if (internalSecret) {
-      if (internalSecret === 'internal-dev-check') {
+    const internalExpected = process.env.REVALIDATE_SECRET || (process.env.NODE_ENV !== 'production' ? 'dev-revalidate-secret' : undefined);
+    if (internalSecret && internalExpected) {
+      const provBuf = Buffer.from(internalSecret, 'utf8');
+      const expBuf = Buffer.from(internalExpected, 'utf8');
+      if (provBuf.length === expBuf.length && timingSafeEqual(provBuf, expBuf)) {
         isInternal = true;
-      } else if (process.env.REVALIDATE_SECRET) {
-        const provBuf = Buffer.from(internalSecret, 'utf8');
-        const expBuf = Buffer.from(process.env.REVALIDATE_SECRET, 'utf8');
-        if (provBuf.length === expBuf.length && timingSafeEqual(provBuf, expBuf)) {
-          isInternal = true;
-        }
       }
     }
 
@@ -347,18 +358,6 @@ export function buildApp(db: DB) {
   // to in-memory tracking to throttle enumeration without DB write amplification.
   const MEMORY_LOGIN_FAILURES = new Map<string, { count: number; lockedUntil: number }>();
 
-  // Reject non-JSON content types on /api/v1/auth/* POST routes (415) to eliminate lockout bypass
-  app.post('/api/v1/auth/*', async (c, next) => {
-    const contentType = c.req.header('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      return c.json(
-        problem(415, 'Unsupported Media Type', 'Content-Type must be application/json'),
-        415,
-        { 'Content-Type': 'application/problem+json' }
-      );
-    }
-    return next();
-  });
 
   app.post('/api/v1/auth/sign-in/email', async (c) => {
     let email = '';

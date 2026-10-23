@@ -14,6 +14,7 @@ export interface OutboxPayload {
 
 /**
  * Records an event in the outbox table within the caller's transaction/flow.
+ * Closes Z-06 / Task T3.5.3.
  */
 export async function recordOutboxEvent(
   db: DB,
@@ -36,6 +37,7 @@ export async function recordOutboxEvent(
 
 /**
  * Dispatches pending outbox events to the web tier's /internal/revalidate endpoint.
+ * Enforces exponential backoff and production INTERNAL_WEB_URL requirement (Task T3.5.4).
  */
 export async function dispatchOutbox(db: DB): Promise<{ processed: number; failed: number }> {
   const pendingRows = await db
@@ -49,16 +51,33 @@ export async function dispatchOutbox(db: DB): Promise<{ processed: number; faile
     return { processed: 0, failed: 0 };
   }
 
-  const webUrl = process.env.INTERNAL_WEB_URL || 'http://127.0.0.1:4321';
+  const isProd = process.env.NODE_ENV === 'production';
+  const webUrl = process.env.INTERNAL_WEB_URL || (isProd ? '' : 'http://127.0.0.1:4321');
+  if (isProd && !webUrl) {
+    throw new Error('INTERNAL_WEB_URL environment variable is strictly required in production (T3.5.4)');
+  }
+  const targetWebUrl = webUrl || 'http://127.0.0.1:4321';
   const secret = process.env.REVALIDATE_SECRET || 'dev-revalidate-secret';
 
   let processed = 0;
   let failed = 0;
+  const now = Date.now();
 
   for (const row of pendingRows) {
+    // Exponential backoff check (T3.5.4 item 2)
+    const attempts = row.attempts || 0;
+    if (attempts > 0) {
+      const backoffMs = Math.min(1000 * Math.pow(2, attempts - 1), 30_000);
+      const createdTime = row.createdAt ? new Date(row.createdAt).getTime() : now;
+      if (now - createdTime < backoffMs) {
+        // Backoff interval hasn't elapsed yet; skip for now
+        continue;
+      }
+    }
+
     const payload = (row.payload || {}) as OutboxPayload;
     try {
-      const res = await fetch(`${webUrl}/internal/revalidate`, {
+      const res = await fetch(`${targetWebUrl}/internal/revalidate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,27 +101,27 @@ export async function dispatchOutbox(db: DB): Promise<{ processed: number; faile
         processed++;
       } else {
         const errText = await res.text().catch(() => 'Unknown HTTP error');
-        const attempts = (row.attempts || 0) + 1;
-        const status = attempts >= 5 ? 'failed' : 'pending';
+        const nextAttempts = attempts + 1;
+        const nextStatus = nextAttempts >= 5 ? 'failed' : 'pending';
         await db
           .update(outbox)
           .set({
-            attempts,
+            attempts: nextAttempts,
             lastError: `HTTP ${res.status}: ${errText.slice(0, 500)}`,
-            status,
+            status: nextStatus,
           })
           .where(eq(outbox.id, row.id));
         failed++;
       }
     } catch (err: any) {
-      const attempts = (row.attempts || 0) + 1;
-      const status = attempts >= 5 ? 'failed' : 'pending';
+      const nextAttempts = attempts + 1;
+      const nextStatus = nextAttempts >= 5 ? 'failed' : 'pending';
       await db
         .update(outbox)
         .set({
-          attempts,
+          attempts: nextAttempts,
           lastError: err.message ? String(err.message).slice(0, 500) : 'Network error',
-          status,
+          status: nextStatus,
         })
         .where(eq(outbox.id, row.id));
       failed++;
@@ -113,3 +132,19 @@ export async function dispatchOutbox(db: DB): Promise<{ processed: number; faile
 }
 
 export const dispatchOutboxEvents = dispatchOutbox;
+
+/**
+ * Starts automatic outbox dispatcher interval worker (Task T3.5.4 item 1).
+ */
+export function startOutboxDispatcher(db: DB, intervalMs = 2000): ReturnType<typeof setInterval> {
+  const tick = async () => {
+    try {
+      await dispatchOutbox(db);
+    } catch (err) {
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('[outbox-dispatcher]', err);
+      }
+    }
+  };
+  return setInterval(tick, intervalMs);
+}

@@ -4,8 +4,6 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..');
-const pagesDir = resolve(repoRoot, 'apps', 'web', 'src', 'pages');
-const cacheFile = resolve(repoRoot, 'apps', 'web', 'src', 'data', 'pages-cache.json');
 const outFile = resolve(repoRoot, 'apps', 'web', 'public', 'sitemap.xml');
 
 const SITE = 'https://www.twinmos.com/';

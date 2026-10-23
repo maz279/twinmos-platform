@@ -1,0 +1,15 @@
+{
+  "provenance": {
+    "minProvenancePercent": 85.0,
+    "currentProvenancePercent": 92.5,
+    "totalRoutes": 28,
+    "provenanceTrackedRoutes": 28,
+    "ratchetActive": true
+  },
+  "hardcode": {
+    "maxLiterals": 45,
+    "currentLiterals": 24,
+    "ratchetActive": true
+  },
+  "lastUpdated": "2026-10-19"
+}

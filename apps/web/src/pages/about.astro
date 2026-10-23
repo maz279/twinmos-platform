@@ -5,13 +5,19 @@ import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
-const page = await getDeliveryPage('about');
+const preview = Astro.url.searchParams.get('preview') ?? undefined;
+const page = await getDeliveryPage('about', 'en', preview);
+if (preview) {
+  Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+}
 const title = page?.title ?? "About TwinMOS — Since 1998";
-const desc = page?.seoDescription ?? "TwinMOS Technologies: founded 1998 in Taipei; ISO 9001 quality system; offices in Taipei, Dubai, Dongguan, Cologne and San Jose; 93+ countries.";
+const desc = page?.seoDescription ?? "TwinMOS Technologies: founded 1998 in Taipei; ISO 9001 quality system; offices in Dubai, Taipei, San Jose, Hong Kong and Dhaka; 93+ countries.";
 const blocks = page?.blocks ?? [];
+const noindex = Boolean(preview) || Boolean(page?.noindex);
 ---
 
-<Layout title={title} desc={desc} >
+<Layout title={title} desc={desc} noindex={noindex}>
   <main id="main">
     <BlockDispatcher blocks={blocks} />
   </main>

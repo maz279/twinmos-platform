@@ -96,21 +96,27 @@ export const article = pgTable('article', {
   id: serial('id').primaryKey(), slug: varchar('slug', { length: 120 }).notNull(), locale: varchar('locale', { length: 10 }).notNull().default('en'),
   title: text('title').notNull(), deck: text('deck'), body: text('body').notNull().default(''),
   category: varchar('category', { length: 40 }).notNull().default('Article'), tags: text('tags').array().default([]),
-  status: contentStatusEnum('status').notNull().default('draft'), publishAt: timestamp('publish_at', { withTimezone: true }),
+  status: contentStatusEnum('status').notNull().default('draft'),
+  publishAt: timestamp('publish_at', { withTimezone: true }),
+  unpublishAt: timestamp('unpublish_at', { withTimezone: true }),
   authorId: text('author_id').references(() => user.id, { onDelete: 'set null' }), heroMediaId: integer('hero_media_id').references(() => mediaAsset.id, { onDelete: 'set null' }),
   structuredBody: jsonb('structured_body').default([]),
   readingTimeMin: integer('reading_time_min'),
   version: integer('version').notNull().default(1),
   seo: jsonb('seo').default({}), revisionOf: integer('revision_of'), createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
-}, (t) => [uniqueIndex('article_slug_locale_uq').on(t.slug, t.locale), index('article_status_idx').on(t.status, t.publishAt)]);
+  source: text('source'),
+  approver: text('approver'),
+  translationGroup: varchar('translation_group', { length: 60 }),
+}, (t) => [uniqueIndex('article_slug_locale_uq').on(t.slug, t.locale), index('article_status_idx').on(t.status, t.publishAt), index('article_translation_group_idx').on(t.translationGroup)]);
 
 export const page = pgTable('page', {
   id: serial('id').primaryKey(), slug: varchar('slug', { length: 120 }).notNull(), locale: varchar('locale', { length: 10 }).notNull().default('en'),
   title: text('title').notNull(), blocks: jsonb('blocks').notNull().default([]), status: contentStatusEnum('status').notNull().default('draft'),
   path: varchar('path', { length: 200 }),
   template: varchar('template', { length: 60 }).notNull().default('default'),
-  parentId: integer('parent_id'),
+  parentId: integer('parent_id').references((): AnyPgColumn => page.id, { onDelete: 'set null' }),
+  sort: integer('sort').notNull().default(0),
   translationGroup: varchar('translation_group', { length: 60 }),
   seoTitle: text('seo_title'),
   seoDescription: text('seo_description'),
@@ -118,24 +124,48 @@ export const page = pgTable('page', {
   noindex: boolean('noindex').notNull().default(false),
   legacyPaths: text('legacy_paths').array().default([]),
   publishedAt: timestamp('published_at', { withTimezone: true }),
+  publishAt: timestamp('publish_at', { withTimezone: true }),
+  unpublishAt: timestamp('unpublish_at', { withTimezone: true }),
   version: integer('version').notNull().default(1),
   seo: jsonb('seo').default({}), createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(), deletedAt: timestamp('deleted_at', { withTimezone: true }),
-}, (t) => [uniqueIndex('page_slug_locale_uq').on(t.slug, t.locale), index('page_path_locale_idx').on(t.path, t.locale)]);
+  source: text('source'),
+  approver: text('approver'),
+}, (t) => [
+  uniqueIndex('page_slug_locale_uq').on(t.slug, t.locale),
+  uniqueIndex('page_locale_path_uq').on(t.locale, t.path),
+  index('page_path_locale_idx').on(t.path, t.locale),
+]);
 
 export const newsPost = pgTable('news_post', {
   id: serial('id').primaryKey(), slug: varchar('slug', { length: 120 }).notNull(), locale: varchar('locale', { length: 10 }).notNull().default('en'),
   title: text('title').notNull(), body: text('body').notNull().default(''), tag: text('tag'), eventDate: timestamp('event_date', { withTimezone: true }),
-  status: contentStatusEnum('status').notNull().default('draft'), publishAt: timestamp('publish_at', { withTimezone: true }), heroMediaId: integer('hero_media_id'),
+  status: contentStatusEnum('status').notNull().default('draft'),
+  publishAt: timestamp('publish_at', { withTimezone: true }),
+  unpublishAt: timestamp('unpublish_at', { withTimezone: true }),
+  heroMediaId: integer('hero_media_id'),
   createdAt: ts(), deletedAt: timestamp('deleted_at', { withTimezone: true }),
-}, (t) => [uniqueIndex('news_slug_locale_uq').on(t.slug, t.locale)]);
+  seo: jsonb('seo').default({}),
+  source: text('source'),
+  approver: text('approver'),
+  translationGroup: varchar('translation_group', { length: 60 }),
+}, (t) => [uniqueIndex('news_slug_locale_uq').on(t.slug, t.locale), index('news_translation_group_idx').on(t.translationGroup)]);
 
 export const faq = pgTable('faq', {
   id: serial('id').primaryKey(), groupKey: varchar('group_key', { length: 40 }).notNull(), locale: varchar('locale', { length: 10 }).notNull().default('en'),
-  question: text('question').notNull(), answer: text('answer').notNull(), sort: integer('sort').notNull().default(0),
-  status: contentStatusEnum('status').notNull().default('published'), createdAt: ts(),
+  question: text('question').notNull(), answer: text('answer').notNull(), label: varchar('label', { length: 120 }), sort: integer('sort').notNull().default(0),
+  status: contentStatusEnum('status').notNull().default('published'),
+  publishAt: timestamp('publish_at', { withTimezone: true }),
+  unpublishAt: timestamp('unpublish_at', { withTimezone: true }),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  source: text('source'),
+  approver: text('approver'),
+  createdAt: ts(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   version: integer('version').notNull().default(1),
-}, (t) => [index('faq_group_locale_idx').on(t.groupKey, t.locale)]);
+}, (t) => [
+  uniqueIndex('faq_question_locale_uq').on(t.question, t.locale),
+  index('faq_group_locale_idx').on(t.groupKey, t.locale),
+]);
 
 // P3: immutable snapshot taken on every publish — enables one-click rollback.
 export const contentRevision = pgTable('content_revision', {
@@ -169,7 +199,10 @@ export const product = pgTable('product', {
   id: serial('id').primaryKey(), sku: varchar('sku', { length: 40 }).notNull().unique(), slug: varchar('slug', { length: 80 }).notNull().unique(),
   name: text('name').notNull(), brandId: integer('brand_id').references(() => brand.id, { onDelete: 'restrict' }),
   categoryId: integer('category_id').references(() => category.id, { onDelete: 'restrict' }),
-  status: contentStatusEnum('status').notNull().default('draft'), specs: jsonb('specs').notNull().default({}),
+  status: contentStatusEnum('status').notNull().default('draft'),
+  publishAt: timestamp('publish_at', { withTimezone: true }),
+  unpublishAt: timestamp('unpublish_at', { withTimezone: true }),
+  specs: jsonb('specs').notNull().default({}),
   // 0007: rich product management — marketing copy + list pricing
   description: text('description').notNull().default(''),
   priceUsd: numeric('price_usd', { precision: 10, scale: 2 }), currency: varchar('currency', { length: 3 }).notNull().default('USD'),
@@ -190,7 +223,10 @@ export const product = pgTable('product', {
   version: integer('version').notNull().default(1),
   releasedAt: timestamp('released_at', { withTimezone: true }), createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
-}, (t) => [index('product_status_idx').on(t.status), index('product_cat_idx').on(t.categoryId)]);
+  source: text('source'),
+  approver: text('approver'),
+  translationGroup: varchar('translation_group', { length: 60 }),
+}, (t) => [index('product_status_idx').on(t.status), index('product_cat_idx').on(t.categoryId), index('product_translation_group_idx').on(t.translationGroup)]);
 export const compatibilityRule = pgTable('compatibility_rule', {
   id: serial('id').primaryKey(), deviceBrand: text('device_brand').notNull(), deviceModel: text('device_model').notNull(),
   memoryGen: varchar('memory_gen', { length: 12 }), formFactor: varchar('form_factor', { length: 24 }), maxGb: integer('max_gb'), notes: text('notes'),
@@ -200,6 +236,7 @@ export const compatibilityRule = pgTable('compatibility_rule', {
   slots: integer('slots'), speed: varchar('speed', { length: 30 }),
   cats: text('cats').array().notNull().default([]),
   ssdNote: varchar('ssd_note', { length: 120 }), ssdCats: text('ssd_cats').array().notNull().default([]),
+  qvlStatus: varchar('qvl_status', { length: 30 }).notNull().default('certified'),
 }, (t) => [index('compat_device_idx').on(t.deviceBrand, t.deviceModel)]);
 export const productVariant = pgTable('product_variant', {
   id: serial('id').primaryKey(), productId: integer('product_id').notNull().references(() => product.id, { onDelete: 'cascade' }),
@@ -211,10 +248,19 @@ export const distributor = pgTable('distributor', {
   id: serial('id').primaryKey(), name: text('name').notNull(), country: varchar('country', { length: 60 }).notNull(),
   region: varchar('region', { length: 30 }).notNull(), status: varchar('status', { length: 20 }).notNull().default('authorized'),
   cities: text('cities').array().default([]), contact: jsonb('contact').default({}), note: text('note'), createdAt: ts(),
+  isoCountry: varchar('iso_country', { length: 2 }),
+  tagline: text('tagline'),
+  ctaConfig: jsonb('cta_config').default({}),
+  sort: integer('sort').notNull().default(0),
+  source: text('source'),
+  approver: text('approver'),
 }, (t) => [index('distributor_region_idx').on(t.region, t.country)]);
 export const marketplaceListing = pgTable('marketplace_listing', {
   id: serial('id').primaryKey(), platform: varchar('platform', { length: 40 }).notNull(), url: text('url').notNull(),
   country: varchar('country', { length: 60 }), verifiedAt: timestamp('verified_at', { withTimezone: true }), createdAt: ts(),
+  description: text('description'),
+  ctaLabel: varchar('cta_label', { length: 60 }),
+  sort: integer('sort').notNull().default(0),
 });
 
 // ---- support ----
@@ -346,12 +392,14 @@ export const outbox = pgTable('outbox', {
 // ---- Phase C: Content Model Entities (C2..C6) ----
 export const navMenu = pgTable('nav_menu', {
   id: serial('id').primaryKey(),
-  code: varchar('code', { length: 40 }).notNull().unique(),
+  code: varchar('code', { length: 40 }).notNull(),
   title: text('title').notNull(),
   locale: varchar('locale', { length: 10 }).notNull().default('en'),
   createdAt: ts(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+  uniqueIndex('nav_menu_code_locale_uq').on(t.code, t.locale),
+]);
 
 export const navItem = pgTable('nav_item', {
   id: serial('id').primaryKey(),
@@ -366,6 +414,7 @@ export const navItem = pgTable('nav_item', {
   icon: varchar('icon', { length: 60 }),
   badge: varchar('badge', { length: 40 }),
 }, (t) => [
+  uniqueIndex('nav_item_menu_parent_sort_uq').on(t.menuId, t.parentId, t.sort),
   index('nav_item_menu_idx').on(t.menuId),
   index('nav_item_parent_idx').on(t.parentId),
 ]);
@@ -376,13 +425,18 @@ export const glossaryTerm = pgTable('glossary_term', {
   definition: text('definition').notNull(),
   letter: varchar('letter', { length: 2 }).notNull(),
   explainerSlug: text('explainer_slug'),
+  status: contentStatusEnum('status').notNull().default('published'),
   locale: varchar('locale', { length: 10 }).notNull().default('en'),
   translationGroup: varchar('translation_group', { length: 60 }),
+  source: text('source'),
+  approver: text('approver'),
   createdAt: ts(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
+  uniqueIndex('glossary_term_uq').on(t.term, t.locale),
   index('glossary_term_letter_idx').on(t.letter, t.locale),
   index('glossary_term_group_idx').on(t.translationGroup),
+  index('glossary_term_status_idx').on(t.status),
 ]);
 
 export const office = pgTable('office', {
@@ -395,10 +449,15 @@ export const office = pgTable('office', {
   note: text('note'),
   sort: integer('sort').notNull().default(0),
   locale: varchar('locale', { length: 10 }).notNull().default('en'),
+  status: varchar('status', { length: 20 }).notNull().default('published'),
+  source: text('source'),
+  approver: text('approver'),
   createdAt: ts(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
+  uniqueIndex('office_title_locale_uq').on(t.title, t.locale),
   index('office_locale_sort_idx').on(t.locale, t.sort),
+  index('office_status_idx').on(t.status),
 ]);
 
 export const testimonial = pgTable('testimonial', {
@@ -410,10 +469,16 @@ export const testimonial = pgTable('testimonial', {
   sort: integer('sort').notNull().default(0),
   permissionFlag: boolean('permission_flag').notNull().default(true),
   locale: varchar('locale', { length: 10 }).notNull().default('en'),
+  status: varchar('status', { length: 20 }).notNull().default('published'),
+  source: text('source'),
+  approver: text('approver'),
+  permissionEvidence: text('permission_evidence'),
   createdAt: ts(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
+  uniqueIndex('testimonial_author_locale_uq').on(t.author, t.locale),
   index('testimonial_locale_sort_idx').on(t.locale, t.sort),
+  index('testimonial_status_idx').on(t.status),
 ]);
 
 export const policyDocument = pgTable('policy_document', {
@@ -423,16 +488,42 @@ export const policyDocument = pgTable('policy_document', {
   version: varchar('version', { length: 20 }).notNull().default('1.0'),
   status: contentStatusEnum('status').notNull().default('draft'),
   effectiveDate: timestamp('effective_date', { withTimezone: true }),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  legalApproved: boolean('legal_approved').notNull().default(false),
+  approvedBy: text('approved_by'),
+  changeSummary: text('change_summary'),
   summary: text('summary'),
   body: text('body').notNull().default(''),
   cookieCategories: jsonb('cookie_categories').default([]),
   locale: varchar('locale', { length: 10 }).notNull().default('en'),
   translationGroup: varchar('translation_group', { length: 60 }),
+  source: text('source'),
+  approver: text('approver'),
   createdAt: ts(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  uniqueIndex('policy_doc_slug_locale_uq').on(t.slug, t.locale),
+  uniqueIndex('policy_doc_slug_locale_ver_uq').on(t.slug, t.locale, t.version),
+  index('policy_doc_slug_locale_idx').on(t.slug, t.locale),
   index('policy_doc_status_idx').on(t.status),
+  index('policy_doc_legal_idx').on(t.legalApproved),
+]);
+
+/** MS4.8: per-field entity translations applied to delivery (not just UI strings). */
+export const entityTranslation = pgTable('entity_translation', {
+  id: serial('id').primaryKey(),
+  entity: varchar('entity', { length: 20 }).notNull(),
+  entityId: integer('entity_id').notNull(),
+  locale: varchar('locale', { length: 10 }).notNull(),
+  field: varchar('field', { length: 60 }).notNull(),
+  value: text('value').notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('current'),
+  sourceHash: varchar('source_hash', { length: 64 }),
+  updatedBy: text('updated_by').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: ts(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex('entity_translation_uq').on(t.entity, t.entityId, t.locale, t.field),
+  index('entity_translation_locale_idx').on(t.entity, t.locale),
 ]);
 
 export const formDefinition = pgTable('form_definition', {
@@ -441,6 +532,7 @@ export const formDefinition = pgTable('form_definition', {
   title: text('title').notNull(),
   description: text('description'),
   successMessage: text('success_message'),
+  errorMessage: text('error_message'),
   routingEmail: text('routing_email'),
   privacyNotice: text('privacy_notice'),
   isActive: boolean('is_active').notNull().default(true),
@@ -461,6 +553,7 @@ export const formField = pgTable('form_field', {
   sort: integer('sort').notNull().default(0),
   validationRegex: text('validation_regex'),
 }, (t) => [
+  uniqueIndex('form_field_form_name_uq').on(t.formId, t.name),
   index('form_field_form_idx').on(t.formId, t.sort),
 ]);
 
@@ -490,5 +583,40 @@ export const searchQueryLog = pgTable('search_query_log', {
 }, (t) => [
   index('search_log_created_idx').on(t.createdAt),
 ]);
+
+// ---- Phase D / MS4.5: Spec dictionary, Spec templates, Device type labels ----
+export const specDictionary = pgTable('spec_dictionary', {
+  id: serial('id').primaryKey(),
+  key: varchar('key', { length: 80 }).notNull(),
+  normalizedKey: varchar('normalized_key', { length: 80 }).notNull(),
+  categoryId: integer('category_id').references(() => category.id, { onDelete: 'set null' }),
+  dataType: varchar('data_type', { length: 30 }).notNull().default('string'),
+  unit: varchar('unit', { length: 20 }),
+  description: text('description'),
+  createdAt: ts(),
+}, (t) => [
+  index('spec_dictionary_norm_idx').on(t.normalizedKey),
+  index('spec_dictionary_cat_idx').on(t.categoryId),
+]);
+
+export const specTemplate = pgTable('spec_template', {
+  id: serial('id').primaryKey(),
+  categoryId: integer('category_id').notNull().references(() => category.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 80 }).notNull(),
+  specKeys: text('spec_keys').array().notNull().default([]),
+  requiredKeys: text('required_keys').array().notNull().default([]),
+  createdAt: ts(),
+}, (t) => [
+  index('spec_template_cat_idx').on(t.categoryId),
+]);
+
+export const deviceTypeLabel = pgTable('device_type_label', {
+  id: serial('id').primaryKey(),
+  deviceType: varchar('device_type', { length: 30 }).notNull().unique(),
+  label: varchar('label', { length: 80 }).notNull(),
+  sort: integer('sort').notNull().default(0),
+  createdAt: ts(),
+});
+
 
 

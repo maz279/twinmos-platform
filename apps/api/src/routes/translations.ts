@@ -11,7 +11,8 @@ import {
   LOCALE_SCHEMA, LOCALES, problem,
 } from '@twinmos/shared';
 import type { Role } from '@twinmos/shared';
-import { translation, auditLog, glossaryTerm, office, testimonial, policyDocument } from '@twinmos/db';
+import { translation, auditLog, glossaryTerm, office, testimonial, policyDocument, page, product, entityTranslation } from '@twinmos/db';
+import { createHash } from 'node:crypto';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 
@@ -232,46 +233,102 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     return c.json({ locale: locale.data, ns, imported, skippedEmpty });
   });
 
-  /** Phase C (LOC-01): Entity XLIFF export — Glossary, Offices, Testimonials, Policies */
+  /** Phase C (LOC-01) & MS4.8: Entity XLIFF export — Glossary, Offices, Testimonials, Policies, Pages, Products */
   r.get('/translations/entities/xliff', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
     const locale = LOCALE_SCHEMA.safeParse(c.req.query('locale') ?? 'ar');
     if (!locale.success) return c.json(problem(422, 'Validation Failed', 'locale is required.'), 422, { 'Content-Type': P });
 
-    const [enGlossary, enOffices, enTestimonials, enPolicies] = await Promise.all([
-      db.select().from(glossaryTerm).where(eq(glossaryTerm.locale, 'en')),
-      db.select().from(office).where(eq(office.locale, 'en')),
-      db.select().from(testimonial).where(eq(testimonial.locale, 'en')),
-      db.select().from(policyDocument).where(eq(policyDocument.locale, 'en')),
+    const entityParam = c.req.query('entity');
+    const [enGlossary, enOffices, enTestimonials, enPolicies, enPages, enProducts, existingTranslations] = await Promise.all([
+      (!entityParam || entityParam === 'all' || entityParam === 'glossary' || entityParam === 'glossary_term')
+        ? db.select().from(glossaryTerm).where(eq(glossaryTerm.locale, 'en'))
+        : Promise.resolve([]),
+      (!entityParam || entityParam === 'all' || entityParam === 'office')
+        ? db.select().from(office).where(eq(office.locale, 'en'))
+        : Promise.resolve([]),
+      (!entityParam || entityParam === 'all' || entityParam === 'testimonial')
+        ? db.select().from(testimonial).where(eq(testimonial.locale, 'en'))
+        : Promise.resolve([]),
+      (!entityParam || entityParam === 'all' || entityParam === 'policy')
+        ? db.select().from(policyDocument).where(eq(policyDocument.locale, 'en'))
+        : Promise.resolve([]),
+      (!entityParam || entityParam === 'all' || entityParam === 'page')
+        ? db.select().from(page).where(eq(page.locale, 'en'))
+        : Promise.resolve([]),
+      (!entityParam || entityParam === 'all' || entityParam === 'product')
+        ? db.select().from(product)
+        : Promise.resolve([]),
+      db.select().from(translation).where(and(eq(translation.locale, locale.data), eq(translation.ns, 'entities'))),
     ]);
 
+    const transMap = new Map(existingTranslations.map((t) => [t.key, t.value]));
     const units: string[] = [];
 
+    for (const p of enPages) {
+      if (p.title) {
+        const key = `page:${p.id}:title`;
+        const tgt = transMap.get(key) ?? '';
+        units.push(`    <trans-unit id="${key}">\n      <source xml:lang="en">${esc(p.title)}</source>\n      <target xml:lang="${locale.data}">${esc(tgt)}</target>\n    </trans-unit>`);
+      }
+      const desc = (p.seo as any)?.description;
+      if (desc) {
+        const key = `page:${p.id}:seoDescription`;
+        const tgt = transMap.get(key) ?? '';
+        units.push(`    <trans-unit id="${key}">\n      <source xml:lang="en">${esc(desc)}</source>\n      <target xml:lang="${locale.data}">${esc(tgt)}</target>\n    </trans-unit>`);
+      }
+    }
+
+    for (const pr of enProducts) {
+      if (pr.name) {
+        const key = `product:${pr.id}:name`;
+        const tgt = transMap.get(key) ?? '';
+        units.push(`    <trans-unit id="${key}">\n      <source xml:lang="en">${esc(pr.name)}</source>\n      <target xml:lang="${locale.data}">${esc(tgt)}</target>\n    </trans-unit>`);
+      }
+      if (pr.shortSpec) {
+        const key = `product:${pr.id}:shortSpec`;
+        const tgt = transMap.get(key) ?? '';
+        units.push(`    <trans-unit id="${key}">\n      <source xml:lang="en">${esc(pr.shortSpec)}</source>\n      <target xml:lang="${locale.data}">${esc(tgt)}</target>\n    </trans-unit>`);
+      }
+      if (pr.description) {
+        const key = `product:${pr.id}:description`;
+        const tgt = transMap.get(key) ?? '';
+        units.push(`    <trans-unit id="${key}">\n      <source xml:lang="en">${esc(pr.description)}</source>\n      <target xml:lang="${locale.data}">${esc(tgt)}</target>\n    </trans-unit>`);
+      }
+    }
+
     for (const g of enGlossary) {
+      const kTerm = `glossary:${g.id}:term`;
+      const kDef = `glossary:${g.id}:definition`;
       units.push(
-        `    <trans-unit id="glossary:${g.id}:term">\n      <source xml:lang="en">${esc(g.term)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`,
-        `    <trans-unit id="glossary:${g.id}:definition">\n      <source xml:lang="en">${esc(g.definition)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`
+        `    <trans-unit id="${kTerm}">\n      <source xml:lang="en">${esc(g.term)}</source>\n      <target xml:lang="${locale.data}">${esc(transMap.get(kTerm) ?? '')}</target>\n    </trans-unit>`,
+        `    <trans-unit id="${kDef}">\n      <source xml:lang="en">${esc(g.definition)}</source>\n      <target xml:lang="${locale.data}">${esc(transMap.get(kDef) ?? '')}</target>\n    </trans-unit>`
       );
     }
 
     for (const o of enOffices) {
+      const kTitle = `office:${o.id}:title`;
+      const kAddr = `office:${o.id}:address`;
       units.push(
-        `    <trans-unit id="office:${o.id}:title">\n      <source xml:lang="en">${esc(o.title)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`,
-        `    <trans-unit id="office:${o.id}:address">\n      <source xml:lang="en">${esc(o.address)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`
+        `    <trans-unit id="${kTitle}">\n      <source xml:lang="en">${esc(o.title)}</source>\n      <target xml:lang="${locale.data}">${esc(transMap.get(kTitle) ?? '')}</target>\n    </trans-unit>`,
+        `    <trans-unit id="${kAddr}">\n      <source xml:lang="en">${esc(o.address)}</source>\n      <target xml:lang="${locale.data}">${esc(transMap.get(kAddr) ?? '')}</target>\n    </trans-unit>`
       );
     }
 
     for (const t of enTestimonials) {
+      const kQuote = `testimonial:${t.id}:quote`;
+      const kAuthor = `testimonial:${t.id}:author`;
       units.push(
-        `    <trans-unit id="testimonial:${t.id}:quote">\n      <source xml:lang="en">${esc(t.quote)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`,
-        `    <trans-unit id="testimonial:${t.id}:author">\n      <source xml:lang="en">${esc(t.author)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`
+        `    <trans-unit id="${kQuote}">\n      <source xml:lang="en">${esc(t.quote)}</source>\n      <target xml:lang="${locale.data}">${esc(transMap.get(kQuote) ?? '')}</target>\n    </trans-unit>`,
+        `    <trans-unit id="${kAuthor}">\n      <source xml:lang="en">${esc(t.author)}</source>\n      <target xml:lang="${locale.data}">${esc(transMap.get(kAuthor) ?? '')}</target>\n    </trans-unit>`
       );
     }
 
     for (const p of enPolicies) {
+      const kTitle = `policy:${p.id}:title`;
       units.push(
-        `    <trans-unit id="policy:${p.id}:title">\n      <source xml:lang="en">${esc(p.title)}</source>\n      <target xml:lang="${locale.data}"></target>\n    </trans-unit>`
+        `    <trans-unit id="${kTitle}">\n      <source xml:lang="en">${esc(p.title)}</source>\n      <target xml:lang="${locale.data}">${esc(transMap.get(kTitle) ?? '')}</target>\n    </trans-unit>`
       );
     }
 
@@ -280,6 +337,103 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guar
       'content-type': 'application/xliff+xml; charset=utf-8',
       'content-disposition': `attachment; filename="twinmos-entities-${locale.data}.xliff"`,
     });
+  });
+
+  /** Phase 5.1 / MS4.8: Entity Translation Per-Field Status (missing, outdated, current) */
+  r.get('/translations/entities/status', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const locale = LOCALE_SCHEMA.safeParse(c.req.query('locale') ?? 'ar');
+    if (!locale.success) return c.json(problem(422, 'Validation Failed', 'locale is required.'), 422, { 'Content-Type': P });
+
+    const [enGlossary, enOffices, enTestimonials, enPolicies, enPages, enProducts, existingTranslations] = await Promise.all([
+      db.select().from(glossaryTerm).where(eq(glossaryTerm.locale, 'en')),
+      db.select().from(office).where(eq(office.locale, 'en')),
+      db.select().from(testimonial).where(eq(testimonial.locale, 'en')),
+      db.select().from(policyDocument).where(eq(policyDocument.locale, 'en')),
+      db.select().from(page).where(eq(page.locale, 'en')),
+      db.select().from(product),
+      db.select().from(translation).where(and(eq(translation.locale, locale.data), eq(translation.ns, 'entities'))),
+    ]);
+
+    const transMap = new Map(existingTranslations.map((t) => [t.key, t]));
+
+    const items: Array<{
+      id: string;
+      entity: string;
+      entityId: number;
+      field: string;
+      source: string;
+      target: string | null;
+      status: 'missing' | 'outdated' | 'current';
+      sourceUpdatedAt: string;
+      targetUpdatedAt: string | null;
+    }> = [];
+
+    function addField(entity: string, entityId: number, field: string, source: string | null | undefined, srcUpdatedAt: Date | null | undefined) {
+      if (!source) return;
+      const key = `${entity}:${entityId}:${field}`;
+      const tr = transMap.get(key);
+      const target = tr?.value ?? null;
+      const sourceDate = srcUpdatedAt ? new Date(srcUpdatedAt).toISOString() : new Date().toISOString();
+      const targetDate = tr?.updatedAt ? new Date(tr.updatedAt).toISOString() : null;
+
+      let status: 'missing' | 'outdated' | 'current' = 'missing';
+      if (target != null && target.trim().length > 0) {
+        if (targetDate && new Date(targetDate).getTime() < new Date(sourceDate).getTime() - 1000) {
+          status = 'outdated';
+        } else {
+          status = 'current';
+        }
+      }
+
+      items.push({
+        id: key,
+        entity,
+        entityId,
+        field,
+        source,
+        target,
+        status,
+        sourceUpdatedAt: sourceDate,
+        targetUpdatedAt: targetDate,
+      });
+    }
+
+    for (const p of enPages) {
+      addField('page', p.id, 'title', p.title, p.updatedAt);
+      if ((p.seo as any)?.description) addField('page', p.id, 'seoDescription', (p.seo as any).description, p.updatedAt);
+    }
+    for (const pr of enProducts) {
+      addField('product', pr.id, 'name', pr.name, pr.updatedAt);
+      if (pr.shortSpec) addField('product', pr.id, 'shortSpec', pr.shortSpec, pr.updatedAt);
+      if (pr.description) addField('product', pr.id, 'description', pr.description, pr.updatedAt);
+    }
+    for (const g of enGlossary) {
+      addField('glossary', g.id, 'term', g.term, g.updatedAt);
+      addField('glossary', g.id, 'definition', g.definition, g.updatedAt);
+    }
+    for (const o of enOffices) {
+      addField('office', o.id, 'title', o.title, o.updatedAt);
+      addField('office', o.id, 'address', o.address, o.updatedAt);
+    }
+    for (const t of enTestimonials) {
+      addField('testimonial', t.id, 'quote', t.quote, t.updatedAt);
+      addField('testimonial', t.id, 'author', t.author, t.updatedAt);
+    }
+    for (const pol of enPolicies) {
+      addField('policy', pol.id, 'title', pol.title, pol.updatedAt);
+      if (pol.body) addField('policy', pol.id, 'body', pol.body, pol.updatedAt);
+    }
+
+    const summary = {
+      total: items.length,
+      missing: items.filter((x) => x.status === 'missing').length,
+      outdated: items.filter((x) => x.status === 'outdated').length,
+      current: items.filter((x) => x.status === 'current').length,
+    };
+
+    return c.json({ locale: locale.data, summary, items });
   });
 
   /** Phase C (LOC-01): Entity XLIFF import — validates encoding and stores translations */
@@ -324,6 +478,7 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     let imported = 0;
     let skippedEmpty = 0;
 
+    let applied = 0;
     for (const u of units) {
       if (u.target == null || u.target === '') {
         skippedEmpty += 1;
@@ -341,10 +496,25 @@ export function translationsRoute(db: DB, deps: { requireRole: (r: Role) => Guar
         set: { value: u.target, updatedBy: guard.user.id, updatedAt: new Date() },
       });
       imported += 1;
+      // T4.8.3: also materialize the applied layer the delivery API reads —
+      // entity translations must reach the site, not just the studio table.
+      const m = u.id.match(/^([a-z_]+):(\d+):([a-zA-Z]+)$/);
+      if (m) {
+        await db.insert(entityTranslation).values({
+          entity: m[1], entityId: Number(m[2]), locale: locale.data, field: m[3],
+          value: u.target, status: 'current',
+          sourceHash: createHash('sha256').update(u.source).digest('hex'),
+          updatedBy: guard.user.id,
+        }).onConflictDoUpdate({
+          target: [entityTranslation.entity, entityTranslation.entityId, entityTranslation.locale, entityTranslation.field],
+          set: { value: u.target, status: 'current', sourceHash: createHash('sha256').update(u.source).digest('hex'), updatedBy: guard.user.id, updatedAt: new Date() },
+        });
+        applied += 1;
+      }
     }
 
-    await auditRow(c, guard.user.id, 'translation.entities.xliff.import', locale.data + ':entities', { imported, skippedEmpty });
-    return c.json({ locale: locale.data, ns: 'entities', imported, skippedEmpty });
+    await auditRow(c, guard.user.id, 'translation.entities.xliff.import', locale.data + ':entities', { imported, skippedEmpty, applied });
+    return c.json({ locale: locale.data, ns: 'entities', imported, skippedEmpty, applied });
   });
 
   /** Upsert a single string. */

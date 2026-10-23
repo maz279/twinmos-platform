@@ -1,15 +1,21 @@
 // P3 settings — key/value settings (incl. menus as a settings key), redirects
 // manager, locales. Settings/menus/redirects are super_admin/admin per the
 // docs/04 RBAC matrix; locales read-only for admin+.
-import { writeFileSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
 import { Hono } from 'hono';
 import { asc, eq } from 'drizzle-orm';
-import { redirectCreateSchema, redirectUpdateSchema, settingUpdateSchema, problem } from '@twinmos/shared';
-import type { Role } from '@twinmos/shared';
+import {
+  redirectCreateSchema,
+  redirectUpdateSchema,
+  settingUpdateSchema,
+  problem,
+  SETTINGS_GROUP_SCHEMAS,
+  normalizeSettingsGroup,
+} from '@twinmos/shared';
+import type { Role, SettingsGroupKey } from '@twinmos/shared';
 import { setting, redirect, locale, auditLog } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
+import { recordOutboxEvent } from '../services/outbox.ts';
 
 type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
@@ -69,8 +75,26 @@ const RESERVED_LIVE_ROUTES = new Set([
   '/internal',
 ]);
 
-function validateRedirectRules(from: string, to: string, existingRedirects: Array<{ id: number; from: string; to: string }>, currentId?: number) {
-  const normFrom = from.trim().toLowerCase();
+const SECRET_FIELD = /(secret|password|token|private|api[_-]?key)/i;
+
+/**
+ * Audit rows must never contain credential-shaped values. Whole secret-named
+ * keys are redacted outright; object groups (integrations) keep their public
+ * fields and redact credential-shaped members.
+ */
+function redactForAudit(key: string, value: unknown, isSecretKey: boolean) {
+  if (isSecretKey) return { redacted: true };
+  if (key === 'integrations' && value && typeof value === 'object' && !Array.isArray(value)) {
+    const out: Record<string, unknown> = {};
+    for (const [field, fieldValue] of Object.entries(value as Record<string, unknown>)) {
+      out[field] = SECRET_FIELD.test(field) ? '[redacted]' : fieldValue;
+    }
+    return { value: out };
+  }
+  return { value };
+}
+
+function validateRedirectRules(from: string, to: string, existingRedirects: Array<{ id: number; from: string; to: string }>, currentId?: number) {  const normFrom = from.trim().toLowerCase();
   const normTo = to.trim().toLowerCase();
 
   if (normFrom === normTo) {
@@ -102,25 +126,6 @@ function validateRedirectRules(from: string, to: string, existingRedirects: Arra
   return null;
 }
 
-async function syncNginxRedirectMap(db: DB) {
-  try {
-    const all = await db.select().from(redirect).orderBy(asc(redirect.id));
-    const lines = [
-      '# TwinMOS CMS-managed redirects map (CMS-E1 / NF-14)',
-      '# Syntax: <source_path> <destination_path>;',
-    ];
-    for (const r of all) {
-      lines.push(`${r.from} ${r.to};`);
-    }
-    const mapPath = resolve(process.cwd(), 'deploy/nginx/twinmos-redirects.map');
-    if (existsSync(dirname(mapPath))) {
-      writeFileSync(mapPath, lines.join('\n') + '\n', 'utf8');
-    }
-  } catch {
-    // Non-fatal if filesystem write is restricted
-  }
-}
-
 export function settingsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
   const r = new Hono();
 
@@ -150,17 +155,113 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; s
     return c.json({ items: rows });
   });
 
+  r.get('/settings/:key', async (c) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const key = c.req.param('key');
+    const rows = await db.select().from(setting).where(eq(setting.key, key)).limit(1);
+    if (!rows[0]) {
+      // Known typed group with no stored row: return the schema defaults.
+      if (key in SETTINGS_GROUP_SCHEMAS) {
+        try {
+          const defaultVal = normalizeSettingsGroup(key as SettingsGroupKey, {});
+          return c.json({ key, value: defaultVal, isDefault: true });
+        } catch {
+          return c.json({ key, value: null, isDefault: true, invalid: true });
+        }
+      }
+      return c.json(problem(404, 'Setting not found'), 404, { 'Content-Type': P });
+    }
+    return c.json(rows[0]);
+  });
+
   r.put('/settings', async (c) => {
     const guard = await roleGuard(c, 'super_admin'); // docs/04 RBAC: Settings/integrations = super_admin only
     if (guard instanceof Response) return guard;
     const parsed = settingUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+
+    // Validate typed settings group schemas (MS4.2 / T4.2.1) and normalise the
+    // value so a partial PUT keeps the group defaults instead of erasing them.
+    let storedValue: unknown = parsed.data.value;
+    if (parsed.data.key in SETTINGS_GROUP_SCHEMAS) {
+      const groupSchema = SETTINGS_GROUP_SCHEMAS[parsed.data.key as SettingsGroupKey];
+      const groupParsed = groupSchema.safeParse(parsed.data.value);
+      if (!groupParsed.success) {
+        return c.json(
+          problem(422, 'Invalid settings group value', `Validation failed for group '${parsed.data.key}'`, groupParsed.error.issues),
+          422,
+          { 'Content-Type': P }
+        );
+      }
+      storedValue = normalizeSettingsGroup(parsed.data.key as SettingsGroupKey, parsed.data.value);
+    }
+
     // secret-shaped keys are write-only: never returned, only acknowledged
     const isSecret = /key|secret|password|token/i.test(parsed.data.key);
-    await db.insert(setting).values({ key: parsed.data.key, value: parsed.data.value as any, updatedAt: new Date() })
-      .onConflictDoUpdate({ target: setting.key, set: { value: parsed.data.value as any, updatedAt: new Date() } });
-    await auditRow(c, guard.user.id, 'setting.update', 'setting', parsed.data.key, isSecret ? { redacted: true } : { value: parsed.data.value });
-    return c.json({ key: parsed.data.key, stored: true, secret: isSecret });
+    await db.insert(setting).values({ key: parsed.data.key, value: storedValue as any, updatedAt: new Date() })
+      .onConflictDoUpdate({ target: setting.key, set: { value: storedValue as any, updatedAt: new Date() } });
+    await auditRow(c, guard.user.id, 'setting.update', 'setting', parsed.data.key, redactForAudit(parsed.data.key, storedValue, isSecret));
+
+    // Task T3.5.3: record outbox row for settings / menus change
+    try {
+      const isMenu = parsed.data.key === 'menus' || parsed.data.key.startsWith('menus.');
+      const isSiteSetting = parsed.data.key.startsWith('site.') || parsed.data.key === 'seo.defaults' || parsed.data.key === 'integrations';
+      const tags = isMenu ? ['menus', 'header', 'footer', 'nav'] : isSiteSetting ? ['settings', 'site'] : ['settings', 'robots'];
+      await recordOutboxEvent(db, isMenu ? 'menu.update' : 'settings.update', {
+        entityType: 'setting',
+        entityId: parsed.data.key,
+        action: 'update',
+        tags,
+        paths: ['/'],
+      });
+    } catch {}
+
+    return c.json({ key: parsed.data.key, stored: true, secret: isSecret, value: storedValue });
+  });
+
+  r.put('/settings/:key', async (c) => {
+    const guard = await roleGuard(c, 'super_admin');
+    if (guard instanceof Response) return guard;
+    const key = c.req.param('key');
+    const raw = await c.req.json().catch(() => ({}));
+    const val = raw && typeof raw === 'object' && 'value' in raw ? raw.value : raw;
+    const parsed = settingUpdateSchema.safeParse({ key, value: val });
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+
+    let storedValue: unknown = parsed.data.value;
+    if (key in SETTINGS_GROUP_SCHEMAS) {
+      const groupSchema = SETTINGS_GROUP_SCHEMAS[key as SettingsGroupKey];
+      const groupParsed = groupSchema.safeParse(parsed.data.value);
+      if (!groupParsed.success) {
+        return c.json(
+          problem(422, 'Invalid settings group value', `Validation failed for group '${key}'`, groupParsed.error.issues),
+          422,
+          { 'Content-Type': P }
+        );
+      }
+      storedValue = normalizeSettingsGroup(key as SettingsGroupKey, parsed.data.value);
+    }
+
+    const isSecret = /key|secret|password|token/i.test(key);
+    await db.insert(setting).values({ key, value: storedValue as any, updatedAt: new Date() })
+      .onConflictDoUpdate({ target: setting.key, set: { value: storedValue as any, updatedAt: new Date() } });
+    await auditRow(c, guard.user.id, 'setting.update', 'setting', key, redactForAudit(key, storedValue, isSecret));
+
+    try {
+      const isMenu = key === 'menus' || key.startsWith('menus.');
+      const isSiteSetting = key.startsWith('site.') || key === 'seo.defaults' || key === 'integrations';
+      const tags = isMenu ? ['menus', 'header', 'footer', 'nav'] : isSiteSetting ? ['settings', 'site'] : ['settings', 'robots'];
+      await recordOutboxEvent(db, isMenu ? 'menu.update' : 'settings.update', {
+        entityType: 'setting',
+        entityId: key,
+        action: 'update',
+        tags,
+        paths: ['/'],
+      });
+    } catch {}
+
+    return c.json({ key, stored: true, secret: isSecret, value: storedValue });
   });
 
   function prunePatch<T extends Record<string, any>>(raw: any, parsed: T): Partial<T> {
@@ -195,7 +296,18 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; s
     try {
       const rows = await db.insert(redirect).values(parsed.data).returning();
       await auditRow(c, guard.user.id, 'redirect.create', 'redirect', String(rows[0].id), parsed.data);
-      await syncNginxRedirectMap(db);
+
+      // Task T3.5.3 & T3.5.7: Cache results under tag 'redirects'; outbox invalidates it
+      try {
+        await recordOutboxEvent(db, 'redirect.create', {
+          entityType: 'redirect',
+          entityId: rows[0].id,
+          action: 'create',
+          tags: ['redirects'],
+          paths: [parsed.data.from],
+        });
+      } catch {}
+
       return c.json(rows[0], 201);
     } catch (e: any) {
       if (String(e?.cause ?? e).includes('unique')) {
@@ -225,7 +337,18 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; s
 
     const rows = await db.update(redirect).set(patchData).where(eq(redirect.id, id)).returning();
     await auditRow(c, guard.user.id, 'redirect.update', 'redirect', String(id), patchData);
-    await syncNginxRedirectMap(db);
+
+    // Task T3.5.3 & T3.5.7: Cache results under tag 'redirects'; outbox invalidates it
+    try {
+      await recordOutboxEvent(db, 'redirect.update', {
+        entityType: 'redirect',
+        entityId: id,
+        action: 'update',
+        tags: ['redirects'],
+        paths: Array.from(new Set([newFrom, targetRow.from, newTo, targetRow.to].filter(Boolean) as string[])),
+      });
+    } catch {}
+
     return c.json(rows[0]);
   };
   r.patch('/redirects/:id', updateRedirect);
@@ -238,7 +361,18 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; s
     const rows = await db.delete(redirect).where(eq(redirect.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Redirect not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'redirect.delete', 'redirect', String(id), {});
-    await syncNginxRedirectMap(db);
+
+    // Task T3.5.3 & T3.5.7: Cache results under tag 'redirects'; outbox invalidates it
+    try {
+      await recordOutboxEvent(db, 'redirect.delete', {
+        entityType: 'redirect',
+        entityId: id,
+        action: 'delete',
+        tags: ['redirects'],
+        paths: [rows[0].from],
+      });
+    } catch {}
+
     return c.json({ deleted: true });
   });
 

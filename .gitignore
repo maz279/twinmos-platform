@@ -11,6 +11,7 @@ coverage/
 .turbo/
 .mimosa/
 data/
+!tooling/data/
 apps/web/public/__audit/
 apps/web/_p1/
 _p1/
@@ -20,3 +21,4 @@ test-results
 workspace/
 apps/api/data/
 
+deploy/compose/.env

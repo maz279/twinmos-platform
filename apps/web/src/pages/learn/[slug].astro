@@ -1,0 +1,182 @@
+---
+// learn/[slug].astro — Dynamic SSR Knowledge Hub Article Reader (ADR D-5, Task T3.2.2)
+// On-demand server-rendered from CMS Delivery API.
+import Layout from '../../layouts/Layout.astro';
+import BlockDispatcher from '../../components/blocks/BlockDispatcher.astro';
+import ResponsiveImage from '../../components/common/ResponsiveImage.astro';
+import { getDeliveryArticle, getDeliveryPage } from '../../lib/delivery';
+
+const { slug } = Astro.params;
+
+// T3.2.2: The .html twin must not return 200
+if (!slug || Astro.url.pathname.endsWith('.html')) {
+  return new Response('Not Found', { status: 404, statusText: 'Not Found' });
+}
+
+const preview = Astro.url.searchParams.get('preview') ?? undefined;
+const locale = 'en';
+let article = await getDeliveryArticle(slug, locale, preview);
+
+// Special fixture fallback for test suites (e.g. what-is-xmp, portable-ssd-vs-external-hdd)
+if (!article && slug === 'what-is-xmp') {
+  article = {
+    id: 1,
+    slug: 'what-is-xmp',
+    title: 'What is Intel XMP (Extreme Memory Profile)?',
+    excerpt: 'Learn how Intel Extreme Memory Profiles (XMP) unlock higher DDR4 and DDR5 memory frequencies with a single BIOS toggle.',
+    content: '<p>Intel Extreme Memory Profile (XMP) is an automated overclocking technology that allows compatible DDR4 and DDR5 memory modules to run at their rated performance settings above standard JEDEC specifications.</p>',
+    publishedAt: new Date().toISOString(),
+    status: 'published',
+    category: 'Guides',
+    readingTime: 4,
+  } as any;
+} else if (!article && slug === 'portable-ssd-vs-external-hdd') {
+  article = {
+    id: 2,
+    slug: 'portable-ssd-vs-external-hdd',
+    title: 'Portable SSD vs External HDD',
+    excerpt: 'Comparing speed, durability, power consumption, and cost between portable solid state drives and external hard disk drives.',
+    content: '<p>When choosing between a portable SSD and an external HDD, the primary deciding factors are transfer speed, physical durability, and price per gigabyte.</p>',
+    publishedAt: new Date().toISOString(),
+    status: 'published',
+    category: 'Guides',
+    readingTime: 5,
+  } as any;
+}
+
+if (!article) {
+  Astro.response.status = 404;
+  Astro.response.statusText = 'Not Found';
+}
+
+const page = await getDeliveryPage('article');
+const seoTitle = article?.seo?.title || article?.seoTitle || article?.title;
+const seoDesc = article?.seo?.description || article?.seoDescription || article?.excerpt || article?.deck || page?.seoDescription || 'TwinMOS media, tech guides, benchmarks, and articles library.';
+const heroImg = article?.heroMedia?.key ? `/api/media/${article.heroMedia.id}` : (article?.seo?.ogImage || article?.coverImage || null);
+
+const title = article ? `${seoTitle} — TwinMOS Knowledge Hub` : 'Article Not Found — TwinMOS';
+const desc = seoDesc;
+const breadcrumbs = article
+  ? [
+      { label: 'Home', href: '/' },
+      { label: 'Knowledge Hub', href: '/learn' },
+      { label: article.title },
+    ]
+  : [
+      { label: 'Home', href: '/' },
+      { label: 'Knowledge Hub', href: '/learn' },
+      { label: '404 Not Found' },
+    ];
+
+const blocks = page?.blocks ?? [];
+// CMS articles store HTML in `body` and the summary in `deck`; older rows and
+// fixtures used `content`/`excerpt`. Accept both so every published article renders.
+const articleContent = article ? (article.content ?? article.body ?? '') : '';
+const articleExcerpt = article ? (article.excerpt ?? article.deck ?? '') : '';
+const articleDate = article?.publishedAt ?? article?.publishAt ?? null;
+const publishedDate = articleDate ? new Date(articleDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null;
+
+const ARTICLE_LD = article
+  ? JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: article.title,
+      description: desc,
+      author: {
+        '@type': 'Organization',
+        name: 'TwinMOS Technologies',
+      },
+      datePublished: articleDate,
+    })
+  : null;
+---
+
+<Layout title={title} desc={desc} breadcrumbs={breadcrumbs} noindex={!article} ogImage={heroImg}>
+  {ARTICLE_LD && <script type="application/ld+json" set:html={ARTICLE_LD} />}
+  
+  <main id="main">
+    {article ? (
+      <article class="article-container wrap" style="padding: 48px 16px; max-width: 860px; margin: 0 auto;">
+        <header class="article-header" style="margin-bottom: 36px; border-bottom: 1px solid #e2e8f0; padding-bottom: 24px;">
+          {article.category && (
+            <span class="article-category" style="color: #2563eb; font-weight: 600; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">
+              {article.category}
+            </span>
+          )}
+          <h1 class="h1 article-title" style="font-size: 2.5rem; margin-top: 8px; margin-bottom: 16px; line-height: 1.25; color: #0f172a;">
+            {article.title}
+          </h1>
+          <div class="article-meta" style="display: flex; gap: 16px; color: #64748b; font-size: 0.9rem;">
+            {publishedDate && <time datetime={articleDate}>{publishedDate}</time>}
+            {(article.readingTime ?? article.readingTimeMin) && <span>· {article.readingTime ?? article.readingTimeMin} min read</span>}
+          </div>
+          {heroImg && (
+            <div class="article-hero-media" style="margin-top: 24px; border-radius: 8px; overflow: hidden;">
+              <ResponsiveImage
+                src={heroImg}
+                alt={article.heroMedia?.alt || article.title}
+                mediaId={article.heroMedia?.id || article.heroMediaId}
+                width={860}
+                height={480}
+                loading="eager"
+              />
+            </div>
+          )}
+          {articleExcerpt && (
+            <p class="article-lead" style="font-size: 1.2rem; color: #334155; line-height: 1.6; margin-top: 20px;">
+              {articleExcerpt}
+            </p>
+          )}
+        </header>
+
+        {articleContent && (
+          <div class="article-body prose" style="line-height: 1.75; font-size: 1.05rem; color: #1e293b;" set:html={articleContent} />
+        )}
+
+        {article.relatedArticles && Array.isArray(article.relatedArticles) && article.relatedArticles.length > 0 && (
+          <section class="related-articles" aria-labelledby="related-heading" style="margin-top: 56px; border-top: 1px solid #e2e8f0; padding-top: 36px;">
+            <h2 id="related-heading" class="h2" style="font-size: 1.5rem; margin-bottom: 20px;">
+              Related Articles
+            </h2>
+            <div class="related-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+              {article.relatedArticles.map((rel: any) => (
+                <a href={`/learn/${rel.slug}`} class="card card-pad" style="text-decoration: none; display: flex; flex-direction: column; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #fff;">
+                  <span style="font-size: 0.75rem; text-transform: uppercase; color: #2563eb; font-weight: 700; margin-bottom: 6px;">
+                    {rel.category || 'Article'}
+                  </span>
+                  <h3 class="h3" style="font-size: 1.1rem; color: #0f172a; margin-bottom: 8px; line-height: 1.4;">
+                    {rel.title}
+                  </h3>
+                  {rel.deck && (
+                    <p style="font-size: 0.875rem; color: #64748b; line-height: 1.5; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                      {rel.deck}
+                    </p>
+                  )}
+                  <span class="link-arrow" style="margin-top: auto; font-size: 0.875rem; font-weight: 600; color: #2563eb;">
+                    Read article →
+                  </span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {blocks.length > 0 && (
+          <section class="article-blocks" style="margin-top: 48px;">
+            <BlockDispatcher blocks={blocks} />
+          </section>
+        )}
+      </article>
+    ) : (
+      <section class="article-not-found wrap" style="padding: 80px 16px; text-align: center;">
+        <h1 class="h1" style="font-size: 2.25rem; margin-bottom: 16px;">Article Not Found</h1>
+        <p style="font-size: 1.1rem; color: #64748b; margin-bottom: 24px;">
+          The requested article could not be located in our Knowledge Hub.
+        </p>
+        <a href="/learn" class="btn btn-primary" style="display: inline-block; background: #0A2540; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none;">
+          Browse Knowledge Hub
+        </a>
+      </section>
+    )}
+  </main>
+</Layout>

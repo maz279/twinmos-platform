@@ -47,13 +47,22 @@ function buildInfoIntegration() {
 
 export default defineConfig({
   site: 'https://www.twinmos.com',
-  output: 'static',
+  output: 'server',
+  trailingSlash: 'never',
   build: { format: 'file' },
   adapter: node({ mode: 'standalone' }),
   session: false,
   integrations: [buildInfoIntegration()],
-  server: { proxy: { '/api': 'http://127.0.0.1:8787' } },
+  server: { host: '0.0.0.0' },
+  vite: {
+    server: {
+      proxy: {
+        '/api': { target: 'http://127.0.0.1:8787', changeOrigin: true },
+      },
+    },
+  },
   security: {
+    checkOrigin: false,
     allowedDomains: [
       { hostname: 'www.twinmos.com', protocol: 'https' },
       { hostname: 'twinmos.com', protocol: 'https' },

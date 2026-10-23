@@ -96,6 +96,27 @@ function createStaticServer(port = 4321) {
       return;
     }
 
+    // SSR builds have no static index/products HTML. Fall through to the live
+    // web server (same machine) so this audit exercises real rendered pages.
+    const live = request(`http://127.0.0.1:4321${req.url}`, {
+      method: req.method,
+      headers: { ...req.headers, host: '127.0.0.1:4321' },
+    }, (liveRes) => {
+      res.writeHead(liveRes.statusCode, liveRes.headers);
+      liveRes.pipe(res);
+    });
+    live.on('error', () => {
+      const notFound = join(serveRoot, '404.html');
+      if (existsSync(notFound)) {
+        res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });
+        createReadStream(notFound).pipe(res);
+      } else {
+        res.writeHead(404).end('Not Found');
+      }
+    });
+    req.pipe(live);
+    return;
+
     const notFound = join(serveRoot, '404.html');
     if (existsSync(notFound)) {
       res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });

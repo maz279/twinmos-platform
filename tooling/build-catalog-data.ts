@@ -52,6 +52,13 @@ async function main() {
   } catch (e) {
     console.log('[build-catalog-data] Delivery API not running or timed out; using prototype data baseline.');
   }
+  if (dbProducts.length === 0 && process.env.ALLOW_PROTOTYPE_CATALOG !== '1') {
+    // A prototype-only catalogue silently drops CMS products from the client
+    // widgets (shop/search/quote hydration). Fail the build instead of
+    // shipping stale data; the opt-out is explicit and noisy.
+    console.error('[build-catalog-data] No products from the Delivery API. Start the API before building, or set ALLOW_PROTOTYPE_CATALOG=1 for a prototype-only build.');
+    process.exit(1);
+  }
 
   // 4. Merge products
   const protoProdMap = new Map(proto.products.map((p) => [p.id, p]));

@@ -186,7 +186,7 @@ function Sidebar({ modules, activeModule, activeCtx, badges, collapsed, onToggle
                       <Icon name={m.icon} size={16} style={{ flexShrink: 0, transition: 'color .12s' }} />
                       {!collapsed && <span style={{ flex: 1 }}>{m.label}</span>}
                       {!collapsed && !!n && (
-                        <span style={{ background: badgeBg, color: m.badge === 'openRma' ? '#3D2E10' : '#fff', borderRadius: 999, fontSize: 10.5, fontWeight: 800, padding: '1px 7px' }}>{n}</span>
+                        <span style={{ background: badgeBg, color: '#0A2540', borderRadius: 999, fontSize: 10.5, fontWeight: 800, padding: '1px 7px' }}>{n}</span>
                       )}
                     </button>
                     {/* third-level expander — a sibling button, never nested
@@ -305,7 +305,7 @@ function TopBar({ me, module, tab, badges, onOpenSearch, onSignOut, onMfaSetup, 
           <span style={{ display: 'block', fontSize: 12, color: INK, fontWeight: 700, maxWidth: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{me.user?.email}</span>
           <Badge value={me.user?.role ?? 'unknown'} />
         </span>
-        <button onClick={signOut} title="Sign out" style={{ ...btn, background: '#F2F5F8', color: MUTED, boxShadow: 'none', fontWeight: 700, padding: '7px 11px' }}>Sign out</button>
+        <button onClick={signOut} title="Sign out" style={{ ...btn, background: '#E2E8F0', color: '#0F172A', boxShadow: 'none', fontWeight: 700, padding: '7px 11px' }}>Sign out</button>
       </span>
       {mega && <MegaMenu modules={visibleModules(me.user?.role)} badges={badges} open={open} onClose={() => setMega(false)} />}
     </header>
@@ -316,21 +316,27 @@ function TabStrip({ tabs, activeId, onSelect, onClose }: {
   tabs: Tab[]; activeId: string; onSelect: (id: string) => void; onClose: (id: string) => void;
 }) {
   return (
-    <div role="tablist" className="tm-tabs-scroll" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px 0', overflowX: 'auto', flexShrink: 0 }}>
+    <nav aria-label="Open workspace tabs" className="tm-tabs-scroll" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px 0', overflowX: 'auto', flexShrink: 0 }}>
       {tabs.map((t) => {
         const mod = MODULES.find((m) => m.id === t.module);
         const on = t.id === activeId;
         return (
-          <div key={t.id} role="tab" aria-selected={on} className={'tm-tab' + (on ? ' on' : '')} style={{ flexShrink: 0 }}
-            onClick={() => onSelect(t.id)}
-            onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); onClose(t.id); } }}>
-            {mod && <Icon name={mod.icon} size={13} style={{ color: on ? TEAL : FAINT }} />}
-            <span>{t.title}</span>
-            <button className="tm-tab-x" title="Close tab" onClick={(e) => { e.stopPropagation(); onClose(t.id); }}><Icon name="x" size={11} /></button>
+          <div key={t.id} className={'tm-tab' + (on ? ' on' : '')} style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <button
+              type="button"
+              aria-current={on ? 'page' : undefined}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, border: 0, background: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: 'pointer' }}
+              onClick={() => onSelect(t.id)}
+              onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); onClose(t.id); } }}
+            >
+              {mod && <Icon name={mod.icon} size={13} style={{ color: on ? TEAL : FAINT }} />}
+              <span>{t.title}</span>
+            </button>
+            <button type="button" className="tm-tab-x" title="Close tab" aria-label={`Close ${t.title} tab`} onClick={(e) => { e.stopPropagation(); onClose(t.id); }}><Icon name="x" size={11} /></button>
           </div>
         );
       })}
-    </div>
+    </nav>
   );
 }
 

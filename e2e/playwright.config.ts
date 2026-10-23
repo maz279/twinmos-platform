@@ -28,8 +28,8 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
-    { name: 'public', testMatch: /public\.spec\.ts/ },
-    { name: 'admin', testMatch: /admin\.spec\.ts/ },
+    { name: 'public', testMatch: /(public|ms42-public|locale)\.spec\.ts/ },
+    { name: 'admin', testMatch: /(admin|ms42-admin)\.spec\.ts/ },
   ],
   webServer: [
     {

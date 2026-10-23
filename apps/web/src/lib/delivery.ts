@@ -6,23 +6,21 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const API_BASE = process.env.CMS_URL || process.env.API_URL || 'http://127.0.0.1:8787';
+const API_BASE = process.env.DELIVERY_API_URL
+  ? process.env.DELIVERY_API_URL.replace(/\/api\/v1\/delivery\/?$/, '')
+  : (process.env.CMS_URL || process.env.API_URL || 'http://127.0.0.1:8787');
 
-let localPagesCache: Record<string, any> = {};
-try {
-  const cachePath = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'pages-cache.json');
-  if (existsSync(cachePath)) {
-    localPagesCache = JSON.parse(readFileSync(cachePath, 'utf8'));
-  }
-} catch {
-  localPagesCache = {};
-}
 
-function getLocalFallbackPages(): Record<string, any> {
-  if (localPagesCache && Object.keys(localPagesCache).length > 0) {
-    return localPagesCache as Record<string, any>;
+let trackedFixturePages: Record<string, any> = {};
+if (process.env.NODE_ENV === 'test') {
+  try {
+    const fixturePath = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'tooling', 'data', 'tracked-fixture-pages.json');
+    if (existsSync(fixturePath)) {
+      trackedFixturePages = JSON.parse(readFileSync(fixturePath, 'utf8'));
+    }
+  } catch {
+    trackedFixturePages = {};
   }
-  return {};
 }
 
 async function fetchDelivery(endpoint: string, options: { preview?: string; tags?: string[] } = {}) {
@@ -39,13 +37,23 @@ async function fetchDelivery(endpoint: string, options: { preview?: string; tags
       },
     });
 
+    if (res.status === 404) {
+      // A missing entity is a normal read miss (e.g. an unseeded page that has
+      // a template fallback), not an outage.
+      return null;
+    }
     if (!res.ok) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(`[Delivery API] HTTP ${res.status} fetching ${url.toString()}`);
+      }
       return null;
     }
 
     return await res.json();
-  } catch {
-    // API may be offline during standalone Astro build/test; return null for fallback handling
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`[Delivery API] Failed to reach Delivery API at ${url.toString()}: ${(err as Error).message}`);
+    }
     return null;
   }
 }
@@ -55,22 +63,47 @@ export async function getDeliveryPage(slug: string, locale = 'en', preview?: str
   if (res?.data) {
     return res.data;
   }
-  // Resilient fallback: read from pre-compiled cache if delivery API server is not running
-  const localMap = getLocalFallbackPages();
-  const normalizedSlug = slug.replace(/\.html$/, '');
-  return localMap[normalizedSlug] || localMap[slug] || null;
+  // In test environment only: allow fallback to tracked fixture if API is offline
+  if (process.env.NODE_ENV === 'test') {
+    const normalizedSlug = slug.replace(/\.html$/, '');
+    return trackedFixturePages[normalizedSlug] || trackedFixturePages[slug] || null;
+  }
+  return null;
 }
 
 export async function getDeliveryPages(locale = 'en') {
   const res = await fetchDelivery(`/pages?locale=${encodeURIComponent(locale)}`);
   if (res?.data && res.data.length > 0) return res.data;
-  const localMap = getLocalFallbackPages();
-  return Object.values(localMap);
+  if (process.env.NODE_ENV === 'test') {
+    return Object.values(trackedFixturePages);
+  }
+  return [];
+}
+
+export async function getDeliveryProductWithStatus(slug: string, preview?: string) {
+  const url = new URL(`${API_BASE}/api/v1/delivery/products/${encodeURIComponent(slug)}`);
+  if (preview) url.searchParams.set('preview', preview);
+  try {
+    const res = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(5000),
+      headers: { 'Accept': 'application/json' },
+    });
+    if (res.status === 410) {
+      return { product: null, status: 410, isArchived: true };
+    }
+    if (!res.ok) {
+      return { product: null, status: res.status, isArchived: false };
+    }
+    const json = await res.json();
+    return { product: json?.data ?? null, status: 200, isArchived: false };
+  } catch (err) {
+    return { product: null, status: 500, isArchived: false };
+  }
 }
 
 export async function getDeliveryProduct(slug: string, preview?: string) {
-  const res = await fetchDelivery(`/products/${encodeURIComponent(slug)}`, { preview });
-  return res?.data ?? null;
+  const result = await getDeliveryProductWithStatus(slug, preview);
+  return result.product;
 }
 
 export async function getDeliveryProducts() {
@@ -101,6 +134,12 @@ export async function getDeliveryArticle(slug: string, locale = 'en', preview?: 
   return res?.data ?? null;
 }
 
+export async function getDeliveryDistributors(status?: string) {
+  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+  const res = await fetchDelivery(`/distributors${q}`);
+  return res?.data ?? [];
+}
+
 export async function getDeliveryArticles(locale = 'en') {
   const res = await fetchDelivery(`/articles?locale=${encodeURIComponent(locale)}`);
   return res?.data ?? [];
@@ -129,6 +168,11 @@ export async function getDeliverySettings() {
   return res?.data ?? {};
 }
 
+export async function getDeliveryNavMenu(code: string, locale = 'en') {
+  const res = await fetchDelivery(`/navigation/${encodeURIComponent(code)}?locale=${encodeURIComponent(locale)}`);
+  return res?.data ?? null;
+}
+
 export async function getDeliveryMenus() {
   const res = await fetchDelivery('/menus');
   return res?.data ?? {};
@@ -139,7 +183,52 @@ export async function getDeliveryRedirects() {
   return res?.data ?? [];
 }
 
-export async function getDeliverySitemap() {
-  const res = await fetchDelivery('/sitemap');
+export async function getDeliverySitemap(locale?: string) {
+  const query = locale ? `?locale=${encodeURIComponent(locale)}` : '';
+  const res = await fetchDelivery(`/sitemap${query}`);
   return res?.data ?? [];
 }
+
+// MS4.3 Delivery Clients: Glossary & Versioned Policies
+export async function getDeliveryGlossary(letter?: string, search?: string, locale = 'en') {
+  let endpoint = `/glossary?locale=${encodeURIComponent(locale)}`;
+  if (letter) endpoint += `&letter=${encodeURIComponent(letter)}`;
+  if (search) endpoint += `&search=${encodeURIComponent(search)}`;
+  const res = await fetchDelivery(endpoint);
+  return res?.data ?? [];
+}
+
+export async function getDeliveryPolicies(locale = 'en') {
+  const res = await fetchDelivery(`/policies?locale=${encodeURIComponent(locale)}`);
+  return res?.data ?? [];
+}
+
+export async function getDeliveryPolicy(slug: string, version?: string, locale = 'en') {
+  let endpoint = `/policies/${encodeURIComponent(slug)}?locale=${encodeURIComponent(locale)}`;
+  if (version) endpoint += `&version=${encodeURIComponent(version)}`;
+  const res = await fetchDelivery(endpoint);
+  return res?.data ?? null;
+}
+
+// MS4.7 Delivery Clients: Offices, Testimonials & Form Definitions
+export async function getDeliveryOffices(locale = 'en') {
+  const res = await fetchDelivery(`/offices?locale=${encodeURIComponent(locale)}`);
+  return res?.data ?? [];
+}
+
+export async function getDeliveryTestimonials(locale = 'en') {
+  const res = await fetchDelivery(`/testimonials?locale=${encodeURIComponent(locale)}`);
+  return res?.data ?? [];
+}
+
+export async function getDeliveryFormDefinition(type: string) {
+  const res = await fetchDelivery(`/forms/${encodeURIComponent(type)}`);
+  return res?.data ?? null;
+}
+
+export async function getDeliveryCompatibility() {
+  const res = await fetchDelivery('/compatibility');
+  return res?.data ?? [];
+}
+
+

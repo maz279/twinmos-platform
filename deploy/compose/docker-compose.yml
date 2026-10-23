@@ -7,8 +7,10 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - web
-      - api
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
     networks:
       - twinmos_internal
     restart: unless-stopped
@@ -19,15 +21,59 @@ services:
       dockerfile: apps/web/Dockerfile
     environment:
       - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=4321
+      - API_URL=http://api:8787
       - DELIVERY_API_URL=http://api:8787/api/v1/delivery
-      - REVALIDATE_SECRET=${REVALIDATE_SECRET:-prod-revalidation-secret-key-32ch}
+      - REVALIDATE_SECRET=${REVALIDATE_SECRET}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - twinmos_internal
     expose:
       - "4321"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4321/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
+
+  migrate:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - twinmos_internal
+    command: ["node", "--experimental-strip-types", "scripts/migrate.ts"]
+    restart: "no"
+
+  bootstrap:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-https://www.twinmos.com}
+      - SEED_ADMIN_EMAIL=${SEED_ADMIN_EMAIL:-admin@twinmos.com}
+      - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD}
+      - BOOTSTRAP_SEED=1
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - twinmos_internal
+    command: ["node", "--experimental-strip-types", "scripts/seed.ts", "--bootstrap"]
+    restart: "no"
 
   api:
     build:
@@ -36,33 +82,49 @@ services:
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-twinmos}:${POSTGRES_PASSWORD:-twinmos_secure_pwd}@postgres:5432/${POSTGRES_DB:-twinmos}
+      - PORT=8787
+      - TRUST_PROXY=1
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-      - BETTER_AUTH_URL=https://www.twinmos.com
-      - PREVIEW_SIGNING_KEY=${PREVIEW_SIGNING_KEY:-preview-hmac-sha256-signing-key-32chars}
-      - REVALIDATE_SECRET=${REVALIDATE_SECRET:-prod-revalidation-secret-key-32ch}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-https://www.twinmos.com}
+      - PREVIEW_SIGNING_KEY=${PREVIEW_SIGNING_KEY}
+      - REVALIDATE_SECRET=${REVALIDATE_SECRET}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
+      - PUBLIC_TURNSTILE_SITE_KEY=${PUBLIC_TURNSTILE_SITE_KEY}
+      - INTERNAL_WEB_URL=http://web:4321
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - MAIL_FROM=${MAIL_FROM}
+      - FORMS_TO=${FORMS_TO}
+      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN:-https://www.twinmos.com}
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - twinmos_internal
     # S-11 / SEC-C1: Expose internally to edge & web, do NOT bind host port
     expose:
       - "8787"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   postgres:
-    image: postgres:18-alpine
+    image: mirror.gcr.io/library/postgres:18-alpine
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-twinmos}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-twinmos_secure_pwd}
-      - POSTGRES_DB=${POSTGRES_DB:-twinmos}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
     networks:
       - twinmos_internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-twinmos} -d ${POSTGRES_DB:-twinmos}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -74,3 +136,4 @@ networks:
 
 volumes:
   pgdata:
+

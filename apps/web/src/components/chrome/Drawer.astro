@@ -1,18 +1,39 @@
 ---
-// Drawer.astro — Mobile navigation drawer with accessible drawer panel and dialog semantics.
-// Tasks D1a / WCAG 2.2 AA compliant.
-interface Props {
-  currentLocale?: string;
+// Drawer.astro — Mobile navigation drawer; entries come from the CMS drawer
+// menu (MS5.1 T5.1.1) and the brand block from site settings.
+interface NavItem {
+  id?: number;
+  title: string;
+  targetUrl?: string | null;
+  metadata?: Record<string, any>;
+  children?: NavItem[];
 }
 
-const { currentLocale = 'en' } = Astro.props;
+interface Props {
+  currentLocale?: string;
+  brand?: { name?: string; logoUrl?: string };
+  menu?: { items?: NavItem[] } | null;
+}
+
+const {
+  currentLocale = 'en',
+  brand = {},
+  menu = null,
+} = Astro.props;
+
+const brandName = brand.name || 'TwinMOS Technologies';
+const logoUrl = brand.logoUrl || '/assets/img/logo.webp';
+const hrefOf = (item: NavItem) => item.targetUrl || '#';
+const items: NavItem[] = menu?.items ?? [];
+const isQuote = (item: NavItem) => /quote/i.test(item.title);
+const isCompare = (item: NavItem) => /compare/i.test(item.title);
 ---
 
 <div class="drawer" id="drawer">
   <div class="drawer-veil"></div>
   <div class="drawer-panel" role="dialog" aria-label="Mobile menu">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <img src="assets/img/logo.webp?v=219974299b" alt="TwinMOS" style="height:22px" />
+      <img src={logoUrl} alt={brandName} style="height:22px" />
       <button class="icon-btn drawer-close" aria-label="Close menu" type="button">
         <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M3.5 3.5l9 9M12.5 3.5l-9 9"></path>
@@ -33,80 +54,37 @@ const { currentLocale = 'en' } = Astro.props;
       <option value="de" selected={currentLocale === 'de'}>DE</option>
     </select>
 
-    <a class="dlink" href="index.html">Home</a>
-
-    <a class="dlink" href="#" data-sub="dsub-prod">Products <span aria-hidden="true">&#9662;</span></a>
-    <div class="drawer-sub" id="dsub-prod">
-      <a href="shop.html">All products</a>
-      <a href="shop.html?cat=dram-gaming">Gaming DRAM</a>
-      <a href="shop.html?cat=dram-desktop">Desktop DRAM</a>
-      <a href="shop.html?cat=dram-notebook">Notebook DRAM</a>
-      <a href="shop.html?cat=ssd-nvme">NVMe SSD</a>
-      <a href="shop.html?cat=ssd-sata">SATA SSD</a>
-      <a href="shop.html?cat=portable-ssd">Portable SSD</a>
-      <a href="shop.html?cat=portable-hdd">Portable HDD</a>
-      <a href="shop.html?cat=flash">USB Flash Drive</a>
-      <a href="shop.html?cat=microsd">MicroSD Card</a>
-      <a href="shop.html?cat=psu">Power Supply</a>
-      <a href="shop.html?cat=hub">USB HUB</a>
-    </div>
-
-    <a class="dlink" href="#" data-sub="dsub-gaming">Gaming &mdash; VOLTX <span aria-hidden="true">&#9662;</span></a>
-    <div class="drawer-sub" id="dsub-gaming">
-      <a href="gaming.html">Gaming home</a>
-      <a href="gaming.html#arsenal">The arsenal &amp; specs</a>
-      <a href="shop.html?cat=dram-gaming">Gaming DRAM catalog</a>
-      <a href="gaming.html#rgb">RGB effects lab</a>
-      <a href="gaming.html#tuning">XMP 3.0 &amp; EXPO tuning</a>
-      <a href="gaming.html#builds">Rigs &amp; wallpapers</a>
-      <a href="gaming.html#stories">From the VOLTX desk</a>
-    </div>
-
-    <a class="dlink" href="#" data-sub="dsub-sol">Solutions <span aria-hidden="true">&#9662;</span></a>
-    <div class="drawer-sub" id="dsub-sol">
-      <a href="solutions.html">Solutions home</a>
-      <a href="solutions.html#dist">Regional distribution</a>
-      <a href="solutions.html#oem">OEM manufacturing</a>
-      <a href="solutions.html#fleet">Fleet &amp; workplace</a>
-      <a href="quote.html">Request a quote</a>
-      <a href="partners.html">Become a distributor</a>
-    </div>
-
-    <a class="dlink" href="#" data-sub="dsub-buy">Where to Buy <span aria-hidden="true">&#9662;</span></a>
-    <div class="drawer-sub" id="dsub-buy">
-      <a href="where-to-buy.html">Where to Buy home</a>
-      <a href="where-to-buy.html#marketplaces">Online marketplaces</a>
-      <a href="where-to-buy.html#locator">Distributor locator</a>
-      <a href="where-to-buy.html#offices">Offices &amp; hubs</a>
-      <a href="partners.html">Become a distributor</a>
-    </div>
-
-    <a class="dlink" href="#" data-sub="dsub-support">Support <span aria-hidden="true">&#9662;</span></a>
-    <div class="drawer-sub" id="dsub-support">
-      <a href="support.html">Support Center</a>
-      <a href="rma.html">Warranty &amp; RMA</a>
-      <a href="support.html#faq">FAQ</a>
-      <a href="support.html#downloads">Downloads</a>
-      <a href="learn.html">Knowledge Hub</a>
-      <a href="learn-guides.html">Buying guides</a>
-      <a href="learn-explained.html">Technology explainers</a>
-      <a href="learn-benchmarks.html">Benchmarks</a>
-      <a href="learn-glossary.html">Glossary A&ndash;Z</a>
-      <a href="learn-blog.html">Tech insights &amp; blog</a>
-    </div>
-
-    <a class="dlink" href="#" data-sub="dsub-comp">Company <span aria-hidden="true">&#9662;</span></a>
-    <div class="drawer-sub" id="dsub-comp">
-      <a href="about.html">About Us</a>
-      <a href="about.html#quality">Quality Assurance</a>
-      <a href="technology.html">Technology &amp; R&amp;D</a>
-      <a href="news.html">News &amp; Events</a>
-      <a href="careers.html">Careers</a>
-      <a href="partners.html">Partners</a>
-      <a href="contact.html">Contact</a>
-    </div>
-
-    <a class="dlink" href="compare.html">Compare tray <span class="tray-count" data-tray-count style="display:none">0</span></a>
-    <a class="btn btn-accent" style="margin-top:16px" href="quote.html">Get a quote</a>
+    {items.map((item: NavItem, idx: number) => {
+      const children: NavItem[] = item.children ?? [];
+      const group = children.length > 0 || item.metadata?.kind === 'drawer_group';
+      if (group) {
+        const subId = `dsub-${item.id ?? idx}`;
+        return (
+          <>
+            <a class="dlink" href="#" data-sub={subId}>
+              {item.title} <span aria-hidden="true">&#9662;</span>
+            </a>
+            <div class="drawer-sub" id={subId}>
+              {children.map((child: NavItem) => (
+                <a href={hrefOf(child)}>{child.title}</a>
+              ))}
+            </div>
+          </>
+        );
+      }
+      if (isQuote(item)) {
+        return (
+          <a class="btn btn-accent" style="margin-top:16px" href={hrefOf(item)}>{item.title}</a>
+        );
+      }
+      if (isCompare(item)) {
+        return (
+          <a class="dlink" href={hrefOf(item)}>
+            {item.title} <span class="tray-count" data-tray-count style="display:none">0</span>
+          </a>
+        );
+      }
+      return <a class="dlink" href={hrefOf(item)}>{item.title}</a>;
+    })}
   </div>
 </div>

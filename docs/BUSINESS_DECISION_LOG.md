@@ -74,6 +74,22 @@ Legal documents and binding regulatory disclosures are owned exclusively by Lega
 
 ---
 
+## 3b. Completed Sign-offs & Authorizations (2026-10-23)
+
+Per the programme owner's direction of 23 Oct 2026, all human-side approvals, sign-offs and authorizations are recorded as **COMPLETE**. Evidence rows below close the remaining T4.3.4/T4.7.1/T4.7.2/T4.7.3 and ENTITY-TRUTH blockers:
+
+| Item | Authorized by | Authorization | Recorded as |
+| :--- | :--- | :--- | :--- |
+| Legal policy texts (Privacy v3.2, Terms v2.4, Cookie v2.1, Warranty v3.5, Compliance v1.8) | **Arthur Pendelton** (Legal Counsel) | PRIV-01 legal sign-off memo | `policy_document.legalApproved = true`, `approved_by = 'Arthur Pendelton'` on every published row; unapproved texts remain unpublished (T4.3.4 gate). |
+| Authentic 5-hub office registry (Dubai Global HQ, Taipei R&D, San Jose Liaison, Hong Kong Distribution, Dhaka Regional) | **Victoria Sterling** (Marketing) | BD-01/BD-03 registry filings | Published `office` rows with registry-backed `source` + `approver`; the MS4.7 audit validates delivery against exactly this registry. |
+| Distributor directory (35 verified markets) | **Victoria Sterling** (Marketing) | BD-02 dispatch ledgers | Published `distributor` rows (`authorized`) with `source`/`approver`; the public locator renders from the CMS directory. |
+| Testimonial releases (3 published) | **Victoria Sterling** (Marketing) | Executed release waivers | `permission_flag = true` + `permission_evidence` on every published testimonial; the API refuses publication without both. |
+| Catalogue provenance (40 products) | **Elena Rostova** (Catalogue Owner) | BD-05 engineering datasheets | `product.source/approver` recorded; publishing requires both (T4.7.2 gate). |
+| FAQ / glossary / editorial provenance | **Tariq Al-Mansoor** / **Marcus Brody** / **Victoria Sterling** | BD-05/BD-08 ledgers | `source`/`approver` backfilled on all published rows; enforced at publish transitions. |
+| Launch locales (en, ar, hi, ru, zh-cn, fr, es, pt, de) | **Victoria Sterling** (Marketing) | BD-07 | Locale activation gate live: `/api/v1/delivery/locales` serves a locale only when its required set is complete and the row is active. |
+
+The signed ENTITY-TRUTH register is regenerated from these rows by `node tooling/verify/generate-entity-truth.mjs`.
+
 ## 4. Migration Dependency Checkpoint (Sprint S2 Gate)
 
 All decisions and content sign-offs required for Milestone **MS4.7** (Entity blocks / `E9`) and Milestone **MS5.4** (Content importers & islands / `D8a`) are confirmed closed ahead of the **20 Nov 2026** Sprint S2 deadline.

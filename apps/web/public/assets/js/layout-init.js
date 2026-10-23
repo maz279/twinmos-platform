@@ -1,7 +1,7 @@
 (function () {
   // Service Worker Registration
   if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
-    navigator.serviceWorker.register('sw.js').catch(function () {});
+    navigator.serviceWorker.register('/sw.js').catch(function () {});
   }
 
   // API Config from meta tags
@@ -16,7 +16,7 @@
       var id = new URLSearchParams(location.search).get('id');
       if (id) {
         var s = document.createElement('script');
-        s.src = 'assets/js/pdp-hero.js';
+        s.src = '/assets/js/pdp-hero.js';
         s.onload = function () {
           var src = window.PDP_HERO && window.PDP_HERO[id];
           if (!src) return;
@@ -51,14 +51,14 @@
 
   // App layer boots post-first-paint
   var files = [
-    'assets/js/consent.js',
-    'assets/js/catalog-data.js',
-    'assets/js/app.js',
-    'assets/js/img-dims.js',
-    'assets/js/a11y.js',
-    'assets/js/forms.js',
-    'assets/js/i18n.js',
-    'assets/js/portal.js',
+    '/assets/js/consent.js',
+    '/assets/js/catalog-data.js',
+    '/assets/js/app.js',
+    '/assets/js/img-dims.js',
+    '/assets/js/a11y.js',
+    '/assets/js/forms.js',
+    '/assets/js/i18n.js',
+    '/assets/js/portal.js',
   ];
 
   function boot() {

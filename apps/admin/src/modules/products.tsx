@@ -112,6 +112,8 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
   const [form, setForm] = useState({
     sku: '', slug: '', name: '', brandId: 0, categoryId: 0, status: 'draft',
     description: '', price: '', currency: 'USD', badges: '', warranty: '', shortSpec: '',
+    featured: false, launchDate: '', isComingSoon: false, warrantyTier: '',
+    source: '', approver: '',
   });
   // 0016 storefront facets — controlled vocabularies that drive the public shop filters
   const [facets, setFacets] = useState({ gen: '', cap: '', interface: '', form: '' });
@@ -135,6 +137,12 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
       description: existing.description ?? '', price: existing.priceUsd != null ? String(Number(existing.priceUsd)) : '',
       currency: existing.currency ?? 'USD', badges: (existing.badges ?? []).join(', '),
       warranty: existing.warranty ?? '', shortSpec: existing.shortSpec ?? '',
+      featured: Boolean((existing as any).featured),
+      launchDate: (existing as any).launchDate ? String((existing as any).launchDate).slice(0, 10) : '',
+      isComingSoon: Boolean((existing as any).isComingSoon),
+      warrantyTier: (existing as any).warrantyTier ?? '',
+      source: (existing as any).source ?? '',
+      approver: (existing as any).approver ?? '',
     });
     setFacets({
       gen: existing.facets?.gen ?? '', cap: existing.facets?.cap ?? '',
@@ -158,15 +166,24 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) { setForm((f) => ({ ...f, [k]: v })); }
 
+  async function transition(to: string) {
+    if (isNew || id == null) return;
+    setErr(null); setBusy(true);
+    try {
+      await apiSend('POST', `/admin/products/${id}/transition`, { to });
+      onDone();
+    } catch (e) { setErr(e instanceof Error ? e.message : 'Transition failed.'); }
+    finally { setBusy(false); }
+  }
+
   async function save(publish?: boolean) {
     setErr(null);
     const price = form.price.trim() === '' ? null : Number(form.price);
     if (price != null && !Number.isFinite(price)) { setErr('Price must be a number (or empty).'); return; }
     if (!isNew && !canWrite) { setErr('Your role cannot save product changes.'); return; }
-    const body = {
+    const body: Record<string, unknown> = {
       sku: form.sku.trim().toUpperCase(), slug: form.slug.trim().toLowerCase() || form.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
       name: form.name.trim(), brandId: form.brandId, categoryId: form.categoryId,
-      status: publish ? 'published' : form.status,
       description: form.description, priceUsd: price, currency: form.currency.toUpperCase(),
       badges: form.badges.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 8),
       warranty: form.warranty.trim() || null,
@@ -174,17 +191,30 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
       facets: Object.fromEntries(Object.entries(facets).filter(([, v]) => v.trim()).map(([k, v]) => [k, v.trim()])),
       specs: Object.fromEntries(specs.filter(([k]) => k.trim()).map(([k, v]) => [k.trim(), v])),
       heroMediaId: hero, gallery, datasheets: datasheets.filter((d) => d.label && d.url),
+      featured: form.featured,
+      launchDate: form.launchDate ? new Date(form.launchDate).toISOString() : null,
+      isComingSoon: form.isComingSoon,
+      warrantyTier: form.warrantyTier.trim() || null,
+      source: form.source.trim() || null,
+      approver: form.approver.trim() || null,
     };
+    if (isNew && !publish) body.status = 'draft';
     setBusy(true);
     try {
+      let productId = id;
       if (isNew) {
         if (!form.sku || !form.name || !form.brandId || !form.categoryId) { setErr('SKU, name, brand and category are required for a new product.'); setBusy(false); return; }
-        await apiSend('POST', '/admin/products', body);
+        const created = await apiSend<Product>('POST', '/admin/products', body);
+        productId = created.id;
       } else {
         // Phase 3.4: send the revision we loaded — the API refuses with 409
         // when someone else saved in the meantime (no silent overwrites).
         await apiSend('PATCH', '/admin/products/' + id, body,
           existing ? { 'If-Match': new Date(existing.updatedAt).toISOString() } : undefined);
+      }
+      if (publish) {
+        // T4.6.1: status moves only through the audited transition endpoint.
+        await apiSend('POST', `/admin/products/${productId}/transition`, { to: 'published' });
       }
       onDone();
     } catch (e) {
@@ -236,10 +266,14 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
               <span><label style={labelStyle}>Name *</label><input style={{ ...input, width: '100%' }} value={form.name} onChange={(e) => set('name', e.target.value)} /></span>
               <span><label style={labelStyle}>SKU * <span style={{ color: '#93A0B4', fontWeight: 400 }}>(A-Z 0-9 -)</span></label><input style={{ ...input, width: '100%' }} value={form.sku} onChange={(e) => set('sku', e.target.value)} disabled={!isNew} /></span>
               <span><label style={labelStyle}>Slug</label><input style={{ ...input, width: '100%' }} value={form.slug} onChange={(e) => set('slug', e.target.value)} placeholder="auto from name" /></span>
-              <span><label style={labelStyle}>Status</label>
-                <select style={{ ...input, width: '100%' }} value={form.status} onChange={(e) => set('status', e.target.value)} disabled={!canWrite}>
-                  {['draft', 'in_review', 'scheduled', 'published', 'archived'].map((s) => <option key={s}>{s}</option>)}
-                </select></span>
+              <span><label style={labelStyle}>Status (via transition)</label>
+                <input style={{ ...input, width: '100%' }} value={form.status} readOnly />
+                {canWrite && !isNew && form.status !== 'published' && (
+                  <button style={{ ...btnGhost, fontSize: 11, marginTop: 4 }} onClick={() => void transition('published')}>Submit → published</button>
+                )}
+                {canWrite && !isNew && form.status === 'published' && (
+                  <button style={{ ...btnGhost, fontSize: 11, marginTop: 4 }} onClick={() => void transition('archived')}>Archive (410)</button>
+                )}</span>
               <span><label style={labelStyle}>Brand *</label>
                 <select style={{ ...input, width: '100%' }} value={form.brandId} onChange={(e) => set('brandId', Number(e.target.value))}>
                   <option value={0}>— choose —</option>
@@ -250,6 +284,25 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
                   <option value={0}>— choose —</option>
                   {(taxonomy?.categories ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select></span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                <input id="feat" type="checkbox" checked={form.featured} onChange={(e) => set('featured', e.target.checked)} />
+                <label htmlFor="feat" style={{ fontSize: 13 }}>Featured</label>
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                <input id="cs" type="checkbox" checked={form.isComingSoon} onChange={(e) => set('isComingSoon', e.target.checked)} />
+                <label htmlFor="cs" style={{ fontSize: 13 }}>Coming soon</label>
+              </span>
+              <span><label style={labelStyle}>Launch date (90-day "New" badge)</label>
+                <input style={{ ...input, width: '100%' }} type="date" value={form.launchDate} onChange={(e) => set('launchDate', e.target.value)} /></span>
+              <span><label style={labelStyle}>Warranty tier</label>
+                <select style={{ ...input, width: '100%' }} value={form.warrantyTier} onChange={(e) => set('warrantyTier', e.target.value)}>
+                  <option value="">—</option>
+                  {['standard', 'extended', 'lifetime', 'limited_lifetime', '1_year', '2_year', '3_year', '5_year', '10_year'].map((t) => <option key={t}>{t}</option>)}
+                </select></span>
+              <span><label style={labelStyle}>Source (provenance)</label>
+                <input style={{ ...input, width: '100%' }} placeholder="e.g. Engineering datasheets (BD-05)" value={form.source} onChange={(e) => set('source', e.target.value)} /></span>
+              <span><label style={labelStyle}>Approver (provenance)</label>
+                <input style={{ ...input, width: '100%' }} placeholder="e.g. Elena Rostova" value={form.approver} onChange={(e) => set('approver', e.target.value)} /></span>
             </div>
           </SectionCard>
 

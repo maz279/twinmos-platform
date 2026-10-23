@@ -1,0 +1,81 @@
+{
+  "timestamp": "2026-10-22T18:19:33.673Z",
+  "milestone": "MS4.3 · Glossary and versioned policies",
+  "allPassed": true,
+  "totalChecks": 12,
+  "passedChecks": 12,
+  "checks": [
+    {
+      "id": "MS43-CHK-01",
+      "title": "Authentic prototype glossary terms imported (113 terms)",
+      "passed": true,
+      "details": "API returned 113 terms (meta.total=113)"
+    },
+    {
+      "id": "MS43-CHK-02",
+      "title": "Zero invented mock glossary terms published (T4.3.2)",
+      "passed": true,
+      "details": "No invented terms present; exactly 113 published terms active"
+    },
+    {
+      "id": "MS43-CHK-03",
+      "title": "Glossary explainer article links mapped (18 refs)",
+      "passed": true,
+      "details": "Found 18 explainer links (e.g. XMP -> what-is-xmp)"
+    },
+    {
+      "id": "MS43-CHK-04",
+      "title": "Glossary Delivery API filtering by letter and search query",
+      "passed": true,
+      "details": "Letter D: 8 terms, Search \"latency\": 3 terms"
+    },
+    {
+      "id": "MS43-CHK-05",
+      "title": "Policy document compound unique constraint (slug, locale, version)",
+      "passed": true,
+      "details": "Migration 0026_policy_versions_glossary registered in drizzle journal"
+    },
+    {
+      "id": "MS43-CHK-06",
+      "title": "Policy document rich version metadata fields present",
+      "passed": true,
+      "details": "version=1.1, status=published, legalApproved=true, effDate=2026-03-01T00:00:00.000Z"
+    },
+    {
+      "id": "MS43-CHK-07",
+      "title": "Older policy versions retrievable via ?version=X (T4.3.3)",
+      "passed": true,
+      "details": "Latest is v1.1 (2026-03-01T00:00:00.000Z); older is v1.0 (2026-01-01T00:00:00.000Z)"
+    },
+    {
+      "id": "MS43-CHK-08",
+      "title": "Admin policy versions history endpoint (/admin/policies/:slug/versions)",
+      "passed": true,
+      "details": "Found 2 version records for warranty in admin API"
+    },
+    {
+      "id": "MS43-CHK-09",
+      "title": "Legal approval gating blocks unapproved publishing with HTTP 400 (T4.3.4)",
+      "passed": true,
+      "details": "Response status: 400, title: \"Legal approval required\""
+    },
+    {
+      "id": "MS43-CHK-10",
+      "title": "Unapproved draft policies hidden from public delivery (404 status)",
+      "passed": true,
+      "details": "terms: 404, privacy: 404, all published are legalApproved: true"
+    },
+    {
+      "id": "MS43-CHK-11",
+      "title": "Public SSR Glossary page renders all 113 terms and explainer links (GREF-C)",
+      "passed": true,
+      "details": "HTTP 200, size=69470 bytes, has AFR=true, Zstd=true, XmpLink=true"
+    },
+    {
+      "id": "MS43-CHK-12",
+      "title": "Public SSR Legal page renders operative warranty & draft notices (GREF-C)",
+      "passed": true,
+      "details": "HTTP 200, size=30739 bytes, has Operative=true, Version1.1=true, Drafts=false"
+    }
+  ]
+}

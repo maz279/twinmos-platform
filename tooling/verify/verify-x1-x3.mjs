@@ -95,6 +95,9 @@ async function run() {
       version: '3.5',
       status: 'published',
       locale: 'en',
+      source: 'https://www.twinmos.com/legal',
+      approver: 'Legal Counsel',
+      legalApproved: true,
     }),
   });
   assert(createPolicyRes.status === 201, `Created test policy (HTTP ${createPolicyRes.status})`);
@@ -137,6 +140,9 @@ async function run() {
       permissionFlag: true,
       sort: 7,
       locale: 'en',
+      source: 'internal-customer-survey',
+      approver: 'Marketing Lead',
+      permissionEvidence: 'Signed customer release on file (verification probe).',
     }),
   });
   assert(createTestimonialRes.status === 201, `Created test testimonial (HTTP ${createTestimonialRes.status})`);
@@ -167,6 +173,15 @@ async function run() {
   assert(putTestimonial.role === 'Principal Architect', `PUT updated role correctly`);
   assert(putTestimonial.permissionFlag === true, `[PROBE X3b] PUT retained permissionFlag: true`);
   assert(putTestimonial.sort === 7, `[PROBE X3b] PUT retained sort: 7`);
+
+  // Cleanup: probes must not leave published testimonials/policies/pages behind.
+  for (const path of [
+    `/api/v1/admin/entities/testimonials/${testimonialId}`,
+    `/api/v1/admin/entities/policies/${policyId}`,
+    `/api/v1/admin/content/page/${pageId}`,
+  ]) {
+    await fetch(`${BASE}${path}`, { method: 'DELETE', headers }).catch(() => {});
+  }
 
   console.log('\n================================================================');
   console.log(`Live Probes Summary: ${passed} checks PASSED, ${failed} checks FAILED.`);

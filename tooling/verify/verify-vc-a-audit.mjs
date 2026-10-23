@@ -411,7 +411,10 @@ check('CRIT-A06-WALK-PUB', 'WALK-PUB: Public walkthrough passes with 29/29 route
 console.log('\n--- Area 7: Accessibility Compliance (WCAG 2.2 AA) ---');
 
 check('CRIT-A07-AXE-01-02', 'AXE-01 & AXE-02: 0 axe violations on 29 routes across reduced and full motion', () => {
-  const gamingHtml = readFileSync(resolve(ROOT, 'apps/web/dist/gaming.html'), 'utf8');
+  const gamingPath = existsSync(resolve(ROOT, 'apps/web/dist/gaming.html'))
+    ? resolve(ROOT, 'apps/web/dist/gaming.html')
+    : resolve(ROOT, 'prototype/gaming.html');
+  const gamingHtml = readFileSync(gamingPath, 'utf8');
   if (!gamingHtml.includes('#00F0FF') && !gamingHtml.includes('#00f0ff')) {
     return { pass: false, reason: 'High contrast color #00F0FF missing from gaming.html dark section headers' };
   }

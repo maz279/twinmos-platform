@@ -4,7 +4,8 @@
  * Strips prototype copy, calculates founding year dynamically, and reconciles truthfulness.
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createDb } from './db-bridge.ts';
 import { page as pageTable } from '../packages/db/src/schema.ts';
 import { eq, and } from 'drizzle-orm';
@@ -38,8 +39,21 @@ interface InventoryBlock {
   intro: string;
 }
 
-const INVENTORY_PATH = resolve('../audit/Audit_report/audit_finding_Implementation/evidence/component_inventory/inventory_blocks.json');
+const HERE = dirname(fileURLToPath(import.meta.url));
+const INVENTORY_PATH = resolve(HERE, 'data', 'inventory_blocks.json');
 const PAGES_DIR = resolve('apps/web/src/pages');
+
+function canonicalJson(obj: any): string {
+  if (obj === null || typeof obj !== 'object') {
+    return JSON.stringify(obj);
+  }
+  if (Array.isArray(obj)) {
+    return `[${obj.map(canonicalJson).join(',')}]`;
+  }
+  const keys = Object.keys(obj).sort();
+  const pairs = keys.map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`);
+  return `{${pairs.join(',')}}`;
+}
 
 async function main() {
   console.log('================================================================');
@@ -122,9 +136,19 @@ async function main() {
 
     const structuredBlocks = blocks.map((invBlock, idx) => {
       const sectionHtml = sectionSplits[idx] || (idx === 0 ? cleanMainHtml : '');
+      // Composite form blocks (form+tracker, form+steps, ...) are rendered by
+      // the generic form dispatcher; keep their page-specific registry type.
+      const isFormComposite = invBlock.type.startsWith('form');
+      const formType = isFormComposite
+        ? (pageKey === 'rma' ? 'rma'
+          : pageKey === 'careers' ? 'job-application'
+            : pageKey === 'partners' ? 'partner-inquiry'
+              : 'contact')
+        : undefined;
       return {
         id: `${pageKey}-block-${invBlock.order}`,
-        type: invBlock.type,
+        type: isFormComposite ? 'form' : invBlock.type,
+        ...(formType ? { formType } : {}),
         heading: invBlock.heading || invBlock.secHead || '',
         eyebrow: invBlock.eyebrow || '',
         title: invBlock.heading || invBlock.secHead || '',
@@ -148,17 +172,20 @@ async function main() {
     });
 
     if (existing) {
-      await db.update(pageTable).set({
-        title,
-        seoTitle: title,
-        seoDescription: desc,
-        path: pagePath,
-        template,
-        blocks: structuredBlocks as any,
-        status: 'published',
-        publishedAt: new Date(),
-        updatedAt: new Date(),
-      }).where(eq(pageTable.id, existing.id));
+      const blocksEqual = canonicalJson(existing.blocks) === canonicalJson(structuredBlocks);
+      const metaEqual = existing.title === title && existing.seoDescription === desc && existing.path === pagePath;
+      if (!blocksEqual || !metaEqual) {
+        await db.update(pageTable).set({
+          title,
+          seoTitle: title,
+          seoDescription: desc,
+          path: pagePath,
+          template,
+          blocks: structuredBlocks as any,
+          status: 'published',
+          updatedAt: new Date(),
+        }).where(eq(pageTable.id, existing.id));
+      }
     } else {
       await db.insert(pageTable).values({
         slug: pageKey,
@@ -191,11 +218,6 @@ async function main() {
     console.log(`  ✓ Seeded page [${pageKey.padEnd(18)}] (${structuredBlocks.length.toString().padStart(2)} blocks) -> ${pagePath}`);
   }
 
-  // Write static pages cache for build-time fallback
-  const cacheDir = resolve('apps/web/src/data');
-  mkdirSync(cacheDir, { recursive: true });
-  writeFileSync(resolve(cacheDir, 'pages-cache.json'), JSON.stringify(pagesCache, null, 2), 'utf8');
-  console.log(`\n[2.5/4] Written static fallback cache to ${resolve(cacheDir, 'pages-cache.json')}`);
 
   console.log(`\n[3/4] Successfully seeded ${seededCount} pages into database.`);
 

@@ -1,80 +1,127 @@
-# TwinMOS CMS-managed redirects map (CMS-E1 / NF-14 / Task E2)
-# Syntax: <source_path> <destination_path>;
+# TwinMOS legacy URL -> current URL map (NGINX map include, NF-14 / R-08)
+#
+# Source: the archived twinmos.com crawl inventory
+# (Corporate website development for TwinMOS/twinmos_website_offline).
+# Every source below is a real published path from that crawl; every target is
+# a current route that resolves on the rebuilt site.
+#
+# Regenerate/verify with: node tooling/verify/nav-targets.mjs (targets) and
+# `docker build -t twinmos-edge:test -f deploy/edge/Dockerfile . && docker run
+# --rm twinmos-edge:test nginx -t` (syntax).
 
-# Product Categories
-/product-category/dram-module /shop.html?cat=dram;
-/product-category/dram-module/ /shop.html?cat=dram;
+# --- Product categories (WooCommerce -> shop facets) ---
+/product-category/dram-module /shop.html?cat=dram-desktop;
+/product-category/dram-module/ /shop.html?cat=dram-desktop;
 /product-category/dram-module/desktop-dram /shop.html?cat=dram-desktop;
-/product-category/dram-module/desktop-dram/ /shop.html?cat=dram-desktop;
+/product-category/dram-module/desktop-dram-dram-module /shop.html?cat=dram-desktop;
 /product-category/dram-module/gaming-dram /shop.html?cat=dram-gaming;
-/product-category/dram-module/gaming-dram/ /shop.html?cat=dram-gaming;
+/product-category/dram-module/gaming-dram-dram-module /shop.html?cat=dram-gaming;
 /product-category/dram-module/notebook-dram /shop.html?cat=dram-notebook;
-/product-category/dram-module/notebook-dram/ /shop.html?cat=dram-notebook;
+/product-category/dram-module/notebook-dram-dram-module /shop.html?cat=dram-notebook;
+/product-category/dram-module/page/1 /shop.html?cat=dram-desktop;
+/product-category/dram-module/page/2 /shop.html?cat=dram-desktop;
+/product-category/flash-drive /shop.html?cat=flash;
+/product-category/microsd-card /shop.html?cat=microsd;
+/product-category/portable-drives /shop.html?cat=portable-ssd;
+/product-category/portable-drives/ /shop.html?cat=portable-ssd;
+/product-category/portable-drives/portable-hdd-portable-drives /shop.html?cat=portable-hdd;
+/product-category/portable-drives/portable-ssd-portable-drives /shop.html?cat=portable-ssd;
+/product-category/power-supply /shop.html?cat=psu;
 /product-category/solid-state-drive /shop.html?cat=ssd;
 /product-category/solid-state-drive/ /shop.html?cat=ssd;
 /product-category/solid-state-drive/nvme-ssd /shop.html?cat=ssd-nvme;
-/product-category/solid-state-drive/nvme-ssd/ /shop.html?cat=ssd-nvme;
+/product-category/solid-state-drive/nvme-ssd-solid-state-drive /shop.html?cat=ssd-nvme;
 /product-category/solid-state-drive/sata-ssd /shop.html?cat=ssd-sata;
-/product-category/solid-state-drive/sata-ssd/ /shop.html?cat=ssd-sata;
-/product-category/portable-drives /shop.html?cat=portable;
-/product-category/portable-drives/ /shop.html?cat=portable;
-/product-category/portable-drives/portable-ssd /shop.html?cat=portable-ssd;
-/product-category/portable-drives/portable-ssd/ /shop.html?cat=portable-ssd;
-/product-category/portable-drives/portable-hdd /shop.html?cat=portable-hdd;
-/product-category/portable-drives/portable-hdd/ /shop.html?cat=portable-hdd;
-/product-category/flash-drive /shop.html?cat=flash;
-/product-category/flash-drive/ /shop.html?cat=flash;
-/product-category/microsd-card /shop.html?cat=microsd;
-/product-category/microsd-card/ /shop.html?cat=microsd;
-/product-category/power-supply /shop.html?cat=psu;
-/product-category/power-supply/ /shop.html?cat=psu;
 /product-category/usb-hub /shop.html?cat=hub;
-/product-category/usb-hub/ /shop.html?cat=hub;
 
-# Corporate & Pages
+# --- Corporate and commerce pages ---
 /about-us /about.html;
-/about-us/ /about.html;
-/contact-us /contact.html;
-/contact-us/ /contact.html;
 /career /careers.html;
-/career/ /careers.html;
-/warranty /legal.html#warranty;
-/warranty/ /legal.html#warranty;
-/warranty-policy /legal.html#warranty;
-/warranty-policy/ /legal.html#warranty;
-/terms-of-use /legal.html#terms;
-/terms-of-use/ /legal.html#terms;
-/privacy-policy /legal.html#privacy;
-/privacy-policy/ /legal.html#privacy;
-/privacy-policy-2 /legal.html#privacy;
-/privacy-policy-2/ /legal.html#privacy;
-/category/articles /learn-blog.html;
-/category/articles/ /learn-blog.html;
-/category/news /news.html;
-/category/news/ /news.html;
-/blog /learn-blog.html;
-/blog/ /learn-blog.html;
+/contact /contact.html;
+/partners /partners.html;
+/support /support.html;
+/request-a-quote /quote.html;
+/shop /shop.html;
+/products /shop.html;
+/product /shop.html;
+/product-brand /shop.html;
+/product-brand/twinmos /shop.html;
+/brands/twinmos /shop.html;
+/brands/twinmos/page/1 /shop.html;
+/quality-assurance /about.html#quality;
+/since1998 /about.html;
 /media-events /news.html;
-/media-events/ /news.html;
 /computex-2026 /news.html;
-/computex-2026/ /news.html;
-/notice /news.html;
-/notice/ /news.html;
-/notice/latest-announcements /news.html;
-/notice/latest-announcements/ /news.html;
+/terms-of-use /legal.html#terms;
+/privacy-policy-2 /legal.html#privacy;
+/warranty /legal.html#warranty;
 
-# Specific legacy products
-/product/twinmos-alphapro-nvme-m-2-2280-new-ssd /product.html?id=alphapro-nvme-m2-2280-ssd;
-/product/twinmos-alphapro-nvme-m-2-2280-new-ssd/ /product.html?id=alphapro-nvme-m2-2280-ssd;
-/product/twinmos-corex-pro-m-2-pcie-gen-5-0-nvme-ssd /product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd;
-/product/twinmos-corex-pro-m-2-pcie-gen-5-0-nvme-ssd/ /product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd;
-/product/twinmos-voltx-ddr5-u-dimm-for-desktop /product.html?id=voltx-ddr5-udimm-16gb;
-/product/twinmos-voltx-ddr5-u-dimm-for-desktop/ /product.html?id=voltx-ddr5-udimm-16gb;
-/product/twinmos-voltx-ddr5-so-dimm-for-laptop /product.html?id=voltx-ddr5-sodimm-16gb;
-/product/twinmos-voltx-ddr5-so-dimm-for-laptop/ /product.html?id=voltx-ddr5-sodimm-16gb;
-/product/twinmos-tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop /product.html?id=tornadox7-ddr4-3200mhz-udimm;
-/product/twinmos-tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop/ /product.html?id=tornadox7-ddr4-3200mhz-udimm;
-/product/twinmos-portable-ssd-elite-drive-pro-usb-type-c /product.html?id=elite-drive-pro-portable-ssd;
-/product/twinmos-portable-ssd-elite-drive-pro-usb-type-c/ /product.html?id=elite-drive-pro-portable-ssd;
-/product/twinmos-portable-hdd-prodrive-ultra-usb-3-0 /product.html?id=prodrive-ultra-portable-hdd;
-/product/twinmos-portable-hdd-prodrive-ultra-usb-3-0/ /product.html?id=prodrive-ultra-portable-hdd;
+# --- Support / FAQ / compatibility ---
+/faq-accessories /support.html#faq;
+/faq-dram /support.html#faq;
+/faq-ssd /support.html#faq;
+/faq-ssd-copy /support.html#faq;
+/compatible-os /compatibility.html;
+/compatible-os/android /compatibility.html;
+/compatible-os/ios /compatibility.html;
+/compatible-os/linux /compatibility.html;
+/compatible-os/mac-os /compatibility.html;
+/compatible-os/windows /compatibility.html;
+/interface /compatibility.html;
+/interface/pcie-gen-3-0x4 /compatibility.html;
+/how-to-check-your-motherboard-and-ram-compatibility /compatibility.html;
+
+# --- Knowledge hub hubs and pagination ---
+/category/articles /learn.html;
+/category/news /news.html;
+/category/product-news /news.html;
+/blog /learn-blog.html;
+/blog/page/2 /learn-blog.html;
+/blog/page/3 /learn-blog.html;
+/blog/page/4 /learn-blog.html;
+/blog/page/5 /learn-blog.html;
+/blog/page/6 /learn-blog.html;
+/blog/page/7 /learn-blog.html;
+/blog/page/8 /learn-blog.html;
+
+# --- Technology explainers ---
+/nand-type /learn-explained.html;
+/nand-flash-brand /learn-explained.html;
+/ssd-controller-brand /learn-explained.html;
+/heat-sink /learn-explained.html;
+/heat-sink/blue-heat-sink /learn-explained.html;
+/heat-sink/dark-maroon-heat-sink /learn-explained.html;
+/heat-sink/no-heat-sink /learn-explained.html;
+/heat-sink/silver-heat-sink /learn-explained.html;
+/endurance /learn-explained.html;
+/endurance/1000-tb-or-900-gb-day /learn-explained.html;
+/endurance/1400-tbw-for-2tb /learn-explained.html;
+/endurance/2000-tbw /learn-explained.html;
+/endurance/700-tbw-for-1tb /learn-explained.html;
+/speed /learn-explained.html;
+/sequential-read-speed /learn-explained.html;
+/sequential-write-speed /learn-explained.html;
+/random-read-speed-4k-files /learn-explained.html;
+/random-write-speed-4k-files /learn-explained.html;
+/latency-cas /learn-explained.html;
+/rd /learn-explained.html;
+/smart /learn-explained.html;
+/power-loose-protection /learn-explained.html;
+/low-density-parity-check /learn-explained.html;
+/bridge-controller-mtbf /learn-explained.html;
+/bridge-controller-mtbf/1000000-hours /learn-explained.html;
+/a-generational-leap-in-ssd-technology-understanding-nvme-speeds-gen3-gen4-gen5-explained /learn-explained.html;
+/explaining-direct-storage-how-our-gen5-ssd-will-change-your-gaming /learn/directstorage-gen5-gaming;
+
+# --- Buying guides ---
+/boost-pc-performance-should-you-upgrade-ram-or-ssd-first /learn-guides.html;
+/bring-new-life-to-your-old-laptop /learn-guides.html;
+/how-do-you-choose-the-best-dram-and-memory-solution-for-ai-computing /learn-guides.html;
+/how-much-ram-do-you-need-on-your-computer /learn-guides.html;
+/decoding-the-language-of-ram-your-ultimate-computer-memory-glossary /learn-glossary.html;
+
+# --- Legacy product pages -> catalog ---
+/twinmos-h2-ultra-ssd /shop.html;
+/twinmos-tornadox7-pro-ddr4-3200mhz-cl16-gaming-ram /shop.html;
+/twinmos-voltx-ddr5-u-dimm-for-desktop /shop.html;
+/twinmos-voltx-rgb-ddr5-u-dimm-for-desktop /shop.html;

@@ -7,6 +7,8 @@ import Breadcrumb from '../components/chrome/Breadcrumb.astro';
 import Footer from '../components/chrome/Footer.astro';
 import CookieBanner from '../components/chrome/CookieBanner.astro';
 import CompareTray from '../components/chrome/CompareTray.astro';
+import { getDeliverySettings, getDeliveryNavMenu } from '../lib/delivery';
+import { SETTINGS_GROUP_DEFAULTS, resolveComputedFigures } from '@twinmos/shared';
 
 interface BreadcrumbItem {
   label: string;
@@ -22,6 +24,7 @@ interface Props {
   hreflangGrid?: boolean;
   breadcrumbs?: BreadcrumbItem[];
   renderChrome?: boolean;
+  ogImage?: string;
 }
 
 const {
@@ -33,6 +36,7 @@ const {
   hreflangGrid = false,
   breadcrumbs = [],
   renderChrome = true,
+  ogImage: customOgImage,
 } = Astro.props;
 
 const path = Astro.url.pathname === '/index.html' ? '/' : Astro.url.pathname;
@@ -42,33 +46,81 @@ const LOCALES = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'];
 const RTL = ['ar'];
 const dir = RTL.includes(locale) ? 'rtl' : undefined;
 
-const localeUrl = (code: string) =>
-  code === 'en'
-    ? new URL(hreflangGrid ? '/' : (path === '/' ? '/' : path), Astro.site || 'https://www.twinmos.com')
-    : new URL(`/${code}.html`, Astro.site || 'https://www.twinmos.com');
+const localeUrl = (code: string) => {
+  const origin = Astro.site || 'https://www.twinmos.com';
+  if (hreflangGrid) return new URL(code === 'en' ? '/' : `/${code}`, origin);
+  // An English page is its own alternate; a localised page alternates to the
+  // locale-stripped English path and to the same path under each locale.
+  if (locale === 'en') return new URL(path, origin);
+  const rest = path.replace(new RegExp(`^/${locale}(?=/|$)`), '') || '/';
+  return new URL(
+    code === 'en' ? rest : `/${code}${rest === '/' ? '' : rest}`,
+    origin,
+  );
+};
+
+const [settings, headerMenu, drawerMenu, footerMenu] = await Promise.all([
+  getDeliverySettings(),
+  getDeliveryNavMenu('header', locale),
+  getDeliveryNavMenu('drawer', locale),
+  getDeliveryNavMenu('footer', locale),
+]);
+const brand = { ...SETTINGS_GROUP_DEFAULTS['site.brand'], ...(settings['site.brand'] || {}) };
+const contact = { ...SETTINGS_GROUP_DEFAULTS['site.contact'], ...(settings['site.contact'] || {}) };
+const social = { ...SETTINGS_GROUP_DEFAULTS['site.social'], ...(settings['site.social'] || {}) };
+const figures = resolveComputedFigures({ ...SETTINGS_GROUP_DEFAULTS['site.figures'], ...(settings['site.figures'] || {}) });
+const seo = { ...SETTINGS_GROUP_DEFAULTS['seo.defaults'], ...(settings['seo.defaults'] || {}) };
+const integrations = { ...SETTINGS_GROUP_DEFAULTS['integrations'], ...(settings['integrations'] || {}) };
+const cookieSettings = { ...SETTINGS_GROUP_DEFAULTS['site.cookie'], ...(settings['site.cookie'] || {}) };
+const whatsapp = { ...SETTINGS_GROUP_DEFAULTS['site.whatsapp'], ...(settings['site.whatsapp'] || {}) };
+
+const pageTitle = applyLiveFigures(title || seo.defaultTitle);
+const pageDesc = applyLiveFigures(desc || seo.defaultDescription);
+
+// Copy authored against the original baseline ("since 1998", "93+ countries")
+// follows site.figures when the operator changes it. Other years (e.g. the
+// ISO 9001 "since 2002" certification) are deliberately left untouched.
+function applyLiveFigures(text: string): string {
+  return String(text)
+    .replace(/\b(since|founded)\s+1998\b/gi, (_m, word) => `${word} ${figures.foundingYear}`)
+    .replace(/\b93\+\s+countries\b/gi, `${figures.countriesCount} countries`);
+}
+const siteOrigin = Astro.site || 'https://www.twinmos.com';
+const ogImage = customOgImage
+  ? (customOgImage.startsWith('http') ? customOgImage : new URL(customOgImage, siteOrigin).toString())
+  : new URL(seo.defaultOgImage || '/assets/img/og-cover.png', siteOrigin).toString();
+
+const socialUrls = [
+  social.facebook,
+  social.instagram,
+  social.linkedin,
+  social.x,
+  social.youtube,
+  social.pinterest,
+].filter(Boolean);
 
 const ORG_LD = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'TwinMOS Technologies',
+  name: brand.name,
   url: 'https://www.twinmos.com/',
-  logo: 'https://www.twinmos.com/assets/img/logo.webp',
-  foundingDate: '1998',
-  address: { '@type': 'PostalAddress', addressLocality: 'Taipei', addressCountry: 'TW' },
-  sameAs: [
-    'https://www.facebook.com/twinmos.tech',
-    'https://www.instagram.com/twinmos.tech',
-    'https://www.linkedin.com/company/twinmos-technologies',
-    'https://x.com/twinmos',
-    'https://www.youtube.com/c/TwinMOStech',
-    'https://www.pinterest.com/twinmos',
-  ],
+  logo: new URL(brand.logoUrl || '/assets/img/logo.webp', siteOrigin).toString(),
+  foundingDate: String(figures.foundingYear || brand.foundingYear || 1998),
+  email: contact.email,
+  telephone: contact.phone,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: contact.address,
+    addressLocality: 'Taipei',
+    addressCountry: contact.country || 'TW',
+  },
+  sameAs: socialUrls,
 });
 
 const SITE_LD = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: 'TwinMOS',
+  name: brand.name,
   url: 'https://www.twinmos.com/',
   potentialAction: {
     '@type': 'SearchAction',
@@ -87,7 +139,7 @@ const BREADCRUMB_LD = breadcrumbs && breadcrumbs.length > 0 ? JSON.stringify({
   })),
 }) : null;
 
-const OG_IMAGE = 'https://www.twinmos.com/assets/img/og-cover.png';
+const OG_IMAGE = ogImage;
 const OG_TYPE = path === '/' ? 'website' : 'article';
 ---
 <!doctype html>
@@ -96,9 +148,9 @@ const OG_TYPE = path === '/' ? 'website' : 'article';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#0A2540" />
-    <meta name="description" content={desc} />
-    {noindex && <meta name="robots" content="noindex,nofollow" />}
-    <title>{title}</title>
+    <meta name="description" content={pageDesc} />
+    {noindex ? <meta name="robots" content="noindex,nofollow" /> : <meta name="robots" content={seo.defaultRobots} />}
+    <title>{pageTitle}</title>
     <link rel="canonical" href={canonical} />
     {hreflangGrid ? (
       LOCALES.map((code) => <link rel="alternate" hreflang={code} href={localeUrl(code)} />)
@@ -108,26 +160,30 @@ const OG_TYPE = path === '/' ? 'website' : 'article';
     <link rel="alternate" hreflang="x-default" href={localeUrl('en')} />
 
     <!-- Open Graph (Task E1 / SEO-01) -->
-    <meta property="og:site_name" content="TwinMOS Technologies" />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={desc} />
+    <meta property="og:site_name" content={brand.name} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDesc} />
     <meta property="og:url" content={canonical.toString()} />
     <meta property="og:type" content={OG_TYPE} />
     <meta property="og:image" content={OG_IMAGE} />
 
     <!-- Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={desc} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDesc} />
     <meta name="twitter:image" content={OG_IMAGE} />
 
-    <link rel="icon" type="image/png" href="assets/img/favicon.png" />
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="assets/css/main.css" />
-    <link rel="stylesheet" href="assets/css/a11y-overrides.css" />
-    {locale !== 'en' && <link rel="stylesheet" href="assets/css/rtl.css" />}
+    <link rel="icon" href={brand.faviconUrl || '/favicon.ico'} />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <link rel="stylesheet" href="/assets/css/a11y-overrides.css" />
+    {locale !== 'en' && <link rel="stylesheet" href="/assets/css/rtl.css" />}
     <meta name="twinmos-api" content={import.meta.env.PUBLIC_API_URL ?? ''} />
-    <meta name="turnstile-site-key" content={import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? ''} />
+    <meta name="turnstile-site-key" content={integrations.turnstileSiteKey || import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''} />
+    <meta
+      name="twinmos-analytics"
+      content={integrations.analyticsEnabled && integrations.googleAnalyticsId ? integrations.googleAnalyticsId : ''}
+    />
 
     <script type="application/ld+json" set:html={ORG_LD} />
     <script type="application/ld+json" set:html={SITE_LD} />
@@ -137,8 +193,8 @@ const OG_TYPE = path === '/' ? 'website' : 'article';
     {renderChrome && (
       <>
         <a class="skip-link" href="#main">Skip to main content</a>
-        <Header activePath={path} currentLocale={locale} />
-        <Drawer currentLocale={locale} />
+        <Header activePath={path} currentLocale={locale} brand={brand} figures={figures} menu={headerMenu} />
+        <Drawer currentLocale={locale} brand={brand} menu={drawerMenu} />
         <SearchOverlay />
         {breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
       </>
@@ -148,13 +204,16 @@ const OG_TYPE = path === '/' ? 'website' : 'article';
 
     {renderChrome && (
       <>
-        <Footer />
-        <CookieBanner />
+        <Footer brand={brand} contact={contact} social={social} figures={figures} whatsapp={whatsapp} menu={footerMenu} />
+        <CookieBanner settings={cookieSettings} />
         <CompareTray />
       </>
     )}
 
     <!-- App layer boots post-first-paint via layout-init.js (eliminates unsafe-inline in script-src) -->
-    <script is:inline src="assets/js/layout-init.js"></script>
+    <script is:inline src="/assets/js/widgets-config.js"></script>
+    <script is:inline src="/assets/js/widgets-init.js"></script>
+    <script is:inline src="/assets/js/layout-init.js"></script>
+    <script is:inline src="/assets/js/analytics-init.js"></script>
   </body>
 </html>

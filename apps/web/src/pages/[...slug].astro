@@ -1,0 +1,39 @@
+---
+// apps/web/src/pages/[...slug].astro — Universal CMS Page Dynamic SSR Renderer (MS4.6 / T4.6.4 / T4.6.5)
+import Layout from '../layouts/Layout.astro';
+import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
+import { getDeliveryPage } from '../lib/delivery';
+
+const rawSlug = Astro.params.slug;
+const slug = (rawSlug && rawSlug.length > 0) ? rawSlug.replace(/^\/+|\/+$/g, '') : 'index';
+
+// T3.2.2: Refuse .html twins under clean route paths
+if (Astro.url.pathname.endsWith('.html')) {
+  return new Response('Not Found', { status: 404, statusText: 'Not Found' });
+}
+
+const preview = Astro.url.searchParams.get('preview') ?? undefined;
+const locale = 'en';
+const page = await getDeliveryPage(slug, locale, preview);
+
+if (!page) {
+  return new Response('Not Found', { status: 404, statusText: 'Not Found' });
+}
+
+// T4.6.4: Preview is noindex and never cached
+if (preview) {
+  Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+}
+
+const title = page.seoTitle || page.title || 'TwinMOS Technologies';
+const desc = page.seoDescription || page.title || 'TwinMOS Technologies — Legendary Memory & Storage';
+const noindex = Boolean(preview) || Boolean(page.noindex);
+const blocks = page.blocks ?? [];
+---
+
+<Layout title={title} desc={desc} noindex={noindex}>
+  <main id="main">
+    <BlockDispatcher blocks={blocks} />
+  </main>
+</Layout>

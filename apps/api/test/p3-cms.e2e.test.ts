@@ -77,7 +77,7 @@ describe('CMS content lifecycle', () => {
         ? { title: 'TwinMOS at COMPUTEX 2027', body: 'Visit our booth for the **Gen5** lineup demo.', tag: 'Event' }
         : { title: 'How to Choose RAM: A Field Guide', deck: 'Capacity, speed, and timings explained.', body: '## Intro\nDDR5 is the current mainstream.' };
 
-    const created = await app.request(`/api/v1/admin/content/${entity}`, { ...{ method: 'POST', body: JSON.stringify(body) }, headers: { 'content-type': 'application/json', cookie: adminCookie, ...({ method: 'POST', body: JSON.stringify(body) }.headers ?? {}) } });
+    const created = await app.request(`/api/v1/admin/content/${entity}`, { ...{ method: 'POST', body: JSON.stringify(body) }, headers: { 'content-type': 'application/json', cookie: authorCookie, ...({ method: 'POST', body: JSON.stringify(body) }.headers ?? {}) } });
     expect(created.status).toBe(201);
     const item = await created.json();
     expect(item.status).toBe('draft');
@@ -96,8 +96,8 @@ describe('CMS content lifecycle', () => {
     const pub = await app.request(`/api/v1/admin/content/${entity}/${item.id}/transition`, { ...{ method: 'POST', body: JSON.stringify({ to: 'published' }) }, headers: { 'content-type': 'application/json', cookie: editorCookie, ...({ method: 'POST', body: JSON.stringify({ to: 'published' }) }.headers ?? {}) } });
     expect(pub.status).toBe(200);
     const revs = await (await app.request(`/api/v1/admin/content/${entity}/${item.id}/revisions`, { headers: { 'content-type': 'application/json', cookie: adminCookie } })).json();
-    expect(revs.items).toHaveLength(1);
-    expect(revs.items[0].snapshot.status).toBe('in_review');
+    expect(revs.items).toHaveLength(2); // every transition snapshots (T4.6.1)
+    expect(revs.items.some((r: any) => r.snapshot.status === 'in_review')).toBe(true);
 
     // editor edits the live item, then rolls back to the snapshot
     const edited = await app.request(`/api/v1/admin/content/${entity}/${item.id}`, { ...{
@@ -132,8 +132,9 @@ describe('CMS content lifecycle', () => {
     const created = await app.request('/api/v1/admin/content/article', { ...{ method: 'POST', body: JSON.stringify({ title: 'Draft Only Piece', body: 'x'.repeat(20) }) }, headers: { 'content-type': 'application/json', cookie: adminCookie, ...({ method: 'POST', body: JSON.stringify({ title: 'Draft Only Piece', body: 'x'.repeat(20) }) }.headers ?? {}) } });
     const { id } = await created.json();
     await app.request(`/api/v1/admin/content/article/${id}/transition`, { ...{ method: 'POST', body: JSON.stringify({ to: 'published' }) }, headers: { 'content-type': 'application/json', cookie: adminCookie, ...({ method: 'POST', body: JSON.stringify({ to: 'published' }) }.headers ?? {}) } });
-    // published → draft is NOT legal (only published → archived)
-    const bad = await app.request(`/api/v1/admin/content/article/${id}/transition`, { ...{ method: 'POST', body: JSON.stringify({ to: 'draft' }) }, headers: { 'content-type': 'application/json', cookie: adminCookie, ...({ method: 'POST', body: JSON.stringify({ to: 'draft' }) }.headers ?? {}) } });
+    await app.request(`/api/v1/admin/content/article/${id}/transition`, { ...{ method: 'POST', body: JSON.stringify({ to: 'archived' }) }, headers: { 'content-type': 'application/json', cookie: adminCookie, ...({ method: 'POST', body: JSON.stringify({ to: 'archived' }) }.headers ?? {}) } });
+    // archived → published is NOT legal (only archived → draft)
+    const bad = await app.request(`/api/v1/admin/content/article/${id}/transition`, { ...{ method: 'POST', body: JSON.stringify({ to: 'published' }) }, headers: { 'content-type': 'application/json', cookie: adminCookie, ...({ method: 'POST', body: JSON.stringify({ to: 'published' }) }.headers ?? {}) } });
     expect(bad.status).toBe(422);
     expect((await bad.json()).detail).toContain('can move to');
   });
@@ -212,10 +213,11 @@ describe('preview URLs', () => {
     const { id } = await created.json();
     const res = await app.request(`/api/v1/admin/content/article/${id}/preview`, { ...{ method: 'POST', body: '{}' }, headers: { 'content-type': 'application/json', cookie: adminCookie, ...({ method: 'POST', body: '{}' }.headers ?? {}) } });
     expect(res.status).toBe(201);
-    const { previewUrl } = await res.json();
-    expect(previewUrl).toMatch(/^\/api\/1preview\//.test(previewUrl) ? /^\/api\/1preview\// : /^\/api\/v1\/preview\//);
+    const { token } = await res.json();
+    expect(typeof token).toBe('string');
+    expect(token.length).toBeGreaterThan(20); // HMAC-signed preview token
 
-    const page = await app.request(previewUrl);
+    const page = await app.request(`/api/v1/preview/${token}`);
     expect(page.status).toBe(200);
     const html = await page.text();
     expect(html).toContain('<h1>Heading</h1>');
@@ -325,7 +327,7 @@ describe('P3 gap fixes: pages blocks, news eventDate, media serving', () => {
   it('page create with blocks; blocks persist through edit + publish', async () => {
     const blocks = [
       { type: 'hero', title: 'Warranty Hub' },
-      { type: 'richText', markdown: '## Overview\nAll TwinMOS products carry regional warranty.' },
+      { type: 'callout', title: 'Overview', message: 'All TwinMOS products carry regional warranty.' },
     ];
     const created = await app.request('/api/v1/admin/content/page', {
       method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
@@ -347,8 +349,9 @@ describe('P3 gap fixes: pages blocks, news eventDate, media serving', () => {
     // publish + preview renders the blocks (JSON sections on the preview page)
     await app.request(`/api/v1/admin/content/page/${page1.id}/transition`, { method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie }, body: JSON.stringify({ to: 'published' }) });
     const prev = await app.request(`/api/v1/admin/content/page/${page1.id}/preview`, { method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie }, body: '{}' });
-    const { previewUrl } = await prev.json();
-    const html = await (await app.request(previewUrl)).text();
+    expect(prev.status).toBe(201);
+    const { token } = await prev.json();
+    const html = await (await app.request(`/api/v1/preview/${token}`)).text();
     expect(html).toContain('Warranty Hub v2');
   });
 
@@ -422,17 +425,19 @@ describe('audit layer 5 fixes', () => {
   });
 
   it('preview tokens expire (expiry honoured, junk 404)', async () => {
-    const { __expirePreviewTokensForTest } = await import('../src/routes/content.ts');
+    const { createPreviewToken } = await import('../src/routes/delivery/preview.ts');
     const created = await app.request('/api/v1/admin/content/article', {
       method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
       body: JSON.stringify({ title: 'TTL Probe', body: 't'.repeat(20) }),
     });
     const { id } = await created.json();
     const prev = await app.request(`/api/v1/admin/content/article/${id}/preview`, { method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie }, body: '{}' });
-    const { previewUrl } = await prev.json();
-    expect((await app.request(previewUrl)).status).toBe(200); // live before expiry
-    __expirePreviewTokensForTest(); // force every minted token past its TTL
-    expect((await app.request(previewUrl)).status).toBe(404); // expired
+    expect(prev.status).toBe(201);
+    const live = (await prev.json()).token;
+    expect((await app.request(`/api/v1/preview/${live}`)).status).toBe(200); // live before expiry
+    // Mint a token already past its TTL cap — the preview route must refuse it.
+    const expired = createPreviewToken('article', id, 'ttl-probe', -1, 'en');
+    expect((await app.request(`/api/v1/preview/${expired}`)).status).toBe(404);
     expect((await app.request('/api/v1/preview/expired-or-junk-token')).status).toBe(404);
   });
 });

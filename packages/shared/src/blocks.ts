@@ -16,6 +16,7 @@ export const BLOCK_TYPES = [
   'faqAccordion',
   'table',
   'productShowcase',
+  'specComparison',
   'whereToBuy',
   'downloadDatasheet',
   'qvlCompatibility',
@@ -26,6 +27,7 @@ export const BLOCK_TYPES = [
   'kpiMeters',
   'callout',
   'linkChips',
+  'anchorNav',
   'categoryTiles',
   // Entity-bound (C4e)
   'policyTabs',
@@ -49,6 +51,7 @@ export const heroBlockSchema = z.object({
   trustStats: z.array(z.object({
     value: z.string(),
     label: z.string(),
+    sub: z.string().optional(),
   })).default([]),
   jumpLinks: z.array(z.object({
     label: z.string(),
@@ -78,6 +81,12 @@ export const sliderBlockSchema = z.object({
     accent: z.string().optional(),
     cta: z.string().optional(),
     link: z.string().optional(),
+    lede: z.string().optional(),
+    ctas: z.array(z.object({
+      label: z.string(),
+      url: z.string(),
+      variant: z.enum(['primary', 'secondary', 'ghost', 'outline']).default('primary').optional(),
+    })).optional(),
   })).min(1, 'At least one slide is required'),
   autoplay: z.boolean().default(true),
   pauseControl: z.boolean().default(true),
@@ -245,6 +254,21 @@ export const productShowcaseBlockSchema = z.object({
   layout: z.enum(['grid', 'carousel']).default('grid'),
 });
 
+// 12b. Spec Comparison Block
+export const specComparisonBlockSchema = z.object({
+  type: z.literal('specComparison'),
+  headline: z.string().optional(),
+  title: z.string().optional(),
+  columns: z.array(z.object({
+    name: z.string(),
+  })).default([]),
+  rows: z.array(z.object({
+    label: z.string(),
+    values: z.string().default(''),
+  })).default([]),
+  version: z.number().int().default(1).optional(),
+});
+
 // 13. Where To Buy Block
 export const whereToBuyBlockSchema = z.object({
   type: z.literal('whereToBuy'),
@@ -358,6 +382,19 @@ export const linkChipsBlockSchema = z.object({
   })),
 });
 
+// 21b. Anchor Nav Block
+export const anchorNavBlockSchema = z.object({
+  type: z.literal('anchorNav'),
+  title: z.string().optional(),
+  sticky: z.boolean().default(true),
+  links: z.array(z.object({
+    label: z.string().min(1, 'Anchor label is required'),
+    targetId: z.string().min(1, 'Target ID is required'),
+    badge: z.string().optional(),
+  })).default([]),
+  version: z.number().int().default(1).optional(),
+});
+
 // 22. Category Tiles Block
 export const categoryTilesBlockSchema = z.object({
   type: z.literal('categoryTiles'),
@@ -365,6 +402,15 @@ export const categoryTilesBlockSchema = z.object({
   subtitle: z.string().optional(),
   categoryIds: z.array(z.number()).default([]),
   showCounts: z.boolean().default(true),
+  categories: z.array(z.object({
+    slug: z.string(),
+    name: z.string().optional(),
+    title: z.string().optional(),
+    pill: z.string().optional(),
+    image: z.string().optional(),
+    desc: z.string().optional(),
+    url: z.string().optional(),
+  })).optional(),
 });
 
 // 23. Policy Tabs Block
@@ -426,9 +472,48 @@ export const appEmbedBlockSchema = z.object({
     'power_calc',
     'ssd_tier',
     'roi_calc',
+    'sn_checker',
+    'rma_tracker',
+    'distributor_locator',
+    'glossary_filter',
   ]),
+  title: z.string().optional(),
   config: z.record(z.string(), z.unknown()).default({}),
+  microcopy: z.record(z.string(), z.string()).optional(),
 });
+
+export const BLOCK_SCHEMAS: Record<BlockType, z.ZodTypeAny> = {
+  hero: heroBlockSchema,
+  slider: sliderBlockSchema,
+  statsCounter: statsCounterBlockSchema,
+  featureGrid: featureGridBlockSchema,
+  bentoGrid: bentoGridBlockSchema,
+  ctaBanner: ctaBannerBlockSchema,
+  splitCta: splitCtaBlockSchema,
+  timeline: timelineBlockSchema,
+  textMedia: textMediaBlockSchema,
+  faqAccordion: faqAccordionBlockSchema,
+  table: tableBlockSchema,
+  productShowcase: productShowcaseBlockSchema,
+  specComparison: specComparisonBlockSchema,
+  whereToBuy: whereToBuyBlockSchema,
+  downloadDatasheet: downloadDatasheetBlockSchema,
+  qvlCompatibility: qvlCompatibilityBlockSchema,
+  testimonial: testimonialBlockSchema,
+  badgeStrip: badgeStripBlockSchema,
+  steps: stepsBlockSchema,
+  kpiMeters: kpiMetersBlockSchema,
+  callout: calloutBlockSchema,
+  linkChips: linkChipsBlockSchema,
+  anchorNav: anchorNavBlockSchema,
+  categoryTiles: categoryTilesBlockSchema,
+  policyTabs: policyTabsBlockSchema,
+  form: formBlockSchema,
+  officeCards: officeCardsBlockSchema,
+  articleList: articleListBlockSchema,
+  glossaryIndex: glossaryIndexBlockSchema,
+  appEmbed: appEmbedBlockSchema,
+};
 
 // Union of all block schemas
 export const blockSchema = z.union([
@@ -444,6 +529,7 @@ export const blockSchema = z.union([
   faqAccordionBlockSchema,
   tableBlockSchema,
   productShowcaseBlockSchema,
+  specComparisonBlockSchema,
   whereToBuyBlockSchema,
   downloadDatasheetBlockSchema,
   qvlCompatibilityBlockSchema,
@@ -453,6 +539,7 @@ export const blockSchema = z.union([
   kpiMetersBlockSchema,
   calloutBlockSchema,
   linkChipsBlockSchema,
+  anchorNavBlockSchema,
   categoryTilesBlockSchema,
   policyTabsBlockSchema,
   formBlockSchema,
@@ -467,22 +554,44 @@ export type Block = z.infer<typeof blockSchema>;
 export const pageBlocksSchema = z.array(blockSchema);
 
 /**
+ * Migrates a block JSON from earlier versions to current schema.
+ */
+export function migrateBlock(raw: Record<string, unknown>): Record<string, unknown> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw;
+  const migrated = { ...raw };
+  if (typeof migrated.version !== 'number') {
+    migrated.version = 1;
+  }
+  return migrated;
+}
+
+/**
  * Validates a block payload, throwing or returning detailed error.
  */
 export function validateBlock(raw: unknown): { success: true; data: Block } | { success: false; errors: string[] } {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return { success: false, errors: ['Block must be an object'] };
+    return { success: false, errors: ['root: Block must be an object'] };
   }
   const item = raw as Record<string, unknown>;
   if (typeof item.type !== 'string' || !item.type.trim()) {
-    return { success: false, errors: ['Block type is required and must be a non-empty string'] };
+    return { success: false, errors: ['type: Block type is required and must be a non-empty string'] };
   }
-  const result = blockSchema.safeParse(raw);
+  if (!BLOCK_TYPES.includes(item.type as any)) {
+    return {
+      success: false,
+      errors: [`type: Unknown block type "${item.type}"`],
+    };
+  }
+  const schema = BLOCK_SCHEMAS[item.type as BlockType];
+  const result = schema.safeParse(item);
   if (result.success) {
-    return { success: true, data: result.data };
+    return { success: true, data: result.data as Block };
   }
-  // Backwards compatibility with prototype/custom block structures
-  return { success: true, data: item as unknown as Block };
+  const errors = result.error.issues.map((i) => {
+    const p = i.path.length > 0 ? i.path.join('.') : 'root';
+    return `${p}: ${i.message}`;
+  });
+  return { success: false, errors };
 }
 
 /**

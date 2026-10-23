@@ -9,7 +9,7 @@ const require = createRequire(import.meta.url);
 const axeSourcePath = require.resolve('axe-core');
 const axeSource = readFileSync(axeSourcePath, 'utf8');
 
-const PORT = process.env.AUDIT_PORT ? Number(process.env.AUDIT_PORT) : 4399;
+const PORT = process.env.AUDIT_PORT ? Number(process.env.AUDIT_PORT) : 4401;
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..', 'apps', 'web', 'dist');
 const SERVE_ROOT = existsSync(join(ROOT, 'client')) ? join(ROOT, 'client') : ROOT;
 const EVIDENCE_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..', 'tooling', 'verify', 'evidence');
@@ -27,10 +27,15 @@ function sendFile(res, filePath, status = 200) {
   res.writeHead(status, {
     'content-type': MIME[extname(filePath).toLowerCase()] ?? 'application/octet-stream',
   });
-  createReadStream(filePath).pipe(res);
+  const stream = createReadStream(filePath);
+  stream.on('error', () => {
+    if (!res.headersSent) res.writeHead(404, { 'content-type': 'text/plain' });
+    res.end('Not Found');
+  });
+  stream.pipe(res);
 }
 
-const server = createServer((req, res) => {
+const server = createServer(async (req, res) => {
   const urlPath = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname);
   const clean = normalize(urlPath).replaceAll('..', '');
   const candidate = join(SERVE_ROOT, clean);
@@ -44,7 +49,32 @@ const server = createServer((req, res) => {
     join(ROOT, clean, 'index.html'),
   ].filter((p) => existsSync(p) && statSync(p).isFile());
   if (tries.length > 0) { sendFile(res, tries[0]); return; }
-  sendFile(res, join(SERVE_ROOT, '404.html'), 404);
+  
+  // SSR fallback: proxy to live Astro server
+  try {
+    let targetPath = req.url;
+    if (targetPath.endsWith('.html')) {
+      targetPath = targetPath.slice(0, -5);
+    } else if (targetPath.includes('.html?')) {
+      targetPath = targetPath.replace('.html?', '?');
+    }
+    const upstreamRes = await fetch(`http://localhost:4321${targetPath}`, {
+      headers: { ...req.headers, host: 'localhost:4321' },
+      redirect: 'follow',
+    });
+    const headers = {};
+    upstreamRes.headers.forEach((v, k) => { headers[k] = v; });
+    res.writeHead(upstreamRes.status, headers);
+    const buf = Buffer.from(await upstreamRes.arrayBuffer());
+    res.end(buf);
+    return;
+  } catch {
+    if (existsSync(join(SERVE_ROOT, '404.html'))) {
+      sendFile(res, join(SERVE_ROOT, '404.html'), 404);
+    } else {
+      res.writeHead(404, { 'content-type': 'text/plain' }).end('Not Found');
+    }
+  }
 });
 
 const ROUTES_29 = [

@@ -297,11 +297,19 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
         autoProvisioned = true;
       }
       try {
+        // Invited partners are created unverified. Send a real verification
+        // link through Better Auth so they can satisfy requireEmailVerification.
+        const callbackURL = `${process.env.ADMIN_PUBLIC_URL ?? 'http://localhost:5173'}/#/verify-email`;
+        await deps.auth?.api?.sendVerificationEmail?.({ body: { email: normalizedEmail, callbackURL } });
+      } catch (err) {
+        console.warn('[partner] verification mail failed:', err);
+      }
+      try {
         const { sendMail } = await import('../mailer.ts');
         await sendMail({
           to: normalizedEmail,
           subject: 'TwinMOS Partner Portal Invitation',
-          text: `You have been added to the TwinMOS Partner Portal. Your temporary password is: ${tempPassword}\nPlease verify your email and set your new password immediately.`,
+          text: `You have been added to the TwinMOS Partner Portal. Your temporary password is: ${tempPassword}\nA separate email contains your verification link — open it first, then sign in and set your new password immediately.`,
           meta: { kind: 'partner-invite', email: normalizedEmail },
         });
       } catch (err) {

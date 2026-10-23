@@ -4,7 +4,6 @@ import { eq } from 'drizzle-orm';
 import {
   createDb,
   navMenu,
-  navItem,
   glossaryTerm,
   office,
   testimonial,
@@ -20,125 +19,20 @@ async function seedPhaseC() {
 
   // ============================================================
   // 1. Navigation Menus & Items (Task C2a, C2b)
+  // Import the real prototype tree instead of inventing links (Z-15).
+  // The importer is idempotent and removes any legacy invented menus.
   // ============================================================
-  const existingMenus = await db.select({ id: navMenu.id, code: navMenu.code }).from(navMenu);
+  const existingMenus = await db.select({ id: navMenu.id }).from(navMenu).limit(1);
   if (existingMenus.length === 0) {
-    console.log('[seed-phase-c] Seeding Navigation Menus...');
-
-    // Header Menu
-    const [headerMenu] = await db.insert(navMenu).values({
-      code: 'header',
-      title: 'Primary Header Navigation',
-      locale: 'en',
-    }).returning();
-
-    // Drawer Menu
-    const [drawerMenu] = await db.insert(navMenu).values({
-      code: 'drawer',
-      title: 'Mobile Navigation Drawer',
-      locale: 'en',
-    }).returning();
-
-    // Footer Menu
-    const [footerMenu] = await db.insert(navMenu).values({
-      code: 'footer',
-      title: 'Footer Multi-Column Navigation',
-      locale: 'en',
-    }).returning();
-
-    // Legal Menu
-    const [legalMenu] = await db.insert(navMenu).values({
-      code: 'legal',
-      title: 'Legal & Compliance Links',
-      locale: 'en',
-    }).returning();
-
-    // Populate Header Items (hierarchical)
-    const [headerProducts] = await db.insert(navItem).values({
-      menuId: headerMenu.id,
-      parentId: null,
-      title: 'Products',
-      targetType: 'category',
-      targetUrl: '/products.html',
-      sort: 10,
-    }).returning();
-
-    await db.insert(navItem).values([
-      { menuId: headerMenu.id, parentId: headerProducts.id, title: 'Gaming DRAM (VOLTX)', targetType: 'category', targetUrl: '/products.html?cat=gaming-dram', sort: 10 },
-      { menuId: headerMenu.id, parentId: headerProducts.id, title: 'Desktop & Laptop RAM', targetType: 'category', targetUrl: '/products.html?cat=standard-dram', sort: 20 },
-      { menuId: headerMenu.id, parentId: headerProducts.id, title: 'Gen5 & Gen4 NVMe SSDs', targetType: 'category', targetUrl: '/products.html?cat=nvme-ssd', sort: 30 },
-      { menuId: headerMenu.id, parentId: headerProducts.id, title: '2.5" SATA SSDs', targetType: 'category', targetUrl: '/products.html?cat=sata-ssd', sort: 40 },
-      { menuId: headerMenu.id, parentId: headerProducts.id, title: 'Memory Cards & Flash', targetType: 'category', targetUrl: '/products.html?cat=flash-memory', sort: 50 },
-    ]);
-
-    const [headerSolutions] = await db.insert(navItem).values({
-      menuId: headerMenu.id,
-      parentId: null,
-      title: 'Solutions',
-      targetType: 'url',
-      targetUrl: '/solutions.html',
-      sort: 20,
-    }).returning();
-
-    await db.insert(navItem).values([
-      { menuId: headerMenu.id, parentId: headerSolutions.id, title: 'Industrial & Embedded', targetType: 'url', targetUrl: '/solutions/industrial.html', sort: 10 },
-      { menuId: headerMenu.id, parentId: headerSolutions.id, title: 'Enterprise Data Storage', targetType: 'url', targetUrl: '/solutions/enterprise.html', sort: 20 },
-      { menuId: headerMenu.id, parentId: headerSolutions.id, title: 'Creator & Gaming Workstations', targetType: 'url', targetUrl: '/solutions/creators.html', sort: 30 },
-    ]);
-
-    await db.insert(navItem).values([
-      { menuId: headerMenu.id, parentId: null, title: 'Support', targetType: 'url', targetUrl: '/support.html', sort: 30 },
-      { menuId: headerMenu.id, parentId: null, title: 'Where to Buy', targetType: 'url', targetUrl: '/where-to-buy.html', sort: 40 },
-      { menuId: headerMenu.id, parentId: null, title: 'About Us', targetType: 'url', targetUrl: '/about.html', sort: 50 },
-      { menuId: headerMenu.id, parentId: null, title: 'Contact', targetType: 'url', targetUrl: '/contact.html', sort: 60 },
-    ]);
-
-    // Drawer Menu Items
-    await db.insert(navItem).values([
-      { menuId: drawerMenu.id, parentId: null, title: 'Products Overview', targetType: 'url', targetUrl: '/products.html', sort: 10 },
-      { menuId: drawerMenu.id, parentId: null, title: 'Gaming Series (VOLTX)', targetType: 'url', targetUrl: '/products.html?brand=voltx', sort: 20 },
-      { menuId: drawerMenu.id, parentId: null, title: 'DRAM Modules', targetType: 'category', targetUrl: '/products.html?cat=dram', sort: 30 },
-      { menuId: drawerMenu.id, parentId: null, title: 'Solid State Drives', targetType: 'category', targetUrl: '/products.html?cat=ssd', sort: 40 },
-      { menuId: drawerMenu.id, parentId: null, title: 'Support & Warranty', targetType: 'url', targetUrl: '/support.html', sort: 50 },
-      { menuId: drawerMenu.id, parentId: null, title: 'Global Offices', targetType: 'url', targetUrl: '/offices.html', sort: 60 },
-      { menuId: drawerMenu.id, parentId: null, title: 'Tech Glossary', targetType: 'url', targetUrl: '/glossary.html', sort: 70 },
-      { menuId: drawerMenu.id, parentId: null, title: 'Distributor Inquiry', targetType: 'url', targetUrl: '/contact.html?type=distributor', sort: 80 },
-    ]);
-
-    // Footer Menu Items
-    const [footerCol1] = await db.insert(navItem).values({ menuId: footerMenu.id, parentId: null, title: 'Products', targetType: 'url', targetUrl: '/products.html', sort: 10 }).returning();
-    await db.insert(navItem).values([
-      { menuId: footerMenu.id, parentId: footerCol1.id, title: 'Gaming Memory (DDR5/DDR4)', targetType: 'url', targetUrl: '/products.html?cat=gaming-dram', sort: 10 },
-      { menuId: footerMenu.id, parentId: footerCol1.id, title: 'NVMe M.2 Solid State Drives', targetType: 'url', targetUrl: '/products.html?cat=nvme-ssd', sort: 20 },
-      { menuId: footerMenu.id, parentId: footerCol1.id, title: 'Enterprise Storage Solutions', targetType: 'url', targetUrl: '/solutions/enterprise.html', sort: 30 },
-      { menuId: footerMenu.id, parentId: footerCol1.id, title: 'Flash Cards & Portable Drives', targetType: 'url', targetUrl: '/products.html?cat=flash', sort: 40 },
-    ]);
-
-    const [footerCol2] = await db.insert(navItem).values({ menuId: footerMenu.id, parentId: null, title: 'Support & Tools', targetType: 'url', targetUrl: '/support.html', sort: 20 }).returning();
-    await db.insert(navItem).values([
-      { menuId: footerMenu.id, parentId: footerCol2.id, title: 'Warranty & RMA Registration', targetType: 'url', targetUrl: '/warranty.html', sort: 10 },
-      { menuId: footerMenu.id, parentId: footerCol2.id, title: 'Product Authenticity Check', targetType: 'url', targetUrl: '/sncheck.html', sort: 20 },
-      { menuId: footerMenu.id, parentId: footerCol2.id, title: 'QVL & Motherboard Compatibility', targetType: 'url', targetUrl: '/compatibility.html', sort: 30 },
-      { menuId: footerMenu.id, parentId: footerCol2.id, title: 'Datasheet & Driver Downloads', targetType: 'url', targetUrl: '/downloads.html', sort: 40 },
-    ]);
-
-    const [footerCol3] = await db.insert(navItem).values({ menuId: footerMenu.id, parentId: null, title: 'Company', targetType: 'url', targetUrl: '/about.html', sort: 30 }).returning();
-    await db.insert(navItem).values([
-      { menuId: footerMenu.id, parentId: footerCol3.id, title: 'About TwinMOS', targetType: 'url', targetUrl: '/about.html', sort: 10 },
-      { menuId: footerMenu.id, parentId: footerCol3.id, title: 'Global Offices & Hubs', targetType: 'url', targetUrl: '/offices.html', sort: 20 },
-      { menuId: footerMenu.id, parentId: footerCol3.id, title: 'News & Announcements', targetType: 'url', targetUrl: '/news.html', sort: 30 },
-      { menuId: footerMenu.id, parentId: footerCol3.id, title: 'Careers at TwinMOS', targetType: 'url', targetUrl: '/careers.html', sort: 40 },
-    ]);
-
-    // Legal Menu Items
-    await db.insert(navItem).values([
-      { menuId: legalMenu.id, parentId: null, title: 'Privacy Policy', targetType: 'url', targetUrl: '/legal/privacy-policy.html', sort: 10 },
-      { menuId: legalMenu.id, parentId: null, title: 'Terms of Service', targetType: 'url', targetUrl: '/legal/terms-of-service.html', sort: 20 },
-      { menuId: legalMenu.id, parentId: null, title: 'Cookie Policy', targetType: 'url', targetUrl: '/legal/cookie-policy.html', sort: 30 },
-      { menuId: legalMenu.id, parentId: null, title: 'Warranty Terms', targetType: 'url', targetUrl: '/legal/warranty-policy.html', sort: 40 },
-    ]);
-
-    console.log('[seed-phase-c] Navigation Menus seeded successfully.');
+    try {
+      const { importPrototypeMenus } = await import('./import-prototype-menus.ts');
+      const result = await importPrototypeMenus(db);
+      console.log(
+        `[seed-phase-c] Imported prototype navigation (${result.total} anchors, ${result.links} links, ${result.rows} rows).`,
+      );
+    } catch (err) {
+      console.warn('[seed-phase-c] Prototype navigation import skipped:', (err as Error).message);
+    }
   }
 
   // ============================================================

@@ -150,6 +150,7 @@ describe('Phase C Content Model & Editors (VC-C Master Suite)', () => {
               isSpecTable: true,
             },
           ],
+          source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
         }),
       });
       const data = await res.json();
@@ -179,6 +180,7 @@ describe('Phase C Content Model & Editors (VC-C Master Suite)', () => {
         body: JSON.stringify({
           title: 'Conflict Test',
           version: 999, // Stale version!
+          source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
         }),
       });
       expect(res.status).toBe(409);
@@ -231,7 +233,6 @@ describe('Phase C Content Model & Editors (VC-C Master Suite)', () => {
           categoryId: 1,
           priceUsd: 189.99,
           currency: 'USD',
-          status: 'published',
           warrantyTier: '5_year',
           launchDate: '2026-03-01T00:00:00.000Z',
           specsDictionary: {
@@ -240,10 +241,17 @@ describe('Phase C Content Model & Editors (VC-C Master Suite)', () => {
             nand: '3D TLC',
             tbw: 1400,
           },
+          source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
         }),
       });
       const data = await res.json();
       prodId = data.id;
+      // T4.6.1: publish via the audited transition endpoint.
+      await app.request(`/api/v1/admin/products/${prodId}/transition`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie: adminCookie },
+        body: JSON.stringify({ to: 'published' }),
+      });
       return prodId;
     }
 
@@ -267,13 +275,11 @@ describe('Phase C Content Model & Editors (VC-C Master Suite)', () => {
       });
       const cur = await getRes.json();
 
-      const patchRes = await app.request(`/api/v1/admin/products/${id}`, {
-        method: 'PATCH',
+      // T4.6.1: archiving moves through the audited transition endpoint.
+      const patchRes = await app.request(`/api/v1/admin/products/${id}/transition`, {
+        method: 'POST',
         headers: { 'content-type': 'application/json', cookie: adminCookie },
-        body: JSON.stringify({
-          status: 'archived',
-          version: cur.version,
-        }),
+        body: JSON.stringify({ to: 'archived' }),
       });
       expect(patchRes.status).toBe(200);
 
@@ -317,6 +323,7 @@ describe('Phase C Content Model & Editors (VC-C Master Suite)', () => {
           address: 'JAFZA View 18, Jebel Ali Free Zone, Dubai, UAE',
           flag: '🇦🇪',
           sort: 1,
+          source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
         }),
       });
       expect(res.status).toBe(201);
@@ -336,6 +343,8 @@ describe('Phase C Content Model & Editors (VC-C Master Suite)', () => {
           author: 'DevOps Lead',
           role: 'Enterprise Cloud Corp',
           permissionFlag: true,
+          permissionEvidence: 'Signed release on file (phase-c fixture).',
+          source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
           sort: 1,
         }),
       });
@@ -356,8 +365,11 @@ describe('Phase C Content Model & Editors (VC-C Master Suite)', () => {
           title: 'Global Warranty Policy',
           version: '2026.1',
           status: 'published',
+          legalApproved: true,
+          approvedBy: 'Arthur Pendelton',
           summary: 'Standard 5-year and lifetime limited warranty conditions.',
           body: 'Full warranty text...',
+          source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
         }),
       });
       expect(res.status).toBe(201);
@@ -381,6 +393,7 @@ describe('Phase C Content Model & Editors (VC-C Master Suite)', () => {
             { name: 'serialNumber', label: 'Serial Number (S/N)', type: 'text', required: true, sort: 1 },
             { name: 'defectReason', label: 'Defect Description', type: 'textarea', required: true, sort: 2 },
           ],
+          source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
         }),
       });
       expect(res.status).toBe(201);

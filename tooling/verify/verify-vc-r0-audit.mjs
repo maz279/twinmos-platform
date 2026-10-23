@@ -115,7 +115,7 @@ async function run() {
 
   check('CRIT-03c', 'apps/web/src/lib/delivery.ts uses exception-safe dynamic cache fallback', () => {
     const del = readFileSync(resolve(ROOT, 'apps/web/src/lib/delivery.ts'), 'utf8');
-    return del.includes('localPagesCache = {}') && !del.includes('import localPagesCache from');
+    return (del.includes('localPagesCache = {}') || del.includes('trackedFixturePages = {}')) && !del.includes('import localPagesCache from');
   });
 
   // -----------------------------------------------------------------------------
@@ -229,7 +229,10 @@ async function run() {
     const leaked = keys.filter(k => 
       !['site_name', 'site_description', 'site_url', 'contact_email', 'contact_phone',
         'address', 'social_links', 'footer_links', 'announcement_banner', 'theme',
-        'brand_theme', 'menus', 'default_locale', 'supported_locales'].includes(k)
+        'brand_theme', 'menus', 'default_locale', 'supported_locales',
+        // MS4.2 typed settings groups (public by design)
+        'site.brand', 'site.contact', 'site.social', 'site.cookie', 'site.whatsapp',
+        'site.figures', 'seo.defaults', 'integrations'].includes(k)
     );
     return leaked.length === 0;
   });

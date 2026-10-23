@@ -1,0 +1,37 @@
+---
+// Localised CMS page (T4.7.5 / rule D-8).
+// Middleware only allows this route through when a published variant exists;
+// everything else 301s to the English URL.
+import Layout from '../../layouts/Layout.astro';
+import BlockDispatcher from '../../components/blocks/BlockDispatcher.astro';
+import { getDeliveryPage } from '../../lib/delivery';
+import { LOCALES } from '@twinmos/shared';
+
+export const prerender = false;
+
+const { locale, slug } = Astro.params;
+if (!locale || !LOCALES.includes(locale as any) || locale === 'en') {
+  return new Response('Not Found', { status: 404, statusText: 'Not Found' });
+}
+
+const pageSlug = String(slug ?? 'index').replace(/\.html$/i, '').replace(/\/+$/, '') || 'index';
+const page = await getDeliveryPage(pageSlug, locale);
+
+if (!page) {
+  return new Response('Not Found', { status: 404, statusText: 'Not Found' });
+}
+
+const title = page.title ?? 'TwinMOS';
+const desc = page.seoDescription ?? page.description ?? '';
+const blocks = page.blocks ?? [];
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: title },
+];
+---
+
+<Layout title={title} desc={desc} locale={locale} breadcrumbs={breadcrumbs} noindex={Boolean(page.noindex)}>
+  <main id="main">
+    <BlockDispatcher blocks={blocks} />
+  </main>
+</Layout>

@@ -371,6 +371,13 @@ function DistributorEditor({ row, canWrite, onDone, onCancel }: {
     name: row?.name ?? '', country: row?.country ?? '', region: row?.region ?? 'me', status: row?.status ?? 'authorized',
     cities: (row?.cities ?? []).join('; '), email: row?.contact?.email ?? '', website: row?.contact?.website ?? '',
     note: row?.note ?? '',
+    // T4.5.6: ISO country, tagline, CTA config, sort order + provenance
+    isoCountry: (row as any)?.isoCountry ?? '', tagline: (row as any)?.tagline ?? '',
+    ctaLabel: ((row as any)?.ctaConfig?.actions?.[0]?.label as string) ?? '',
+    ctaHref: ((row as any)?.ctaConfig?.actions?.[0]?.href as string) ?? '/contact',
+    sort: String((row as any)?.sort ?? 0),
+    source: (row as any)?.source ?? 'Global distributor dispatch ledgers (BD-02)',
+    approver: (row as any)?.approver ?? 'Victoria Sterling',
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -389,6 +396,17 @@ function DistributorEditor({ row, canWrite, onDone, onCancel }: {
         ...(form.website.trim() ? { website: form.website.trim() } : {}),
       },
       note: form.note.trim() || null,
+      isoCountry: form.isoCountry.trim().toUpperCase().slice(0, 2) || null,
+      tagline: form.tagline.trim() || null,
+      sort: Number(form.sort || 0),
+      ctaConfig: {
+        status: 'active',
+        actions: form.ctaLabel.trim()
+          ? [{ label: form.ctaLabel.trim(), href: form.ctaHref.trim() || '/contact', primary: true }]
+          : undefined,
+      },
+      source: form.source.trim() || null,
+      approver: form.approver.trim() || null,
     };
     setBusy(true);
     try {
@@ -425,6 +443,20 @@ function DistributorEditor({ row, canWrite, onDone, onCancel }: {
           <input style={{ ...input, width: '100%' }} placeholder="sales@…" value={form.email} onChange={(e) => set('email', e.target.value)} /></span>
         <span><label style={label}>Website</label>
           <input style={{ ...input, width: '100%' }} placeholder="https://…" value={form.website} onChange={(e) => set('website', e.target.value)} /></span>
+        <span><label style={label}>ISO country (2 letters)</label>
+          <input style={{ ...input, width: '100%' }} placeholder="AE" maxLength={2} value={form.isoCountry} onChange={(e) => set('isoCountry', e.target.value)} /></span>
+        <span><label style={label}>Tagline / channel note</label>
+          <input style={{ ...input, width: '100%' }} placeholder="Regional HQ — Dubai" value={form.tagline} onChange={(e) => set('tagline', e.target.value)} /></span>
+        <span><label style={label}>Primary CTA label</label>
+          <input style={{ ...input, width: '100%' }} placeholder="Contact the hub" value={form.ctaLabel} onChange={(e) => set('ctaLabel', e.target.value)} /></span>
+        <span><label style={label}>Primary CTA href</label>
+          <input style={{ ...input, width: '100%' }} placeholder="/contact" value={form.ctaHref} onChange={(e) => set('ctaHref', e.target.value)} /></span>
+        <span><label style={label}>Sort order</label>
+          <input style={{ ...input, width: '100%' }} type="number" value={form.sort} onChange={(e) => set('sort', e.target.value)} /></span>
+        <span><label style={label}>Source (provenance)</label>
+          <input style={{ ...input, width: '100%' }} value={form.source} onChange={(e) => set('source', e.target.value)} /></span>
+        <span><label style={label}>Approver (provenance)</label>
+          <input style={{ ...input, width: '100%' }} value={form.approver} onChange={(e) => set('approver', e.target.value)} /></span>
       </div>
       <label style={label}>Card note</label>
       <textarea style={{ ...input, width: '100%', minHeight: 60, fontFamily: 'inherit' }} placeholder="Shown on the where-to-buy card…"

@@ -12,7 +12,7 @@
     "sitemap": "node ../../tooling/gen_sitemap.mjs",
     "catalog:build": "node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts",
     "predev": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts",
-    "prebuild": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts && node ../../tooling/gen_sitemap.mjs",
+    "prebuild": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts",
     "sync:proto": "node ../../tooling/sync-prototype-assets.mjs",
     "import:corpus": "node --experimental-strip-types --no-warnings ../../tooling/import-corpus.ts"
   },
@@ -20,7 +20,8 @@
     "@astrojs/check": "0.9.10",
     "@astrojs/node": "11.1.7",
     "@twinmos/shared": "0.1.0",
-    "astro": "^7.3.5"
+    "astro": "^7.3.5",
+    "isomorphic-dompurify": "^4.4.0"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",

@@ -30,7 +30,15 @@ import {
   findPublishedSitemapEntries,
   findSearchSuggestions,
   searchPublishedContent,
+  findDistributors,
+  findMarketplaces,
+  findPublishedJobs,
+  findPublishedJobById,
+  findSpecDictionary,
+  findSpecTemplates,
+  findDeviceTypeLabels,
 } from './query.ts';
+import { and, eq } from 'drizzle-orm';
 
 // Invariant Query Layer Contracts (T3.1.1 / Z-12 / DLV-LEAK / CRIT-07):
 // Centralized in ./query.ts — strictly enforces:
@@ -313,6 +321,33 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
   });
 
   // --- 8. Navigation Menus ---
+  // T4.7.5: locale activation gate — a locale is served only when its
+  // required set (core pages + common strings + menus) is complete AND the
+  // row is flagged active in the locale table.
+  r.get('/locales', async (c) => {
+    const { locale: localeTable, translation: translationTable, navMenu, page: pageTable } = await import('@twinmos/db');
+    const [rows, enPages, menus] = await Promise.all([
+      db.select().from(localeTable),
+      db.select({ id: pageTable.id }).from(pageTable).where(and(eq(pageTable.locale, 'en'), eq(pageTable.status, 'published'))),
+      db.select({ code: navMenu.code }).from(navMenu).where(eq(navMenu.locale, 'en')),
+    ]);
+    const locales = [];
+    for (const row of rows) {
+      if (row.code === 'en') { locales.push({ ...row, complete: true, active: true }); continue; }
+      const strings = await db.select({ id: translationTable.id })
+        .from(translationTable)
+        .where(and(eq(translationTable.locale, row.code), eq(translationTable.ns, 'common')));
+      const translatedMenus = await db.select({ code: navMenu.code }).from(navMenu).where(eq(navMenu.locale, row.code));
+      const complete =
+        enPages.length === 0 ||
+        (strings.length >= 8 && translatedMenus.length >= 3);
+      locales.push({ ...row, complete, active: row.active && complete });
+    }
+    const tags = ['settings'];
+    applyHeaders(c, tags);
+    return c.json({ data: locales.filter((l) => l.code === 'en' || l.active), meta: { total: locales.length, cacheTags: tags } });
+  });
+
   r.get('/navigation', async (c) => {
     const locale = c.req.query('locale') || 'en';
     const menus = await findPublishedNavMenus(db, locale);
@@ -322,7 +357,7 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     return c.json({ data: menus, meta: { total: menus.length, cacheTags: tags } });
   });
 
-  r.get('/navigation/:code', async (c) => {
+  const getNavMenuByCode = async (c: any) => {
     const code = c.req.param('code');
     const locale = c.req.query('locale') || 'en';
 
@@ -334,7 +369,10 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const tags = ['nav', 'menus', `nav:${code}`];
     applyHeaders(c, tags);
     return c.json({ data: menu, meta: { cacheTags: tags } });
-  });
+  };
+
+  r.get('/navigation/:code', getNavMenuByCode);
+  r.get('/menus/:code', getNavMenuByCode);
 
   // --- 9. Glossary ---
   r.get('/glossary', async (c) => {
@@ -381,15 +419,16 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
   r.get('/policies/:slug', async (c) => {
     const slug = c.req.param('slug');
     const locale = c.req.query('locale') || 'en';
+    const version = c.req.query('version');
 
-    const policy = await findPublishedPolicyBySlug(db, slug, locale);
+    const policy = await findPublishedPolicyBySlug(db, slug, locale, version);
     if (!policy) {
       return c.json(problem(404, 'Policy document not found'), 404, { 'Content-Type': PROBLEM_JSON });
     }
 
-    const tags = ['policies', `policy:${slug}`];
+    const tags = ['policies', `policy:${slug}`, ...(version ? [`policy:${slug}:${version}`] : [])];
     applyHeaders(c, tags);
-    return c.json({ data: policy, meta: { cacheTags: tags } });
+    return c.json({ data: policy, meta: { cacheTags: tags, version: policy.version } });
   });
 
   // --- 13. Form Definitions ---
@@ -405,12 +444,23 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     return c.json({ data: formDef, meta: { cacheTags: tags } });
   });
 
-  // --- 14. Settings & Menus (T3.1.1 Safe Allowlist Only) ---
+  // --- 14. Settings & Menus (T3.1.1 Safe Allowlist Only / MS4.2 T4.2.1) ---
   r.get('/settings', async (c) => {
     const safeSettings = await findSafePublicSettings(db);
     const tags = ['settings', 'site'];
     applyHeaders(c, tags);
     return c.json({ data: safeSettings, meta: { cacheTags: tags } });
+  });
+
+  r.get('/settings/:group', async (c) => {
+    const group = c.req.param('group');
+    const safeSettings = await findSafePublicSettings(db);
+    if (!(group in safeSettings)) {
+      return c.json(problem(404, 'Settings group not found'), 404, { 'Content-Type': PROBLEM_JSON });
+    }
+    const tags = ['settings', 'site', `settings:${group}`];
+    applyHeaders(c, tags);
+    return c.json({ data: safeSettings[group], meta: { group, cacheTags: tags } });
   });
 
   r.get('/menus', async (c) => {
@@ -476,6 +526,68 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
       ...result,
       meta: { cacheTags: tags },
     });
+  });
+
+  // --- 18. Directory, Compatibility Labels & Jobs (MS4.5 / T4.5.6) ---
+  r.get('/distributors', async (c) => {
+    const region = c.req.query('region');
+    const status = c.req.query('status');
+    const country = c.req.query('country');
+
+    const rows = await findDistributors(db, { region, status, country });
+    const tags = ['distributors', ...(region ? [`distributors:${region}`] : [])];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
+  });
+
+  r.get('/marketplaces', async (c) => {
+    const country = c.req.query('country');
+    const rows = await findMarketplaces(db, country);
+    const tags = ['marketplaces'];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
+  });
+
+  r.get('/jobs', async (c) => {
+    const dept = c.req.query('dept');
+    const rows = await findPublishedJobs(db, dept);
+    const tags = ['jobs', ...(dept ? [`jobs:${dept}`] : [])];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
+  });
+
+  r.get('/jobs/:id', async (c) => {
+    const id = Number(c.req.param('id'));
+    const job = await findPublishedJobById(db, id);
+    if (!job) {
+      return c.json(problem(404, 'Job posting not found'), 404, { 'Content-Type': PROBLEM_JSON });
+    }
+    const tags = ['jobs', `job:${id}`];
+    applyHeaders(c, tags);
+    return c.json({ data: job, meta: { cacheTags: tags } });
+  });
+
+  r.get('/device-type-labels', async (c) => {
+    const rows = await findDeviceTypeLabels(db);
+    const tags = ['compatibility', 'device-types'];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
+  });
+
+  r.get('/spec-dictionary', async (c) => {
+    const categoryId = c.req.query('categoryId');
+    const rows = await findSpecDictionary(db, categoryId ? Number(categoryId) : undefined);
+    const tags = ['specs', 'dictionary'];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
+  });
+
+  r.get('/spec-templates', async (c) => {
+    const categoryId = c.req.query('categoryId');
+    const rows = await findSpecTemplates(db, categoryId ? Number(categoryId) : undefined);
+    const tags = ['specs', 'templates'];
+    applyHeaders(c, tags);
+    return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
   });
 
   return r;

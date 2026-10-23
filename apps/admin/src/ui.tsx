@@ -24,12 +24,12 @@ export const INK = '#1F2A37';    // headings on white
 export const TEAL = '#1DBF9F';   // primary accent (buttons, active nav, charts)
 export const TEAL_DK = '#0E9F7E';// accent text / pressed states
 export const GOLD = '#E8A33D';   // secondary (RMA / warnings)
-export const RED = '#E0524D';
-export const GREEN = '#1F9D62';
+export const RED = '#B91C1C';     // WCAG AA >= 5.8:1 on white
+export const GREEN = '#15803D';   // WCAG AA >= 4.6:1 on white
 export const BLUE = '#3E8DDD';
 export const PURPLE = '#7C5CDB';
-export const MUTED = '#66748A';  // secondary text
-export const FAINT = '#607286';  // captions / placeholders (WCAG AA >= 4.5:1 on white)
+export const MUTED = '#475569';  // secondary text (WCAG AA >= 5.4:1 on white)
+export const FAINT = '#475569';  // captions / placeholders (WCAG AA >= 5.4:1 on white)
 export const LINE = '#E6EBF1';   // card borders
 export const PAGE = '#F2F4F6';   // canvas behind cards
 
@@ -100,15 +100,49 @@ export function Kpi({ label, value, hint }: { label: string; value: React.ReactN
   );
 }
 
-const TONES: Record<string, string> = {
-  new: TEAL, submitted: TEAL, under_review: PURPLE, approved: GREEN,
-  in_repair: GOLD, shipped: BLUE, delivered: GREEN, closed: '#64748B',
-  assigned: PURPLE, resolved: GREEN, spam: RED, draft: '#64748B',
-  in_review: GOLD, scheduled: BLUE, published: GREEN, archived: '#94A3B8',
+const TONES: Record<string, { bg: string; text: string; border: string }> = {
+  super_admin: { bg: '#EDE9FE', text: '#5B21B6', border: '#C4B5FD' },
+  admin: { bg: '#E0E7FF', text: '#3730A3', border: '#A5B4FC' },
+  editor: { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' },
+  author: { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' },
+  viewer: { bg: '#F1F5F9', text: '#1E293B', border: '#CBD5E1' },
+  member: { bg: '#EFF6FF', text: '#1E40AF', border: '#BFDBFE' },
+  new: { bg: '#E6FFFA', text: '#006653', border: '#B2F5EA' },
+  submitted: { bg: '#E6FFFA', text: '#006653', border: '#B2F5EA' },
+  under_review: { bg: '#EDE9FE', text: '#5B21B6', border: '#C4B5FD' },
+  in_repair: { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' },
+  shipped: { bg: '#E0F2FE', text: '#075985', border: '#BAE6FD' },
+  delivered: { bg: '#DCFCE7', text: '#14532D', border: '#86EFAC' },
+  assigned: { bg: '#EDE9FE', text: '#5B21B6', border: '#C4B5FD' },
+  published: { bg: '#DCFCE7', text: '#14532D', border: '#86EFAC' },
+  draft: { bg: '#F1F5F9', text: '#1E293B', border: '#CBD5E1' },
+  in_review: { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' },
+  scheduled: { bg: '#E0F2FE', text: '#075985', border: '#BAE6FD' },
+  archived: { bg: '#F1F5F9', text: '#334155', border: '#CBD5E1' },
+  closed: { bg: '#F1F5F9', text: '#334155', border: '#CBD5E1' },
+  spam: { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' },
+  approved: { bg: '#DCFCE7', text: '#14532D', border: '#86EFAC' },
+  resolved: { bg: '#DCFCE7', text: '#14532D', border: '#86EFAC' },
 };
+const BADGE_FALLBACK = { bg: '#F1F5F9', text: '#1E293B', border: '#CBD5E1' };
+
 export function Badge({ value }: { value: string }) {
-  const tone = TONES[value] ?? '#64748B';
-  return <span style={{ background: tone + '1C', color: tone, border: `1px solid ${tone}44`, borderRadius: 99, padding: '2px 10px', fontSize: 11.5, fontWeight: 700, whiteSpace: 'nowrap' }}>{value.replace(/_/g, ' ')}</span>;
+  const norm = (value || '').toLowerCase().trim();
+  const cfg = TONES[norm] ?? BADGE_FALLBACK;
+  return (
+    <span style={{
+      background: cfg.bg,
+      color: cfg.text,
+      border: `1px solid ${cfg.border}`,
+      borderRadius: 99,
+      padding: '2px 10px',
+      fontSize: 11.5,
+      fontWeight: 700,
+      whiteSpace: 'nowrap',
+    }}>
+      {value.replace(/_/g, ' ')}
+    </span>
+  );
 }
 
 export function Table({ head, children }: { head: string[]; children: React.ReactNode }) {

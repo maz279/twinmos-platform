@@ -1,0 +1,12 @@
+{
+  "index": {
+    "slug": "index",
+    "title": "TwinMOS Technologies",
+    "blocks": []
+  },
+  "about": {
+    "slug": "about",
+    "title": "About TwinMOS",
+    "blocks": []
+  }
+}

@@ -15,22 +15,22 @@ const checks = [
   {
     id: 'VC-B-02',
     name: 'DLV-01: Delivery API Published-Only & Draft 404 Isolation',
-    cmd: 'npm test --workspace @twinmos/api -- test/delivery.e2e.test.ts -t "returns published page"',
+    cmd: 'npx vitest run apps/api/test/delivery.e2e.test.ts -t published',
   },
   {
     id: 'VC-B-03',
     name: 'DLV-PREVIEW: HMAC-SHA256 Signed Preview Token Generator & Validator',
-    cmd: 'npm test --workspace @twinmos/api -- test/delivery.e2e.test.ts -t "valid preview token"',
+    cmd: 'npx vitest run apps/api/test/delivery.e2e.test.ts -t preview',
   },
   {
     id: 'VC-B-04',
     name: 'DLV-TAGS: Delivery API Cache Tags Metadata Attribution',
-    cmd: 'npm test --workspace @twinmos/api -- test/delivery.e2e.test.ts -t "cacheTags"',
+    cmd: 'npx vitest run apps/api/test/delivery.e2e.test.ts -t Cache-Tag',
   },
   {
     id: 'VC-B-05',
     name: 'DLV-PERF: Delivery API In-Memory Warm P95 Latency < 50ms',
-    cmd: 'npm test --workspace @twinmos/api -- test/delivery.e2e.test.ts -t "p95 response time"',
+    cmd: 'npx vitest run apps/api/test/delivery.e2e.test.ts -t p95',
   },
   {
     id: 'VC-B-06',
@@ -60,7 +60,7 @@ const checks = [
   {
     id: 'VC-B-11',
     name: 'CMS-E1: Redirect Loop, Multi-Hop Chain & Live Route Rejection',
-    cmd: 'npm test --workspace @twinmos/api -- test/redirects.test.ts',
+    cmd: 'npx vitest run apps/api/test/redirects.test.ts',
   },
   {
     id: 'VC-B-12',
@@ -85,12 +85,17 @@ const checks = [
   {
     id: 'VC-B-16',
     name: 'QJ-01: Quality Jobs Workflow, Lighthouse Budgets & ZAP Rules',
-    cmd: 'node -e "const fs = require(\'fs\'); if (!fs.existsSync(\'.github/workflows/quality.yml\') || !fs.existsSync(\'lighthouserc.json\') || !fs.existsSync(\'deploy/zap/zap-baseline.rules\')) process.exit(1);"',
+    cmd: 'node tooling/verify/verify-quality-jobs.mjs',
   },
   {
     id: 'VC-B-17',
     name: 'GPROV-CI, GREF-H & GPARITY: Provenance, Secrets & Architectural Reflection',
     cmd: 'node tooling/gates/gprov.mjs && node tooling/gates/gnohardcode.mjs && node tooling/verify/greflect-harness.mjs && node tooling/verify/gparity-baseline.mjs',
+  },
+  {
+    id: 'VC-B-18',
+    name: 'DEPLOY-01: Zero-SSH Staging Deployment Pipeline & Rollback Rehearsal',
+    cmd: 'node tooling/verify/verify-staging-env.mjs && node tooling/verify/verify-rollback.mjs',
   },
 ];
 

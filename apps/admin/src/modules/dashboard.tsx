@@ -47,7 +47,7 @@ function Delta({ v }: { v: number }) {
   if (!v) return null;
   const up = v > 0;
   return (
-    <span style={{ fontSize: 11, fontWeight: 800, color: up ? GREEN : RED, background: up ? GREEN + '1C' : RED + '1C', borderRadius: 999, padding: '2px 8px', marginBottom: 3, whiteSpace: 'nowrap' }}>
+    <span style={{ fontSize: 11, fontWeight: 800, color: up ? '#14532D' : '#991B1B', background: up ? '#DCFCE7' : '#FEE2E2', border: `1px solid ${up ? '#86EFAC' : '#FECACA'}`, borderRadius: 999, padding: '2px 8px', marginBottom: 3, whiteSpace: 'nowrap' }}>
       {up ? '▲' : '▼'} {up ? '+' : ''}{v}
     </span>
   );
@@ -284,7 +284,7 @@ export default function Dashboard({ nav }: ModProps) {
           </div>
           <p style={{ margin: '8px 0 0', fontSize: 12.5, color: MUTED }}>
             {data.media?.missingAlt ?? 0} of {data.media?.total ?? 0} assets missing alt text —{' '}
-            <button onClick={() => nav('media', undefined, { newTab: true })} style={{ border: 0, background: 'none', color: TEAL, cursor: 'pointer', fontSize: 12.5, textDecoration: 'underline', padding: 0, fontWeight: 700 }}>fix in media library</button>
+            <button onClick={() => nav('media', undefined, { newTab: true })} style={{ border: 0, background: 'none', color: '#065F46', cursor: 'pointer', fontSize: 12.5, textDecoration: 'underline', padding: 0, fontWeight: 700 }}>fix in media library</button>
           </p>
         </Card>
 

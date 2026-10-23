@@ -2,9 +2,15 @@
  * TwinMOS Phase D Page Rebuilder (Tasks D2, D3, D4, D7b, D8b, D8c)
  * Replaces static bodyHtml blobs with dynamic Delivery API fetching and BlockDispatcher.
  */
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import pagesCache from '../apps/web/src/data/pages-cache.json' with { type: 'json' };
+
+const inventoryPath = resolve('tooling/data/inventory_blocks.json');
+const inventoryData = JSON.parse(readFileSync(inventoryPath, 'utf8'));
+const pagesCache: Record<string, any> = {};
+for (const p of (inventoryData.pages || [])) {
+  pagesCache[p.pageKey] = p;
+}
 
 const PAGES_DIR = resolve('apps/web/src/pages');
 

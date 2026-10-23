@@ -5,14 +5,25 @@
 // (nav, hero, CTAs) render from the CMS translation store. EN itself stays at
 // the prototype URLs (prefixDefaultLocale: false) — zero P1 parity impact.
 import Layout from '../../layouts/Layout.astro';
-import { LOCALES, localeDir } from '@twinmos/shared';
+import { LOCALES, localeDir, SETTINGS_GROUP_DEFAULTS, resolveComputedFigures } from '@twinmos/shared';
+import { getDeliverySettings } from '../../lib/delivery';
 
-export function getStaticPaths() {
-  return LOCALES.filter((l) => l !== 'en').map((locale) => ({ params: { locale } }));
-}
+export const prerender = false;
 
 const { locale } = Astro.params;
+const isKnownLocale = LOCALES.includes(locale as any) && locale !== 'en';
+if (!isKnownLocale) {
+  Astro.response.status = 404;
+  Astro.response.statusText = 'Not Found';
+  return new Response('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>404 Not Found</title></head><body><h1>404 Not Found</h1></body></html>', {
+    status: 404,
+    statusText: 'Not Found',
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  });
+}
 const dir = localeDir(locale!);
+const settings = await getDeliverySettings().catch(() => ({} as Record<string, any>));
+const figures = resolveComputedFigures({ ...SETTINGS_GROUP_DEFAULTS['site.figures'], ...(settings['site.figures'] || {}) });
 
 const LOCALE_NAMES: Record<string, string> = {
   ar: 'العربية', hi: 'हिन्दी', ru: 'Русский', 'zh-cn': '简体中文',
@@ -32,12 +43,12 @@ const LOCALE_NAMES: Record<string, string> = {
   <main id="main">
     <section class="page-hero" dir={dir}>
       <div class="wrap">
-        <span class="eyebrow" data-i18n="hero.eyebrow">Legendary memory brand since 1998</span>
+        <span class="eyebrow" data-i18n="hero.eyebrow">Legendary memory brand since {figures.foundingYear}</span>
         <h1 class="h1" data-i18n="hero.title">Memory &amp; storage, engineered to endure</h1>
-        <p class="lede" data-i18n="hero.lede">DDR5 modules, PCIe Gen 5 SSDs and portable storage for builders, creators and enterprises — in 93+ countries.</p>
+        <p class="lede" data-i18n="hero.lede">DDR5 modules, PCIe Gen 5 SSDs and portable storage for builders, creators and enterprises — in {figures.countriesCount} countries.</p>
         <p style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
-          <a class="btn btn-accent" href="/shop.html" data-i18n="hero.ctaShop">Explore products</a>
-          <a class="btn btn-ghost" href="/where-to-buy.html" data-i18n="hero.ctaBuy">Where to buy</a>
+          <a class="btn btn-accent" href="/shop" data-i18n="hero.ctaShop">Explore products</a>
+          <a class="btn btn-ghost" href="/where-to-buy" data-i18n="hero.ctaBuy">Where to buy</a>
         </p>
       </div>
     </section>

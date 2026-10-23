@@ -6,7 +6,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "TwinMOS — Memory &amp; Storage Solutions Since 1998",
+    "title": "index — TwinMOS",
     "hasTM": true,
     "cookieVisible": true,
     "cookieAfterDecline": false
@@ -18,9 +18,9 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Shop All Products — TwinMOS",
+    "title": "shop — TwinMOS",
     "hasTM": true,
-    "shopCards": 41
+    "shopCards": 40
   },
   {
     "route": "/product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd",
@@ -32,7 +32,7 @@
     "title": "TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD — TwinMOS",
     "hasTM": true,
     "pdpH1": "TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD",
-    "isLoading": false
+    "isLoading": true
   },
   {
     "route": "/product.html?id=voltx-ddr5-udimm-16gb",
@@ -44,7 +44,7 @@
     "title": "VOLTX DDR5 U-DIMM 16GB — TwinMOS",
     "hasTM": true,
     "pdpH1": "VOLTX DDR5 U-DIMM 16GB",
-    "isLoading": false
+    "isLoading": true
   },
   {
     "route": "/where-to-buy.html",
@@ -53,7 +53,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Where to Buy — TwinMOS",
+    "title": "where-to-buy — TwinMOS",
     "hasTM": true
   },
   {
@@ -63,7 +63,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Compatibility Finder — TwinMOS",
+    "title": "compatibility — TwinMOS",
     "hasTM": true
   },
   {
@@ -73,7 +73,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Support Center — TwinMOS",
+    "title": "support — TwinMOS",
     "hasTM": true
   },
   {
@@ -83,7 +83,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "RMA Center — TwinMOS",
+    "title": "rma — TwinMOS",
     "hasTM": true
   },
   {
@@ -93,7 +93,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Careers at TwinMOS — Open roles, benefits &amp; internships",
+    "title": "careers — TwinMOS",
     "hasTM": true
   },
   {
@@ -103,7 +103,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Partner Program — TwinMOS",
+    "title": "partners — TwinMOS",
     "hasTM": true
   },
   {
@@ -113,7 +113,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Request a Quote — TwinMOS",
+    "title": "quote — TwinMOS",
     "hasTM": true
   },
   {
@@ -123,7 +123,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Contact TwinMOS",
+    "title": "contact — TwinMOS",
     "hasTM": true
   },
   {
@@ -133,7 +133,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "About TwinMOS — Since 1998",
+    "title": "about — TwinMOS",
     "hasTM": true
   },
   {
@@ -143,7 +143,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Technology &amp; R&amp;D — TwinMOS",
+    "title": "technology — TwinMOS",
     "hasTM": true
   },
   {
@@ -153,7 +153,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "VOLTX Gaming Hub — TwinMOS",
+    "title": "gaming — TwinMOS",
     "hasTM": true
   },
   {
@@ -163,7 +163,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "B2B &amp; OEM Memory Solutions — TwinMOS",
+    "title": "solutions — TwinMOS",
     "hasTM": true
   },
   {
@@ -173,7 +173,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Knowledge Hub — Learn Memory &amp; Storage — TwinMOS",
+    "title": "learn — TwinMOS",
     "hasTM": true
   },
   {
@@ -183,7 +183,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Buying Guides — Memory &amp; Storage — TwinMOS",
+    "title": "learn-guides — TwinMOS",
     "hasTM": true
   },
   {
@@ -193,7 +193,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Technology Explainers — Memory &amp; Storage — TwinMOS",
+    "title": "learn-explained — TwinMOS",
     "hasTM": true
   },
   {
@@ -203,7 +203,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Benchmarks — Real-World Performance — TwinMOS",
+    "title": "learn-benchmarks — TwinMOS",
     "hasTM": true
   },
   {
@@ -213,7 +213,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Glossary A–Z — Memory &amp; Storage Terms — TwinMOS",
+    "title": "learn-glossary — TwinMOS",
     "hasTM": true
   },
   {
@@ -223,7 +223,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Tech Insights &amp; Blog — TwinMOS",
+    "title": "learn-blog — TwinMOS",
     "hasTM": true
   },
   {
@@ -233,7 +233,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Newsroom — TwinMOS",
+    "title": "news — TwinMOS",
     "hasTM": true
   },
   {
@@ -243,7 +243,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Legal &amp; Warranty Policy — TwinMOS",
+    "title": "legal — TwinMOS",
     "hasTM": true
   },
   {
@@ -253,7 +253,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "What is XMP? One-Click Memory Overclocking — TwinMOS",
+    "title": "What is XMP? One-Click Memory Overclocking | TwinMOS Knowledge Hub — TwinMOS Knowledge Hub",
     "hasTM": true
   },
   {
@@ -273,7 +273,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Sitemap — TwinMOS",
+    "title": "sitemap — TwinMOS",
     "hasTM": true
   },
   {
@@ -283,7 +283,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "Compare Products — TwinMOS",
+    "title": "compare — TwinMOS",
     "hasTM": true
   },
   {

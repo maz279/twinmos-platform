@@ -25,6 +25,7 @@ import {
   office,
   distributor,
   marketplaceListing,
+  jobPosting,
   testimonial,
   policyDocument,
 } from './db-bridge.ts';
@@ -104,6 +105,9 @@ async function importAll() {
   const existingProductSlugs = new Set(existingProducts.map((p) => p.slug));
 
   let prodImported = 0;
+  // Deterministic launch date: using Date.now() here made re-running the
+  // reconciler mutate rows and fail CONTENT-REPRO idempotence.
+  const COREX_LAUNCH_DATE = new Date('2026-10-01T00:00:00.000Z');
   for (const p of (protoTM.products || [])) {
     const slug = slugify(p.id);
     const brandName = p.brand || 'TwinMOS';
@@ -120,8 +124,10 @@ async function importAll() {
       description: p.shortSpec || `${p.name} - engineered for speed, durability and peak efficiency.`,
       shortSpec: p.shortSpec || '',
       warranty: p.warranty || 'Lifetime',
-      warrantyTier: (p.warranty && /5|five/i.test(p.warranty)) ? '5-year' : (p.warranty && /3|three/i.test(p.warranty) ? '3-year' : 'lifetime'),
+      warrantyTier: (p.warranty && /5|five/i.test(p.warranty)) ? '5_year' : (p.warranty && /3|three/i.test(p.warranty) ? '3_year' : 'lifetime'),
       priceUsd: p.priceUsd ? String(p.priceUsd) : (p.id.includes('corex') ? '199.99' : (p.id.includes('voltx') ? '89.99' : null)),
+      launchDate: p.id.includes('corex') ? COREX_LAUNCH_DATE : null,
+      isComingSoon: false,
       specs: p.specs || {},
       specsDictionary: p.specs || {
         'Capacity': p.cap || '1TB',
@@ -194,11 +200,11 @@ async function importAll() {
   console.log(`  -> Active Articles in DB: ${currentArts.length} (target 98, new: ${artImported})`);
 
   // ------------------------------------------------------------
-  // 4. FAQs: Parse Individual Q&As (155 target volume)
+  // 4. FAQs: Parse Individual Q&As (Idempotent Natural Key Upsert)
   // ------------------------------------------------------------
-  console.log('[4/8] Reconciling FAQs (155 Q&A pairs, replacing whole-file rows)...');
-  // First, delete legacy whole-document rows that contained filepaths or whole bodies as question
-  await db.delete(faq).where(eq(faq.locale, 'en'));
+  console.log('[4/8] Reconciling FAQs (idempotent natural-key upsert)...');
+  const existingFaqs = await db.select().from(faq).where(eq(faq.locale, 'en'));
+  const existingFaqMap = new Map(existingFaqs.map((f) => [f.question.trim().toLowerCase(), f]));
 
   let faqCount = 0;
   if (existsSync(CORPUS_ROOT)) {
@@ -248,43 +254,45 @@ async function importAll() {
 
         // Clean raw markdown links to plain text (Task D8c fix)
         const cleanAnswer = answer.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)');
+        const qKey = question.toLowerCase();
+        const existing = existingFaqMap.get(qKey);
 
-        await db.insert(faq).values({
-          groupKey,
-          question: question.slice(0, 500),
-          answer: cleanAnswer.slice(0, 20000),
-          sort: faqCount++,
-          status: 'published',
-          locale: 'en',
-        });
-        seenQuestions.add(question.toLowerCase());
+        if (existing) {
+          const answerEqual = existing.answer === cleanAnswer.slice(0, 20000);
+          const groupEqual = existing.groupKey === groupKey;
+          if (!answerEqual || !groupEqual) {
+            await db.update(faq).set({
+              groupKey,
+              answer: cleanAnswer.slice(0, 20000),
+              sort: faqCount,
+              status: 'published',
+            }).where(eq(faq.id, existing.id));
+          }
+          faqCount++;
+        } else {
+          await db.insert(faq).values({
+            groupKey,
+            question: question.slice(0, 500),
+            answer: cleanAnswer.slice(0, 20000),
+            sort: faqCount++,
+            status: 'published',
+            locale: 'en',
+          });
+        }
+        seenQuestions.add(qKey);
       }
     }
   }
 
-  // If corpus yielded slightly less or more, ensure we have at least 155 high-quality FAQs
-  if (faqCount < 155) {
-    const additional = 155 - faqCount;
-    for (let i = 1; i <= additional; i++) {
-      await db.insert(faq).values({
-        groupKey: 'support',
-        question: `How do I optimize system performance with TwinMOS high-speed components (FAQ ${i})?`,
-        answer: 'Ensure motherboard BIOS is updated to the latest revision, enable XMP 3.0 / AMD EXPO profile in firmware settings, and ensure adequate airflow over PCIe Gen 5 SSD graphene heat-spreaders.',
-        sort: faqCount++,
-        status: 'published',
-        locale: 'en',
-      });
-    }
-  }
   const currentFaqs = await db.select().from(faq);
-  console.log(`  -> Active FAQs in DB: ${currentFaqs.length} (target 155, all parsed individual Q&As)`);
+  console.log(`  -> Active FAQs in DB: ${currentFaqs.length} (all genuine parsed individual Q&As, zero fake padding)`);
 
   // ------------------------------------------------------------
   // 5. Glossary Terms (113 terms A–Z)
   // ------------------------------------------------------------
   console.log('[5/8] Reconciling Glossary Terms (113 target volume)...');
   const existingTerms = await db.select().from(glossaryTerm);
-  const existingTermMap = new Set(existingTerms.map((t) => t.term.toLowerCase()));
+  const existingTermMap = new Map(existingTerms.map((t) => [t.term.toLowerCase(), t]));
 
   let termImported = 0;
   for (const g of (protoTM.glossary || [])) {
@@ -295,12 +303,15 @@ async function importAll() {
     const definition = g.definition || g.def || `${termStr} technical description.`;
     const explainerSlug = g.explainerSlug || g.slug || null;
 
-    if (existingTermMap.has(termLower)) {
-      await db.update(glossaryTerm).set({
-        definition,
-        letter,
-        explainerSlug,
-      }).where(and(eq(glossaryTerm.term, termStr), eq(glossaryTerm.locale, 'en')));
+    const existing = existingTermMap.get(termLower);
+    if (existing) {
+      if (existing.definition !== definition || existing.letter !== letter || existing.explainerSlug !== explainerSlug) {
+        await db.update(glossaryTerm).set({
+          definition,
+          letter,
+          explainerSlug,
+        }).where(and(eq(glossaryTerm.term, termStr), eq(glossaryTerm.locale, 'en')));
+      }
     } else {
       await db.insert(glossaryTerm).values({
         term: termStr,
@@ -309,7 +320,7 @@ async function importAll() {
         explainerSlug,
         locale: 'en',
       });
-      existingTermMap.add(termLower);
+      existingTermMap.set(termLower, { term: termStr, definition, letter, explainerSlug } as any);
       termImported++;
     }
   }
@@ -380,26 +391,62 @@ async function importAll() {
   for (const o of officeList) {
     const existingOff = await db.select().from(office).where(and(eq(office.title, o.title), eq(office.locale, 'en'))).limit(1);
     if (existingOff[0]) {
-      await db.update(office).set(o).where(eq(office.id, existingOff[0].id));
+      const isDiff = existingOff[0].role !== o.role || existingOff[0].entity !== o.entity || existingOff[0].address !== o.address || existingOff[0].flag !== o.flag || existingOff[0].sort !== o.sort;
+      if (isDiff) {
+        await db.update(office).set(o).where(eq(office.id, existingOff[0].id));
+      }
     } else {
       await db.insert(office).values({ ...o, locale: 'en' });
     }
   }
 
-  // Distributors across key markets
+  // Distributors across key markets (MS4.5 / T4.5.6)
   const distList = [
-    { name: 'Redington Gulf', country: 'United Arab Emirates', region: 'me', status: 'authorized', cities: ['Dubai', 'Abu Dhabi'] },
-    { name: 'ASBIS Middle East', country: 'United Arab Emirates', region: 'me', status: 'authorized', cities: ['Dubai'] },
-    { name: 'CompuMe Egypt', country: 'Egypt', region: 'af', status: 'authorized', cities: ['Cairo', 'Alexandria'] },
-    { name: 'Supertron Infotech', country: 'India', region: 'as', status: 'authorized', cities: ['Mumbai', 'Delhi', 'Kolkata', 'Bengaluru'] },
-    { name: 'Synnex Technology', country: 'Taiwan', region: 'as', status: 'authorized', cities: ['Taipei', 'Kaohsiung'] },
-    { name: 'Bluechip Computer', country: 'Germany', region: 'eu', status: 'authorized', cities: ['Cologne', 'Munich', 'Frankfurt'] },
-    { name: 'ASI Corporation', country: 'United States', region: 'na', status: 'authorized', cities: ['San Jose', 'Dallas', 'Atlanta'] },
+    { name: 'Redington Gulf', country: 'United Arab Emirates', isoCountry: 'AE', region: 'me', status: 'authorized', cities: ['Dubai', 'Abu Dhabi'], tagline: 'Leading IT distributor in GCC', ctaConfig: { label: 'Contact Rep', url: 'mailto:channel@twinmos.com' }, sort: 1 },
+    { name: 'ASBIS Middle East', country: 'United Arab Emirates', isoCountry: 'AE', region: 'me', status: 'authorized', cities: ['Dubai'], tagline: 'Authorized regional distributor', ctaConfig: { label: 'Visit Partner', url: 'https://asbis.ae' }, sort: 2 },
+    { name: 'CompuMe Egypt', country: 'Egypt', isoCountry: 'EG', region: 'af', status: 'authorized', cities: ['Cairo', 'Alexandria'], tagline: 'Leading tech distributor in North Africa', ctaConfig: { label: 'Contact', url: 'mailto:egypt@twinmos.com' }, sort: 3 },
+    { name: 'Supertron Infotech', country: 'India', isoCountry: 'IN', region: 'as', status: 'authorized', cities: ['Mumbai', 'Delhi', 'Kolkata', 'Bengaluru'], tagline: 'Pan-India component distributor', ctaConfig: { label: 'Inquire', url: 'https://supertronindia.com' }, sort: 4 },
+    { name: 'Synnex Technology', country: 'Taiwan', isoCountry: 'TW', region: 'as', status: 'authorized', cities: ['Taipei', 'Kaohsiung'], tagline: 'APAC electronics leader', ctaConfig: { label: 'Learn More', url: 'https://synnex.com.tw' }, sort: 5 },
+    { name: 'Bluechip Computer', country: 'Germany', isoCountry: 'DE', region: 'eu', status: 'authorized', cities: ['Cologne', 'Munich', 'Frankfurt'], tagline: 'European channel specialist', ctaConfig: { label: 'Contact', url: 'https://bluechip.de' }, sort: 6 },
+    { name: 'ASI Corporation', country: 'United States', isoCountry: 'US', region: 'am', status: 'authorized', cities: ['San Jose', 'Dallas', 'Atlanta'], tagline: 'North American distribution partner', ctaConfig: { label: 'Partner Portal', url: 'https://asipartner.com' }, sort: 7 },
   ];
   for (const d of distList) {
     const existingD = await db.select().from(distributor).where(and(eq(distributor.name, d.name), eq(distributor.country, d.country))).limit(1);
     if (!existingD[0]) {
       await db.insert(distributor).values({ ...d, contact: { email: 'channel@twinmos.com' } });
+    } else {
+      await db.update(distributor).set(d).where(eq(distributor.id, existingD[0].id));
+    }
+  }
+
+  // Marketplaces Directory (MS4.5 / T4.5.6)
+  const marketList = [
+    { platform: 'Amazon UAE', country: 'United Arab Emirates', url: 'https://amazon.ae/twinmos', description: 'Official TwinMOS Brand Store on Amazon UAE', ctaLabel: 'Shop Amazon', sort: 10 },
+    { platform: 'Noon UAE', country: 'United Arab Emirates', url: 'https://noon.com/uae-en/twinmos', description: 'Express delivery across the Emirates', ctaLabel: 'Shop Noon', sort: 20 },
+    { platform: 'Amazon US', country: 'United States', url: 'https://amazon.com/twinmos', description: 'Prime delivery across North America', ctaLabel: 'Shop Amazon US', sort: 30 },
+    { platform: 'Newegg', country: 'United States', url: 'https://newegg.com/twinmos', description: 'Components & DIY PC hardware', ctaLabel: 'Shop Newegg', sort: 40 },
+  ];
+  for (const m of marketList) {
+    const existingM = await db.select().from(marketplaceListing).where(and(eq(marketplaceListing.platform, m.platform), eq(marketplaceListing.country, m.country))).limit(1);
+    if (!existingM[0]) {
+      await db.insert(marketplaceListing).values(m);
+    } else {
+      await db.update(marketplaceListing).set(m).where(eq(marketplaceListing.id, existingM[0].id));
+    }
+  }
+
+  // Published Careers & Jobs (MS4.5 / T4.5.6)
+  const jobList = [
+    { title: 'Senior Firmware Engineer - NVMe SSD', dept: 'Engineering', location: 'Taipei, Taiwan', type: 'full-time', level: 'senior', status: 'published' as const, body: 'Design and optimize PCIe Gen 5.0 SSD firmware for next-generation client and enterprise drives.', salaryBand: 'NT$ 1.8M - 2.4M', equalOpportunity: true },
+    { title: 'Global Channel Sales Manager', dept: 'Sales', location: 'Dubai, UAE', type: 'full-time', level: 'lead', status: 'published' as const, body: 'Lead distributor partnerships and expansion across Middle East, Africa, and Central Asia regions.', salaryBand: 'AED 25,000 - 35,000 / month', equalOpportunity: true },
+    { title: 'DRAM Signal Integrity Specialist', dept: 'Engineering', location: 'Taipei, Taiwan', type: 'full-time', level: 'lead', status: 'published' as const, body: 'Perform high-speed DDR5 layout simulation and PCB tuning for overclocked memory modules.', salaryBand: 'NT$ 2.0M - 2.8M', equalOpportunity: true },
+  ];
+  for (const j of jobList) {
+    const existingJ = await db.select().from(jobPosting).where(eq(jobPosting.title, j.title)).limit(1);
+    if (!existingJ[0]) {
+      await db.insert(jobPosting).values(j);
+    } else {
+      await db.update(jobPosting).set(j).where(eq(jobPosting.id, existingJ[0].id));
     }
   }
 
@@ -456,7 +503,10 @@ async function importAll() {
   for (const pol of policies) {
     const existingP = await db.select().from(policyDocument).where(and(eq(policyDocument.slug, pol.slug), eq(policyDocument.locale, 'en'))).limit(1);
     if (existingP[0]) {
-      await db.update(policyDocument).set(pol).where(eq(policyDocument.id, existingP[0].id));
+      const isDiff = existingP[0].title !== pol.title || existingP[0].summary !== pol.summary || existingP[0].body !== pol.body;
+      if (isDiff) {
+        await db.update(policyDocument).set(pol).where(eq(policyDocument.id, existingP[0].id));
+      }
     } else {
       await db.insert(policyDocument).values(pol);
     }

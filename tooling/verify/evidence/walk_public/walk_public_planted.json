@@ -7,10 +7,10 @@
     "pageErrors": [],
     "csp": [],
     "failed": [
-      "404 http://localhost:4398/planted-broken-probe-404.html"
+      "404 http://localhost:4321/planted-broken-probe-404"
     ],
     "status": 404,
-    "title": "",
+    "title": "404 Not Found",
     "hasTM": false
   }
 ]

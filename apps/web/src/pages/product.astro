@@ -1,24 +1,7 @@
 ---
-// product.astro — Dynamic Product Detail Page (PDP) with Spec Dictionary.
-// Tasks D3 / GPROV-100 / GREF-D compliant.
-import Layout from '../layouts/Layout.astro';
-import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
-import { getDeliveryPage, getDeliveryProduct } from '../lib/delivery';
-
-const productId = Astro.url.searchParams.get('id') || Astro.url.searchParams.get('slug') || '';
-let product = null;
-if (productId) {
-  product = await getDeliveryProduct(productId);
-}
-
-const page = await getDeliveryPage('product');
-const title = product?.name ?? page?.title ?? "Product — TwinMOS";
-const desc = product?.shortDescription ?? page?.seoDescription ?? "TwinMOS product detail: specifications, warranty, variants and where to buy.";
-const blocks = page?.blocks ?? [];
+// product.astro — Legacy Product Route Redirector (ADR D-5, Task T3.2.2)
+// Clean URLs canonically live at /products/<slug>.
+const slug = Astro.url.searchParams.get('id') || Astro.url.searchParams.get('slug');
+const target = slug ? `/products/${encodeURIComponent(slug)}` : '/shop';
+return Astro.redirect(target, 301);
 ---
-
-<Layout title={title} desc={desc}>
-  <main id="main">
-    <BlockDispatcher blocks={blocks} />
-  </main>
-</Layout>

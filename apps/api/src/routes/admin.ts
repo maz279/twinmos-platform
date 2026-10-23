@@ -13,13 +13,17 @@ import {
   COMPAT_DEVICE_TYPES, COMPAT_MEMORY_GENS, COMPAT_FORM_FACTORS,
   productImportSchema, PRODUCT_IMPORT_COLUMNS, AUTHORIZED_CURRENCIES, CONTENT_STATUS, sameInstant,
   jobPostingCreateSchema, jobPostingUpdateSchema, JOB_POSTING_STATUSES,
+  specDictionaryCreateSchema, specDictionaryUpdateSchema, specTemplateCreateSchema, specTemplateUpdateSchema,
 } from '@twinmos/shared';
-import { auditLog, brand, category, compatibilityRule, formNote, formSubmission, jobApplication, jobPosting, product, productVariant, rmaEvent, rmaRequest, serialRegistry, snCheck, user, article, page, newsPost, faq, mediaAsset } from '@twinmos/db';
+import { auditLog, brand, category, compatibilityRule, formNote, formSubmission, jobApplication, jobPosting, product, productVariant, rmaEvent, rmaRequest, serialRegistry, snCheck, user, article, page, newsPost, faq, mediaAsset, specDictionary, specTemplate, deviceTypeLabel } from '@twinmos/db';
 import { sendRmaStatusMail, sendCustomerConfirmation } from '../mailer.ts';
 import { IdempotencyStore } from '../idem.ts';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 import type { Role } from '@twinmos/shared';
+import { recordOutboxEvent } from '../services/outbox.ts';
+import { provenanceIssue } from '../lib/provenance.ts';
+import { CONTENT_TRANSITIONS } from '@twinmos/shared';
 
 type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
@@ -176,8 +180,30 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     if (guard instanceof Response) return guard;
     const parsed = productCreateSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
-    const rows = await db.insert(product).values(productValues(parsed.data)).returning();
+    // T4.7.2: the creating actor is the provenance of record when omitted.
+    const data = {
+      ...parsed.data,
+      source: parsed.data.source ?? `admin console (actor ${guard.user.id})`,
+      approver: parsed.data.approver ?? `actor ${guard.user.id}`,
+    } as typeof parsed.data;
+    const provIssue = provenanceIssue(data as any, (data as any).status ?? 'draft');
+    if (provIssue) return c.json(problem(422, 'Missing provenance', provIssue.message, [provIssue]), 422, { 'Content-Type': P });
+    const rows = await db.insert(product).values(productValues(data)).returning();
     await auditRow(c, guard.user.id, 'product.create', 'product', String(rows[0].id), parsed.data);
+
+    // Task T3.5.3: record outbox row on product creation
+    try {
+      const slugVal = rows[0]?.slug || String(rows[0]?.id);
+      await recordOutboxEvent(db, 'product.create', {
+        entityType: 'product',
+        entityId: rows[0].id,
+        slug: slugVal,
+        action: 'create',
+        tags: ['products', 'catalog', `product:${slugVal}`, 'sitemap'],
+        paths: [`/products/${slugVal}`, `/product.html?id=${slugVal}`],
+      });
+    } catch {}
+
     return c.json(rows[0], 201);
   });
 
@@ -186,13 +212,17 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
     const rawJson = await c.req.json().catch(() => ({}));
+    if (rawJson.status !== undefined) {
+      return c.json(problem(422, 'Status transition required', 'Status cannot be updated directly via PATCH. Use POST /admin/products/:id/transition instead.'), 422, { 'Content-Type': P });
+    }
     const parsed = productUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
     // Phase 3.4: optimistic locking — a stale If-Match (the updatedAt the
     // editor loaded) means someone else saved first; refuse with 409 instead
     // of silently overwriting their work.
     const ifMatch = c.req.header('if-match');
-    const current = (await db.select({ updatedAt: product.updatedAt, version: product.version }).from(product).where(eq(product.id, id)).limit(1))[0];
+    const currentRow = (await db.select().from(product).where(eq(product.id, id)).limit(1))[0];
+    const current = currentRow;
     if (!current) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
     if (ifMatch && !sameInstant(ifMatch, current.updatedAt)) {
       return c.json(problem(409, 'Conflict', 'This product was modified by someone else after you loaded it. Reload the latest version and re-apply your changes.'), 409, { 'Content-Type': P });
@@ -201,6 +231,12 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       return c.json(problem(409, 'Conflict', 'Version conflict: this product was modified by someone else.'), 409, { 'Content-Type': P });
     }
     const patchData = prunePatch(rawJson, parsed.data);
+    // Publish-time provenance is enforced on the transition endpoint; a PATCH
+    // that touches provenance fields must keep the row publishable.
+    if (['source', 'approver'].some((k) => k in patchData)) {
+      const provIssue = provenanceIssue({ ...current, ...patchData }, current.status);
+      if (provIssue) return c.json(problem(422, 'Missing provenance', provIssue.message, [provIssue]), 422, { 'Content-Type': P });
+    }
     const updatePayload: Record<string, unknown> = { ...productValues(patchData), updatedAt: new Date() };
     if (current.version !== undefined) {
       updatePayload.version = (current.version ?? 1) + 1;
@@ -209,10 +245,54 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       .where(eq(product.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'product.update', 'product', String(id), patchData);
+
+    // Task T3.5.3: record outbox row on product update
+    try {
+      const slugVal = rows[0]?.slug || current?.slug || String(id);
+      await recordOutboxEvent(db, 'product.update', {
+        entityType: 'product',
+        entityId: id,
+        slug: slugVal,
+        action: 'update',
+        tags: ['products', 'catalog', `product:${slugVal}`, 'sitemap'],
+        paths: [`/products/${slugVal}`, `/product.html?id=${slugVal}`],
+      });
+    } catch {}
+
     return c.json(rows[0]);
   };
   r.patch('/products/:id', updateProduct);
   r.put('/products/:id', updateProduct);
+
+  // T4.6.1: product lifecycle transitions (direct status PATCH is refused).
+  r.post('/products/:id/transition', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const body = await c.req.json().catch(() => ({}));
+    const to = String(body.to ?? '');
+    const row = (await db.select().from(product).where(eq(product.id, id)).limit(1))[0];
+    if (!row) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
+    const legal = CONTENT_TRANSITIONS[row.status as keyof typeof CONTENT_TRANSITIONS] ?? [];
+    if (!legal.includes(to as any)) {
+      return c.json(problem(422, 'Illegal transition', `'${row.status}' can move to: ${legal.join(', ') || 'none'}.`), 422, { 'Content-Type': P });
+    }
+    if (to === 'published' || to === 'scheduled') {
+      const provIssue = provenanceIssue(row as any, to);
+      if (provIssue) return c.json(problem(422, 'Missing provenance', provIssue.message, [provIssue]), 422, { 'Content-Type': P });
+    }
+    const patch: Record<string, unknown> = { status: to, updatedAt: new Date() };
+    if (body.publishAt) patch.publishAt = new Date(body.publishAt);
+    if (body.unpublishAt) patch.unpublishAt = new Date(body.unpublishAt);
+    const rows = await db.update(product).set(patch).where(eq(product.id, id)).returning();
+    await auditRow(c, guard.user.id, 'product.transition', 'product', String(id), { from: row.status, to });
+    await recordOutboxEvent(db, 'product.change', {
+      entityType: 'product', entityId: id, slug: row.slug, action: to,
+      tags: ['products', 'catalog', `product:${row.slug}`, 'sitemap'],
+      paths: [`/products/${row.slug}`, `/${row.slug}`],
+    });
+    return c.json(rows[0]);
+  });
 
   // ==================== Phase 3.1: product variants ====================
   // Variants carry hardware attributes (capacity/speed/finish/lighting) plus
@@ -1461,6 +1541,98 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     await auditRow(c, guard.user.id, 'job_application.reply', 'job_application', String(id), { sent, chars: text.length });
     const fresh = (await db.select().from(jobApplication).where(eq(jobApplication.id, id)).limit(1))[0];
     return c.json({ sent, status: fresh.status }, 201);
+  });
+
+  // ---------------- Spec Dictionary (MS4.5 / T4.5.4) ----------------
+  r.get('/spec-dictionary', async (c) => {
+    const guard = await authed(c);
+    if (guard instanceof Response) return guard;
+    const catId = c.req.query('categoryId');
+    const q = c.req.query('q');
+    const conditions = [];
+    if (catId) conditions.push(eq(specDictionary.categoryId, Number(catId)));
+    if (q) conditions.push(or(ilike(specDictionary.key, `%${q}%`), ilike(specDictionary.normalizedKey, `%${q}%`)));
+    const rows = await db.select().from(specDictionary).where(conditions.length ? and(...conditions) : undefined).orderBy(asc(specDictionary.key));
+    return c.json({ data: rows, meta: { total: rows.length } });
+  });
+
+  r.post('/spec-dictionary', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = specDictionaryCreateSchema.safeParse(rawJson);
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const rows = await db.insert(specDictionary).values(parsed.data as any).returning();
+    await auditRow(c, guard.user.id, 'spec_dictionary.create', 'spec_dictionary', String(rows[0].id), parsed.data);
+    return c.json(rows[0], 201);
+  });
+
+  r.patch('/spec-dictionary/:id', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = specDictionaryUpdateSchema.safeParse(rawJson);
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const rows = await db.update(specDictionary).set(parsed.data as any).where(eq(specDictionary.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Entry not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'spec_dictionary.update', 'spec_dictionary', String(id), parsed.data);
+    return c.json(rows[0]);
+  });
+
+  r.delete('/spec-dictionary/:id', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const rows = await db.delete(specDictionary).where(eq(specDictionary.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Entry not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'spec_dictionary.delete', 'spec_dictionary', String(id), { key: rows[0].key });
+    return c.json({ deleted: true });
+  });
+
+  // ---------------- Spec Templates (MS4.5 / T4.5.4) ----------------
+  r.get('/spec-templates', async (c) => {
+    const guard = await authed(c);
+    if (guard instanceof Response) return guard;
+    const catId = c.req.query('categoryId');
+    const conditions = [];
+    if (catId) conditions.push(eq(specTemplate.categoryId, Number(catId)));
+    const rows = await db.select().from(specTemplate).where(conditions.length ? and(...conditions) : undefined).orderBy(asc(specTemplate.name));
+    return c.json({ data: rows, meta: { total: rows.length } });
+  });
+
+  r.post('/spec-templates', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = specTemplateCreateSchema.safeParse(rawJson);
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const rows = await db.insert(specTemplate).values(parsed.data as any).returning();
+    await auditRow(c, guard.user.id, 'spec_template.create', 'spec_template', String(rows[0].id), parsed.data);
+    return c.json(rows[0], 201);
+  });
+
+  r.patch('/spec-templates/:id', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = specTemplateUpdateSchema.safeParse(rawJson);
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const rows = await db.update(specTemplate).set(parsed.data as any).where(eq(specTemplate.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Template not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'spec_template.update', 'spec_template', String(id), parsed.data);
+    return c.json(rows[0]);
+  });
+
+  r.delete('/spec-templates/:id', async (c) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const rows = await db.delete(specTemplate).where(eq(specTemplate.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Template not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'spec_template.delete', 'spec_template', String(id), { name: rows[0].name });
+    return c.json({ deleted: true });
   });
 
   return r;

@@ -169,6 +169,62 @@
       "when": 1791456100000,
       "tag": "0023_durable_lockout",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791542400000,
+      "tag": "0024_page_constraints",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791542500000,
+      "tag": "0025_nav_menu_locale_code",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791542600000,
+      "tag": "0026_policy_versions_glossary",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791542700000,
+      "tag": "0027_catalogue_directory_ms45",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791542800000,
+      "tag": "0028_editorial_workflow_scheduling",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791542900000,
+      "tag": "0029_truthful_entities_ms47",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1791543000000,
+      "tag": "0030_phase4_completion",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1791543100000,
+      "tag": "0031_page_sort",
+      "breakpoints": true
     }
   ]
 }

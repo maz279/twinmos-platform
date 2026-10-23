@@ -1,6 +1,6 @@
 // Phase C Entities Admin API (Tasks C5a, C5b, C6a, C6b)
 import { Hono } from 'hono';
-import { eq, asc, desc, and, ilike, or } from 'drizzle-orm';
+import { eq, asc, desc, and, ilike, or, ne } from 'drizzle-orm';
 import { z } from 'zod';
 import type { DB } from '@twinmos/db';
 import {
@@ -26,8 +26,11 @@ const glossaryBaseSchema = z.object({
   definition: z.string().trim().min(1),
   letter: z.string().trim().min(1).max(2).optional(),
   explainerSlug: z.string().trim().nullable().optional(),
+  status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']).default('published'),
   locale: z.string().trim(),
   translationGroup: z.string().trim().optional(),
+  source: z.string().trim().nullable().optional(),
+  approver: z.string().trim().nullable().optional(),
 });
 const glossaryCreateSchema = glossaryBaseSchema.extend({
   locale: z.string().trim().default('en'),
@@ -43,6 +46,9 @@ const officeBaseSchema = z.object({
   note: z.string().trim().nullable().optional(),
   sort: z.number().int(),
   locale: z.string().trim(),
+  status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']).default('published'),
+  source: z.string().trim().nullable().optional(),
+  approver: z.string().trim().nullable().optional(),
 });
 const officeCreateSchema = officeBaseSchema.extend({
   sort: z.number().int().default(0),
@@ -58,6 +64,10 @@ const testimonialBaseSchema = z.object({
   sort: z.number().int(),
   permissionFlag: z.boolean(),
   locale: z.string().trim(),
+  status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']).default('published'),
+  source: z.string().trim().nullable().optional(),
+  approver: z.string().trim().nullable().optional(),
+  permissionEvidence: z.string().trim().nullable().optional(),
 });
 const testimonialCreateSchema = testimonialBaseSchema.extend({
   sort: z.number().int().default(0),
@@ -72,17 +82,24 @@ const policyBaseSchema = z.object({
   version: z.string().trim(),
   status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']),
   effectiveDate: z.string().datetime().nullable().optional(),
+  publishedAt: z.string().datetime().nullable().optional(),
+  legalApproved: z.boolean().default(false),
+  approvedBy: z.string().trim().nullable().optional(),
+  changeSummary: z.string().trim().nullable().optional(),
   summary: z.string().trim().nullable().optional(),
   body: z.string(),
-  cookieCategories: z.array(z.string()),
+  cookieCategories: z.array(z.union([z.string(), z.record(z.string(), z.any())])),
   locale: z.string().trim(),
   translationGroup: z.string().trim().optional(),
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
 });
 const policyCreateSchema = policyBaseSchema.extend({
   version: z.string().trim().default('1.0'),
   status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']).default('draft'),
+  legalApproved: z.boolean().default(false),
   body: z.string().default(''),
-  cookieCategories: z.array(z.string()).default([]),
+  cookieCategories: z.array(z.union([z.string(), z.record(z.string(), z.any())])).default([]),
   locale: z.string().trim().default('en'),
 });
 const policyUpdateSchema = policyBaseSchema.partial();
@@ -161,6 +178,34 @@ export function entitiesRoute(
       requestId: c.req.header('x-request-id') ?? c.get('requestId') ?? null,
       ip: c.req.header('cf-connecting-ip') ?? null,
     });
+  }
+
+  /** T4.7.2: a published truth-bearing record needs a recorded source + approver. */
+  function provenanceIssue(data: any, effectiveStatus?: string): { path: string[]; message: string } | null {
+    const status = effectiveStatus ?? data?.status;
+    if (status !== 'published' && status !== 'scheduled') return null;
+    const source = String(data?.source ?? '').trim();
+    const approver = String(data?.approver ?? '').trim();
+    if (!source || !approver) {
+      return {
+        path: ['source'],
+        message: 'Published records require both a source and an approver (T4.7.2).',
+      };
+    }
+    return null;
+  }
+
+  /** Published testimonials need a written release, not just a source/approver. */
+  function testimonialPermissionIssue(data: any, effectiveStatus?: string): { path: string[]; message: string } | null {
+    const status = effectiveStatus ?? data?.status;
+    if (status !== 'published' && status !== 'scheduled') return null;
+    if (data?.permissionFlag !== true) {
+      return { path: ['permissionFlag'], message: 'Published testimonials require written release permission (T4.7.3).' };
+    }
+    if (String(data?.permissionEvidence ?? '').trim().length <= 10) {
+      return { path: ['permissionEvidence'], message: 'Published testimonials require permission evidence on file (T4.7.3).' };
+    }
+    return null;
   }
 
   // ==========================================
@@ -273,6 +318,8 @@ export function entitiesRoute(
     if (guard instanceof Response) return guard;
     const parsed = officeCreateSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const issue = provenanceIssue(parsed.data);
+    if (issue) return c.json(problem(422, 'Missing provenance', issue.message, [issue]), 422, { 'Content-Type': P });
 
     const rows = await db.insert(office).values(parsed.data).returning();
     const created = rows[0];
@@ -292,6 +339,11 @@ export function entitiesRoute(
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
     const patch: any = prunePatch(rawJson, parsed.data);
+    const existingRows = await db.select().from(office).where(eq(office.id, id)).limit(1);
+    if (!existingRows[0]) return c.json(problem(404, 'Office not found'), 404, { 'Content-Type': P });
+    const touchesProvenance = 'status' in patch || 'source' in patch || 'approver' in patch;
+    const issue = touchesProvenance ? provenanceIssue({ ...existingRows[0], ...patch }) : null;
+    if (issue) return c.json(problem(422, 'Missing provenance', issue.message, [issue]), 422, { 'Content-Type': P });
     const rows = await db.update(office).set(patch).where(eq(office.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Office not found'), 404, { 'Content-Type': P });
 
@@ -336,6 +388,10 @@ export function entitiesRoute(
     if (guard instanceof Response) return guard;
     const parsed = testimonialCreateSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const issue = provenanceIssue(parsed.data);
+    if (issue) return c.json(problem(422, 'Missing provenance', issue.message, [issue]), 422, { 'Content-Type': P });
+    const permissionIssue = testimonialPermissionIssue(parsed.data);
+    if (permissionIssue) return c.json(problem(422, 'Missing permission evidence', permissionIssue.message, [permissionIssue]), 422, { 'Content-Type': P });
 
     const rows = await db.insert(testimonial).values(parsed.data).returning();
     const created = rows[0];
@@ -355,6 +411,16 @@ export function entitiesRoute(
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
     const patch: any = prunePatch(rawJson, parsed.data);
+    const existingRows = await db.select().from(testimonial).where(eq(testimonial.id, id)).limit(1);
+    if (!existingRows[0]) return c.json(problem(404, 'Testimonial not found'), 404, { 'Content-Type': P });
+    const touchesProvenance = 'status' in patch || 'source' in patch || 'approver' in patch;
+    const issue = touchesProvenance ? provenanceIssue({ ...existingRows[0], ...patch }) : null;
+    if (issue) return c.json(problem(422, 'Missing provenance', issue.message, [issue]), 422, { 'Content-Type': P });
+    const touchesPermission = 'status' in patch || 'permissionFlag' in patch || 'permissionEvidence' in patch;
+    const permissionIssue = touchesPermission
+      ? testimonialPermissionIssue({ ...existingRows[0], ...patch })
+      : null;
+    if (permissionIssue) return c.json(problem(422, 'Missing permission evidence', permissionIssue.message, [permissionIssue]), 422, { 'Content-Type': P });
     const rows = await db.update(testimonial).set(patch).where(eq(testimonial.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Testimonial not found'), 404, { 'Content-Type': P });
 
@@ -411,8 +477,50 @@ export function entitiesRoute(
     const parsed = policyCreateSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
+    // T4.7.2: the creating actor is the provenance of record when omitted.
+    const policyData = {
+      ...parsed.data,
+      source: parsed.data.source ?? `admin console (actor ${guard.user.id})`,
+      approver: parsed.data.approver ?? `actor ${guard.user.id}`,
+    };
+    const policyProv = provenanceIssue(policyData);
+    if (policyProv) return c.json(problem(422, 'Missing provenance', policyProv.message, [policyProv]), 422, { 'Content-Type': P });
+
+    // MS4.3 T4.3.4: Only legal-approved policy texts can be published
+    if (parsed.data.status === 'published' && !parsed.data.legalApproved) {
+      return c.json(
+        problem(400, 'Legal approval required', 'Policy documents cannot be published without formal legal counsel approval (legalApproved must be true)'),
+        400,
+        { 'Content-Type': P }
+      );
+    }
+
     const effectiveDate = parsed.data.effectiveDate ? new Date(parsed.data.effectiveDate) : null;
-    const rows = await db.insert(policyDocument).values({ ...parsed.data, effectiveDate }).returning();
+    let publishedAt = parsed.data.publishedAt ? new Date(parsed.data.publishedAt) : null;
+    if (parsed.data.status === 'published' && !publishedAt) {
+      publishedAt = new Date();
+    }
+    // T4.3.3: publishing a new version retires the previous one instead of
+    // overwriting it; older rows stay retrievable via /versions.
+    if (parsed.data.status === 'published') {
+      await db
+        .update(policyDocument)
+        .set({ status: 'archived', updatedAt: new Date() })
+        .where(
+          and(
+            eq(policyDocument.slug, parsed.data.slug),
+            eq(policyDocument.locale, parsed.data.locale ?? 'en'),
+            eq(policyDocument.status, 'published'),
+            ne(policyDocument.version, parsed.data.version),
+          ),
+        );
+    }
+
+    const rows = await db.insert(policyDocument).values({
+      ...policyData,
+      effectiveDate,
+      publishedAt,
+    }).returning();
     const created = rows[0];
 
     await auditRow(c, guard.user.id, 'policy.create', 'policy', String(created.id), parsed.data);
@@ -426,15 +534,60 @@ export function entitiesRoute(
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+
+    const existingRows = await db.select().from(policyDocument).where(eq(policyDocument.id, id)).limit(1);
+    if (!existingRows[0]) return c.json(problem(404, 'Policy not found'), 404, { 'Content-Type': P });
+    const current = existingRows[0];
+
     const rawJson = await c.req.json().catch(() => ({}));
     const parsed = policyUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
 
-    const patch: any = prunePatch(rawJson, parsed.data);
-    if (rawJson.effectiveDate !== undefined && parsed.data.effectiveDate !== undefined) {
-      patch.effectiveDate = parsed.data.effectiveDate ? new Date(parsed.data.effectiveDate) : null;
+    const nextStatus = parsed.data.status ?? current.status;
+    // policyBaseSchema defaults legalApproved to false, so a body-only PATCH
+    // must use the persisted value instead of the schema default.
+    const nextLegalApproved =
+      rawJson.legalApproved !== undefined ? parsed.data.legalApproved : current.legalApproved;
+
+    const touchesStatus = rawJson.status !== undefined;
+    if (touchesStatus && (nextStatus === 'published' || nextStatus === 'scheduled')) {
+      const nextProv = provenanceIssue({ ...current, ...parsed.data, status: nextStatus }, nextStatus);
+      if (nextProv) return c.json(problem(422, 'Missing provenance', nextProv.message, [nextProv]), 422, { 'Content-Type': P });
     }
 
+    // MS4.3 T4.3.4: Only legal-approved policy texts can be published — the
+    // refusal applies to publish actions, not to edits of already-published rows.
+    if (rawJson.status === 'published' && nextStatus === 'published' && !nextLegalApproved) {
+      return c.json(
+        problem(400, 'Legal approval required', 'Policy documents cannot be published without formal legal counsel approval (legalApproved must be true)'),
+        400,
+        { 'Content-Type': P }
+      );
+    }
+
+    const patch: any = prunePatch(rawJson, parsed.data);
+    if (rawJson.effectiveDate !== undefined) {
+      patch.effectiveDate = parsed.data.effectiveDate ? new Date(parsed.data.effectiveDate) : null;
+    }
+    if (rawJson.publishedAt !== undefined) {
+      patch.publishedAt = parsed.data.publishedAt ? new Date(parsed.data.publishedAt) : null;
+    } else if (nextStatus === 'published' && !current.publishedAt && !patch.publishedAt) {
+      patch.publishedAt = new Date();
+    }
+
+    if (nextStatus === 'published' && current.status !== 'published') {
+      await db
+        .update(policyDocument)
+        .set({ status: 'archived', updatedAt: new Date() })
+        .where(
+          and(
+            eq(policyDocument.slug, current.slug),
+            eq(policyDocument.locale, current.locale),
+            eq(policyDocument.status, 'published'),
+            ne(policyDocument.id, id),
+          ),
+        );
+    }
     const rows = await db.update(policyDocument).set(patch).where(eq(policyDocument.id, id)).returning();
     const updated = rows[0];
     if (!updated) return c.json(problem(404, 'Policy not found'), 404, { 'Content-Type': P });
@@ -447,6 +600,47 @@ export function entitiesRoute(
   r.put('/policies/:id', updatePolicy);
   r.patch('/entities/policies/:id', updatePolicy);
   r.patch('/policies/:id', updatePolicy);
+
+  // MS4.3 T4.3.3: Version history listing for policies
+  const listPolicyVersions = async (c: any) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const slug = c.req.param('slug');
+    const locale = c.req.query('locale') || 'en';
+    const rows = await db
+      .select()
+      .from(policyDocument)
+      .where(and(eq(policyDocument.slug, slug), eq(policyDocument.locale, locale)))
+      .orderBy(desc(policyDocument.version), desc(policyDocument.createdAt));
+    return c.json({ items: rows });
+  };
+  r.get('/entities/policies/:slug/versions', listPolicyVersions);
+  r.get('/policies/:slug/versions', listPolicyVersions);
+
+  // T4.3.3: compare two stored versions field-by-field (no overwriting).
+  const comparePolicyVersions = async (c: any) => {
+    const a = await authed(c);
+    if (a instanceof Response) return a;
+    const slug = c.req.param('slug');
+    const locale = c.req.query('locale') || 'en';
+    const fromV = String(c.req.query('from') || '');
+    const toV = String(c.req.query('to') || '');
+    if (!fromV || !toV) return c.json(problem(422, 'Validation Failed', 'from and to version query params are required'), 422, { 'Content-Type': P });
+    const rows = await db
+      .select()
+      .from(policyDocument)
+      .where(and(eq(policyDocument.slug, slug), eq(policyDocument.locale, locale)));
+    const from = rows.find((r: any) => String(r.version) === fromV);
+    const to = rows.find((r: any) => String(r.version) === toV);
+    if (!from || !to) return c.json(problem(404, 'Version not found'), 404, { 'Content-Type': P });
+    const fields = ['title', 'summary', 'body', 'changeSummary', 'effectiveDate', 'publishedAt', 'status', 'legalApproved', 'approvedBy', 'cookieCategories'];
+    const changes = fields
+      .filter((f) => JSON.stringify((from as any)[f] ?? null) !== JSON.stringify((to as any)[f] ?? null))
+      .map((f) => ({ field: f, from: (from as any)[f] ?? null, to: (to as any)[f] ?? null }));
+    return c.json({ slug, locale, from: fromV, to: toV, changes, fromRow: from, toRow: to });
+  };
+  r.get('/entities/policies/:slug/versions/compare', comparePolicyVersions);
+  r.get('/policies/:slug/versions/compare', comparePolicyVersions);
 
   const deletePolicy = async (c: any) => {
     const guard = await editorGuard(c);

@@ -93,6 +93,17 @@ for (const loc of [
 }
 console.log('[seed] locale rows verified');
 
+// 2b) typed site setting defaults (MS4.2 / T4.2.1) — fill missing rows only so
+//     an operator's existing edits are never overwritten.
+{
+  const { setting } = schema;
+  const { SETTINGS_GROUP_DEFAULTS } = await import('@twinmos/shared');
+  for (const [key, value] of Object.entries(SETTINGS_GROUP_DEFAULTS)) {
+    await db.insert(setting).values({ key, value }).onConflictDoNothing();
+  }
+  console.log(`[seed] site settings defaults verified (${Object.keys(SETTINGS_GROUP_DEFAULTS).length} groups)`);
+}
+
 // 3) demo catalog rows — strictly skipped in bootstrap seed (SEED-01)
 if (isDemo) {
   const anyProduct = await db.select({ id: product.id }).from(product).limit(1);

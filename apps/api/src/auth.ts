@@ -66,6 +66,16 @@ export function initAuth(db: DB) {
       requireEmailVerification: process.env.NODE_ENV === 'production' || process.env.REQUIRE_EMAIL_VERIFICATION === '1',
       revokeSessionsOnPasswordReset: true,
       resetPasswordTokenExpiresIn: 60 * 60, // 1 hour expiration
+      // A successful reset proves ownership of the mailbox: clear the durable
+      // lockout so the user is not immediately locked out of the new password.
+      onPasswordReset: async ({ user: resetUser }: any) => {
+        if (!resetUser?.id) return;
+        await db.update(schema.user).set({
+          failedLoginCount: 0,
+          lockedUntil: null,
+          updatedAt: new Date(),
+        }).where(eq(schema.user.id, resetUser.id));
+      },
       sendResetPassword: async ({ user, url, token }: any) => {
         // Security (Roadmap R0.3 / Z-09 / RESET-LOG): never log reset URLs or tokens to console.
         await sendMail({

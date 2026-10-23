@@ -15,7 +15,9 @@
   var API = window.TWINMOS_API || '/api/v1';
   if (API.charAt(API.length - 1) === '/') API = API.slice(0, -1);
 
-  var PAGE_TYPE = { '/contact.html': 'contact', '/quote.html': 'quote', '/careers.html': 'job-application', '/partners.html': 'partner-inquiry' };
+  // Clean URLs are canonical; .html aliases are 301s. Normalise both.
+  var PAGE_TYPE = { '/contact': 'contact', '/quote': 'quote', '/careers': 'job-application', '/partners': 'partner-inquiry' };
+  function cleanPath(p) { return String(p || '/').replace(/\.html$/i, '').replace(/\/$/, '') || '/'; }
   /** RMA intake field names (shared rmaIntakeSchema) mapped from form labels. */
   var KEY_ALIASES = {
     'full name': 'name', 'email': 'email', 'e-mail': 'email', 'email address': 'email',
@@ -55,7 +57,9 @@
     if (form.id === 'nlForm') return 'newsletter';
     var success = form.getAttribute('data-success') || '';
     if (success.indexOf('Demo sign-in') !== -1) return null; // portal demo — leave to prototype
-    if (form.hasAttribute('data-tm-form')) return PAGE_TYPE[location.pathname] || null;
+    var explicit = form.getAttribute('data-form-type');
+    if (explicit) return explicit;
+    if (form.hasAttribute('data-tm-form')) return PAGE_TYPE[cleanPath(location.pathname)] || null;
     return null;
   }
 
@@ -68,7 +72,9 @@
       var label = fg.querySelector('label');
       var ctl = fg.querySelector('input, select, textarea');
       if (!ctl) return;
-      var key = keyFor(label ? label.textContent : '');
+      // Prefer the explicit name attribute (CMS form definitions); fall back to
+      // the legacy prototype label mapping.
+      var key = ctl.name ? (ctl.name === 'consent' ? '_consent' : ctl.name) : keyFor(label ? label.textContent : '');
       var value = ctl.type === 'checkbox' ? (ctl.checked ? 'yes' : '') : String(ctl.value || '').trim();
       if (key === '_consent') { consentChecked = ctl.checked; return; }
       if (!value) return;
@@ -94,6 +100,11 @@
       fg.classList.toggle('invalid', bad);
       if (bad) ok = false;
     });
+    var consent = form.querySelector('input[name="consent"]');
+    if (consent && !consent.checked) {
+      showError(form, 'Please accept the privacy notice to continue.');
+      ok = false;
+    }
     return ok;
   }
 
@@ -122,7 +133,9 @@
   var turnstileReady = null;
   function ensureTurnstile(form) {
     var key = window.TURNSTILE_SITE_KEY;
-    if (!key || form.querySelector('.cf-turnstile')) return Promise.resolve(null);
+    // Skip the placeholder key shipped in the default settings; rendering it
+    // produces a Cloudflare 400020 error on every quote page.
+    if (!key || key === '0x4AAAAAAAx' || form.querySelector('.cf-turnstile')) return Promise.resolve(null);
     if (!turnstileReady) {
       turnstileReady = new Promise(function (resolve) {
         var s = document.createElement('script');
@@ -168,7 +181,7 @@
       type: type === 'job-application' ? careersType(data.payload) : type,
       email: data.email,
       payload: data.payload,
-      consent: true, // UI carries an explicit checkbox where the prototype provides one; documented for forms whose prototype UI lacks it
+      consent: data.consentChecked !== false,
       ...(turnstileToken(form) ? { turnstileToken: turnstileToken(form) } : {}),
     };
 

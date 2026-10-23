@@ -58,6 +58,17 @@ if (expiredResult) {
   console.log('[greflect-harness] PASS CRYPTO-01: Expired tokens are strictly rejected.');
 }
 
+// 3. Live Architectural Reflection Fixture (T3.6.1 / Z-17 / GREF-H)
+console.log('\n[greflect-harness] 3. Running live end-to-end editorial reflection fixture...');
+import { execSync } from 'node:child_process';
+try {
+  execSync('node tooling/verify/greflect-fixture.mjs', { stdio: 'inherit' });
+  console.log('[greflect-harness] PASS REFLECT-01: Live end-to-end editorial reflection verified.');
+} catch (err) {
+  console.error('[greflect-harness] FAIL REFLECT-01: Live editorial reflection fixture failed.');
+  failures++;
+}
+
 if (failures > 0) {
   console.error(`[greflect-harness] G-REFLECT harness FAILED with ${failures} error(s).`);
   process.exit(1);

@@ -1,15 +1,23 @@
 ---
 // CookieBanner.astro — Accessible GDPR/ePrivacy compliant cookie banner with symmetric Accept & Decline.
-// Tasks D1b, E5a / CONSENT-01 compliant.
+// Tasks D1b, E5a / CONSENT-01 compliant. Copy and policy target come from
+// site.cookie (MS4.2 T4.2.2) instead of being hardcoded.
+interface Props {
+  settings?: { title?: string; description?: string; policyUrl?: string; essentialOnlyDefault?: boolean };
+}
+
+const { settings = {} } = Astro.props;
+const title = settings.title || 'Cookie Preferences';
+const description = settings.description || 'We use essential cookies to ensure site security and proper functionality.';
+const policyUrl = settings.policyUrl || '/legal.html#cookies';
 ---
 
-<div class="cookie-bar" id="cookieBar" role="region" aria-label="Cookie consent">
+<div class="cookie-bar" id="cookieBar" role="region" aria-label={title}>
   <span>
-    🍪 We use essential cookies to ensure site security and proper functionality. See our <a href="legal.html#privacy" style="text-decoration:underline">privacy policy</a>.
+    🍪 {description} <a href={policyUrl} style="text-decoration:underline">Learn more</a>.
   </span>
   <div style="display:inline-flex;gap:8px;align-items:center;margin-left:auto">
     <button class="btn btn-ghost btn-sm cookie-decline" id="cookieDecline" type="button" style="color:#ffffff!important;border:1px solid rgba(255,255,255,0.6)!important">Decline</button>
     <button class="btn btn-accent btn-sm cookie-accept" id="cookieAccept" type="button">Accept</button>
   </div>
 </div>
-

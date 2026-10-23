@@ -32,11 +32,25 @@ for (const [name, path] of [
 // 2. Inspect API Dockerfile
 if (existsSync(apiDockerPath)) {
   const apiDf = readFileSync(apiDockerPath, 'utf8');
-  if (!apiDf.includes('--omit=dev')) {
-    console.error('[verify-container-sbom] FAIL SBOM-01: API Dockerfile does not omit dev dependencies.');
+  if (!apiDf.includes('node:24-alpine')) {
+    console.error('[verify-container-sbom] FAIL T3.4.1: API Dockerfile must use node:24-alpine base.');
     failures++;
   } else {
-    console.log('[verify-container-sbom] PASS SBOM-01: API Dockerfile enforces dev-dependency pruning.');
+    console.log('[verify-container-sbom] PASS T3.4.1: API Dockerfile uses node:24-alpine base.');
+  }
+
+  if (apiDf.includes('/packages/db/node_modules') || apiDf.includes('/apps/api/node_modules')) {
+    console.error('[verify-container-sbom] FAIL T3.4.1: API Dockerfile copies non-existent workspace subpath node_modules directories.');
+    failures++;
+  } else {
+    console.log('[verify-container-sbom] PASS T3.4.1: API Dockerfile copies hoisted /app/node_modules only.');
+  }
+
+  if (!apiDf.includes('--omit=dev') || !apiDf.includes('drizzle-kit')) {
+    console.error('[verify-container-sbom] FAIL SBOM-01: API Dockerfile does not prune devOptional tooling (drizzle-kit/esbuild/vitest).');
+    failures++;
+  } else {
+    console.log('[verify-container-sbom] PASS SBOM-01: API Dockerfile enforces dev-dependency pruning and removes drizzle-kit.');
   }
 
   if (!apiDf.includes('USER node')) {
@@ -50,6 +64,20 @@ if (existsSync(apiDockerPath)) {
 // 3. Inspect Web Dockerfile
 if (existsSync(webDockerPath)) {
   const webDf = readFileSync(webDockerPath, 'utf8');
+  if (!webDf.includes('node:24-alpine')) {
+    console.error('[verify-container-sbom] FAIL T3.4.1: Web Dockerfile must use node:24-alpine base.');
+    failures++;
+  } else {
+    console.log('[verify-container-sbom] PASS T3.4.1: Web Dockerfile uses node:24-alpine base.');
+  }
+
+  if (webDf.includes('/apps/web/node_modules')) {
+    console.error('[verify-container-sbom] FAIL T3.4.1: Web Dockerfile copies non-existent apps/web/node_modules directory.');
+    failures++;
+  } else {
+    console.log('[verify-container-sbom] PASS T3.4.1: Web Dockerfile copies hoisted /app/node_modules only.');
+  }
+
   if (!webDf.includes('USER node')) {
     console.error('[verify-container-sbom] FAIL SEC-C1: Web Dockerfile does not run as non-root user (node).');
     failures++;
@@ -58,7 +86,27 @@ if (existsSync(webDockerPath)) {
   }
 }
 
-// 4. Inspect .dockerignore
+// 4. Verify SBOM artifacts exist and are valid (SBOM-01)
+const apiSbomPath = resolve(process.cwd(), 'deploy/sbom/api-sbom.json');
+const webSbomPath = resolve(process.cwd(), 'deploy/sbom/web-sbom.json');
+const edgeSbomPath = resolve(process.cwd(), 'deploy/sbom/edge-sbom.json');
+
+for (const [name, path] of [['API SBOM', apiSbomPath], ['Web SBOM', webSbomPath], ['Edge SBOM', edgeSbomPath]]) {
+  if (!existsSync(path)) {
+    console.error(`[verify-container-sbom] FAIL SBOM-01: Missing ${name} at ${path}`);
+    failures++;
+  } else {
+    const content = JSON.parse(readFileSync(path, 'utf8'));
+    if (!content.components || content.components.length === 0) {
+      console.error(`[verify-container-sbom] FAIL SBOM-01: ${name} contains 0 components.`);
+      failures++;
+    } else {
+      console.log(`[verify-container-sbom] PASS SBOM-01: ${name} verified with ${content.components.length} components.`);
+    }
+  }
+}
+
+// 5. Inspect .dockerignore
 if (existsSync(dockerignorePath)) {
   const di = readFileSync(dockerignorePath, 'utf8');
   if (!di.includes('workspace/') || !di.includes('apps/api/data')) {
@@ -69,7 +117,7 @@ if (existsSync(dockerignorePath)) {
   }
 }
 
-// 5. Inspect Docker Compose S-11 isolation
+// 6. Inspect Docker Compose S-11 isolation
 const composePath = resolve(process.cwd(), 'deploy/compose/docker-compose.yml');
 if (!existsSync(composePath)) {
   console.error('[verify-container-sbom] FAIL COMPOSE-01: Missing deploy/compose/docker-compose.yml.');

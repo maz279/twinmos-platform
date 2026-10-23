@@ -123,6 +123,9 @@ export const productBaseSchema = z.object({
 });
 
 export const productCreateSchema = productBaseSchema.extend({
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
+  translationGroup: z.string().trim().max(60).nullable().optional(),
   status: z.enum(CONTENT_STATUS).default('draft'),
   specs: z.record(z.string(), z.unknown()).default({}),
   description: z.string().trim().max(8000).default(''),
@@ -142,7 +145,16 @@ export const productCreateSchema = productBaseSchema.extend({
   specsDictionary: z.record(z.string(), z.unknown()).default({}),
   version: z.number().int().default(1),
 });
-export const productUpdateSchema = productBaseSchema.partial();
+export const productUpdateSchema = productBaseSchema.partial().extend({
+  featured: z.boolean().optional(),
+  launchDate: z.string().datetime().nullable().optional(),
+  isComingSoon: z.boolean().optional(),
+  warrantyTier: z.string().trim().max(40).nullable().optional(),
+  specsDictionary: z.record(z.string(), z.unknown()).optional(),
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
+  translationGroup: z.string().trim().max(60).nullable().optional(),
+});
 
 // ---- Phase 3: catalog engineering contracts (TWN-ADMIN-CMS-AUDIT-PLAN-2026-001 §3) ----
 // 3.1 product variants — hardware attributes + per-variant pricing/inventory.
@@ -195,6 +207,7 @@ export const compatibilityBaseSchema = z.object({
   cats: z.array(z.string().trim().min(1).max(40)).max(8),
   ssdNote: z.string().trim().max(120).nullable(),
   ssdCats: z.array(z.string().trim().min(1).max(40)).max(8),
+  qvlStatus: z.string().trim().max(30).default('certified'),
 });
 export const compatibilityCreateSchema = compatibilityBaseSchema.extend({
   memoryGen: z.enum(COMPAT_MEMORY_GENS).nullable().default(null),
@@ -207,6 +220,7 @@ export const compatibilityCreateSchema = compatibilityBaseSchema.extend({
   cats: z.array(z.string().trim().min(1).max(40)).max(8).default([]),
   ssdNote: z.string().trim().max(120).nullable().default(null),
   ssdCats: z.array(z.string().trim().min(1).max(40)).max(8).default([]),
+  qvlStatus: z.string().trim().max(30).default('certified'),
 });
 export const compatibilityUpdateSchema = compatibilityBaseSchema.partial();
 export type CompatibilityInput = z.infer<typeof compatibilityCreateSchema>;
@@ -230,23 +244,71 @@ export const distributorBaseSchema = z.object({
   cities: z.array(z.string().trim().min(1).max(60)).max(20),
   contact: z.record(z.string(), z.string().max(300)), // {email, phone, website, tag}
   note: z.string().trim().max(1000).nullable(),
+  isoCountry: z.string().trim().length(2).nullable().optional(),
+  tagline: z.string().trim().max(300).nullable().optional(),
+  ctaConfig: z.record(z.string(), z.unknown()).optional(),
+  sort: z.number().int().default(0),
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
 });
 export const distributorCreateSchema = distributorBaseSchema.extend({
   status: z.enum(DISTRIBUTOR_STATUSES).default('authorized'),
   cities: z.array(z.string().trim().min(1).max(60)).max(20).default([]),
   contact: z.record(z.string(), z.string().max(300)).default({}),
   note: z.string().trim().max(1000).nullable().default(null),
+  isoCountry: z.string().trim().length(2).nullable().optional().default(null),
+  tagline: z.string().trim().max(300).nullable().optional().default(null),
+  ctaConfig: z.record(z.string(), z.unknown()).optional().default({}),
+  sort: z.number().int().default(0),
 });
 export const distributorUpdateSchema = distributorBaseSchema.partial();
 export const marketplaceListingBaseSchema = z.object({
   platform: z.string().trim().min(2).max(40),
   url: z.url().max(500),
   country: z.string().trim().max(60).nullable(),
+  description: z.string().trim().max(500).nullable().optional(),
+  ctaLabel: z.string().trim().max(60).nullable().optional(),
+  sort: z.number().int().default(0),
 });
 export const marketplaceListingCreateSchema = marketplaceListingBaseSchema.extend({
   country: z.string().trim().max(60).nullable().default(null),
+  description: z.string().trim().max(500).nullable().optional().default(null),
+  ctaLabel: z.string().trim().max(60).nullable().optional().default(null),
+  sort: z.number().int().default(0),
 });
 export const marketplaceListingUpdateSchema = marketplaceListingBaseSchema.partial();
+
+// ---- MS4.5: Spec dictionary, Spec templates, Device type labels ----
+export const specDictionaryBaseSchema = z.object({
+  key: z.string().trim().min(1).max(80),
+  normalizedKey: z.string().trim().min(1).max(80),
+  categoryId: z.number().int().positive().nullable().optional(),
+  dataType: z.enum(['string', 'number', 'boolean', 'array']).default('string'),
+  unit: z.string().trim().max(20).nullable().optional(),
+  description: z.string().trim().max(500).nullable().optional(),
+});
+export const specDictionaryCreateSchema = specDictionaryBaseSchema;
+export const specDictionaryUpdateSchema = specDictionaryBaseSchema.partial();
+export type SpecDictionaryInput = z.infer<typeof specDictionaryCreateSchema>;
+
+export const specTemplateBaseSchema = z.object({
+  categoryId: z.number().int().positive(),
+  name: z.string().trim().min(1).max(80),
+  specKeys: z.array(z.string().trim().min(1).max(80)).default([]),
+  requiredKeys: z.array(z.string().trim().min(1).max(80)).default([]),
+});
+export const specTemplateCreateSchema = specTemplateBaseSchema;
+export const specTemplateUpdateSchema = specTemplateBaseSchema.partial();
+export type SpecTemplateInput = z.infer<typeof specTemplateCreateSchema>;
+
+export const deviceTypeLabelBaseSchema = z.object({
+  deviceType: z.string().trim().min(1).max(30),
+  label: z.string().trim().min(1).max(80),
+  sort: z.number().int().default(0),
+});
+export const deviceTypeLabelCreateSchema = deviceTypeLabelBaseSchema;
+export const deviceTypeLabelUpdateSchema = deviceTypeLabelBaseSchema.partial();
+export type DeviceTypeLabelInput = z.infer<typeof deviceTypeLabelCreateSchema>;
 
 // 3.3 bulk import envelope — the CSV text is parsed/validated server-side.
 export const productImportSchema = z.object({
@@ -271,7 +333,13 @@ export function sameInstant(headerVal: string | undefined | null, dbVal: Date | 
 
 // ---- RFC 9457 problem details helper ----
 export function problem(status: number, title: string, detail?: string, errors?: unknown) {
-  return { type: 'about:blank', status, title, ...(detail ? { detail } : {}), ...(errors ? { errors } : {}) };
+  return {
+    type: 'about:blank',
+    status,
+    title,
+    ...(detail ? { detail } : {}),
+    ...(errors ? { errors, invalid_params: errors } : {}),
+  };
 }
 
 // ---- P2: RMA intake (payload of POST /forms/rma; also creates the RMA case) ----
@@ -313,7 +381,7 @@ export const CONTENT_TRANSITIONS: Record<(typeof CONTENT_STATUS)[number], (typeo
   draft: ['in_review', 'published', 'archived'],
   in_review: ['scheduled', 'published', 'draft', 'archived'],
   scheduled: ['published', 'draft', 'archived'],
-  published: ['archived'],
+  published: ['archived', 'draft'],
   archived: ['draft'],
 };
 
@@ -325,6 +393,7 @@ export const articleBaseSchema = z.object({
   slug: slugField.optional(), // derived from title when omitted
   title: z.string().trim().min(2).max(200),
   deck: z.string().trim().max(400).optional(),
+  heroMediaId: z.number().int().positive().nullable().optional(),
   body: bodyField,
   category: z.string().trim().max(40),
   tags: z.array(z.string().max(40)).max(12),
@@ -332,9 +401,13 @@ export const articleBaseSchema = z.object({
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
   structuredBody: z.array(z.record(z.string(), z.unknown())).nullable().optional(),
   readingTimeMin: z.number().int().min(0).nullable().optional(),
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
+  translationGroup: z.string().trim().max(60).nullable().optional(),
   version: z.number().int().optional(),
 });
 export const articleCreateSchema = articleBaseSchema.extend({
+  heroMediaId: z.number().int().positive().nullable().optional().default(null),
   body: bodyField.default(''),
   category: z.string().trim().max(40).default('Article'),
   tags: z.array(z.string().max(40)).max(12).default([]),
@@ -349,20 +422,39 @@ export const articleUpdateSchema = articleBaseSchema.partial();
 export const newsBaseSchema = z.object({
   slug: slugField.optional(),
   title: z.string().trim().min(2).max(200),
+  heroMediaId: z.number().int().positive().nullable().optional(),
   body: bodyField,
   tag: z.string().trim().max(40).optional(),
   eventDate: z.string().datetime().optional(), // ISO — set for event-type posts
   locale: localeField,
+  seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(),
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
+  translationGroup: z.string().trim().max(60).nullable().optional(),
 });
 export const newsCreateSchema = newsBaseSchema.extend({
+  heroMediaId: z.number().int().positive().nullable().optional().default(null),
   body: bodyField.default(''),
   locale: localeField.default('en'),
 });
 export const newsUpdateSchema = newsBaseSchema.partial();
 
+export const RESERVED_PAGE_PATHS = ['/admin', '/api', '/internal'] as const;
+
+export function isReservedPagePath(path?: string | null): boolean {
+  if (!path) return false;
+  const norm = '/' + path.replace(/^\/+/, '').toLowerCase();
+  return RESERVED_PAGE_PATHS.some((res) => norm === res || norm.startsWith(res + '/'));
+}
+
+export const pagePathSchema = z.string().trim().regex(/^\/[a-zA-Z0-9_\-\/]*$/, 'Must start with /')
+  .refine((p) => !isReservedPagePath(p), {
+    message: 'Path cannot use reserved prefixes (/admin, /api, /internal)',
+  });
+
 export const pageBaseSchema = z.object({
   slug: slugField.optional(),
-  path: z.string().trim().regex(/^\/[a-zA-Z0-9_\-\/]*$/, 'Must start with /').nullable().optional(),
+  path: pagePathSchema.nullable().optional(),
   template: z.enum(['default', 'landing', 'full_width', 'legal', 'category', 'product_detail', 'support_portal']),
   parentId: z.number().int().positive().nullable().optional(),
   translationGroup: z.string().trim().nullable().optional(),
@@ -375,14 +467,17 @@ export const pageBaseSchema = z.object({
   ogMediaId: z.number().int().positive().nullable().optional(),
   noindex: z.boolean(),
   legacyPaths: z.array(z.string()),
+  sort: z.number().int().min(0).max(9999).optional(),
   status: z.enum(CONTENT_STATUS),
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
   version: z.number().int().optional(),
 });
 export const pageCreateSchema = pageBaseSchema.extend({
   blocks: z.array(z.record(z.string(), z.unknown())).default([]),
   locale: localeField.default('en'),
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
-  path: z.string().trim().regex(/^\/[a-zA-Z0-9_\-\/]*$/, 'Must start with /').nullable().optional().default(null),
+  path: pagePathSchema.nullable().optional().default(null),
   template: z.enum(['default', 'landing', 'full_width', 'legal', 'category', 'product_detail', 'support_portal']).default('default'),
   parentId: z.number().int().positive().nullable().optional().default(null),
   translationGroup: z.string().trim().nullable().optional().default(null),
@@ -401,7 +496,10 @@ export const faqBaseSchema = z.object({
   question: z.string().trim().min(4).max(500),
   answer: z.string().trim().min(1).max(20_000),
   sort: z.number().int().min(0).max(9999),
+  label: z.string().trim().max(120).nullable().optional(),
   locale: localeField,
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
   version: z.number().int().optional(),
 });
 export const faqCreateSchema = faqBaseSchema.extend({
@@ -414,6 +512,7 @@ export const faqUpdateSchema = faqBaseSchema.partial();
 export const contentTransitionSchema = z.object({
   to: z.enum(CONTENT_STATUS),
   publishAt: z.string().datetime().optional(), // required when to=scheduled
+  unpublishAt: z.string().datetime().optional(), // optional scheduled unpublish
 });
 export const contentRevertSchema = z.object({ revisionId: z.number().int().positive() });
 
@@ -534,4 +633,7 @@ export const snCheckSchema = z.object({
 
 export * from './delivery.ts';
 export * from './blocks.ts';
+export * from './widgets.ts';
+export * from './sanitize.ts';
+export * from './settings.ts';
 

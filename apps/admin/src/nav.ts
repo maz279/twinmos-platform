@@ -28,6 +28,7 @@ const Translations = lazy(() => import('./modules/translations'));
 const UsersModule = lazy(() => import('./modules/users'));
 const AuditLog = lazy(() => import('./modules/audit'));
 const Settings = lazy(() => import('./modules/settings'));
+const Entities = lazy(() => import('./modules/entities'));
 
 /** Per-tab context for deep links, e.g. { kind:'lead', id:'42', label:'QT-0042' }. */
 export type TabCtx = { kind: string; id?: string; label?: string };
@@ -85,5 +86,6 @@ export const MODULES: ModuleDef[] = [
   { id: 'translations', label: 'Translations', group: 'Localization', icon: 'translate', minRole: 'viewer', desc: '9-locale translation strings with import/export.', comp: (p) => h(Translations, { isSuperAdmin: p.me.user?.role === 'super_admin' }) },
   { id: 'users', label: 'Users & Roles', group: 'Administration', icon: 'users', minRole: 'super_admin', desc: 'Staff directory, role governance, MFA enforcement, and active session management.', comp: UsersModule },
   { id: 'audit', label: 'Audit log', group: 'Administration', icon: 'shield', minRole: 'editor', desc: 'Filterable trail of every mutation (12-month retention).', comp: AuditLog },
+  { id: 'entities', label: 'Truth & Entities', group: 'Content Studio', icon: 'shield', minRole: 'editor', desc: 'Versioned policies, approved offices, permission-backed testimonials and form definitions.', comp: (p) => h(Entities, { canWrite: p.canWrite, me: p.me, nav: p.nav }) },
   { id: 'settings', label: 'Settings', group: 'Administration', icon: 'sliders', minRole: 'admin', desc: 'Site settings, redirects and locale management.', comp: (p) => h(Settings, { canManage: isAdminRole(p.me.user?.role), isSuperAdmin: p.me.user?.role === 'super_admin' }) },
 ];

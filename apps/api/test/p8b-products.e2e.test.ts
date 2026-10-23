@@ -78,6 +78,7 @@ describe('P8-2: rich product CRUD (0007 fields)', () => {
         priceUsd: 129.99, currency: 'USD',
         heroMediaId: null, gallery: [], datasheets: [{ label: 'Datasheet', url: 'https://example.com/ds.pdf' }],
         badges: ['New'], specs: { Speed: '6000 MT/s' },
+        source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
       }),
     });
     expect(res.status).toBe(201);
@@ -96,13 +97,19 @@ describe('P8-2: rich product CRUD (0007 fields)', () => {
     })).json();
     const patch = await app.request('/api/v1/admin/products/' + created.id, {
       method: 'PATCH', headers: { 'content-type': 'application/json', cookie },
-      body: JSON.stringify({ priceUsd: 259.5, description: 'Updated copy.', status: 'published' }),
+      body: JSON.stringify({ priceUsd: 259.5, description: 'Updated copy.' }),
     });
     expect(patch.status).toBe(200);
     const p = await patch.json();
     expect(Number(p.priceUsd)).toBe(259.5);
     expect(p.description).toBe('Updated copy.');
-    expect(p.status).toBe('published');
+    // T4.6.1: publishing moves through the audited transition endpoint.
+    const pub = await app.request(`/api/v1/admin/products/${created.id}/transition`, {
+      method: 'POST', headers: { 'content-type': 'application/json', cookie },
+      body: JSON.stringify({ to: 'published' }),
+    });
+    expect(pub.status).toBe(200);
+    expect((await pub.json()).status).toBe('published');
 
     const list = await (await app.request('/api/v1/admin/products?q=p8b-ddr5-32', { headers: { cookie } })).json();
     expect(list.items).toHaveLength(1);

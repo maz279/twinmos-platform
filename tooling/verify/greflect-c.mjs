@@ -162,7 +162,11 @@ console.log('\n[*] 4. Checking LOC-01 Middleware Fallback Reflection...');
 const middlewarePath = resolve(process.cwd(), 'apps/web/src/middleware.ts');
 const middlewareContent = readFileSync(middlewarePath, 'utf8');
 
-if (!middlewareContent.includes('LOC-01') || !middlewareContent.includes('context.redirect')) {
+const hasLocaleResolution =
+  (middlewareContent.includes('LOC-01') || middlewareContent.includes('T4.7.5') || middlewareContent.includes('D-8')) &&
+  middlewareContent.includes('LOCALES.includes') &&
+  middlewareContent.includes('context.redirect');
+if (!hasLocaleResolution) {
   console.error('[-] FAIL LOC-01: Astro middleware missing LOC-01 localization fallback redirect');
   failures++;
 } else {

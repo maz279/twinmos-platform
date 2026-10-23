@@ -1,4 +1,4 @@
-FROM nginx:alpine
+FROM mirror.gcr.io/library/nginx:alpine
 
 # Create required directories for caching, snippets, and certificates
 RUN mkdir -p /var/cache/nginx/ssr \
@@ -23,6 +23,6 @@ COPY deploy/nginx/twinmos.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80 443
 
 HEALTHCHECK --interval=15s --timeout=3s --retries=3 \
-  CMD wget --spider -q http://127.0.0.1/ || exit 1
+  CMD wget -q --spider --no-check-certificate --header="Host: www.twinmos.com" https://127.0.0.1/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

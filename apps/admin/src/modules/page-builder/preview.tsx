@@ -17,6 +17,28 @@ function Media({ id, alt, style }: { id: unknown; alt?: string; style?: React.CS
 const str = (v: unknown, d = '') => (v == null ? d : String(v));
 const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? (v as Record<string, unknown>[]) : []);
 
+function renderWithTokens(text: unknown, fallback = '') {
+  const s = str(text, fallback);
+  if (!s.includes('{logo}')) return s;
+  const parts = s.split('{logo}');
+  return (
+    <>
+      {parts.map((part, i) => (
+        <React.Fragment key={i}>
+          {part}
+          {i < parts.length - 1 && (
+            <img
+              src="/brand/logo.svg"
+              alt="TwinMOS"
+              style={{ height: '0.9em', display: 'inline-block', verticalAlign: 'middle', margin: '0 4px' }}
+            />
+          )}
+        </React.Fragment>
+      ))}
+    </>
+  );
+}
+
 /** Minimal markdown-ish render (bold/headings/lists) — enough for previews. */
 function Md({ text }: { text: unknown }) {
   const lines = str(text).split('\n');
@@ -48,8 +70,8 @@ function BlockView({ block }: { block: PageBlock }) {
         {w('bgMediaId') != null && <Media id={w('bgMediaId')} alt={str(w('title'))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.38 }} />}
         <div style={S({ position: 'relative', maxWidth: 620 })}>
           {str(w('eyebrow')) && <span style={S({ fontSize: 11.5, letterSpacing: 2, fontWeight: 800, color: GOLD, textTransform: 'uppercase' })}>{str(w('eyebrow'))}</span>}
-          <h1 style={S({ margin: '6px 0 8px', fontSize: 34, lineHeight: 1.15, color: '#fff' })}>{str(w('title'), 'Hero headline')}</h1>
-          {str(w('subdeck')) && <p style={S({ margin: 0, color: '#C6D2DE', fontSize: 15 })}>{str(w('subdeck'))}</p>}
+          <h1 style={S({ margin: '6px 0 8px', fontSize: 34, lineHeight: 1.15, color: '#fff' })}>{renderWithTokens(w('title') ?? w('headline'), 'Hero headline')}</h1>
+          {(str(w('lede')) || str(w('subdeck'))) && <p style={S({ margin: 0, color: '#C6D2DE', fontSize: 15 })}>{str(w('lede') || w('subdeck'))}</p>}
           <div style={S({ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' })}>
             {str(w('ctaLabel')) && <span style={S({ background: CYAN, color: '#fff', fontWeight: 800, padding: '9px 18px', borderRadius: 8, fontSize: 14 })}>{str(w('ctaLabel'))}</span>}
             {str(w('ctaSecondaryLabel')) && <span style={S({ border: '1px solid rgba(255,255,255,.5)', color: '#fff', fontWeight: 700, padding: '9px 18px', borderRadius: 8, fontSize: 14 })}>{str(w('ctaSecondaryLabel'))}</span>}

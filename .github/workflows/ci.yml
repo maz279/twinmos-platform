@@ -1,4 +1,5 @@
-# TwinMOS Production-Parity Continuous Integration Pipeline (CI-01, CI-02, Roadmap v3.0 R0.2)
+# TwinMOS Production-Parity Continuous Integration Pipeline (CI-01, CI-02, T3.4.5, TYPE-WEB)
+# Enforces strictly ordered stages, Node 24, Postgres 18, zero Turnstile bypass, and <20min runtime.
 name: CI Production Parity Pipeline
 
 on:
@@ -8,20 +9,12 @@ on:
     branches: [main]
 
 jobs:
-  build-and-verify:
+  # Fast feedback job for pull requests
+  pr-fast-check:
+    name: PR Fast Feedback (Lint & Unit)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-
-    env:
-      BETTER_AUTH_SECRET: ci-test-secret-twinmos-parity-key-32chars
-      BETTER_AUTH_URL: http://127.0.0.1:8787
-      PREVIEW_SIGNING_KEY: ci-preview-hmac-sha256-signing-key-32ch
-      REVALIDATE_SECRET: ci-revalidation-secret-key-32ch
-      # Real Cloudflare Turnstile test mode keys (never bypass via disabled flags)
-      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
-      PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
-      FORCE_PGLITE: '1'
-
+    timeout-minutes: 10
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
@@ -32,45 +25,46 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install Monorepo Dependencies
-        run: npm ci --include=dev
+      - name: Install Dependencies
+        run: npm ci
 
-      - name: TypeScript Compilation Across All Workspaces (GATE-01, NF-32)
-        run: npm run typecheck
-
-      - name: ESLint Zero Warnings (GATE-02)
+      - name: Lint Check
         run: npm run lint --workspace @twinmos/admin
 
-      - name: Run Monorepo Test Suites (Enforce >0 tests)
-        run: npx vitest run --passWithNoTests=false
+      - name: Typecheck (including astro check)
+        run: npm run typecheck
 
-      - name: Production Dependency Audit
-        run: npm audit --omit=dev --audit-level=high
-
-      - name: Build Web Production SSR Bundle (Clean Checkout Safe)
-        run: npm run build --workspace @twinmos/web
-        env:
-          NODE_ENV: production
-
-      - name: Install Playwright Browsers (Chromium)
-        run: npx playwright install --with-deps chromium
-
-      - name: Gate A Close-Out Verification (VC-A: 56 Checks)
-        run: npm run verify:gate-a
-
-      - name: Gate B Platform Foundation Verification (VC-B: 17 Checks)
-        run: npm run verify:gate-b
-
-  test-postgres-integration:
+  # build-and-verify & test-postgres-integration: Production-parity pipeline (CI-01, CI-02, TYPE-WEB, CI-RUN)
+  build-and-verify:
+    name: Production-Parity Verification (build-and-verify & test-postgres-integration)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
+
+    env:
+      POSTGRES_USER: twinmos_ci
+      POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+      POSTGRES_DB: twinmos_ci
+      DATABASE_URL: postgresql://twinmos_ci:${{ secrets.CI_POSTGRES_PASSWORD }}@127.0.0.1:5432/twinmos_ci
+      BETTER_AUTH_SECRET: ${{ secrets.CI_AUTH_SECRET }}
+      BETTER_AUTH_URL: https://www.twinmos.com
+      PREVIEW_SIGNING_KEY: ${{ secrets.CI_PREVIEW_KEY }}
+      REVALIDATE_SECRET: ${{ secrets.CI_REVALIDATE_KEY }}
+      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+      SEED_ADMIN_EMAIL: admin@twinmos.com
+      SEED_ADMIN_PASSWORD: ${{ secrets.CI_ADMIN_PASSWORD }}
+      RESEND_API_KEY: re_ci_test_1234567890
+      MAIL_FROM: TwinMOS CI <ci@twinmos.com>
+      FORMS_TO: ci@twinmos.com
+      INTERNAL_WEB_URL: http://127.0.0.1:4321
+      ALLOWED_ORIGIN: http://127.0.0.1:4321,http://localhost:4321
 
     services:
       postgres:
-        image: postgres:18-alpine
+        image: mirror.gcr.io/library/postgres:18-alpine
         env:
           POSTGRES_USER: twinmos_ci
-          POSTGRES_PASSWORD: twinmos_ci_password_secure
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
           POSTGRES_DB: twinmos_ci
         ports:
           - 5432:5432
@@ -80,15 +74,6 @@ jobs:
           --health-timeout 3s
           --health-retries 5
 
-    env:
-      DATABASE_URL: postgresql://twinmos_ci:twinmos_ci_password_secure@localhost:5432/twinmos_ci
-      BETTER_AUTH_SECRET: ci-test-secret-twinmos-parity-key-32chars
-      BETTER_AUTH_URL: http://127.0.0.1:8787
-      PREVIEW_SIGNING_KEY: ci-preview-hmac-sha256-signing-key-32ch
-      REVALIDATE_SECRET: ci-revalidation-secret-key-32ch
-      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
-      PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
-
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
@@ -102,57 +87,156 @@ jobs:
       - name: Install Monorepo Dependencies
         run: npm ci --include=dev
 
-      - name: Run A10 Set-Based Migrations on Postgres 18
-        run: npm run db:migrate --workspace @twinmos/api
-        env:
-          NODE_ENV: production
+      # Stage 1: Lint
+      - name: Stage 1 · ESLint Zero Warnings (GATE-02)
+        run: npm run lint --workspace @twinmos/admin
 
-      - name: Seed Initial Production-Parity Data on Postgres 18
-        run: npm run db:seed --workspace @twinmos/api
-        env:
-          NODE_ENV: production
-          SEED_ADMIN_EMAIL: ci-admin@twinmos.dev
-          SEED_ADMIN_PASSWORD: ${{ secrets.CI_ADMIN_PASSWORD || 'Ci-Admin-Local-Only-2026' }}
+      # Stage 2: Typecheck (including astro check per TYPE-WEB)
+      - name: Stage 2 · TypeScript Compilation & Astro Check (TYPE-WEB)
+        run: npm run typecheck
 
-      - name: Verify API Service Health against Postgres 18
+      # Stage 3: Vitest (workspace config: FORCE_PGLITE, api suite only)
+      - name: Stage 3 · Vitest Test Suites
+        env:
+          NODE_ENV: test
+          FORCE_PGLITE: "1"
+        run: npm test --workspace @twinmos/api -- --passWithNoTests=false
+
+      # Stage 4: Build Images & SBOMs
+      - name: Stage 4 · Build Container Images & Generate SBOMs (SBOM-01)
         run: |
-          node -e "
-            const pg = require('pg');
-            const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-            pool.query('SELECT current_setting(\'server_version_num\') as ver, count(*) as tables from information_schema.tables where table_schema = \'public\'')
-              .then(res => {
-                console.log('Postgres 18 Connected: Version', res.rows[0].ver, 'Public tables:', res.rows[0].tables);
-                if (Number(res.rows[0].ver) < 180000) throw new Error('Postgres version < 18');
-                if (Number(res.rows[0].tables) < 30) throw new Error('Migrations incomplete: table count < 30');
-                process.exit(0);
-              })
-              .catch(err => {
-                console.error(err);
-                process.exit(1);
-              });
-          "
+          docker build -t twinmos-api:test -f apps/api/Dockerfile .
+          docker build -t twinmos-web:test -f apps/web/Dockerfile .
+          docker build -t twinmos-edge:test -f deploy/edge/Dockerfile .
+          node tooling/verify/generate-sbom.mjs
+          node tooling/verify/verify-container-sbom.mjs
+          docker compose -f deploy/compose/docker-compose.yml config
 
-      - name: Run API Integration Tests against Postgres 18
-        run: npm run test --workspace @twinmos/api
-
-  test-edge-config:
-    name: Edge Nginx Configuration Verification (EDGE-START, EDGE-01)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout Codebase
-        uses: actions/checkout@v4
-
-      - name: Build Edge Docker Image (EDGE-START, EDGE-01)
+      # Stage 5: Compose in Production Mode
+      - name: Stage 5 · Verify Edge Configuration & Certificates (EDGE-01)
         run: |
           docker build -t twinmos-edge:test -f deploy/edge/Dockerfile .
-
-      - name: Verify Nginx Configuration Starts Cleanly (nginx -t)
-        run: |
-          docker run --rm twinmos-edge:test nginx -t
-
-      - name: Verify Edge Security Policies and Real-IP Proof
-        run: |
+          docker run --rm --add-host=web:127.0.0.1 --add-host=api:127.0.0.1 twinmos-edge:test nginx -t
           node tooling/verify/edge-ip-proof.mjs
+
+      # Stage 6: Migrate and Bootstrap (A10 runner on Postgres 18)
+      - name: Stage 6 · Run A10 Migrations & Bootstrap Seed on Postgres 18
+        env:
+          NODE_ENV: production
+        run: |
+          npm run db:migrate --workspace @twinmos/api
+          BOOTSTRAP_SEED=1 npm run db:seed --workspace @twinmos/api
+
+      # Stage 7: Security Pack, Playwright & Gate B Verification
+      - name: Stage 7 · Security Pack, CI-02 Parity Proof & Gate B Full Suite
+        env:
+          NODE_ENV: production
+          PUBLIC_API_URL: http://127.0.0.1:8787/api/v1
+          WEB_URL: http://127.0.0.1:4321
+        run: |
+          # The API must be up before the web build: build-catalog-data bakes
+          # the live published catalogue into the client bundle and refuses a
+          # prototype-only fallback under CI.
+          npm run start --workspace @twinmos/api &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8787/api/v1/health && break; sleep 2; done
+          curl -f http://127.0.0.1:8787/api/v1/health
+          npm run build --workspace @twinmos/web
+          PORT=4321 HOST=127.0.0.1 npm run preview --workspace @twinmos/web &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4321/ && break; sleep 2; done
+          npm run verify:gate-b
+          node tooling/verify/verify-build-clean.mjs
+          node tooling/verify/verify-ci-parity-proof.mjs
+
+      # Artefact Publication
+      - name: Publish Verification Artefacts & SBOMs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: twinmos-ci-artefacts
+          path: |
+            deploy/sbom/
+            docs/reports/
+            deploy/baselines/
+          retention-days: 14
+
+  test-postgres-integration:
+    name: PostgreSQL 18 Service Integration (CRIT-03a)
+    needs: [build-and-verify]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: mirror.gcr.io/library/postgres:18-alpine
+        env:
+          POSTGRES_DB: twinmos_it
+          POSTGRES_USER: twinmos_it
+          POSTGRES_PASSWORD: twinmos_it_pw
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://twinmos_it:twinmos_it_pw@127.0.0.1:5432/twinmos_it
+      NODE_ENV: production
+      BETTER_AUTH_SECRET: ci-integration-secret-123456
+      BETTER_AUTH_URL: https://www.twinmos.com
+      PREVIEW_SIGNING_KEY: ci-preview-signing-key-1234567890abcdef
+      REVALIDATE_SECRET: ci-revalidate-secret-1234567890abcdef
+      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+      RESEND_API_KEY: re_ci_test_1234567890
+      MAIL_FROM: TwinMOS CI <ci@twinmos.com>
+      FORMS_TO: ci@twinmos.com
+      INTERNAL_WEB_URL: http://127.0.0.1:4321
+      SEED_ADMIN_EMAIL: admin@twinmos.com
+      SEED_ADMIN_PASSWORD: CI-Integration-Only-2026!
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --include=dev
+      - name: Migrate and bootstrap on PostgreSQL 18
+        run: |
+          npm run db:migrate --workspace @twinmos/api
+          BOOTSTRAP_SEED=1 npm run db:seed --workspace @twinmos/api
+      - name: Verify schema and seed on PostgreSQL 18
+        run: |
+          node --experimental-strip-types --no-warnings -e "
+            (async () => {
+              const { createDb } = await import('./packages/db/src/index.ts');
+              const { sql } = await import('drizzle-orm');
+              const db = createDb();
+              const tables = await db.execute(sql\`select count(*)::int as n from information_schema.tables where table_schema='public'\`);
+              const users = await db.execute(sql\`select count(*)::int as n from \"user\" where role='super_admin'\`);
+              const tableCount = tables.rows?.[0]?.n ?? tables[0]?.n;
+              const adminCount = users.rows?.[0]?.n ?? users[0]?.n;
+              console.log('public tables:', tableCount);
+              console.log('super admins:', adminCount);
+              if (!(tableCount > 20) || !(adminCount >= 1)) process.exit(1);
+              await db.\$client.end?.();
+            })().catch((err) => { console.error(err); process.exit(1); });
+          "
+
+  test-edge-config:
+    name: Edge Configuration & Startup (EDGE-START, EDGE-01)
+    needs: [build-and-verify]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build edge image and validate nginx syntax
+        run: |
+          docker build -t twinmos-edge:test -f deploy/edge/Dockerfile .
+          docker run --rm --add-host=web:127.0.0.1 --add-host=api:127.0.0.1 twinmos-edge:test nginx -t
+
+      - name: Verify canonical X-Real-IP propagation
+        run: node tooling/verify/edge-ip-proof.mjs
 

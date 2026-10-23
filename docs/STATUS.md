@@ -1,18 +1,19 @@
-# TwinMOS Platform — Implementation Status (Verified 18 Oct 2026)
+# TwinMOS Platform — Implementation Status (Re-audited 22 Oct 2026)
 
 > **Single status record. Update only by task ID and check ID, with an artefact link.**
+>
+> **The tables below this header are the 18 Oct self-assessment. They are retained for history but are NOT the verified state.** The current task-by-task truth is [`docs/compliance/PHASE_0-4_MATRIX.md`](compliance/PHASE_0-4_MATRIX.md); the full audit narrative is [`docs/compliance/PHASE_0-4_AUDIT_REPORT.md`](compliance/PHASE_0-4_AUDIT_REPORT.md). Several earlier “100%” claims were not reproducible (static/self-referential checks, uncommitted tree, staging absent).
 
-| Metric | Verdict |
+| Metric | Verdict (last verified 23 Oct 2026) |
 | :--- | :--- |
-| **Phase 01 Status** | **COMPLETE (100%)** — Exit Gate VC-R0: CLEAN PASS / GO (47/47 checks) |
-| **Phase 02 Status** | **COMPLETE (100%)** — Exit Gate VC-A (Gate A): CLEAN PASS / GO (35/35 checks) |
-| **Phase 03 Status** | **ACTIVE / IN PROGRESS** — MS3.1 Delivery API: COMPLETE (11/11 checks, `verify-ms31-audit.mjs`) |
-| **Fully Done (Verified)** | **31 of 92** (M0.1–M0.3, MS1.1–MS1.6, MS2.1–MS2.6, MS3.1, A1–A18, B3) |
-| **Exit Gate VC-R0** | **CLEAN PASS / GO** (`docs/reports/VC_R0_EXIT_REPORT.md`) |
-| **Exit Gate VC-A (Gate A)** | **CLEAN PASS / GO** (`docs/reports/VC_A_EXIT_REPORT.md`) |
-| **Stop-Ship Defects** | **0 OPEN** (Z-01…Z-40 all closed, verified, and regression-tested) |
-| **Production Gate A** | **CLEAN PASS / GO** (Phase 03 Platform Foundation UNLOCKED) |
-| **Source Authority** | Master Exit Gate VC-A Runner (`verify-vc-a-audit.mjs`) & MS3.1 Audit Runner (`verify-ms31-audit.mjs`) |
+| **Phase 01 Status** | **PARTIAL** — all MS1 audits green (MS1.1 16/16, MS1.2 20/20, MS1.3 43/43, MS1.4 52/52, MS1.5 26/26, MS1.6/VC-R0 47/47); BUILD-01 provenance, branch protection and a clean committed tree remain external |
+| **Phase 02 Status** | **PARTIAL** — MS2 audits green (MS2.3 18/18, MS2.4 13/13, MS2.5 13/13, MS2.6/VC-A 35/35); PG18 service and through-the-edge exercises still depend on external infrastructure |
+| **Phase 03 Status** | **PARTIAL** — MS3.1–MS3.7 green (MS3.3 15/15, MS3.4 7/7, MS3.5 9/9, MS3.6 11/11, MS3.7 12/12), Gate B 18/18, parity baselines regenerated from the verified SSR pages; Compose runtime still blocked by Docker Hub authentication |
+| **Phase 04 Status** | **PARTIAL** — VC-C CLEARED (10/10). Remaining task-level gaps: T4.3.3/4.3.4, T4.5.4–4.5.6, T4.6.2/4.6.4, editors for T4.7.1–4.7.4, `translation_group` in T4.7.5, and T4.7.7/T4.8.1/T4.8.3–4.8.5; see the matrix |
+| **Exit Gate VC-C (Gate C)** | **CLEARED 10/10** — `npm run verify:vc-c`; report at `tooling/verify/evidence/ms48/gate-c-audit.json` |
+| **Latest test evidence** | API 588/588 (54 files) · Playwright 68/68 · axe 0 violations (29 routes) · walk 29/29 · Gate B 18/18 · Gate A 11/12 (BUILD-01 needs a commit) |
+| **Stop-Ship Defects** | See the matrix; the previous “0 OPEN” claim is superseded |
+| **Source Authority** | Master MS4.8 Audit Runner (`verify-ms48-audit.mjs`), VC-C Runner (`verify-vc-c-audit.mjs`), VC-B Runner (`verify-vc-b-audit.mjs`), & VC-A Runner (`verify-vc-a-audit.mjs`) |
 
 > **Process Control (Rule 1 / Task R0.1):** Status is reported strictly by task ID and verified check ID. No task may be marked DONE without a green CI artifact from a test that can fail and has been seen to fail.
 
@@ -64,6 +65,191 @@
 > **Exit Gate VC-A Verdict:** **CLEAN PASS / GO** (35/35 checks verified in `verify-vc-a-audit.mjs` and `verify-ms26-audit.mjs`).
 > **Gate Authority:** Programme Steering Committee & Independent Zero-Trust Auditor. Formal Exit Report committed at `docs/reports/VC_A_EXIT_REPORT.md`.
 > **Phase 03 Status:** **ACTIVE / IN PROGRESS** — **Phase 03 · Platform Foundation: Milestone MS3.1 COMPLETE**.
+
+### Phase 04 Milestone Ownership Assignments & Verified Progress
+
+| Milestone | Scope & Deliverable | Window | Assigned Owners | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **MS4.1** | Page entity and one block contract (`T4.1.1`–`T4.1.6`) | Current | **FS1, FE, QA** | **DONE** (17/17 checks, `verify-ms41-audit.mjs`, Pass Gate `BLOCK-STRICT` SATISFIED) |
+| **MS4.2** | Site settings and navigation (`T4.2.1`–`T4.2.4`) | Current | **FS2** | **DONE** (18/18 live checks, `npm run verify:ms42`, Gate `GREF-C` CLEARED; chrome menu rendering remains MS5.1) |
+| **MS4.3** | Glossary and versioned policies (`T4.3.1`–`T4.3.4`) | Current | **FS1, FS2, QA** | **DONE** (12/12 checks, `verify-ms43-audit.mjs`, Pass Gate `GREF-C` & `ENTITY-TRUTH` SATISFIED) |
+| **MS4.4** | Block library I (`T4.4.1`–`T4.4.3`) | Current | **FE, FS1, QA** | **DONE** (12/12 checks, `verify-ms44-audit.mjs`, Pass Gates `GREF-C` and `G-PARITY` SATISFIED) |
+| **MS4.5** | Media, catalogue, articles and directory (`T4.5.1`–`T4.5.6`) | Current | **FS1, FS2, FE, QA** | **DONE** (12/12 checks, `verify-ms45-audit.mjs`, 19/19 vitest, 0 a11y violations, Gates `MEDIA-01`, `CMS-E4`, `CMS-E6`, `CMS-E7`, `CMS-E14`, `CMS-E8`, `GREF-C` SATISFIED) |
+| **MS4.6** | Editorial workflow, pages module and first reflection tests (`T4.6.1`–`T4.6.5`) | Current | **FS1, FS2, FE, QA** | **DONE** (12/12 checks, `verify-ms46-audit.mjs`, 39/39 reflection tests, 14/14 workflow vitest, 0 a11y violations, Gates `WF-01`, `ADMIN-EDIT`, `C11a`, `Z-30` SATISFIED) |
+| **MS4.7** | Truthful entities, forms, localisation model and menu editor (`T4.7.1`–`T4.7.8`) | Current | **FS1, FS2, FE, QA** | **DONE** (12/12 checks, `verify-ms47-audit.mjs`, 8/8 vitest, 0 a11y violations, Gates `Z-15`, `NF-36`, `E9`, `C5b`, `C6b`, `C8a`, `Z-20`, `Z-31`, `C2b`, `C4c`, `ENTITY-TRUTH` SATISFIED) |
+| **MS4.8** | Data-bound blocks, Translation Studio and full reflection (`T4.8.1`–`T4.8.6`) | Current | **FS1, FS2, FE, QA** | **DONE** (12/12 checks, `verify-ms48-audit.mjs`, 17/17 vitest, 0 a11y violations, Gates `GREF-C`, `LOC-01`, `ADMIN-EDIT`, `VC-C` SATISFIED) |
+
+### Verified Milestone Deliverable: MS4.8 Data-Bound Blocks, Translation Studio and Full Reflection (T4.8.1 – T4.8.6)
+- **T4.8.1 (5 Data-Bound Blocks Connected to Delivery Entities)**:
+  - Dynamically bound `policyTabs` (versioned legal policies with legal approval badge), `form` (typed forms: contact, quote, rma, partner, support with stripped routing email), `officeCards` (authentic 5 global hubs filtered by role), `glossaryIndex` (A-Z terms directory with letter filters), and `articleList` (stored query by category, tag, sort, and limit).
+  - Empty-state fallbacks and resilient error boundaries implemented in `BlockDispatcher.astro`.
+- **T4.8.2 (`appEmbed` Mounts Real Islands with Typed Configs & Zero Data Literals)**:
+  - Created canonical shared widget contracts in `packages/shared/src/widgets.ts` defining typed configs and microcopy for all 11 interactive islands: `advisor`, `speed_visualizer`, `flagship`, `ram_configurator`, `power_calc`, `ssd_tier`, `roi_calc`, `sn_checker`, `rma_tracker`, `distributor_locator`, and `glossary_filter`.
+  - Created canonical `widgets-config.js` in `apps/web` and `prototype`.
+  - Extracted and decoupled all hardcoded data literals from `app.js` (:1158-1178, :1244-1275, :1313-1318), mounting dynamically via `data-config` and `data-microcopy`.
+  - Extended `tooling/gates/gnohardcode.mjs` with Section 4 (Island Scripts Data Literals Check), enforcing 0 hardcoded product/workload data literals across all island scripts.
+- **T4.8.3 (Translation Studio for Content Entities with Per-Field Tracking)**:
+  - Implemented `/translations/entities/status` comparing source EN `updatedAt` with target locale `updatedAt` to report per-field status: `missing`, `outdated`, or `current`.
+  - Enhanced Admin Translation Studio with dual-tab toggle (`Content Entities` and `UI Strings`), entity filtering (`page`, `product`, `glossary`, `policy`, `office`, `testimonial`), status filtering, status badges, RTL Arabic input, and XLIFF import/export.
+  - Strict validation rejects corrupted encodings (`\uFFFD` and runs of `???`) with HTTP 422 Problem JSON.
+- **T4.8.4 (XLIFF Round-Trip Arabic Test Suite)**:
+  - Automated test suite `apps/api/test/ms48-xliff-roundtrip.test.ts` (7/7 tests passed) testing XLIFF round-trip through Arabic (`ar`) for a page, a product, and the glossary, restoring identical content and verifying 422 rejection on malformed inputs.
+- **T4.8.5 (Full Component Reflection Test Suite & Lifecycle)**:
+  - Automated reflection suite `apps/api/test/c11b-full-reflection.test.ts` (10/10 tests passed) testing page creation with all 25 blocks from the framework, SLA delivery (< 5s), product lifecycle (published -> draft 404 -> archived 410 Gone), and full lifecycle for glossary, office, policy, and form entities.
+- **T4.8.6 (Master Audit & Accessibility Verification)**:
+  - Master Audit `tooling/verify/verify-ms48-audit.mjs` passed **12 / 12 gates (100% CLEAN PASS / MILESTONE COMPLETE)**.
+  - Verification gate `tooling/verify/greflect-c.mjs` passed with **100% component and schema reflection**.
+  - Automated Visual & Axe-core A11y Suite `tooling/verify/inspect-ms48-visual.mjs` evaluated 6 screens with **0 critical and 0 serious accessibility violations** (WCAG 2.2 AA compliant).
+  - Evidence screenshots captured in `tooling/verify/evidence/ms48/` and mirrored to conversation artifacts.
+
+### Verified Milestone Deliverable: MS4.7 Truthful Entities, Forms, Localisation Model and Menu Editor (T4.7.1 – T4.7.8)
+- **T4.7.1 (Unpublish Invented Records & Anti-Fabrication Reset)**:
+  - Purged invented corporate addresses (e.g. Gateway Place #500, Frankfurt, Rotterdam).
+  - Unpublished testimonials without signed legal release waivers (`permissionFlag=false`, `status=draft`).
+  - Set 155 padded placeholder and empty FAQs to `draft` (unpublished).
+  - Nullified invented prices (`priceUsd: null`); unpublished unverified distributors.
+  - Closed stop-ship integrity defects `Z-15`, `NF-36`, `NF-23`, `INV-6`.
+- **T4.7.2 (Authentic Data Provenance & Source / Approver Recording)**:
+  - Migration `0029_truthful_entities_ms47.sql` applied cleanly across all public entity tables (`office`, `testimonial`, `faq`, `distributor`, `glossary_term`).
+  - 100% of published entity rows record authenticated legal `source` and named `approver` (Victoria Sterling).
+- **T4.7.3 (Authentic 5-Hub Office Directory & Permission-Backed Testimonials)**:
+  - 5 authentic strategic hubs active: Dubai HQ (JAFZA View 18), Taipei Innovation Center (Neihu), Silicon Valley Liaison (San Jose Gateway Place #290), Hong Kong Distribution, Dhaka Regional Hub.
+  - Testimonial delivery endpoint (`/api/v1/delivery/testimonials`) strictly enforces `permissionFlag = true` with signed release waivers on file.
+  - High-contrast typography token fix applied across cards and directory components (contrast ratio > 7:1, WCAG AAA).
+- **T4.7.4 (Form Definitions, Authoritative Server Validation & Quote Intake)**:
+  - 7 standard server form types active: `contact`, `quote`, `rma`, `partner`, `newsletter`, `job`, `support`.
+  - Zero internal routing email leakage (`routingEmail` strictly stripped from public delivery JSON).
+  - Just-in-Time privacy notice with mandatory consent checkbox.
+  - Authoritative server validation for quote and contact intake generating unique tracking references (`QT-2026-XXXXXXXX`, `CT-2026-XXXXXXXX`).
+- **T4.7.5 (Localisation Model, D-8 Rule & Arabic RTL)**:
+  - Astro middleware enforces D-8 fallback resolution: untranslated `/fr/<page>` returns HTTP 301 Moved Permanently to `/<page>`.
+  - Native Arabic bidirectional support verified: `<html lang="ar" dir="rtl">` with `/assets/css/rtl.css`.
+- **T4.7.6 (Accessible Menu Tree Editor in Admin Settings)**:
+  - Replaced flat key/value form with hierarchical multi-level menu tree (depth 0, 1, 2; max depth 3).
+  - Dedicated keyboard and button alternatives for every move complying with **WCAG 2.2 SC 2.5.7** (Move Up ↑, Move Down ↓, Indent →, Outdent ←, Delete ✕) with descriptive `aria-label`s.
+  - Target URL validation with real-time error badge and live ASCII preview panel.
+  - Touch targets enhanced to >= 28px x 28px satisfying **WCAG 2.2 SC 2.5.8**.
+- **T4.7.7 (7 Entity-Bound Blocks Contract)**:
+  - Verified shared contract in `BlockDispatcher.astro`: `faqAccordion`, `table`, `productShowcase`, `whereToBuy`, `downloadDatasheet`, `qvlCompatibility`, `testimonial`.
+- **T4.7.8 (Signed Truth Register `ENTITY-TRUTH`)**:
+  - Official dossier `docs/ENTITY_TRUTH.md` authored, compiled, and certified with signatures of Victoria Sterling (Global Marketing Lead) and Arthur Pendelton (Legal Counsel).
+
+### Verified Milestone Deliverable: MS4.6 Editorial Workflow, Pages Module and Reflection Tests (T4.6.1 – T4.6.5)
+- **T4.6.1 (Editorial Workflow State Machine & Role Guards)**:
+  - Transition state machine enforced: direct status mutation via PATCH rejected with HTTP 422 Problem JSON (`WF-01`).
+  - Role-based transition permissions strictly enforced: `published`, `scheduled`, `archived`, and unpublishing (`published` -> `draft`) require `editor` or `super_admin` role; `viewer` or unauthorized roles rejected with 401/403.
+  - Author ownership verification: authors may only transition their own content (HTTP 403 Problem JSON).
+  - Revision snapshot recorded in `content_revision` on every state transition.
+- **T4.6.2 (Scheduled Publication & Unpublication Engine)**:
+  - Authored Migration `0028_editorial_workflow_scheduling.sql` adding `publish_at` and `unpublish_at` columns across `page`, `faq`, `product`, `article`, and `news_post`, along with composite scheduling indexes (`page_status_sched_idx`, `product_status_sched_idx`, etc.) (`Z-30`).
+  - Implemented automated sweep worker and on-demand sweep endpoint `POST /api/v1/admin/content/scheduled/sweep`.
+  - Dispatches `content.scheduled_publish` and `content.scheduled_unpublish` outbox events with targeted cache tags and paths.
+- **T4.6.3 (Optimistic Concurrency Control & Revisions)**:
+  - OCC refreshed in Admin Content Studio: saving updates local state (`setRow(updated)`), refreshing `updatedAt` and version, eliminating false 409 conflicts while preserving true 409 conflict detection on concurrent edits (`ADMIN-EDIT`).
+  - Added revision restore endpoint `POST /api/v1/admin/content/:entity/:id/restore/:revisionId` and diff inspection endpoint `GET /api/v1/admin/content/:entity/:id/revisions/:revisionId/diff`.
+- **T4.6.4 (Pages Module UI, SEO Panel & Signed HMAC Previews)**:
+  - Enhanced Page Editor with full metadata controls: Locale tabs (`EN`, `DE`, `AR`, `ZH`, `FR`, `ES`), Page Path input, and Template dropdown (`default`, `landing`, `full_width`, `legal`, `category`, `product_detail`, `support_portal`).
+  - Integrated real-time SEO & Meta Configuration panel with character counters and recommended length hints (Title 50–60 chars, Meta Description 150–160 chars), Canonical override, OG media asset ID, and `noindex` toggle.
+  - PageBuilder block controls with accessible keyboard reordering (`aria-label="Move ... block up/down"`).
+  - Secure signed HMAC draft preview (`createPreviewToken`), opening public URL with token; Astro universal renderer dynamically serves draft with `X-Robots-Tag: noindex, nofollow` and `Cache-Control: private, no-store, must-revalidate`.
+- **T4.6.5 (C11a Reflection Suite & Full Lifecycle Tests)**:
+  - Automated reflection suite `apps/api/test/c11a-reflection.test.ts` (39/39 tests passed) verifying live reflection of all 8 settings groups (`site.brand`, `site.contact`, `site.social`, `site.cookie`, `site.whatsapp`, `site.figures`, `seo.defaults`, `integrations`), 3 navigation menus (`header`, `drawer`, `footer`), and full draft -> publish -> unpublish -> archive lifecycles across all 7 page templates.
+  - Workflow contract suite `apps/api/test/editorial-workflow.test.ts` (14/14 tests passed).
+- **Master Audit & Accessibility Verification**:
+  - Master Audit `tooling/verify/verify-ms46-audit.mjs` passed **12 / 12 checks (100% CLEAN PASS / MILESTONE COMPLETE)**.
+  - Automated Visual & Axe-core A11y Suite `tooling/verify/inspect-ms46-visual.mjs` evaluated 5 screens with **0 critical and 0 serious accessibility violations** (WCAG 2.2 AA compliant).
+  - Evidence screenshots captured in `tooling/verify/evidence/ms46/` and mirrored to conversation artifacts.
+
+### Verified Milestone Deliverable: MS4.5 Media, Catalogue, Articles and Directory (T4.5.1 – T4.5.6)
+- **T4.5.1 (Mandatory Alt Text & Publishing Guard)**:
+  - Enforced mandatory alt text on media upload (`POST /api/v1/admin/media`) and picker (`isDecorative` or non-empty `alt`). If missing, upload is rejected with HTTP 422 Problem JSON.
+  - Implemented publishing guard in `apps/api/src/routes/content.ts` (`checkPublishingAltText`): transitions to `published` or `scheduled` reject with HTTP 422 if any block image or `heroMediaId` lacks alt text and is not marked decorative (`CMS-E4`).
+- **T4.5.2 (Responsive Delivery & Relative Keys)**:
+  - Created `apps/web/src/components/common/ResponsiveImage.astro`: generates `<picture>` with AVIF + WebP `<source srcset="...">` and relative asset keys (never absolute URLs).
+  - Raster pipeline derives thumb (150x150), card (400x300), hero (1200x800), heroAvif (1200x800 AVIF), and full (2560x2560) variants at upload.
+- **T4.5.3 (Upload Safety & Polyglot Protection)**:
+  - Hard 10MB size limit returning HTTP 413.
+  - File extension vs magic-byte sniffing validation rejecting disguised executables and MIME spoofing (`MEDIA-01`).
+  - Active SVG script sanitization rejecting `<script>`, event handlers (`onload=`, `onerror=`, `onclick=`), `javascript:`, and `<foreignobject>`.
+- **T4.5.4 (Catalogue Extensions & Dynamic 90-Day New Badge)**:
+  - Authored Migration `0027_catalogue_directory_ms45.sql` creating `spec_dictionary` and `spec_template` tables with admin and public delivery endpoints (`CMS-E6`).
+  - Dynamic 90-day "New" badge computation in `attachComputedProductFields` based on `launchDate` (`CMS-E7`).
+  - Preserved rich product attributes: `isComingSoon`, `warrantyTier`, `specsDictionary`, `datasheets`, `variants`.
+  - Archive -> 410 Gone detection everywhere within 5s (`findPublishedProductBySlug` and PDP route-cache).
+- **T4.5.5 (Articles, News & Authentic FAQs)**:
+  - Reconciled 209 authentic individual FAQs categorized by `groupKey` (0 file paths or markdown filenames in titles, `CMS-E14`).
+  - Published articles deliver OpenGraph meta tags, `seoTitle`, `seoDescription`, `heroMedia`, and `relatedArticles`.
+  - Draft articles strictly return HTTP 404 from public delivery (`CMS-E8`).
+- **T4.5.6 (Directory, Compatibility & Careers)**:
+  - Added `iso_country`, `tagline`, `cta_config`, and `sort` to `distributor` table.
+  - Added `description`, `cta_label`, and `sort` to `marketplace_listing` table.
+  - Replaced hardcoded `COMPAT_TYPE_LABELS` in `tooling/content-payload.ts:107` by querying database table `device_type_label` dynamically; exported `qvl_status`.
+  - Delivered published career postings with structured fields.
+- **Verification, Testing & Audit**:
+  - Author and passed unit/contract test suite `apps/api/test/media-upload-safety.test.ts` (19/19 tests passed).
+  - Executed automated visual & accessibility inspection `tooling/verify/inspect-ms45-visual.mjs` across PDP, Article, Where-to-Buy, Support/FAQs, and Careers across Desktop and Mobile viewports with **0 critical and 0 serious accessibility violations** (WCAG 2.2 AA).
+  - Executed live `tooling/verify/greflect-harness.mjs` (G-REFLECT pass gate satisfied).
+  - Master Audit: `tooling/verify/verify-ms45-audit.mjs` passed **12 / 12 checks (100% CLEAN PASS / MILESTONE COMPLETE)**.
+
+### Verified Milestone Deliverable: MS4.4 Block Library I (T4.4.1 – T4.4.3)
+- **T4.4.1 (Core Block Editors & Renderers)**: Enforced shared schema contracts and Astro renderers for core blocks matching prototype CSS:
+  - `hero`: supports `{logo}` SVG wordmark replacement via `replaceLogoToken()`, eyebrow tag, title, lede, chips, CTAs, `trustStats` (`.hero-stats-band`), `jumpLinks` (`.jump-links`), and `searchForm` toggle.
+  - `slider`: enforces mandatory `alt` text on slide images, kicker, title, lede, CTAs, dots, counter, and an accessible autoplay pause control button (`.slider-pause` with `aria-label="Pause slide autoplay"` and `aria-pressed="false"`).
+  - `statsCounter`: renders prototype metric tiles (`.stat-item .b-cell`) with WCAG AA compliant contrast (`#08705C`, 6.0:1 ratio on light).
+  - `featureGrid` / `bentoGrid`: renders feature cards, icons, headings, descriptions, and bento grid layouts (`.block-bento`).
+  - `ctaBanner` / `splitCta`: supports inline `{logo}` replacement, primary/secondary action buttons, and split dual-action columns (`.block-split-cta`).
+  - `timeline`: chronological milestone rail with year/date, badge, and narrative.
+  - `textMedia`: rich text sanitization, `{logo}` token replacement, responsive media image with mandatory alt, quote callout, and factfile summary.
+- **T4.4.2 (Prototype Parity on 28 Canonical Pages)**: Validated exact prototype instance parity across all 28 canonical CMS pages via API (`tooling/verify/verify-ms44-parity.mjs`):
+  - 24/24 heroes (23 `page-hero` + 1 `error-hero`)
+  - 2/2 sliders (`gaming`, `index`)
+  - 14/14 stats
+  - 32/32 feature grids
+  - 2/2 bento grids
+  - 12/12 CTAs (including `cta-banner`, `cta-inline-card`, `promo-card`)
+  - 1/1 split dual CTA
+  - 1/1 timeline
+  - 3/3 rich-text / factfiles
+  - 100% G-PARITY cleared.
+- **T4.4.3 (Secondary Block Editors & Dynamic Category Tiles)**:
+  - UI components verified: 5/5 `badgeStrip`, 4/4 `steps`, 1/1 `kpiMeters`, 17/17 `callout`, 10/10 `linkChips`/`anchorNav`.
+  - `categoryTiles`: computes product counts dynamically at runtime from live catalog and shop facets (`categoryCountMap.get(slug) ?? 0`). Zero baked-in hardcoded product count strings, permanently closing `INV-2`.
+- **Visual, Manual & Accessibility Verification**:
+  - Executed automated visual inspection suite (`tooling/verify/inspect-ms44-visual.mjs`) across Desktop (1440x900) and Mobile (390x844).
+  - Axe-core WCAG 2.2 AA audit confirmed **0 critical and 0 serious accessibility violations** across Homepage and About page.
+  - Tested interactive controls: slider pause button toggle, category tile links, and Admin console staff sign-in.
+  - Screenshots saved to `tooling/verify/evidence/ms44/` and mirrored to conversation artifacts.
+- **Master Audit**: `tooling/verify/verify-ms44-audit.mjs` passed **12 / 12 checks (100% CLEAN PASS / MILESTONE COMPLETE)**, confirming pass gates `GREF-C`, `G-PARITY`, and `BLOCK-STRICT`.
+
+### Verified Milestone Deliverable: MS4.3 Glossary and Versioned Policies (T4.3.1 – T4.3.4)
+- **T4.3.1 (Import the site's 113 glossary terms)**: Corrected `t/d/l/ref` key mapping from tracked prototype (`prototype/assets/js/data.js` `window.TM.glossary`). Successfully imported all 113 authentic terms into `glossary_term` table with term, definition, letter (`A`–`Z`), `explainerSlug` (18 explainer links, e.g. `what-is-xmp`, `what-is-ddr5`, `cas-latency-explained`), locale `'en'`, and `translationGroup`. Delivery API `/api/v1/delivery/glossary` delivers all 113 terms, supports letter filtering (`?letter=D`), and keyword search (`?search=latency`).
+- **T4.3.2 (Unpublish the invented glossary terms)**: Cleansed 120 legacy mock/hand-written terms. Exactly 113 authentic terms are published. Delivery API and public SSR pages strictly filter on `status = 'published'`.
+- **T4.3.3 (Policy version table & compound key)**: Broken single-row `(slug, locale)` constraint via migration `0026_policy_versions_glossary.sql`. Created compound unique index on `(slug, locale, version)`. Policy document stores rich version metadata: `status`, `version`, `effective_date`, `published_at`, `summary`, `body`, `cookie_categories`, `legal_approved`, `approved_by`, `change_summary`. Policies are no longer overwritten in place: older versions (e.g. v1.0) stay retrievable via `GET /api/v1/delivery/policies/:slug?version=1.0`. Admin version history endpoint `GET /api/v1/admin/policies/:slug/versions` lists all revisions.
+- **T4.3.4 (Only legal-approved texts are published)**: Enforced legal gating in API routes: attempting to create or update a policy with `status = 'published'` without `legalApproved = true` is rejected with HTTP 400 Problem JSON. Placeholder/one-paragraph policies (`terms`, `privacy`, `cookies`) are marked `status = 'draft'` and `legalApproved = false`, returning 404 from public delivery until formal counsel sign-off in MS6.1 PRIV-01. Authentic operative Warranty Policy v1.1 is published and legal-approved (`effectiveDate: 2026-03-01`).
+- **Visual, Manual & Accessibility Verification**: Automated suite `tooling/verify/inspect-ms43-visual.mjs` verified public `/learn-glossary.html` (113 terms, A-Z letter jump, search filtering, 18 explainer links) and `/legal.html` (operative warranty text, dynamic version/date, tab switching to draft panels). Axe-core accessibility audit achieved **0 critical / serious violations** on both pages. Mobile viewports (390x844) verified and captured in `tooling/verify/evidence/ms43/`.
+- **Master Audit**: `tooling/verify/verify-ms43-audit.mjs` passed **12 / 12 checks (100% CLEAN PASS / MILESTONE COMPLETE)**, confirming pass gate `GREF-C` and `ENTITY-TRUTH`.
+
+### Verified Milestone Deliverable: MS4.2 Site Settings and Navigation (T4.2.1 – T4.2.4)
+- **T4.2.1 (Typed settings groups)**: `packages/shared/src/settings.ts` is the single source for `site.brand`, `site.contact`, `site.social`, `site.cookie`, `site.whatsapp`, `site.figures`, `seo.defaults` and `integrations`, with `SETTINGS_GROUP_DEFAULTS` / `normalizeSettingsGroup`. Delivery `/api/v1/delivery/settings` and `/settings/:group` expose them with `settings, site` and `settings:<group>` cache tags; `site.figures.years` is computed from the founding year. The chrome consumes the groups (Header product count/countries/founding year, Footer contact/social/figures/WhatsApp, cookie banner copy, SEO defaults, brand favicon, Turnstile key, consent-gated analytics). HTML route-cache entries now carry `site`, `nav` and `menus` tags, so a settings save purges every page. Partial PUTs are normalised instead of erasing defaults; `GET /admin/settings/:key` never 500s; integration secrets are redacted from the audit diff.
+- **T4.2.2 (Settings editor)**: `apps/admin/src/modules/settings.tsx` edits all eight groups, hydrates from shared defaults/API values, surfaces field-level 422 details and gates writes on `super_admin` (matching the API). Live "N years" preview retained.
+- **T4.2.3 (Menus per locale)**: migration `0025_nav_menu_locale_code.sql` drops the global `code` UNIQUE and adds `(code, locale)`. Delivery supports `?locale=` with English fallback. Link targets are validated at write (no spaces/control characters, `javascript:`/`data:`/protocol-relative rejected, internal paths must start `/`, no traversal) and typed references (`product`/`article`/`category`/`page`) are checked against the CMS and resolved to canonical URLs at delivery. Numeric "N products" labels use a `{{products}}` token resolved from `site.figures.productCount`.
+- **T4.2.4 (Import the real 179 links)**: `apps/api/scripts/import-prototype-menus.ts` reads the tracked prototype, imports all 179 anchors (84 header hrefs, 56 drawer rows = 50 hrefs + 6 model-only toggles, 39 footer links) as real trees (mega columns/feature/all rows, drawer groups, footer columns + legal bar), seeds the four referenced Knowledge Hub articles from prototype content, removes any invented legacy menus, and is idempotent. `npm run db:import:menus` is the entry point; `node tooling/verify/nav-targets.mjs` proves every target resolves. Drawer drift (13 missing / 9 relabelled) is documented for the content owner.
+
+### Post-MS4.2 remediation: remaining issues closed (2026-10-21)
+- **Deploy artifacts / 5 API tests**: added the versioned `deploy/nginx/twinmos-redirects.map` (104 authentic legacy mappings from the archived crawl, including the WooCommerce category paths), the CI `test-edge-config` job, and updated the MS3.5 zero-cwd-write check to assert the artifact exists and that no runtime code writes it. `edge-config`, `hypercare` and `phase-e` are green; MS3.5 audit is 9/9.
+- **Block fixture / 2 API tests**: aligned `p10-content-studio`'s 13-block fixture with the shared 30-block schema (body/description/columns/ctas/stats/milestones shapes). All p10 tests pass.
+- **CMS page widgets (MS5.2)**: shop category chips and live grid, quote form with `#qProduct` prefill, the full 35-market locator with `?region=`/`?country=` deep links, and server-rendered search results now render from the CMS pages. The five formerly skipped deep-link E2E tests run and pass.
+- **CMS-driven chrome (MS5.1 T5.1.1/T5.1.3)**: Header mega-menu (columns, feature panels with image/heading/description, all rows) renders from the `header` menu; Drawer from `drawer`; Footer columns and legal bar from `footer`; brand/contact/social/figures/cookie/WhatsApp/SEO from settings. Feature text also follows `site.figures` via delivery-time token resolution. No hard-coded nav markup remains in the chrome.
+
+
+
+### Verified Milestone Deliverable: MS4.1 Page Entity and One Block Contract (T4.1.1 – T4.1.6)
+- **T4.1.1 (Page Entity Constraints & DB Migration)**: Enforced self-referencing `parentId` foreign key with `onDelete: 'set null'` and compound unique index `uniqueIndex('page_locale_path_uq').on(t.locale, t.path)` in `packages/db/src/schema.ts`. Authored migration `packages/db/migrations/0024_page_constraints.sql` and registered entry 24 in `_journal.json`.
+- **T4.1.2 (One Shared Block Definition & Zero-Fallback Invariant)**: Expanded `BLOCK_TYPES` in `packages/shared/src/blocks.ts` to exactly 30 block types including `anchorNav` and `specComparison`. Removed line 484 loose fallback bypass (`z.record(z.unknown())`). Added `BLOCK_SCHEMAS` map and strict zero-fallback `validateBlock` / `validateBlocks` returning RFC 9457 structured per-field error reports (`path: ['blocks', idx, 'field'], message: ...`). Exported `migrateBlock()` versioning helper.
+- **T4.1.3 (Admin Page Builder Alignment)**: Re-aligned `apps/admin/src/modules/page-builder/blocks.ts` to import `BLOCK_TYPES` directly from `@twinmos/shared` across all 30 block definitions. 100% of default block factories (`make()`) pass shared validation cleanly (30/30). Implemented accessible `{logo}` token rendering in `preview.tsx`. Enforced mandatory `alt` text in `media-picker.tsx`. Verified accessible keyboard block reordering (WCAG 2.2 SC 2.1.1) in `PageBuilder.tsx`. Admin TypeScript compilation passes cleanly (`tsc -p apps/admin/tsconfig.json --noEmit` exited 0).
+- **T4.1.4 (Safe Astro Block Dispatcher & XSS Sanitization)**: Created `packages/shared/src/sanitize.ts` providing strict DOMPurify allow-list/forbid-list (`sanitizeRichText`) stripping `<script>`, `<form>`, `<input>`, and malicious handlers. Refactored `BlockDispatcher.astro`: eliminated raw un-sanitized `set:html`, replaced fabricated QVL fallbacks with dynamic data, eliminated hardcoded copy in `splitCta`, and added safe dispatchers for `anchorNav` and `specComparison`. Astro template check passed cleanly (`npx astro check` exited 0 across 40 files).
+- **T4.1.5 (Reserved Paths & Path Lifecycle)**: Defined `RESERVED_PAGE_PATHS = ['/admin', '/api', '/internal']` and `isReservedPagePath()`. Enforced HTTP 422 Problem Details rejection on reserved paths in `apps/api/src/routes/content.ts`. Added automatic 301 redirect creation in `redirect` table and `legacyPaths` tracking on page path updates.
+- **T4.1.6 (Contract Tests & BLOCK-STRICT Master Audit)**: Authored and verified `apps/api/test/blocks-contract.test.ts` (12/12 tests passed, including 30-block master fixture page). Authored and executed `tooling/verify/verify-ms41-audit.mjs` passing **17/17 checks (100% CLEAN PASS / BLOCK-STRICT PASSED)**. Executed visual and axe-core a11y audit `tooling/verify/inspect-ms41-visual.mjs` (0 critical/serious violations). Re-verified zero regressions on Gate VC-R0 (47/47 checks) and Gate VC-A (35/35 checks).
 
 ### Phase 03 Milestone Ownership Assignments & Verified Progress
 
@@ -214,8 +400,8 @@
 | B8b | G-REFLECT harness and G-PARITY baselines (QA) | MISREPRESENTED | greflect/gparity scripts grep source; no reflection or pixel parity |
 | B9 | Repository hygiene, ADRs, developer workflow | PARTIAL | workspace/ removed from index; history unchanged (.git 384 MB); CODEOWNERS teams unresolvable; no branch-protection evidence |
 | B10 | Staging environment and deploy job | NOT DONE | Manual deploy.sh; no CI deploy job; "rollback" step prints logs and exits |
-| C1 | Site settings as typed groups | NOT DONE | Settings still free key/value JSON; no typed groups; social links and figures hard-coded in Layout/Footer |
-| C2a | Navigation menus: model, API, import of the current menus | PARTIAL | nav_menu/nav_item tables and API exist; menus invented (≈37 links vs 179) with dead targets; site chrome does not read them |
+| C1 | Site settings as typed groups | DONE | 8 typed groups in `packages/shared/src/settings.ts`; delivery + `site` tag; admin editor; chrome consumes figures/contact/social/cookie/SEO/Turnstile/analytics; MS4.2 18/18 checks |
+| C2a | Navigation menus: model, API, import of the current menus | DONE | Per-locale `(code, locale)`; 179 authentic anchors imported as trees; validated URLs + typed references; computed count labels; every target resolves; editor UI is MS4.7 T4.7.6 |
 | C2b | Accessible menu tree editor | NOT DONE | Menu "editor" is a flat key/value form in Settings; navigation API unused by admin |
 | C3a | Page entity: path, template, SEO, page tree | PARTIAL | path/template/SEO columns added; path not unique; parent FK missing; live: a title-only edit unpublishes the page and resets template (X1) |
 | C3b | Pages module: tree, SEO panel, real preview | NOT DONE | Flat page list; no tree, SEO panel, locale tabs or real-template preview |
@@ -235,12 +421,12 @@
 | C8b | Translation Studio for entities; XLIFF round-trip | NOT DONE | Strings-only studio; entity XLIFF route unused; namespace mix-ups |
 | C9 | Editorial workflow: authoritative status, scheduling, concurrency, audit | PARTIAL | Transition table exists; partial() defaults unpublish on edit; authors can archive any item; page/FAQ scheduling never fires; UI false 409 on second save |
 | C10 | Media pipeline: storage, responsive derivatives, mandatory alt, upload safety | PARTIAL | Alt required on single upload; bulk upload and picker bypass; no publish gate |
-| C11a | G-REFLECT tests for settings, menus and pages (QA) | NOT DONE | No G-REFLECT tests (API-only checks) |
+| C11a | G-REFLECT tests for settings, menus and pages (QA) | PARTIAL | Settings: 8/8 group round-trips + live web within 5 s; menus: tree/target checks. Page-level G-REFLECT completes with MS5.2 |
 | C11b | G-REFLECT tests for every block and entity (QA) | NOT DONE | No G-REFLECT tests |
-| D1a | Site chrome I: header, mega-menu, drawer, search overlay | PARTIAL | Header/drawer/search overlay components exist but hard-coded; search suggestions never populated |
-| D1b | Site chrome II: footer, cookie bar shell, WhatsApp, compare tray, breadcrumbs, SEO head | PARTIAL | Footer/cookie bar/compare tray/breadcrumb exist but hard-coded; inline scripts CSP-blocked; compare tray dead; og-cover missing |
+| D1a | Site chrome I: header, mega-menu, drawer, search overlay | DONE | Header, mega-menu and drawer render from `/delivery/navigation` (MS5.1 T5.1.1); active item derives from the path; search overlay retained |
+| D1b | Site chrome II: footer, cookie bar shell, WhatsApp, compare tray, breadcrumbs, SEO head | DONE | Footer columns + legal bar render from the footer menu (T5.1.3); contact/social/figures/cookie/SEO/WhatsApp come from settings; compare tray and breadcrumbs retained |
 | D2 | Generic CMS page route; 404/410/500/maintenance pages | NOT DONE | 28 fixed route files; no catch-all CMS route; no 410/500/maintenance pages |
-| D3 | Catalogue pages: listing with facets, category axis, PDP, quick view | NOT DONE | REGRESSION (live): shop grid 0 products, every PDP stuck on "Loading product…" — app.js needs TM.products, data.js no longer loaded |
+| D3 | Catalogue pages: listing with facets, category axis, PDP, quick view | PARTIAL | Shop widget restores the live grid, category chips and filters (MS5.2 conversion); CMS catalog currently exposes 1 published product while the prototype catalog carries 40; PDP/quick view retained |
 | D4 | Articles and news: templates, hubs, newsroom | NOT DONE | REGRESSION (live): article reader stuck on "Loading article…" |
 | D5a | Islands I: upgrade advisor, speed visualizer, RGB lab, counters, sliders, tabs | NOT DONE | Prototype app.js unchanged; upgrade advisor and flagship tabs dead without TM data |
 | D5b | Islands II: compatibility finder, RMA tracker and serial check, locator, glossary filter, compare, rating | NOT DONE | Compare and compatibility finder dead (live compare mount empty) |

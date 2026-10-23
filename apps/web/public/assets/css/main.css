@@ -11,7 +11,7 @@
   --brand-ink:#0A2540;
   --ink:#13273B;
   --body:#3D5568;
-  --muted:#5E7691;
+  --muted:#475467;
   --accent:#00A3E0;
   --accent-deep:#0082B3;
   --accent-2:#7C3AED;
@@ -60,8 +60,8 @@ p{margin:0 0 1em}
 ul{margin:0 0 1em;padding-left:1.2em}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
 body.gaming :focus-visible{outline-color:#00F0FF}
-.skip-link{position:absolute;left:-9999px;top:0;background:var(--primary);color:#fff;padding:10px 16px;z-index:200;border-radius:0 0 8px 0}
-.skip-link:focus{left:0}
+.skip-link{position:absolute;top:-64px;inset-inline-start:16px;background:var(--primary);color:#fff;padding:10px 16px;z-index:200;border-radius:0 0 8px 0;transition:top .15s}
+.skip-link:focus{top:8px}
 .wrap{max-width:var(--wrap);margin:0 auto;padding:0 clamp(16px,4vw,40px)}
 .wrap-wide{max-width:1440px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
 section{padding:clamp(40px,7vw,84px) 0}

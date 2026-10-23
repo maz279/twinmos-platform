@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { timingSafeEqual } from 'node:crypto';
 import { invalidateRedirectsCache } from '../../lib/redirects.ts';
+import { routeCache } from '../../lib/route-cache.ts';
 
 export const prerender = false;
 
@@ -38,8 +39,9 @@ export const POST: APIRoute = async ({ request }) => {
   const tags: string[] = Array.isArray(body?.tags) ? body.tags : [];
   const paths: string[] = Array.isArray(body?.paths) ? body.paths : [];
 
-  // Invalidate in-memory redirects cache
+  // Invalidate in-memory redirects cache and route cache (Task T3.2.3)
   invalidateRedirectsCache();
+  const cacheResult = routeCache.invalidate({ paths, tags });
 
   return new Response(
     JSON.stringify({
@@ -47,6 +49,7 @@ export const POST: APIRoute = async ({ request }) => {
       timestamp: new Date().toISOString(),
       tags,
       paths,
+      routeCache: cacheResult,
     }),
     {
       status: 200,

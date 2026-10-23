@@ -1,24 +1,7 @@
 ---
-// article.astro — Dynamic Knowledge Hub Article Reader.
-// Tasks D4 / GPROV-100 / GREF-D compliant.
-import Layout from '../layouts/Layout.astro';
-import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
-import { getDeliveryPage, getDeliveryArticle } from '../lib/delivery';
-
-const articleId = Astro.url.searchParams.get('id') || Astro.url.searchParams.get('slug') || '';
-let article = null;
-if (articleId) {
-  article = await getDeliveryArticle(articleId);
-}
-
-const page = await getDeliveryPage('article');
-const title = article?.title ?? page?.title ?? "Article — TwinMOS";
-const desc = article?.excerpt ?? page?.seoDescription ?? "TwinMOS media &amp; articles library.";
-const blocks = page?.blocks ?? [];
+// article.astro — Legacy Article Route Redirector (ADR D-5, Task T3.2.2)
+// Clean URLs canonically live at /learn/<slug>.
+const slug = Astro.url.searchParams.get('id') || Astro.url.searchParams.get('slug');
+const target = slug ? `/learn/${encodeURIComponent(slug)}` : '/learn';
+return Astro.redirect(target, 301);
 ---
-
-<Layout title={title} desc={desc}>
-  <main id="main">
-    <BlockDispatcher blocks={blocks} />
-  </main>
-</Layout>
