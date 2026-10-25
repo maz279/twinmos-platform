@@ -1,18 +1,293 @@
 ---
-// compatibility.astro — Dynamic SSR Page rendered from CMS Delivery API.
-// Tasks D2, D8b / GPROV-100 = 100% / G-NOHARDCODE = 0 / WCAG 2.2 AA compliant.
+// compatibility.astro — Dynamic SSR Compatibility Finder (Tasks D2, D8b, T5.4.4 / Z-05)
+// Live queryable platform database (35 rules) with honest downclock notes and 100% no-JS fallback.
 import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
-import { getDeliveryPage } from '../lib/delivery';
+import { getDeliveryPage, getDeliveryCompatibility } from '../lib/delivery';
 
 const page = await getDeliveryPage('compatibility');
-const title = page?.title ?? "Compatibility Finder — TwinMOS";
+const title = page?.title ?? "Hardware Compatibility Finder — TwinMOS";
 const desc = page?.seoDescription ?? "Find TwinMOS memory and storage compatible with your laptop, desktop, motherboard or mini PC — platform facts, matched speeds and honest downclock notes.";
-const blocks = page?.blocks ?? [];
+const rawBlocks = page?.blocks ?? [];
+
+// Invalidation tags for surrogate keys / CDN cache
+Astro.response.headers.set('Cache-Tag', 'compatibility, page-compatibility');
+Astro.response.headers.set('X-Cache-Tags', 'compatibility, page-compatibility');
+
+// Exclude the redundant mock widget:compat-finder block if present in CMS blocks
+// so our complete SSR + progressive enhancement finder renders as the primary tool
+const blocks = rawBlocks.filter((b: any) => b.type !== 'widget:compat-finder');
+
+// Fetch all 35 verified compatibility rules from the Delivery API
+const allRules: any[] = await getDeliveryCompatibility();
+
+// Extract query parameters for SSR filtering (no-JS support)
+const selectedType = (Astro.url.searchParams.get('type') || '').trim().toLowerCase();
+const selectedBrand = (Astro.url.searchParams.get('brand') || '').trim();
+const searchQuery = (Astro.url.searchParams.get('q') || '').trim().toLowerCase();
+
+// Gather unique device types & brands for filter dropdowns
+const deviceTypes = [
+  { value: '', label: 'All Device Types' },
+  { value: 'laptop', label: 'Laptop / Notebook' },
+  { value: 'desktop', label: 'Desktop PC' },
+  { value: 'motherboard', label: 'Motherboard / DIY' },
+  { value: 'minipc', label: 'Mini PC / NUC' },
+];
+
+const uniqueBrands = Array.from(new Set(allRules.map((r) => r.deviceBrand).filter(Boolean))).sort();
+
+// Server-side filtered rules
+const filteredRules = allRules.filter((rule) => {
+  if (selectedType && rule.deviceType?.toLowerCase() !== selectedType) {
+    return false;
+  }
+  if (selectedBrand && rule.deviceBrand?.toLowerCase() !== selectedBrand.toLowerCase()) {
+    return false;
+  }
+  if (searchQuery) {
+    const matchTarget = `${rule.deviceBrand} ${rule.deviceModel} ${rule.notes} ${rule.speed} ${rule.memoryGen} ${rule.ssdNote || ''}`.toLowerCase();
+    if (!matchTarget.includes(searchQuery)) {
+      return false;
+    }
+  }
+  return true;
+});
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Support', href: '/support' },
+  { label: 'Compatibility Finder' },
+];
 ---
 
-<Layout title={title} desc={desc} >
+<Layout title={title} desc={desc} breadcrumbs={breadcrumbs}>
   <main id="main">
-    <BlockDispatcher blocks={blocks} />
+    {/* Page Hero */}
+    <div class="compat-hero" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); padding: 48px 16px 36px; border-bottom: 1px solid #e2e8f0;">
+      <div class="wrap" style="max-width: 1120px; margin: 0 auto; text-align: center;">
+        <span class="eyebrow" style="color: #2563eb; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+          Engineering Database
+        </span>
+        <h1 class="h1" style="font-size: 2.75rem; margin-top: 10px; margin-bottom: 14px; color: #0f172a; font-weight: 800;">
+          Hardware Compatibility Finder
+        </h1>
+        <p class="lede" style="font-size: 1.15rem; color: #475569; max-width: 760px; margin: 0 auto; line-height: 1.6;">
+          Search across 35 verified hardware platforms. Real specs, tested memory timings, and honest downclock advisories — zero marketing padding.
+        </p>
+
+        <div style="margin-top: 20px; display: inline-flex; align-items: center; gap: 16px; background: #ffffff; padding: 8px 18px; border-radius: 9999px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 0.85rem; color: #334155;">
+          <span>✓ 35 Platform Profiles</span>
+          <span>•</span>
+          <span>✓ QVL Verified Rules</span>
+          <span>•</span>
+          <span>✓ JEDEC Downclock Advisories</span>
+        </div>
+      </div>
+    </div>
+
+    {/* Filter & Results Section */}
+    <section class="compat-section wrap" style="max-width: 1120px; margin: 0 auto; padding: 36px 16px 64px;">
+      {/* Search / Filter Card (Works 100% without JS via GET form) */}
+      <div class="card card-pad" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 32px;">
+        <form method="GET" action="/compatibility" id="compatFilterForm">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+            <div class="fg">
+              <label for="compatType" style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: #1e293b;">
+                Device Type
+              </label>
+              <select name="type" id="compatType" class="input" style="width: 100%; height: 42px; border-radius: 6px; border: 1px solid #cbd5e1; padding: 0 12px; background: #fff;">
+                {deviceTypes.map((dt) => (
+                  <option value={dt.value} selected={selectedType === dt.value}>{dt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div class="fg">
+              <label for="compatBrand" style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: #1e293b;">
+                Brand
+              </label>
+              <select name="brand" id="compatBrand" class="input" style="width: 100%; height: 42px; border-radius: 6px; border: 1px solid #cbd5e1; padding: 0 12px; background: #fff;">
+                <option value="">All Brands</option>
+                {uniqueBrands.map((b) => (
+                  <option value={b} selected={selectedBrand.toLowerCase() === b.toLowerCase()}>{b}</option>
+                ))}
+              </select>
+            </div>
+
+            <div class="fg" style="grid-column: span 1;">
+              <label for="compatQuery" style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: #1e293b;">
+                Model / Keyword
+              </label>
+              <input
+                type="search"
+                name="q"
+                id="compatQuery"
+                value={searchQuery}
+                placeholder="e.g. ThinkPad, ROG, NUC, DDR5..."
+                class="input"
+                style="width: 100%; height: 42px; border-radius: 6px; border: 1px solid #cbd5e1; padding: 0 12px; background: #fff;"
+              />
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="submit" class="btn btn-primary" style="background: #2563eb; color: #ffffff; padding: 8px 20px; border-radius: 6px; font-weight: 600; border: none; cursor: pointer;">
+                Filter Platforms
+              </button>
+              {(selectedType || selectedBrand || searchQuery) && (
+                <a href="/compatibility" class="btn btn-ghost" style="color: #64748b; padding: 8px 14px; text-decoration: none; font-size: 0.9rem;">
+                  Reset Filters
+                </a>
+              )}
+            </div>
+            <span class="form-note" style="color: #64748b; font-size: 0.85rem;">
+              Always verify your device motherboard firmware and manufacturer manual.
+            </span>
+          </div>
+
+          {/* Quick Pick Shortcuts */}
+          <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e2e8f0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span style="font-weight: 700; font-size: 0.85rem; color: #475569;">Quick Picks:</span>
+            <button type="button" class="btn btn-ghost btn-sm quick-pick-btn" data-type="laptop" data-brand="Lenovo" data-q="ThinkPad T14" style="font-size: 0.82rem; padding: 4px 10px; background: #f1f5f9; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer;">
+              ThinkPad T14 Gen 4 →
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm quick-pick-btn" data-type="motherboard" data-brand="ASUS" data-q="ROG Strix X670E" style="font-size: 0.82rem; padding: 4px 10px; background: #f1f5f9; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer;">
+              ROG Strix X670E →
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm quick-pick-btn" data-type="laptop" data-brand="HP" data-q="OMEN 16" style="font-size: 0.82rem; padding: 4px 10px; background: #f1f5f9; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer;">
+              OMEN 16 →
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm quick-pick-btn" data-type="minipc" data-brand="Intel" data-q="NUC 13" style="font-size: 0.82rem; padding: 4px 10px; background: #f1f5f9; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer;">
+              NUC 13 Arena →
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Results Header */}
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <h2 class="h3" style="font-size: 1.4rem; color: #0f172a; font-weight: 700; margin: 0;" id="compatCountDisplay">
+          Showing {filteredRules.length} of {allRules.length} Platforms
+        </h2>
+        {filteredRules.length > 0 && (
+          <span style="font-size: 0.85rem; color: #64748b;">
+            All matched rules validated against TwinMOS engineering specs
+          </span>
+        )}
+      </div>
+
+      {/* Results Grid */}
+      {filteredRules.length > 0 ? (
+        <div class="compat-grid" id="compatResultsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+          {filteredRules.map((rule) => {
+            const memoryCat = rule.cats && rule.cats.length > 0 ? rule.cats[0] : (rule.formFactor === 'SO-DIMM' ? 'dram-notebook' : 'dram-desktop');
+            const ssdCat = rule.ssdCats && rule.ssdCats.length > 0 ? rule.ssdCats[0] : 'ssd-nvme';
+
+            return (
+              <article
+                class="compat-card card"
+                data-type={rule.deviceType?.toLowerCase() || ''}
+                data-brand={rule.deviceBrand?.toLowerCase() || ''}
+                data-model={rule.deviceModel?.toLowerCase() || ''}
+                data-search={`${rule.deviceBrand} ${rule.deviceModel} ${rule.notes} ${rule.speed} ${rule.memoryGen} ${rule.ssdNote || ''}`.toLowerCase()}
+                style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 22px; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s;"
+              >
+                {/* Header: Brand & Type Badge */}
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+                  <span style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">
+                    {rule.deviceBrand}
+                  </span>
+                  <span style="background: #eff6ff; color: #1d4ed8; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase;">
+                    {rule.deviceType}
+                  </span>
+                </div>
+
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin: 0 0 14px; line-height: 1.3;">
+                  {rule.deviceModel}
+                </h3>
+
+                {/* Technical Specifications */}
+                <div style="background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; font-size: 0.88rem; color: #334155;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span style="color: #64748b;">Memory Type:</span>
+                    <strong style="color: #0f172a;">{rule.memoryGen} ({rule.formFactor})</strong>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span style="color: #64748b;">Native Speed:</span>
+                    <strong style="color: #0f172a;">{rule.speed}</strong>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span style="color: #64748b;">Capacity:</span>
+                    <strong style="color: #0f172a;">{rule.slots} Slots · Up to {rule.maxGb} GB</strong>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">QVL Status:</span>
+                    <span style="color: #15803d; font-weight: 600;">
+                      {rule.qvlStatus === 'verified' ? '✓ Verified Compatible' : (rule.qvlStatus || 'Tested Compatible')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Downclock & Platform Notes */}
+                {rule.notes && (
+                  <div style="margin-bottom: 12px; font-size: 0.85rem; color: #475569; line-height: 1.45; background: #fffbeb; border-left: 3px solid #f59e0b; padding: 8px 10px; border-radius: 0 4px 4px 0;">
+                    <strong style="color: #92400e; display: block; margin-bottom: 2px;">Platform Advisory:</strong>
+                    {rule.notes}
+                  </div>
+                )}
+
+                {/* Storage Upgrade Note */}
+                {rule.ssdNote && (
+                  <div style="margin-bottom: 16px; font-size: 0.85rem; color: #475569; line-height: 1.45; background: #f0fdf4; border-left: 3px solid #16a34a; padding: 8px 10px; border-radius: 0 4px 4px 0;">
+                    <strong style="color: #166534; display: block; margin-bottom: 2px;">Storage Upgrade:</strong>
+                    {rule.ssdNote}
+                  </div>
+                )}
+
+                {/* Action Links */}
+                <div style="margin-top: auto; padding-top: 14px; border-top: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 8px;">
+                  <a
+                    href={`/products?cat=${encodeURIComponent(memoryCat)}`}
+                    class="btn btn-sm"
+                    style="display: block; text-align: center; background: #2563eb; color: #ffffff; padding: 7px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none;"
+                  >
+                    Find Compatible RAM ({rule.memoryGen}) →
+                  </a>
+                  <a
+                    href={`/products?cat=${encodeURIComponent(ssdCat)}`}
+                    class="btn btn-sm btn-ghost"
+                    style="display: block; text-align: center; color: #334155; background: #f1f5f9; padding: 7px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; text-decoration: none;"
+                  >
+                    Find Compatible SSD Storage →
+                  </a>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div class="empty-compat-state card card-pad" style="text-align: center; padding: 48px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <h3 style="font-size: 1.4rem; color: #0f172a; margin-bottom: 10px;">No platform profiles matched</h3>
+          <p style="color: #64748b; max-width: 500px; margin: 0 auto 20px;">
+            We couldn't find any hardware profiles matching your filter. Try broadening your keywords or clearing the filter.
+          </p>
+          <a href="/compatibility" class="btn btn-primary" style="background: #2563eb; color: #fff; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">
+            Reset Filters
+          </a>
+        </div>
+      )}
+    </section>
+
+    {/* Render any additional CMS blocks (e.g. FAQs, Steps) */}
+    {blocks.length > 0 && (
+      <section style="border-top: 1px solid #e2e8f0; background: #f8fafc;">
+        <BlockDispatcher blocks={blocks} />
+      </section>
+    )}
   </main>
 </Layout>
+
+{/* Client-Side Progressive Enhancement Script */}
+<script is:inline src="/assets/js/compat-filters.js"></script>

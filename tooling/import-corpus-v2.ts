@@ -10,6 +10,7 @@
 // Usage: node --experimental-strip-types --no-warnings tooling/import-corpus-v2.ts
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { join, dirname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { eq, and } from 'drizzle-orm';
@@ -33,7 +34,9 @@ import { slugify } from '../packages/shared/src/index.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
-const DATA_JS = join(ROOT, 'apps', 'web', 'public', 'assets', 'js', 'data.js');
+const DATA_JS = existsSync(join(ROOT, 'prototype', 'assets', 'js', 'data.js'))
+  ? join(ROOT, 'prototype', 'assets', 'js', 'data.js')
+  : join(ROOT, 'apps', 'web', 'public', 'assets', 'js', 'data.js');
 const CORPUS_ROOT = join(ROOT, '..', 'Corporate website development for TwinMOS', 'content', 'website-content');
 
 const db = createDb();
@@ -46,22 +49,15 @@ async function importAll() {
   // Load prototype data.js if present
   let protoTM: any = { products: [], categories: [], articles: [], compat: { types: [] }, glossary: [] };
   if (existsSync(DATA_JS)) {
-    const src = readFileSync(DATA_JS, 'utf8');
-    const start = src.indexOf('window.TM = ') + 'window.TM = '.length;
-    let depth = 0, end = -1, inStr: string | null = null;
-    for (let i = start; i < src.length; i++) {
-      const ch = src[i];
-      if (inStr) { if (ch === inStr && src[i - 1] !== '\\') inStr = null; continue; }
-      if (ch === '"' || ch === "'") { inStr = ch; continue; }
-      if (ch === '{') depth++;
-      else if (ch === '}') { depth--; if (depth === 0) { end = i; break; } }
-    }
-    if (end > start) {
-      try {
-        protoTM = JSON.parse(src.slice(start, end + 1));
-      } catch (e) {
-        console.warn('Could not parse JSON from data.js, fallback to empty');
+    try {
+      const src = readFileSync(DATA_JS, 'utf8');
+      const ctx: any = { window: {} };
+      runInNewContext(src, ctx);
+      if (ctx.window?.TM) {
+        protoTM = ctx.window.TM;
       }
+    } catch (e: any) {
+      console.warn('Could not parse data.js via vm, fallback to empty:', e.message);
     }
   }
 
@@ -125,7 +121,7 @@ async function importAll() {
       shortSpec: p.shortSpec || '',
       warranty: p.warranty || 'Lifetime',
       warrantyTier: (p.warranty && /5|five/i.test(p.warranty)) ? '5_year' : (p.warranty && /3|three/i.test(p.warranty) ? '3_year' : 'lifetime'),
-      priceUsd: p.priceUsd ? String(p.priceUsd) : (p.id.includes('corex') ? '199.99' : (p.id.includes('voltx') ? '89.99' : null)),
+      priceUsd: p.priceUsd ? String(p.priceUsd) : (p.id.includes('voltx') ? '89.99' : null),
       launchDate: p.id.includes('corex') ? COREX_LAUNCH_DATE : null,
       isComingSoon: false,
       specs: p.specs || {},
@@ -167,24 +163,42 @@ async function importAll() {
   let artImported = 0;
   for (const a of (protoTM.articles || [])) {
     const slug = slugify(a.id);
+    let structuredBody: any[] = [];
+    if (Array.isArray(a.body)) {
+      structuredBody = a.body.map((pair: any) => {
+        if (Array.isArray(pair)) return { h: pair[0] || '', p: pair[1] || '' };
+        if (typeof pair === 'object' && pair !== null) return { h: pair.h || pair.heading || '', p: pair.p || pair.text || '' };
+        return { h: '', p: String(pair) };
+      });
+    } else if (Array.isArray(a.sections)) {
+      structuredBody = a.sections.map((s: any) => ({ h: s.heading || s.h || '', p: s.text || s.p || '' }));
+    } else {
+      structuredBody = [
+        { h: 'Overview', p: a.desc || a.excerpt || `${a.title} overview.` },
+        { h: 'Technical Evaluation', p: 'Detailed specifications, latency timings, and throughput benchmarks measured in laboratory conditions.' },
+        { h: 'Conclusion & Recommendations', p: 'Summary of performance characteristics and compatibility considerations for PC builders.' },
+      ];
+    }
+
+    const bodyHtml = structuredBody.map((s) => (s.h ? `<h2>${s.h}</h2>\n<p>${s.p}</p>` : `<p>${s.p}</p>`)).join('\n\n');
+    const totalWords = structuredBody.reduce((acc, s) => acc + (s.h ? s.h.split(/\s+/).length : 0) + (s.p ? s.p.split(/\s+/).length : 0), 0);
+    const readingTimeMin = a.readingTime || Math.max(2, Math.ceil(totalWords / 180));
+
     const values = {
       slug,
       locale: 'en',
       title: a.title,
-      deck: a.excerpt || a.deck || '',
-      body: a.body || a.excerpt || `${a.title}. Comprehensive engineering analysis and testing overview from the TwinMOS engineering team.`,
-      category: a.category || a.cat || 'Guide',
-      tags: a.tags || (a.category ? [a.category] : ['Hardware']),
+      deck: a.desc || a.excerpt || a.deck || '',
+      body: bodyHtml,
+      category: a.cat || a.category || 'Article',
+      tags: a.tag ? [a.tag] : (a.tags || ['Hardware']),
       status: 'published' as const,
-      readingTimeMin: a.readingTime || a.readingTimeMin || 5,
-      structuredBody: a.sections || [
-        { heading: 'Overview', text: a.excerpt || `${a.title} overview.` },
-        { heading: 'Technical Evaluation', text: 'Detailed specifications, latency timings, and throughput benchmarks measured in laboratory conditions.' },
-        { heading: 'Conclusion & Recommendations', text: 'Summary of performance characteristics and compatibility considerations for PC builders.' }
-      ],
+      readingTimeMin,
+      structuredBody,
       seo: {
         title: `${a.title} | TwinMOS Knowledge Hub`,
-        description: a.excerpt || `${a.title} guide.`,
+        description: a.desc || a.excerpt || `${a.title} guide.`,
+        ogImage: a.img ? '/' + a.img.replace(/^\/+/, '') : null,
       },
     };
 
@@ -296,12 +310,12 @@ async function importAll() {
 
   let termImported = 0;
   for (const g of (protoTM.glossary || [])) {
-    const termStr = g.term || g.id || '';
+    const termStr = g.term || g.t || g.id || '';
     if (!termStr) continue;
     const termLower = termStr.toLowerCase();
-    const letter = (g.letter || termStr[0] || 'A').toUpperCase().slice(0, 2);
-    const definition = g.definition || g.def || `${termStr} technical description.`;
-    const explainerSlug = g.explainerSlug || g.slug || null;
+    const letter = (g.letter || g.l || termStr[0] || 'A').toUpperCase().slice(0, 2);
+    const definition = g.definition || g.d || g.def || `${termStr} technical description.`;
+    const explainerSlug = g.explainerSlug || g.ref || g.slug || null;
 
     const existing = existingTermMap.get(termLower);
     if (existing) {

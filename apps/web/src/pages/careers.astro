@@ -5,13 +5,27 @@ import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
-const page = await getDeliveryPage('careers');
-const title = page?.title ?? "Careers at TwinMOS — Open roles, benefits &amp; internships";
+const preview = Astro.url.searchParams.get('preview') ?? undefined;
+const page = await getDeliveryPage('careers', 'en', preview);
+
+if (preview) {
+  Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+} else {
+  const tags = Array.isArray(page?.cacheTags) && page.cacheTags.length > 0
+    ? page.cacheTags.join(', ')
+    : 'careers, page-careers, forms';
+  Astro.response.headers.set('Cache-Tag', tags);
+  Astro.response.headers.set('X-Cache-Tags', tags);
+}
+
+const title = page?.title ?? "Careers at TwinMOS — Open roles, benefits & internships";
 const desc = page?.seoDescription ?? "Join TwinMOS — memory and storage since 1998. Open roles across six departments, internships and graduate programs, benefits, and five offices: Dubai, Taipei, San Jose, Hong Kong and Dhaka.";
 const blocks = page?.blocks ?? [];
+const noindex = Boolean(preview) || Boolean(page?.noindex);
 ---
 
-<Layout title={title} desc={desc} >
+<Layout title={title} desc={desc} noindex={noindex}>
   <main id="main">
     <BlockDispatcher blocks={blocks} />
   </main>

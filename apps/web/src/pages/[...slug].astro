@@ -1,11 +1,12 @@
 ---
-// apps/web/src/pages/[...slug].astro — Universal CMS Page Dynamic SSR Renderer (MS4.6 / T4.6.4 / T4.6.5)
+// apps/web/src/pages/[...slug].astro — Universal CMS Page Dynamic SSR Renderer (MS5.2 / T5.2.1)
 import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
-import { getDeliveryPage } from '../lib/delivery';
+import { getDeliveryPage, getDeliveryPageByPath } from '../lib/delivery';
 
 const rawSlug = Astro.params.slug;
 const slug = (rawSlug && rawSlug.length > 0) ? rawSlug.replace(/^\/+|\/+$/g, '') : 'index';
+const pathname = Astro.url.pathname === '/index.html' ? '/' : Astro.url.pathname.replace(/\/+$/, '') || '/';
 
 // T3.2.2: Refuse .html twins under clean route paths
 if (Astro.url.pathname.endsWith('.html')) {
@@ -14,26 +15,55 @@ if (Astro.url.pathname.endsWith('.html')) {
 
 const preview = Astro.url.searchParams.get('preview') ?? undefined;
 const locale = 'en';
-const page = await getDeliveryPage(slug, locale, preview);
 
+// Resolve page by exact path first, then by slug (T5.2.1)
+let page = await getDeliveryPageByPath(pathname, locale, preview);
 if (!page) {
-  return new Response('Not Found', { status: 404, statusText: 'Not Found' });
+  page = await getDeliveryPage(slug, locale, preview);
 }
 
-// T4.6.4: Preview is noindex and never cached
+let isNotFound = false;
+if (!page) {
+  isNotFound = true;
+  Astro.response.status = 404;
+  page = await getDeliveryPage('404', locale, preview);
+}
+
+// T5.2.1: Cache tags and preview headers per page
 if (preview) {
   Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
   Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+} else if (page && !isNotFound) {
+  const cacheTags = page.cacheTags || ['pages', `page:${page.slug}`];
+  Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+  Astro.response.headers.set('Cache-Tag', cacheTags.join(', '));
+  Astro.response.headers.set('X-Cache-Tags', cacheTags.join(', '));
 }
 
-const title = page.seoTitle || page.title || 'TwinMOS Technologies';
-const desc = page.seoDescription || page.title || 'TwinMOS Technologies — Legendary Memory & Storage';
-const noindex = Boolean(preview) || Boolean(page.noindex);
-const blocks = page.blocks ?? [];
+const title = page?.seoTitle || page?.title || (isNotFound ? 'Page not found — TwinMOS' : 'TwinMOS Technologies');
+const desc = page?.seoDescription || page?.title || (isNotFound ? '404 — page not found.' : 'TwinMOS Technologies — Legendary Memory & Storage');
+const noindex = Boolean(preview) || Boolean(page?.noindex) || isNotFound;
+const blocks = page?.blocks ?? [];
+const hasBlocks = Array.isArray(blocks) && blocks.length > 0;
 ---
 
 <Layout title={title} desc={desc} noindex={noindex}>
   <main id="main">
-    <BlockDispatcher blocks={blocks} />
+    {hasBlocks ? (
+      <BlockDispatcher blocks={blocks} />
+    ) : (
+      <section class="page-hero block-hero" style="min-height:55vh;display:flex;align-items:center;text-align:center" data-fallback="offline-404">
+        <div class="wrap" style="max-width:680px;margin:0 auto">
+          <span class="eyebrow" style="color:var(--accent,#E02B20);font-weight:700">404 Error</span>
+          <h1 class="h1" style="margin:12px 0 16px">This page went out of stock</h1>
+          <p class="lede" style="margin-bottom:28px">The address you followed does not exist or may have been moved. Everything else, though, is very much in stock.</p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <a class="btn btn-accent" href="/">Back to home</a>
+            <a class="btn btn-ghost" href="/shop">Browse products</a>
+            <a class="btn btn-ghost" href="/support">Contact support</a>
+          </div>
+        </div>
+      </section>
+    )}
   </main>
 </Layout>

@@ -1,4 +1,4 @@
-import { eq, ne, and, or, lte, gt, desc, asc, ilike, isNull, inArray, type SQL } from 'drizzle-orm';
+import { eq, ne, and, or, lte, gt, desc, asc, ilike, isNull, inArray, sql, type SQL } from 'drizzle-orm';
 import type { DB } from '@twinmos/db';
 import {
   page,
@@ -233,6 +233,7 @@ export interface ProductQueryFilters {
   catSlug?: string;
   brandSlug?: string;
   q?: string;
+  sort?: string;
 }
 
 export function attachComputedProductFields(p: any) {
@@ -258,26 +259,20 @@ export function attachComputedProductFields(p: any) {
 
 export async function findPublishedProducts(db: DB, filters: ProductQueryFilters = {}) {
   const now = new Date();
-  let rows = await db
-    .select()
-    .from(product)
-    .where(
-      and(
-        eq(product.status, 'published'),
-        isNull(product.deletedAt),
-        or(isNull(product.launchDate), lte(product.launchDate, now))!
-      )
-    )
-    .orderBy(desc(product.id));
+  const conditions: SQL[] = [
+    eq(product.status, 'published'),
+    isNull(product.deletedAt),
+    or(isNull(product.launchDate), lte(product.launchDate, now))!,
+  ];
 
-  if (filters.catSlug) {
+  if (filters.catSlug && filters.catSlug !== 'all') {
     const targetCat = await db
-      .select()
+      .select({ id: category.id })
       .from(category)
       .where(eq(category.slug, filters.catSlug))
       .limit(1);
     if (targetCat[0]) {
-      rows = rows.filter((p) => p.categoryId === targetCat[0].id);
+      conditions.push(eq(product.categoryId, targetCat[0].id));
     } else {
       return [];
     }
@@ -285,27 +280,44 @@ export async function findPublishedProducts(db: DB, filters: ProductQueryFilters
 
   if (filters.brandSlug) {
     const targetBrand = await db
-      .select()
+      .select({ id: brand.id })
       .from(brand)
       .where(eq(brand.slug, filters.brandSlug))
       .limit(1);
     if (targetBrand[0]) {
-      rows = rows.filter((p) => p.brandId === targetBrand[0].id);
+      conditions.push(eq(product.brandId, targetBrand[0].id));
     } else {
       return [];
     }
   }
 
   if (filters.q) {
-    const cleanQ = filters.q.toLowerCase();
-    rows = rows.filter(
-      (p) =>
-        p.name.toLowerCase().includes(cleanQ) ||
-        (p.description && p.description.toLowerCase().includes(cleanQ)) ||
-        (p.shortSpec && p.shortSpec.toLowerCase().includes(cleanQ))
+    const cleanQ = filters.q.trim();
+    conditions.push(
+      or(
+        ilike(product.name, `%${cleanQ}%`),
+        ilike(product.description, `%${cleanQ}%`),
+        ilike(product.shortSpec, `%${cleanQ}%`)
+      )!
     );
   }
 
+  let queryBuilder = db
+    .select()
+    .from(product)
+    .where(and(...conditions));
+
+  if (filters.sort === 'name') {
+    queryBuilder = queryBuilder.orderBy(asc(sql`lower(${product.name})`)) as any;
+  } else if (filters.sort === 'cat') {
+    queryBuilder = queryBuilder.orderBy(asc(product.categoryId), desc(product.id)) as any;
+  } else if (filters.sort === 'featured') {
+    queryBuilder = queryBuilder.orderBy(desc(product.featured), desc(product.id)) as any;
+  } else {
+    queryBuilder = queryBuilder.orderBy(desc(product.id)) as any;
+  }
+
+  const rows = await queryBuilder;
   return rows.map(attachComputedProductFields);
 }
 
@@ -1160,10 +1172,25 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
   const queryTokens = cleanQ.split(/\s+/).filter(Boolean);
   const now = new Date();
 
-  // 1. Products search
+  // 1. Products search (SQL-level querying, Defect Z-22 resolved)
   let prodResults: any[] = [];
   if (!type || type === 'product') {
-    const allProds = await db
+    const prodConditions: SQL[] = [
+      eq(product.status, 'published'),
+      isNull(product.deletedAt),
+      or(isNull(product.launchDate), lte(product.launchDate, now))!,
+    ];
+    for (const tok of queryTokens) {
+      prodConditions.push(
+        or(
+          ilike(product.name, `%${tok}%`),
+          ilike(product.description, `%${tok}%`),
+          ilike(product.shortSpec, `%${tok}%`)
+        )!
+      );
+    }
+
+    const prods = await db
       .select({
         id: product.id,
         name: product.name,
@@ -1174,35 +1201,41 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
         categoryId: product.categoryId,
       })
       .from(product)
-      .where(
-        and(
-          eq(product.status, 'published'),
-          isNull(product.deletedAt),
-          or(isNull(product.launchDate), lte(product.launchDate, now))!
-        )
-      );
+      .where(and(...prodConditions))
+      .limit(50);
 
-    prodResults = allProds
-      .filter((p) => {
-        const text = `${p.name} ${p.description || ''} ${p.shortSpec || ''}`.toLowerCase();
-        return queryTokens.every((tok) => text.includes(tok));
-      })
-      .map((p) => ({
-        type: 'product',
-        id: p.id,
-        title: p.name,
-        slug: p.slug,
-        url: `/products/${p.slug}`,
-        snippet: p.shortSpec || (p.description ? p.description.slice(0, 160) : ''),
-        badge: p.warranty || 'Product',
-        locale: 'en',
-      }));
+    prodResults = prods.map((p) => ({
+      type: 'product',
+      id: p.id,
+      title: p.name,
+      slug: p.slug,
+      url: `/products/${p.slug}`,
+      snippet: p.shortSpec || (p.description ? p.description.slice(0, 160) : ''),
+      badge: p.warranty || 'Product',
+      locale: 'en',
+    }));
   }
 
-  // 2. Articles search
+  // 2. Articles search (SQL-level querying, Defect Z-22 resolved)
   let artResults: any[] = [];
   if (!type || type === 'article') {
-    const allArts = await db
+    const artConditions: SQL[] = [
+      eq(article.status, 'published'),
+      eq(article.locale, locale),
+      isNull(article.deletedAt),
+      or(isNull(article.publishAt), lte(article.publishAt, now))!,
+    ];
+    for (const tok of queryTokens) {
+      artConditions.push(
+        or(
+          ilike(article.title, `%${tok}%`),
+          ilike(article.deck, `%${tok}%`),
+          ilike(article.body, `%${tok}%`)
+        )!
+      );
+    }
+
+    const arts = await db
       .select({
         id: article.id,
         title: article.title,
@@ -1213,62 +1246,74 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
         locale: article.locale,
       })
       .from(article)
-      .where(
-        and(
-          eq(article.status, 'published'),
-          eq(article.locale, locale),
-          isNull(article.deletedAt),
-          or(isNull(article.publishAt), lte(article.publishAt, now))!
-        )
-      );
+      .where(and(...artConditions))
+      .limit(50);
 
-    artResults = allArts
-      .filter((a) => {
-        const text = `${a.title} ${a.deck || ''} ${a.body}`.toLowerCase();
-        return queryTokens.every((tok) => text.includes(tok));
-      })
-      .map((a) => ({
-        type: 'article',
-        id: a.id,
-        title: a.title,
-        slug: a.slug,
-        url: `/learn/${a.slug}`,
-        snippet: a.deck || (a.body ? a.body.slice(0, 160) : ''),
-        badge: a.category || 'Article',
-        category: a.category,
-        locale: a.locale,
-      }));
+    artResults = arts.map((a) => ({
+      type: 'article',
+      id: a.id,
+      title: a.title,
+      slug: a.slug,
+      url: `/learn/${a.slug}`,
+      snippet: a.deck || (a.body ? a.body.slice(0, 160) : ''),
+      badge: a.category || 'Article',
+      category: a.category,
+      locale: a.locale,
+    }));
   }
 
-  // 3. Glossary search
+  // 3. Glossary search (SQL-level querying, Defect Z-22 resolved)
   let glossaryResults: any[] = [];
   if (!type || type === 'glossary') {
-    const allTerms = await db
+    const glossConditions: SQL[] = [
+      eq(glossaryTerm.locale, locale),
+    ];
+    for (const tok of queryTokens) {
+      glossConditions.push(
+        or(
+          ilike(glossaryTerm.term, `%${tok}%`),
+          ilike(glossaryTerm.definition, `%${tok}%`)
+        )!
+      );
+    }
+
+    const terms = await db
       .select()
       .from(glossaryTerm)
-      .where(eq(glossaryTerm.locale, locale));
+      .where(and(...glossConditions))
+      .limit(50);
 
-    glossaryResults = allTerms
-      .filter((t) => {
-        const text = `${t.term} ${t.definition}`.toLowerCase();
-        return queryTokens.every((tok) => text.includes(tok));
-      })
-      .map((t) => ({
-        type: 'glossary',
-        id: t.id,
-        title: t.term,
-        slug: t.term,
-        url: `/learn-glossary#term-${slugify(t.term)}`,
-        snippet: t.definition.slice(0, 160),
-        badge: 'Glossary',
-        locale: t.locale,
-      }));
+    glossaryResults = terms.map((t) => ({
+      type: 'glossary',
+      id: t.id,
+      title: t.term,
+      slug: t.term,
+      url: `/learn-glossary#term-${slugify(t.term)}`,
+      snippet: t.definition.slice(0, 160),
+      badge: 'Glossary',
+      locale: t.locale,
+    }));
   }
 
-  // 4. Pages search
+  // 4. Pages search (SQL-level querying, Defect Z-22 resolved)
   let pageResults: any[] = [];
   if (!type || type === 'page') {
-    const allPages = await db
+    const pageConditions: SQL[] = [
+      eq(page.status, 'published'),
+      eq(page.locale, locale),
+      isNull(page.deletedAt),
+      or(isNull(page.publishedAt), lte(page.publishedAt, now))!,
+    ];
+    for (const tok of queryTokens) {
+      pageConditions.push(
+        or(
+          ilike(page.title, `%${tok}%`),
+          ilike(page.seoDescription, `%${tok}%`)
+        )!
+      );
+    }
+
+    const pages = await db
       .select({
         id: page.id,
         title: page.title,
@@ -1278,30 +1323,19 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
         locale: page.locale,
       })
       .from(page)
-      .where(
-        and(
-          eq(page.status, 'published'),
-          eq(page.locale, locale),
-          isNull(page.deletedAt),
-          or(isNull(page.publishedAt), lte(page.publishedAt, now))!
-        )
-      );
+      .where(and(...pageConditions))
+      .limit(50);
 
-    pageResults = allPages
-      .filter((p) => {
-        const text = `${p.title} ${p.seoDescription || ''}`.toLowerCase();
-        return queryTokens.every((tok) => text.includes(tok));
-      })
-      .map((p) => ({
-        type: 'page',
-        id: p.id,
-        title: p.title,
-        slug: p.slug,
-        url: p.path ? p.path.replace(/\.html?$/i, '') : `/${p.slug}`,
-        snippet: p.seoDescription ? p.seoDescription.slice(0, 160) : '',
-        badge: 'Page',
-        locale: p.locale,
-      }));
+    pageResults = pages.map((p) => ({
+      type: 'page',
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      url: p.path ? p.path.replace(/\.html?$/i, '') : `/${p.slug}`,
+      snippet: p.seoDescription ? p.seoDescription.slice(0, 160) : '',
+      badge: 'Page',
+      locale: p.locale,
+    }));
   }
 
   const combined = [

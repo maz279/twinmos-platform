@@ -1,33 +1,254 @@
 ---
-// compare.astro — Dynamic SSR Page rendered from CMS Delivery API.
-// Tasks D2, D8b / GPROV-100 = 100% / G-NOHARDCODE = 0 / WCAG 2.2 AA compliant.
+// compare.astro — Dynamic SSR Product Comparison (Tasks D2, D8b, T5.4.4 / Z-05)
+// Up to 4 products side-by-side with automatic difference highlighting and URL sharing.
 import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
-import { getDeliveryPage } from '../lib/delivery';
+import ResponsiveImage from '../components/common/ResponsiveImage.astro';
+import { getDeliveryPage, getDeliveryProduct, getDeliveryProductComparison } from '../lib/delivery';
 
 const page = await getDeliveryPage('compare');
 const title = page?.title ?? "Compare Products — TwinMOS";
-const desc = page?.seoDescription ?? "Side-by-side TwinMOS product comparison with automatic difference highlighting.";
+const desc = page?.seoDescription ?? "Side-by-side TwinMOS product comparison with automatic difference highlighting and shareable links.";
 const blocks = page?.blocks ?? [];
+const hasHero = blocks.some((b: any) => b?.type === 'hero' || b?.type === 'page-hero' || b?.type === 'error-hero');
+
+// Invalidation tags for surrogate keys / CDN cache
+Astro.response.headers.set('Cache-Tag', 'compare, page-compare');
+Astro.response.headers.set('X-Cache-Tags', 'compare, page-compare');
+
+// Parse up to 4 slugs from URL query parameters (?items=slug1,slug2 or ?slugs=...)
+const itemsParam = Astro.url.searchParams.get('items') || Astro.url.searchParams.get('slugs') || Astro.url.searchParams.get('ids') || '';
+const slugs = itemsParam ? itemsParam.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 4) : [];
+
+let products: any[] = [];
+if (slugs.length > 0) {
+  products = await getDeliveryProductComparison(slugs);
+  // Fallback to individual product fetches if comparison endpoint returned partial
+  if (products.length < slugs.length) {
+    const fetchedSlugs = new Set(products.map((p) => p.slug));
+    for (const s of slugs) {
+      if (!fetchedSlugs.has(s)) {
+        const prod = await getDeliveryProduct(s);
+        if (prod) products.push(prod);
+      }
+    }
+  }
+}
+
+// Canonical spec attributes to compare
+const standardAttributes = [
+  { key: 'category', label: 'Category', getVal: (p: any) => p.category?.name || p.catLabel || p.cat || '—' },
+  { key: 'brand', label: 'Brand', getVal: (p: any) => p.brand?.name || p.brand || 'TwinMOS' },
+  { key: 'shortSpec', label: 'Key Spec', getVal: (p: any) => p.shortSpec || '—' },
+  { key: 'interface', label: 'Interface', getVal: (p: any) => p.specs?.Interface || p.specs?.interface || p.interface || '—' },
+  { key: 'formFactor', label: 'Form Factor', getVal: (p: any) => p.specs?.['Form Factor'] || p.specs?.form || p.form || '—' },
+  { key: 'capacity', label: 'Capacity / Variants', getVal: (p: any) => p.specs?.Capacity || p.cap || (Array.isArray(p.variants) ? p.variants.join(', ') : '—') },
+  { key: 'readSpeed', label: 'Sequential Read', getVal: (p: any) => p.specs?.['Sequential Read Speed'] || p.specs?.readSpeed || '—' },
+  { key: 'writeSpeed', label: 'Sequential Write', getVal: (p: any) => p.specs?.['Sequential Write Speed'] || p.specs?.writeSpeed || '—' },
+  { key: 'warranty', label: 'Warranty Tier', getVal: (p: any) => p.warranty || p.warrantyTier || p.specs?.Warranty || '—' },
+  { key: 'dimensions', label: 'Dimensions', getVal: (p: any) => p.specs?.Dimensions || p.specs?.dimensions || '—' },
+  { key: 'weight', label: 'Weight', getVal: (p: any) => p.specs?.Weight || p.specs?.weight || '—' },
+  { key: 'os', label: 'Compatible OS', getVal: (p: any) => p.specs?.['Compatible-OS'] || p.specs?.compatibleOs || '—' },
+];
+
+// Determine which specs are active and whether they have differences
+const specRows = standardAttributes.map((attr) => {
+  const values = products.map((p) => String(attr.getVal(p) ?? '—').trim());
+  const nonDashValues = values.filter((v) => v !== '—');
+  const isDiff = products.length > 1 && new Set(values).size > 1;
+  const isRelevant = nonDashValues.length > 0;
+  return {
+    ...attr,
+    values,
+    isDiff,
+    isRelevant,
+  };
+}).filter((r) => r.isRelevant || products.length === 0);
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Catalogue', href: '/products' },
+  { label: 'Compare' },
+];
 ---
 
-<Layout title={title} desc={desc}>
+<Layout title={title} desc={desc} breadcrumbs={breadcrumbs}>
   <main id="main">
-    {blocks.length > 0 ? (
-      <BlockDispatcher blocks={blocks} />
-    ) : (
-      <>
-        <div class="page-hero">
-          <div class="wrap">
-            <span class="eyebrow">Decision tool</span>
-            <h1 class="h1">Compare products</h1>
-            <p class="lede">Add up to four products from the catalog using the ⇄ button on any product card. Differences are highlighted automatically, and your tray persists between visits.</p>
+    {blocks.length > 0 && <BlockDispatcher blocks={blocks} />}
+
+    {!hasHero && (
+      <div class="page-hero" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); padding: 48px 16px 32px; border-bottom: 1px solid #e2e8f0;">
+        <div class="wrap" style="max-width: 1200px; margin: 0 auto; text-align: center;">
+          <span class="eyebrow" style="color: #2563eb; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">
+            Decision Tool
+          </span>
+          <h1 class="h1" style="font-size: 2.75rem; margin-top: 10px; margin-bottom: 14px; color: #0f172a; font-weight: 800;">
+            Compare Products Side-by-Side
+          </h1>
+          <p class="lede" style="font-size: 1.15rem; color: #475569; max-width: 720px; margin: 0 auto; line-height: 1.6;">
+            Compare up to 4 models from the TwinMOS catalogue. Differences are automatically highlighted for rapid technical evaluation.
+          </p>
+        </div>
+      </div>
+    )}
+
+    <section class="compare-section wrap" style="padding: 40px 16px 80px; max-width: 1200px; margin: 0 auto;">
+      {products.length > 0 ? (
+        <div class="compare-container">
+          {/* Action Toolbar */}
+          <div class="compare-toolbar" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; padding: 14px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-weight: 600; font-size: 0.95rem; color: #0f172a;">
+                Comparing {products.length} of 4 items
+              </span>
+              <button
+                type="button"
+                id="toggleDiffBtn"
+                class="btn btn-sm"
+                aria-pressed="true"
+                style="background: #2563eb; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer;"
+              >
+                Highlight Differences: ON
+              </button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button
+                type="button"
+                id="copyShareLinkBtn"
+                class="btn btn-sm"
+                style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: #0f172a;"
+              >
+                🔗 Copy Share Link
+              </button>
+              <span id="shareFeedback" aria-live="polite" style="display: none; font-size: 0.85rem; color: #16a34a; font-weight: 600;">
+                ✓ Link copied!
+              </span>
+              <a
+                href="/products"
+                class="btn btn-sm"
+                style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; color: #0f172a;"
+              >
+                + Add Another Product
+              </a>
+            </div>
+          </div>
+
+          {/* Comparison Table */}
+          <div class="table-responsive" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+            <table class="table-compare" style="width: 100%; border-collapse: collapse; min-width: 760px;">
+              <thead>
+                <tr style="border-bottom: 2px solid #e2e8f0; background: #fafafa;">
+                  <th scope="col" style="padding: 20px 16px; text-align: left; width: 220px; font-size: 0.95rem; font-weight: 700; color: #475569;">
+                    Product Details
+                  </th>
+                  {products.map((p, pIdx) => {
+                    const remainingSlugs = products.filter((_, idx) => idx !== pIdx).map((x) => x.slug).join(',');
+                    const removeUrl = remainingSlugs ? `/compare?items=${remainingSlugs}` : '/compare';
+                    const imgUrl = p.heroMedia?.key ? `/api/media/${p.heroMedia.id}` : (p.img ? '/' + p.img.replace(/^\/+/, '') : null);
+                    return (
+                      <th scope="col" style="padding: 20px 16px; text-align: center; vertical-align: top; width: calc((100% - 220px) / 4);">
+                        <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
+                          <a
+                            href={removeUrl}
+                            class="btn-remove"
+                            aria-label={`Remove ${p.name} from comparison`}
+                            style="position: absolute; top: -8px; right: 0; background: #fee2e2; color: #b91c1c; border: none; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem; font-weight: bold;"
+                          >
+                            ×
+                          </a>
+                          {imgUrl ? (
+                            <img src={imgUrl} alt={p.name} style="height: 100px; width: auto; object-fit: contain; margin-bottom: 12px;" />
+                          ) : (
+                            <div style="height: 100px; width: 100px; background: #f1f5f9; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; color: #0f172a; font-weight: 700; font-size: 0.85rem;">
+                              No Image
+                            </div>
+                          )}
+                          <span style="font-size: 0.75rem; text-transform: uppercase; color: #1d4ed8; font-weight: 700; margin-bottom: 4px;">
+                            {p.category?.name || p.catLabel || 'Hardware'}
+                          </span>
+                          <a href={`/products/${p.slug}`} style="font-size: 1rem; font-weight: 700; color: #0f172a; text-decoration: none; line-height: 1.3; margin-bottom: 8px;">
+                            {p.name}
+                          </a>
+                          <a href={`/products/${p.slug}`} class="btn btn-sm" style="display: inline-block; padding: 4px 12px; background: #0A2540; color: #fff; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-decoration: none;">
+                            View PDP →
+                          </a>
+                        </div>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {specRows.map((row) => (
+                  <tr
+                    class={`spec-row ${row.isDiff ? 'has-diff' : ''}`}
+                    style={`border-bottom: 1px solid #f1f5f9; transition: background 0.2s ease; ${row.isDiff ? 'background: #fffbeb;' : ''}`}
+                  >
+                    <th scope="row" style="padding: 16px; text-align: left; font-size: 0.9rem; font-weight: 600; color: #334155; border-right: 1px solid #f1f5f9;">
+                      <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>{row.label}</span>
+                        {row.isDiff && (
+                          <span class="diff-badge" style="background: #fef3c7; color: #b45309; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 700;">
+                            Diff
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                    {row.values.map((val) => (
+                      <td style="padding: 16px; text-align: center; font-size: 0.9rem; color: #1e293b; border-right: 1px solid #f1f5f9;">
+                        {val}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-        <section style="padding-top:clamp(22px,3vw,36px)">
-          <div class="wrap" id="cmpMount"></div>
-        </section>
-      </>
-    )}
+      ) : (
+        /* Empty State */
+        <div class="empty-compare" style="text-align: center; padding: 60px 16px 80px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <div style="font-size: 3rem; margin-bottom: 16px;">⇄</div>
+          <h2 class="h2" style="font-size: 1.75rem; color: #0f172a; margin-bottom: 12px; font-weight: 700;">
+            No Products Selected for Comparison
+          </h2>
+          <p style="font-size: 1.05rem; color: #64748b; max-width: 540px; margin: 0 auto 28px; line-height: 1.6;">
+            Select up to 4 models from the catalogue using the compare button on any product card, or explore our popular side-by-side technical benchmarks below.
+          </p>
+          <a href="/products" class="btn btn-primary" style="display: inline-block; background: #0A2540; color: #fff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1rem;">
+            Browse Product Catalogue
+          </a>
+
+          {/* Popular comparison shortcuts */}
+          <div style="margin-top: 48px; border-top: 1px solid #e2e8f0; padding-top: 32px; max-width: 760px; margin-left: auto; margin-right: auto;">
+            <h3 class="h3" style="font-size: 1.1rem; color: #334155; margin-bottom: 16px; font-weight: 600;">
+              Popular Comparisons:
+            </h3>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
+              <a
+                href="/compare?items=corex-pro-m2-pcie-gen-5-0-nvme-ssd,corex-m2-pcie-gen-4-0-nvme-ssd"
+                style="padding: 8px 16px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; text-decoration: none; color: #0f172a; font-size: 0.85rem; font-weight: 500;"
+              >
+                CoreX Pro Gen5 vs CoreX Gen4 SSD
+              </a>
+              <a
+                href="/compare?items=voltx-rgb-ddr5-u-dimm-for-desktop,voltx-ddr5-u-dimm-for-desktop"
+                style="padding: 8px 16px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; text-decoration: none; color: #0f172a; font-size: 0.85rem; font-weight: 500;"
+              >
+                VOLTX RGB DDR5 vs Standard VOLTX DDR5
+              </a>
+              <a
+                href="/compare?items=voltx-ddr5-so-dimm-for-laptop,tornadox7-pro-ddr4-3200mhz-cl16-u-dimm-for-desktop"
+                style="padding: 8px 16px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; text-decoration: none; color: #0f172a; font-size: 0.85rem; font-weight: 500;"
+              >
+                VOLTX DDR5 Laptop vs TornadoX7 Desktop
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   </main>
+
+  <script is:inline src="/assets/js/share-copy.js"></script>
 </Layout>

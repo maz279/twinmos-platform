@@ -28,7 +28,7 @@ const countries = figures.countriesCount || '93+';
 const address = contact.address || 'Taipei, Taiwan';
 const salesEmail = contact.salesEmail || contact.email || 'sales@twinmos.com';
 const phone = contact.phone || '+886 2 2659 0880';
-const waUrl = whatsapp.waUrl || 'https://wa.me/886226590880';
+const waUrl = whatsapp.waUrl || (whatsapp.phoneNumber ? `https://wa.me/${whatsapp.phoneNumber.replace(/[^0-9]/g, '')}` : 'https://wa.me/886226590880');
 
 const hrefOf = (item: NavItem) => item.targetUrl || '#';
 const groups: NavItem[] = menu?.items ?? [];

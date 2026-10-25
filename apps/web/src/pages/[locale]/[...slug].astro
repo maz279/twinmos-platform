@@ -4,21 +4,47 @@
 // everything else 301s to the English URL.
 import Layout from '../../layouts/Layout.astro';
 import BlockDispatcher from '../../components/blocks/BlockDispatcher.astro';
-import { getDeliveryPage } from '../../lib/delivery';
+import { getDeliveryPage, getDeliveryPageByPath } from '../../lib/delivery';
 import { LOCALES } from '@twinmos/shared';
 
 export const prerender = false;
 
 const { locale, slug } = Astro.params;
 if (!locale || !LOCALES.includes(locale as any) || locale === 'en') {
+  // Not a locale prefix at all — an ordinary unknown page: branded 404 (T5.2.2).
+  return Astro.rewrite('/404');
+}
+
+// T3.2.2: Refuse .html twins under clean route paths
+if (Astro.url.pathname.endsWith('.html')) {
   return new Response('Not Found', { status: 404, statusText: 'Not Found' });
 }
 
+const preview = Astro.url.searchParams.get('preview') ?? undefined;
 const pageSlug = String(slug ?? 'index').replace(/\.html$/i, '').replace(/\/+$/, '') || 'index';
-const page = await getDeliveryPage(pageSlug, locale);
+const pagePath = `/${pageSlug}`;
+
+// Resolve page by exact path first, then by slug (T5.2.1)
+let page = await getDeliveryPageByPath(pagePath, locale, preview);
+if (!page) {
+  page = await getDeliveryPage(pageSlug, locale, preview);
+}
 
 if (!page) {
-  return new Response('Not Found', { status: 404, statusText: 'Not Found' });
+  // Middleware 301s untranslated locale paths; reaching here means a missing
+  // page under a real locale prefix — serve the branded 404 (T5.2.2).
+  return Astro.rewrite('/404');
+}
+
+// T5.2.1: Cache tags and preview headers per page for localized delivery
+if (preview) {
+  Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+} else {
+  const cacheTags = page.cacheTags || ['pages', `page:${page.slug}`, `locale:${locale}`];
+  Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+  Astro.response.headers.set('Cache-Tag', cacheTags.join(', '));
+  Astro.response.headers.set('X-Cache-Tags', cacheTags.join(', '));
 }
 
 const title = page.title ?? 'TwinMOS';

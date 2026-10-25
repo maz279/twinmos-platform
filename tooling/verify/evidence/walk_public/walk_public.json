@@ -32,7 +32,7 @@
     "title": "TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD — TwinMOS",
     "hasTM": true,
     "pdpH1": "TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD",
-    "isLoading": true
+    "isLoading": false
   },
   {
     "route": "/product.html?id=voltx-ddr5-udimm-16gb",
@@ -44,7 +44,7 @@
     "title": "VOLTX DDR5 U-DIMM 16GB — TwinMOS",
     "hasTM": true,
     "pdpH1": "VOLTX DDR5 U-DIMM 16GB",
-    "isLoading": true
+    "isLoading": false
   },
   {
     "route": "/where-to-buy.html",

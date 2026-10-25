@@ -1,0 +1,413 @@
+---
+// products/index.astro — Server-rendered Product Catalogue (MS5.3 / T5.3.1)
+// Live facet counts from Delivery API, URL query filters (?cat=, ?sort=, ?q=, ?brand=),
+// mobile filter drawer, quick view & compare tray integration.
+// CAT-01 compliant (facet filtering p95 < 300 ms).
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumb from '../../components/chrome/Breadcrumb.astro';
+import ResponsiveImage from '../../components/common/ResponsiveImage.astro';
+import { getDeliveryProducts, getDeliveryFacets, getDeliveryPage } from '../../lib/delivery';
+
+const url = Astro.url;
+const cat = url.searchParams.get('cat') || 'all';
+const brand = url.searchParams.get('brand') || '';
+const q = url.searchParams.get('q') || '';
+const sort = url.searchParams.get('sort') || 'featured';
+
+const [facets, products, page] = await Promise.all([
+  getDeliveryFacets(),
+  getDeliveryProducts({
+    cat: cat !== 'all' ? cat : undefined,
+    brand: brand || undefined,
+    q: q || undefined,
+    sort,
+  }),
+  getDeliveryPage('shop').catch(() => null),
+]);
+
+const categories = facets?.categories ?? [];
+const brands = facets?.brands ?? [];
+const totalProducts = facets?.total ?? products.length;
+
+const selectedCategory = categories.find((c: any) => c.slug === cat);
+const title = selectedCategory
+  ? `${selectedCategory.name} — TwinMOS Products`
+  : (page?.title ?? 'Products Catalogue — TwinMOS');
+const desc = selectedCategory
+  ? `Explore ${selectedCategory.name} from TwinMOS. High-performance, tested and backed by industry-leading warranty.`
+  : (page?.seoDescription ?? 'Browse the complete TwinMOS product catalogue: DDR5 & DDR4 RAM, NVMe Gen 5 & SATA SSDs, portable storage, and accessories.');
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Products', href: '/products' },
+  ...(selectedCategory ? [{ label: selectedCategory.name }] : []),
+];
+
+const cacheTags = ['products', 'catalog', ...(cat !== 'all' ? [`category:${cat}`] : [])].join(', ');
+Astro.response.headers.set('Cache-Tag', cacheTags);
+Astro.response.headers.set('X-Cache-Tags', cacheTags);
+---
+
+<Layout title={title} desc={desc}>
+  <Breadcrumb items={breadcrumbs} />
+
+  <main id="main">
+    <div class="page-hero">
+      <div class="wrap">
+        <span class="eyebrow">Product Catalogue</span>
+        <h1 class="h1">{selectedCategory ? selectedCategory.name : 'All Products'}</h1>
+        <p class="lede">
+          {selectedCategory
+            ? `Showing all high-performance ${selectedCategory.name.toLowerCase()} hardware in the current TwinMOS lineup.`
+            : `Every memory module, solid-state drive, and accessory engineered by TwinMOS since 1998 — backed by industry-leading warranties.`}
+        </p>
+      </div>
+    </div>
+
+    <!-- Category quick-filter tabs / chips -->
+    <section class="wrap" style="padding-top:16px;padding-bottom:8px">
+      <div class="tabs" role="tablist" aria-label="Product categories" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin">
+        <a
+          href="/products"
+          class={`tab ${cat === 'all' ? 'on' : ''}`}
+          role="tab"
+          aria-selected={cat === 'all' ? 'true' : 'false'}
+          style="text-decoration:none;white-space:nowrap"
+        >
+          All Products <span class="tab-cnt">({totalProducts})</span>
+        </a>
+        {categories.map((c: any) => (
+          <a
+            href={`/products/${c.slug}`}
+            class={`tab ${cat === c.slug ? 'on' : ''}`}
+            role="tab"
+            aria-selected={cat === c.slug ? 'true' : 'false'}
+            style="text-decoration:none;white-space:nowrap"
+          >
+            {c.name} <span class="tab-cnt">({c.count})</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <!-- Catalogue Main Layout -->
+    <section style="padding: 16px 0 64px">
+      <div class="wrap">
+        <div class="shop-layout" style="display:grid;grid-template-columns:260px 1fr;gap:32px;align-items:start">
+          
+          <!-- Desktop Filter Rail (Live database facets) -->
+          <aside class="filters" aria-label="Product filters" style="background:#fff;border:1px solid #E6EBF1;border-radius:12px;padding:24px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <h2 style="font-size:16px;font-weight:700;margin:0">Filters</h2>
+              {(cat !== 'all' || brand || q) && (
+                <a href="/products" class="btn btn-ghost btn-sm" style="font-size:12px;padding:4px 8px">Reset</a>
+              )}
+            </div>
+
+            <!-- Category Axis -->
+            <div class="filter-group" style="margin-bottom:24px">
+              <h3 style="font-size:14px;font-weight:700;margin:0 0 12px;color:var(--color-brand,#0A2540)">Category</h3>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <label class="fcheck" style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer">
+                  <input
+                    type="radio"
+                    name="fcat"
+                    value="all"
+                    checked={cat === 'all'}
+                    data-nav="/products"
+                  />
+                  <span>All Categories</span>
+                  <span class="cnt" style="margin-left:auto;font-size:12px;color:var(--muted)">{totalProducts}</span>
+                </label>
+                {categories.map((c: any) => (
+                  <label class="fcheck" style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer">
+                    <input
+                      type="radio"
+                      name="fcat"
+                      value={c.slug}
+                      checked={cat === c.slug}
+                      data-nav={`/products/${c.slug}`}
+                    />
+                    <span>{c.name}</span>
+                    <span class="cnt" style="margin-left:auto;font-size:12px;color:var(--muted)">{c.count}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <!-- Brand Line Axis -->
+            {brands.length > 0 && (
+              <div class="filter-group" style="margin-bottom:24px">
+                <h3 style="font-size:14px;font-weight:700;margin:0 0 12px;color:var(--color-brand,#0A2540)">Brand Line</h3>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  {brands.map((b: any) => {
+                    const isChecked = brand === b.slug;
+                    const nextUrl = new URL(url.toString());
+                    if (isChecked) {
+                      nextUrl.searchParams.delete('brand');
+                    } else {
+                      nextUrl.searchParams.set('brand', b.slug);
+                    }
+                    return (
+                      <label class="fcheck" style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          data-nav={`${nextUrl.pathname}${nextUrl.search}`}
+                        />
+                        <span>{b.name}</span>
+                        <span class="cnt" style="margin-left:auto;font-size:12px;color:var(--muted)">{b.count}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <!-- Warranty Guarantee Note -->
+            <div class="filter-group" style="margin-top:24px;border-top:1px solid #E6EBF1;padding-top:16px">
+              <h3 style="font-size:13px;font-weight:700;margin:0 0 6px;color:#08705C">TwinMOS Guarantee</h3>
+              <p style="font-size:12px;color:var(--muted);margin:0;line-height:1.5">
+                Lifetime on DRAM modules · 5-year on NVMe SSDs · 3-year on SATA SSDs & portable drives.
+              </p>
+            </div>
+          </aside>
+
+          <!-- Main Listing Area -->
+          <div class="shop-main">
+            <!-- Toolbar: search, sort, count -->
+            <div class="toolbar" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px;padding:12px 16px;background:#F8FAFC;border-radius:10px;border:1px solid #E6EBF1">
+              <form action={url.pathname} method="GET" style="display:flex;gap:8px;flex:1;max-width:320px">
+                {cat !== 'all' && <input type="hidden" name="cat" value={cat} />}
+                {brand && <input type="hidden" name="brand" value={brand} />}
+                <input
+                  class="input"
+                  type="search"
+                  name="q"
+                  value={q}
+                  placeholder="Filter products…"
+                  aria-label="Filter products by keyword"
+                  style="width:100%"
+                />
+                <button class="btn btn-primary btn-sm" type="submit">Filter</button>
+              </form>
+
+              <!-- Mobile filter trigger button -->
+              <button
+                class="btn btn-ghost btn-sm mobile-filter-btn"
+                id="mobileFilterToggle"
+                type="button"
+                aria-label="Open filter drawer"
+                style="display:none"
+              >
+                ⚙️ Filters
+              </button>
+
+              <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
+                <label for="sortSelect" style="font-size:13px;font-weight:600;color:var(--muted)">Sort:</label>
+                <select
+                  id="sortSelect"
+                  class="input"
+                  style="font-size:13px;padding:6px 12px;height:auto"
+                  aria-label="Sort products"
+                >
+                  <option value="featured" selected={sort === 'featured'}>Featured</option>
+                  <option value="name" selected={sort === 'name'}>Name (A–Z)</option>
+                  <option value="cat" selected={sort === 'cat'}>Category</option>
+                </select>
+              </div>
+
+              <span class="result-count" style="font-size:13px;font-weight:700;color:var(--color-brand,#0A2540)">
+                {products.length} {products.length === 1 ? 'product' : 'products'}
+              </span>
+            </div>
+
+            <!-- Active Filters Row -->
+            {(cat !== 'all' || brand || q) && (
+              <div class="active-filters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+                {cat !== 'all' && (
+                  <a href="/products" class="chip" style="font-size:12px;text-decoration:none">
+                    Category: {selectedCategory?.name ?? cat} ✕
+                  </a>
+                )}
+                {brand && (
+                  <a
+                    href={(() => {
+                      const u = new URL(url.toString());
+                      u.searchParams.delete('brand');
+                      return u.pathname + u.search;
+                    })()}
+                    class="chip"
+                    style="font-size:12px;text-decoration:none"
+                  >
+                    Brand: {brand} ✕
+                  </a>
+                )}
+                {q && (
+                  <a
+                    href={(() => {
+                      const u = new URL(url.toString());
+                      u.searchParams.delete('q');
+                      return u.pathname + u.search;
+                    })()}
+                    class="chip"
+                    style="font-size:12px;text-decoration:none"
+                  >
+                    “{q}” ✕
+                  </a>
+                )}
+                <a href="/products" class="btn btn-ghost btn-sm" style="font-size:12px;padding:2px 8px">
+                  Clear all
+                </a>
+              </div>
+            )}
+
+            <!-- Product Cards Grid -->
+            {products.length > 0 ? (
+              <div class="grid g3" id="shopGrid" data-ssr="true" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px">
+                {products.map((p: any) => {
+                  const productImg = p.img || (p.gallery && p.gallery[0]) || '/assets/img/card/corex-pro.webp';
+                  const badgesList = Array.isArray(p.badges) ? p.badges : [];
+                  const isGen5 = p.shortSpec?.includes('Gen 5') || p.name?.includes('Gen 5') || p.name?.includes('Gen 5.0');
+                  return (
+                    <article class="card prod-card" style="border:1px solid #E6EBF1;border-radius:12px;background:#fff;padding:20px;display:flex;flex-direction:column;position:relative">
+                      <!-- Badges row -->
+                      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+                        {p.isNew && (
+                          <span class="badge" style="background:#1DBF9F;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">
+                            NEW
+                          </span>
+                        )}
+                        {isGen5 && (
+                          <span class="badge" style="background:#0A2540;color:#00F0FF;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">
+                            GEN 5
+                          </span>
+                        )}
+                        {badgesList.filter((b: string) => b !== 'New').map((b: string) => (
+                          <span class="badge" style="background:#EEF2F6;color:#0A2540;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px">
+                            {b}
+                          </span>
+                        ))}
+                        {p.warranty && (
+                          <span class="badge" style="background:#F0FDF4;color:#166534;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;margin-left:auto">
+                            {p.warranty}
+                          </span>
+                        )}
+                      </div>
+
+                      <!-- Thumbnail -->
+                      <a href={`/products/${p.slug}`} style="display:flex;align-items:center;justify-content:center;height:160px;margin:12px 0 16px;text-decoration:none">
+                        <img
+                          src={productImg}
+                          alt={p.name}
+                          width="240"
+                          height="160"
+                          style="max-height:160px;width:auto;max-width:100%;object-fit:contain;aspect-ratio:3/2;transition:transform .2s ease"
+                          loading="lazy"
+                        />
+                      </a>
+
+                      <!-- Product Info -->
+                      <h3 class="h3" style="font-size:16px;margin:0 0 6px;line-height:1.4">
+                        <a href={`/products/${p.slug}`} style="color:inherit;text-decoration:none">
+                          {p.name}
+                        </a>
+                      </h3>
+
+                      {(p.shortSpec || p.description) && (
+                        <p style="font-size:13px;color:var(--muted);margin:0 0 16px;line-height:1.5;flex:1">
+                          {p.shortSpec || p.description}
+                        </p>
+                      )}
+
+                      <!-- Actions Row: View Details & Quick View -->
+                      <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid #F1F5F9;align-items:center">
+                        <a href={`/products/${p.slug}`} class="btn btn-primary btn-sm" style="flex:1;text-align:center">
+                          View details
+                        </a>
+                        <button
+                          class="btn btn-ghost btn-sm qv-btn"
+                          data-qv={p.slug}
+                          type="button"
+                          aria-label={`Quick view ${p.name}`}
+                          title="Quick View"
+                        >
+                          👁️
+                        </button>
+                        <button
+                          class="btn btn-ghost btn-sm cmp-add-btn"
+                          data-cmp-slug={p.slug}
+                          type="button"
+                          aria-label={`Add ${p.name} to compare tray`}
+                          title="Compare"
+                        >
+                          ⚖️
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div class="empty-state" style="padding:48px 24px;text-align:center;background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:12px">
+                <h3 class="h3" style="margin-bottom:8px">No products match this selection</h3>
+                <p style="color:var(--muted);margin-bottom:16px">
+                  Try adjusting or clearing your filters, or search for a different memory module or drive.
+                </p>
+                <a href="/products" class="btn btn-primary">
+                  Clear All Filters
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <style>
+    .tab {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      background: #F1F5F9;
+      color: #0F172A !important;
+      font-weight: 600;
+      font-size: 13.5px;
+      transition: all .15s ease;
+    }
+    .tab:hover {
+      background: #E2E8F0;
+      color: #0F172A !important;
+    }
+    .tab.on {
+      background: #0369A1 !important;
+      color: #FFFFFF !important;
+      font-weight: 700;
+    }
+    .tab-cnt {
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 6px;
+      color: #334155;
+    }
+    .tab.on .tab-cnt {
+      color: #FFFFFF !important;
+    }
+
+    @media (max-width: 900px) {
+      .shop-layout {
+        grid-template-columns: 1fr !important;
+      }
+      .filters {
+        display: none;
+      }
+      .mobile-filter-btn {
+        display: inline-flex !important;
+      }
+    }
+  </style>
+</Layout>
+
+<script is:inline src="/assets/js/catalog-filters.js"></script>

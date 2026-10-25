@@ -118,23 +118,15 @@ async function main() {
     }
   }
 
-  // 5. Merge articles
-  const mergedArticles = (proto.articles || []).map((a) => {
-    // ensure body is structured as [{ h, p }]
-    let body = a.body;
-    if (typeof body === 'string') {
-      body = [{ h: 'Overview', p: body }];
-    } else if (Array.isArray(body)) {
-      body = body.map((s) => ({
-        h: s.h || s.heading || 'Details',
-        p: s.p || s.text || '',
-      }));
-    }
-    return {
-      ...a,
-      body: body || [],
-    };
-  });
+  // 5. Merge articles — lightweight metadata for stop-gap, full bodies are SSR-rendered via Delivery API
+  const mergedArticles = (proto.articles || []).map((a) => ({
+    id: a.id,
+    slug: a.slug,
+    title: a.title,
+    category: a.category || '',
+    date: a.date || '',
+    readTime: a.readTime || '',
+  }));
 
   const payload = {
     products: mergedProducts,

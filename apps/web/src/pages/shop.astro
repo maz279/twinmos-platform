@@ -1,17 +1,29 @@
 ---
 // shop.astro — Dynamic Catalogue Listing with Category Axis & Facets.
-// Tasks D3 / GPROV-100 / GREF-D / CAT-01 compliant.
+// Tasks D3, T5.3.6 / GPROV-100 / GREF-D / CAT-01 compliant.
 import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
-const page = await getDeliveryPage('shop');
+const preview = Astro.url.searchParams.get('preview') ?? undefined;
+const page = await getDeliveryPage('shop', 'en', preview);
+
+if (preview) {
+  Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+} else if (page?.cacheTags && Array.isArray(page.cacheTags)) {
+  const tags = page.cacheTags.join(', ');
+  Astro.response.headers.set('Cache-Tag', tags);
+  Astro.response.headers.set('X-Cache-Tags', tags);
+}
+
 const title = page?.title ?? "Shop All Products — TwinMOS";
 const desc = page?.seoDescription ?? "Browse the full TwinMOS catalog: DRAM, NVMe and SATA SSDs, portable storage, flash drives, microSD, power supplies and hubs.";
 const blocks = page?.blocks ?? [];
+const noindex = Boolean(preview) || Boolean(page?.noindex);
 ---
 
-<Layout title={title} desc={desc}>
+<Layout title={title} desc={desc} noindex={noindex}>
   <main id="main">
     <BlockDispatcher blocks={blocks} />
   </main>

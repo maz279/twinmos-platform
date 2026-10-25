@@ -5,13 +5,27 @@ import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
-const page = await getDeliveryPage('rma');
+const preview = Astro.url.searchParams.get('preview') ?? undefined;
+const page = await getDeliveryPage('rma', 'en', preview);
+
+if (preview) {
+  Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+} else {
+  const tags = Array.isArray(page?.cacheTags) && page.cacheTags.length > 0
+    ? page.cacheTags.join(', ')
+    : 'rma, page-rma, forms';
+  Astro.response.headers.set('Cache-Tag', tags);
+  Astro.response.headers.set('X-Cache-Tags', tags);
+}
+
 const title = page?.title ?? "RMA Center — TwinMOS";
 const desc = page?.seoDescription ?? "Start or track a TwinMOS warranty return (RMA).";
 const blocks = page?.blocks ?? [];
+const noindex = Boolean(preview) || Boolean(page?.noindex);
 ---
 
-<Layout title={title} desc={desc} >
+<Layout title={title} desc={desc} noindex={noindex}>
   <main id="main">
     <BlockDispatcher blocks={blocks} />
   </main>

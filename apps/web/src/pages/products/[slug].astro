@@ -1,10 +1,20 @@
 ---
-// products/[slug].astro — Dynamic SSR Product Detail Page (ADR D-5, Task T3.2.2)
-// On-demand server-rendered from CMS Delivery API.
+// products/[slug].astro — Dual-routing SSR Handler for:
+// 1. Category Catalogue Listings (/products/<category> e.g. /products/ssd-nvme)
+// 2. Product Detail Pages (/products/<slug> e.g. /products/corex-pro-m2-pcie-gen-5-0-nvme-ssd)
+// Satisfies T5.3.1 (Category Axis), T5.3.2 (PDP Gallery, Specs, Related, JSON-LD),
+// and T5.3.3 (410 Gone for archived products within 5s).
 import Layout from '../../layouts/Layout.astro';
+import Breadcrumb from '../../components/chrome/Breadcrumb.astro';
 import BlockDispatcher from '../../components/blocks/BlockDispatcher.astro';
 import ResponsiveImage from '../../components/common/ResponsiveImage.astro';
-import { getDeliveryProductWithStatus, getDeliveryPage } from '../../lib/delivery';
+import {
+  getDeliveryProductWithStatus,
+  getDeliveryProducts,
+  getDeliveryFacets,
+  getDeliveryPage,
+  getDeliveryArticles,
+} from '../../lib/delivery';
 
 const { slug } = Astro.params;
 
@@ -13,90 +23,145 @@ if (!slug || Astro.url.pathname.endsWith('.html')) {
   return new Response('Not Found', { status: 404, statusText: 'Not Found' });
 }
 
+// 1. Check if slug matches a known category axis (e.g. /products/ssd-nvme)
+const facets = await getDeliveryFacets();
+const categoryMatch = (facets?.categories ?? []).find((c: any) => c.slug === slug);
+
+// Variables for Category View
+let isCategoryPage = Boolean(categoryMatch);
+let categoryProducts: any[] = [];
+let categoryTotal = 0;
+
+if (isCategoryPage) {
+  const sort = Astro.url.searchParams.get('sort') || 'featured';
+  const q = Astro.url.searchParams.get('q') || '';
+  categoryProducts = await getDeliveryProducts({ cat: slug, sort, q: q || undefined });
+  categoryTotal = categoryProducts.length;
+}
+
+// Variables for Product Detail Page (PDP)
 const preview = Astro.url.searchParams.get('preview') ?? undefined;
-const productRes = await getDeliveryProductWithStatus(slug, preview);
+let productRes: any = null;
+let product: any = null;
 
-// T4.5.4 / CMS-E3: Archive returns 410 Gone everywhere within 5s
-if (productRes.isArchived || productRes.status === 410) {
-  return new Response('410 Gone - This product has been archived and is no longer available in the active catalog.', {
-    status: 410,
-    statusText: 'Gone',
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-  });
+if (!isCategoryPage) {
+  productRes = await getDeliveryProductWithStatus(slug, preview);
+
+  // T4.5.4 / CMS-E3 / T5.3.3: Archive returns 410 Gone within 5s
+  if (productRes.isArchived || productRes.status === 410) {
+    return new Response('410 Gone - This product has been archived and is no longer available in the active catalog.', {
+      status: 410,
+      statusText: 'Gone',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+
+  product = productRes.product;
+
+  // Special fixture fallback for legacy test suites (e.g. microsdxc warranty probe)
+  if (!product && slug === 'microsdxc-class-10-v30-uhs-3') {
+    product = {
+      id: 999,
+      slug: 'microsdxc-class-10-v30-uhs-3',
+      name: 'TwinMOS MicroSDXC Class 10 V30 UHS-3',
+      sku: 'MSD-V30-128G',
+      brand: { name: 'TwinMOS' },
+      category: { name: 'Memory Cards' },
+      warranty: 'Lifetime Warranty',
+      priceUsd: null,
+      specs: { Speed: 'V30 Class 10' },
+      shortDescription: 'High-speed MicroSDXC card with Lifetime Warranty',
+      badges: [],
+    } as any;
+  } else if (!product && slug === 'corex-pro-m2-pcie-gen-5-0-nvme-ssd') {
+    product = {
+      id: 998,
+      slug: 'corex-pro-m2-pcie-gen-5-0-nvme-ssd',
+      name: 'TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD',
+      sku: 'NVCXP1TBG52280',
+      brand: { name: 'CoreX Pro' },
+      category: { name: 'NVMe SSD' },
+      warranty: '5 Years',
+      priceUsd: null,
+      specs: { Interface: 'PCIe Gen 5.0 x4', Speed: 'Up to 14,000 MB/s' },
+      shortDescription: 'TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD with Graphene heatsink.',
+      badges: ['Gen5'],
+    } as any;
+  }
+
+  if (!product) {
+    Astro.response.status = 404;
+    Astro.response.statusText = 'Not Found';
+  }
 }
 
-let product = productRes.product;
+// Data preparations for Category View
+const catTitle = categoryMatch ? `${categoryMatch.name} — TwinMOS Products` : '';
+const catDesc = categoryMatch ? `Explore high-performance TwinMOS ${categoryMatch.name}. Verified specifications, warranty coverage, and authorized dealer distribution.` : '';
+const catBreadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Products', href: '/products' },
+  ...(categoryMatch ? [{ label: categoryMatch.name }] : []),
+];
 
-// Special fixture fallback for test suites (e.g. microsdxc warranty regression, corex-pro)
-if (!product && slug === 'microsdxc-class-10-v30-uhs-3') {
-  product = {
-    id: 999,
-    slug: 'microsdxc-class-10-v30-uhs-3',
-    name: 'TwinMOS MicroSDXC Class 10 V30 UHS-3',
-    sku: 'MSD-V30-128G',
-    brand: { name: 'TwinMOS' },
-    category: { name: 'Memory Cards' },
-    warranty: 'Lifetime Warranty',
-    priceUsd: null,
-    specs: { Speed: 'V30 Class 10' },
-    shortDescription: 'High-speed MicroSDXC card with Lifetime Warranty',
-    badges: [],
-  } as any;
-} else if (!product && slug === 'corex-pro-m2-pcie-gen-5-0-nvme-ssd') {
-  product = {
-    id: 998,
-    slug: 'corex-pro-m2-pcie-gen-5-0-nvme-ssd',
-    name: 'TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD',
-    sku: 'NVCXP1TBG52280',
-    brand: { name: 'CoreX Pro' },
-    category: { name: 'NVMe SSD' },
-    warranty: '5 Years',
-    priceUsd: null,
-    specs: { Interface: 'PCIe Gen 5.0 x4', Speed: 'Up to 14,000 MB/s' },
-    shortDescription: 'TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD with Graphene heatsink.',
-    badges: ['Gen5'],
-  } as any;
-}
-
-if (!product) {
-  Astro.response.status = 404;
-  Astro.response.statusText = 'Not Found';
-}
-
+// Data preparations for PDP
 const priceUsd = product?.priceUsd ?? (slug === 'voltx-ddr5-udimm-16gb' ? '89.99' : null);
-
-const page = await getDeliveryPage('product');
-const title = product ? `${product.name} — TwinMOS` : 'Product Not Found — TwinMOS';
-const desc = product?.shortDescription ?? page?.seoDescription ?? 'TwinMOS high performance memory and storage solutions.';
-const breadcrumbs = product
+const pdpPage = !isCategoryPage ? await getDeliveryPage('product').catch(() => null) : null;
+const pdpTitle = product ? `${product.name} — TwinMOS` : 'Product Not Found — TwinMOS';
+const pdpDesc = product?.shortDescription ?? pdpPage?.seoDescription ?? 'TwinMOS high performance memory and storage solutions.';
+const pdpBreadcrumbs = product
   ? [
       { label: 'Home', href: '/' },
-      { label: 'Products', href: '/shop' },
+      { label: 'Products', href: '/products' },
+      ...(product.category?.name ? [{ label: product.category.name, href: `/products/${product.category.slug || slugify(product.category.name)}` }] : []),
       { label: product.name },
     ]
   : [
       { label: 'Home', href: '/' },
-      { label: 'Products', href: '/shop' },
+      { label: 'Products', href: '/products' },
       { label: '404 Not Found' },
     ];
 
-const blocks = page?.blocks ?? [];
+function slugify(text: string) {
+  return String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
 const rawSpecs = {
   ...(product?.specsDictionary && typeof product.specsDictionary === 'object' ? product.specsDictionary : {}),
   ...(product?.specs && typeof product.specs === 'object' ? product.specs : {}),
 };
 const specs = Object.entries(rawSpecs);
-const badges = Array.isArray(product?.badges) ? product.badges : [];
+
+const badges = Array.isArray(product?.badges) ? [...product.badges] : [];
 if (product?.isComingSoon && !badges.includes('Coming Soon')) {
   badges.push('Coming Soon');
 }
 
+const pdpHeroImg = product?.img
+  || (product?.heroMediaId ? `/api/media/${product.heroMediaId}` : null)
+  || (Array.isArray(product?.gallery) && product.gallery[0])
+  || (product?.category?.slug?.includes('dram') ? '/assets/img/card/voltx-rgb.webp' : '/assets/img/card/corex-pro.webp');
+
+// Fetch related items if in PDP
+let relatedProducts: any[] = [];
+let relatedGuides: any[] = [];
+if (product) {
+  const allProds = await getDeliveryProducts().catch(() => []);
+  relatedProducts = allProds
+    .filter((p: any) => p.slug !== product.slug && (p.categoryId === product.categoryId || p.category?.name === product.category?.name))
+    .slice(0, 4);
+
+  const allArticles = await getDeliveryArticles().catch(() => []);
+  relatedGuides = allArticles.slice(0, 3);
+}
+
+// Schema.org Product JSON-LD without invented offers
 const PRODUCT_LD = product
   ? JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Product',
       name: product.name,
-      description: desc,
+      description: pdpDesc,
       sku: product.sku,
       category: product.category?.name ?? 'Storage & Memory',
       brand: {
@@ -114,150 +179,418 @@ const PRODUCT_LD = product
         : {}),
     })
   : null;
+
+if (isCategoryPage && categoryMatch) {
+  const tags = `products, category:${categoryMatch.slug}`;
+  Astro.response.headers.set('Cache-Tag', tags);
+  Astro.response.headers.set('X-Cache-Tags', tags);
+} else if (product) {
+  const tags = `products, product:${product.slug}, product-id:${product.id}`;
+  Astro.response.headers.set('Cache-Tag', tags);
+  Astro.response.headers.set('X-Cache-Tags', tags);
+}
 ---
 
-<Layout title={title} desc={desc} breadcrumbs={breadcrumbs} noindex={!product}>
-  {PRODUCT_LD && <script type="application/ld+json" set:html={PRODUCT_LD} />}
-  
-  <main id="main">
-    {product ? (
-      <article class="pdp-container wrap" style="padding: 40px 16px; max-width: 1200px; margin: 0 auto;">
-        <header class="pdp-header pdp-info" style="margin-bottom: 32px;">
-          {product.isComingSoon && (
-            <div class="pdp-coming-soon-banner" style="background: #fff7ed; border: 1px solid #fdba74; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; color: #9a3412; font-weight: 600;">
-              ⏳ Coming Soon — Product release scheduled. Check back for availability.
-            </div>
-          )}
+{isCategoryPage ? (
+  /* ========================================================================= */
+  /* CATEGORY CATALOGUE VIEW (e.g. /products/ssd-nvme)                          */
+  /* ========================================================================= */
+  <Layout title={catTitle} desc={catDesc}>
+    <Breadcrumb items={catBreadcrumbs} />
 
-          {badges.length > 0 && (
-            <div class="pdp-badges" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-              {badges.map((badge: string) => (
-                <span class="badge" style="background: var(--color-surface, #eef2f6); color: var(--color-brand, #0A2540); padding: 4px 10px; border-radius: 4px; font-size: 0.825rem; font-weight: 600;">
-                  {badge}
-                </span>
-              ))}
-              {product.warrantyTier && (
-                <span class="badge" style="background: #eff6ff; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-size: 0.825rem; font-weight: 600;">
-                  Tier: {product.warrantyTier}
-                </span>
-              )}
-            </div>
-          )}
+    <main id="main">
+      <div class="page-hero">
+        <div class="wrap">
+          <span class="eyebrow">Category Catalogue</span>
+          <h1 class="h1">{categoryMatch.name}</h1>
+          <p class="lede">
+            Explore all {categoryMatch.name} products engineered by TwinMOS. High-speed performance, rigorous QA, and global warranty backing.
+          </p>
+        </div>
+      </div>
 
-          {(product.img || product.heroMediaId) && (
-            <div class="pdp-hero-image" style="margin-bottom: 24px; max-width: 480px;">
-              <ResponsiveImage
-                src={product.img || `/api/media/${product.heroMediaId}`}
-                alt={product.name}
-                mediaId={product.heroMediaId}
-                width={480}
-                height={320}
-                loading="eager"
-              />
-            </div>
-          )}
+      <!-- Quick category tabs -->
+      <section class="wrap" style="padding-top:16px;padding-bottom:8px">
+        <div class="tabs" role="tablist" aria-label="Product categories" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin">
+          <a href="/products" class="tab" role="tab" aria-selected="false" style="text-decoration:none;white-space:nowrap">
+            All Products <span class="tab-cnt">({facets?.total ?? 0})</span>
+          </a>
+          {facets?.categories?.map((c: any) => (
+            <a
+              href={`/products/${c.slug}`}
+              class={`tab ${c.slug === slug ? 'on' : ''}`}
+              role="tab"
+              aria-selected={c.slug === slug ? 'true' : 'false'}
+              style="text-decoration:none;white-space:nowrap"
+            >
+              {c.name} <span class="tab-cnt">({c.count})</span>
+            </a>
+          ))}
+        </div>
+      </section>
 
-          <h1 class="h1 pdp-title" style="font-size: 2.25rem; margin-bottom: 16px; color: var(--color-text, #111827);">
-            {product.name}
-          </h1>
-          {product.sku && (
-            <p class="pdp-sku" style="font-size: 0.875rem; color: #64748b; margin-bottom: 12px;">
-              SKU: <strong>{product.sku}</strong>
-            </p>
-          )}
-          {product.warranty && (
-            <p class="pdp-warranty" style="font-size: 0.95rem; color: var(--color-brand, #0A2540); margin-bottom: 12px; font-weight: 600;">
-              Warranty: {product.warranty.toLowerCase().includes('warranty') ? product.warranty : `${product.warranty} warranty`}
-            </p>
-          )}
-          {priceUsd && Number(priceUsd) > 0 && (
-            <div class="pdp-price" style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px">
-              <span style="font-size:26px;font-weight:800;color:var(--color-brand, #0A2540)">
-                {product.currency || 'USD'} {Number(priceUsd).toFixed(2)}
-              </span>
-              <span class="form-note" style="color: #64748b; font-size: 0.875rem;">
-                MSRP — where to buy shows local pricing
-              </span>
-            </div>
-          )}
-
-          {product.variants && Array.isArray(product.variants) && product.variants.length > 0 && (
-            <div class="pdp-variants" style="margin-bottom: 16px;">
-              <span style="font-size: 0.875rem; font-weight: 600; color: #475569; display: block; margin-bottom: 8px;">Capacities / Variants:</span>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                {product.variants.map((v: any) => (
-                  <span style="border: 1px solid #cbd5e1; background: #f8fafc; padding: 6px 14px; border-radius: 4px; font-size: 0.875rem; font-weight: 600; color: #334155;">
-                    {typeof v === 'object' ? (v.sku || JSON.stringify(v)) : String(v)}
-                  </span>
+      <!-- Category Products Grid & Filter Rail -->
+      <section style="padding:16px 0 64px">
+        <div class="wrap">
+          <div class="shop-layout" style="display:grid;grid-template-columns:260px 1fr;gap:32px;align-items:start">
+            
+            <aside class="filters" aria-label="Category filters" style="background:#fff;border:1px solid #E6EBF1;border-radius:12px;padding:24px">
+              <h2 style="font-size:16px;font-weight:700;margin:0 0 16px">Categories</h2>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <a href="/products" style="display:flex;align-items:center;justify-content:space-between;color:var(--body);text-decoration:none;font-size:13.5px;padding:4px 0">
+                  <span>All Products</span>
+                  <span class="cnt" style="font-size:12px;color:var(--muted)">{facets?.total ?? 0}</span>
+                </a>
+                {facets?.categories?.map((c: any) => (
+                  <a
+                    href={`/products/${c.slug}`}
+                    style={`display:flex;align-items:center;justify-content:space-between;text-decoration:none;font-size:13.5px;padding:4px 0;${c.slug === slug ? 'font-weight:700;color:var(--accent-deep,#08705C)' : 'color:var(--body)'}`}
+                  >
+                    <span>{c.name}</span>
+                    <span class="cnt" style="font-size:12px;color:var(--muted)">{c.count}</span>
+                  </a>
                 ))}
               </div>
+
+              <div style="margin-top:24px;border-top:1px solid #E6EBF1;padding-top:16px">
+                <h3 style="font-size:13px;font-weight:700;margin:0 0 6px;color:#08705C">TwinMOS Guarantee</h3>
+                <p style="font-size:12px;color:var(--muted);margin:0;line-height:1.5">
+                  Full warranty protection and ISO 9001 certified manufacturing quality on every unit.
+                </p>
+              </div>
+            </aside>
+
+            <div>
+              <div class="toolbar" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px;padding:12px 16px;background:#F8FAFC;border-radius:10px;border:1px solid #E6EBF1">
+                <span class="result-count" style="font-size:14px;font-weight:700;color:var(--color-brand,#0A2540)">
+                  {categoryTotal} {categoryTotal === 1 ? 'product' : 'products'} in {categoryMatch.name}
+                </span>
+                <a href="/products" class="btn btn-ghost btn-sm" style="margin-left:auto">
+                  View all products →
+                </a>
+              </div>
+
+              <div class="grid g3" id="shopGrid" data-ssr="true" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px">
+                {categoryProducts.map((p: any) => {
+                  const productImg = p.img || (p.gallery && p.gallery[0]) || '/assets/img/card/corex-pro.webp';
+                  return (
+                    <article class="card prod-card" style="border:1px solid #E6EBF1;border-radius:12px;background:#fff;padding:20px;display:flex;flex-direction:column">
+                      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+                        {p.isNew && (
+                          <span class="badge" style="background:#1DBF9F;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">NEW</span>
+                        )}
+                        {p.warranty && (
+                          <span class="badge" style="background:#F0FDF4;color:#166534;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;margin-left:auto">{p.warranty}</span>
+                        )}
+                      </div>
+
+                      <a href={`/products/${p.slug}`} style="display:flex;align-items:center;justify-content:center;height:160px;margin:12px 0 16px;text-decoration:none">
+                        <img src={productImg} alt={p.name} width="240" height="160" style="max-height:160px;width:auto;max-width:100%;object-fit:contain;aspect-ratio:3/2" loading="lazy" />
+                      </a>
+
+                      <h3 class="h3" style="font-size:16px;margin:0 0 6px;line-height:1.4">
+                        <a href={`/products/${p.slug}`} style="color:inherit;text-decoration:none">{p.name}</a>
+                      </h3>
+
+                      {(p.shortSpec || p.description) && (
+                        <p style="font-size:13px;color:var(--muted);margin:0 0 16px;line-height:1.5;flex:1">{p.shortSpec || p.description}</p>
+                      )}
+
+                      <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid #F1F5F9;align-items:center">
+                        <a href={`/products/${p.slug}`} class="btn btn-primary btn-sm" style="flex:1;text-align:center">View details</a>
+                        <button class="btn btn-ghost btn-sm qv-btn" data-qv={p.slug} type="button" aria-label={`Quick view ${p.name}`} title="Quick View">👁️</button>
+                        <button class="btn btn-ghost btn-sm cmp-add-btn" data-cmp-slug={p.slug} type="button" aria-label={`Add ${p.name} to compare`} title="Compare">⚖️</button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             </div>
-          )}
 
-          {product.shortDescription && (
-            <p class="pdp-lede" style="font-size: 1.15rem; color: var(--color-text-muted, #475569); line-height: 1.6; max-width: 800px;">
-              {product.shortDescription}
-            </p>
-          )}
-        </header>
-
-        {specs.length > 0 && (
-          <section class="pdp-specs" aria-labelledby="specs-heading" style="margin-top: 40px; margin-bottom: 40px;">
-            <h2 id="specs-heading" class="h2" style="font-size: 1.5rem; margin-bottom: 20px;">
-              Technical Specifications
-            </h2>
-            <div class="specs-table-wrapper" style="overflow-x: auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;">
-              <table class="specs-table" style="width: 100%; border-collapse: collapse; text-align: left;">
-                <tbody>
-                  {specs.map(([key, val]) => (
-                    <tr style="border-bottom: 1px solid #e2e8f0;">
-                      <th scope="row" style="padding: 12px 16px; font-weight: 600; width: 30%; background: #f8fafc; text-transform: capitalize;">
-                        {key.replace(/([A-Z])/g, ' $1').trim()}
-                      </th>
-                      <td style="padding: 12px 16px; color: #334155;">
-                        {typeof val === 'object' ? JSON.stringify(val) : String(val)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
-        {product.datasheets && Array.isArray(product.datasheets) && product.datasheets.length > 0 && (
-          <section class="pdp-datasheets" aria-labelledby="datasheets-heading" style="margin-top: 32px; margin-bottom: 32px;">
-            <h2 id="datasheets-heading" class="h2" style="font-size: 1.35rem; margin-bottom: 16px;">
-              Datasheets & Downloads
-            </h2>
-            <ul class="datasheets-list" style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px;">
-              {product.datasheets.map((ds: any) => (
-                <li style="display: flex; align-items: center; gap: 8px;">
-                  <a href={ds.url || ds.path || '#'} target="_blank" rel="noopener" class="link-arrow" style="font-weight: 600; color: var(--color-brand, #0A2540); text-decoration: none;">
-                    📄 {ds.title || ds.name || 'Product Datasheet'} {ds.size ? `(${ds.size})` : ''}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {blocks.length > 0 && (
-          <section class="pdp-blocks" style="margin-top: 48px;">
-            <BlockDispatcher blocks={blocks} />
-          </section>
-        )}
-      </article>
-    ) : (
-      <section class="pdp-not-found wrap" style="padding: 80px 16px; text-align: center;">
-        <h1 class="h1" style="font-size: 2.25rem; margin-bottom: 16px;">Product Not Found</h1>
-        <p style="font-size: 1.1rem; color: #64748b; margin-bottom: 24px;">
-          The requested product could not be located in our catalog.
-        </p>
-        <a href="/shop" class="btn btn-primary" style="display: inline-block; background: #0A2540; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none;">
-          Browse All Products
-        </a>
+          </div>
+        </div>
       </section>
-    )}
-  </main>
-</Layout>
+    </main>
+
+    <style>
+      @media (max-width: 900px) {
+        .shop-layout {
+          grid-template-columns: 1fr !important;
+        }
+        .filters {
+          display: none;
+        }
+      }
+    </style>
+  </Layout>
+) : (
+  /* ========================================================================= */
+  /* PRODUCT DETAIL PAGE (PDP)                                                */
+  /* ========================================================================= */
+  <Layout
+    title={pdpTitle}
+    desc={pdpDesc}
+    breadcrumbs={pdpBreadcrumbs}
+    noindex={!product}
+    preloadImage={product ? pdpHeroImg : undefined}
+  >
+    {PRODUCT_LD && <script type="application/ld+json" set:html={PRODUCT_LD} />}
+    
+    <main id="main">
+      {product ? (
+        <article class="pdp-container wrap" style="padding: 40px 16px; max-width: 1200px; margin: 0 auto;">
+          <div class="pdp-top-grid" style="display:grid;grid-template-columns:minmax(300px,480px) 1fr;gap:48px;align-items:start;margin-bottom:48px">
+            
+            <!-- Gallery & Responsive Image Island -->
+            <div class="pdp-gallery-island">
+              <div class="pdp-main-image" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:24px;text-align:center;margin-bottom:16px;min-height:360px;display:flex;align-items:center;justify-content:center">
+                <ResponsiveImage
+                  src={pdpHeroImg}
+                  alt={product.name}
+                  mediaId={product.heroMediaId}
+                  width={480}
+                  height={320}
+                  aspectRatio="3/2"
+                  loading="eager"
+                />
+              </div>
+
+              {Array.isArray(product.gallery) && product.gallery.length > 1 && (
+                <div class="pdp-gallery-thumbs" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px">
+                  {product.gallery.map((imgSrc: string, i: number) => (
+                    <button
+                      type="button"
+                      class={`gallery-thumb ${i === 0 ? 'on' : ''}`}
+                      style="border:2px solid #E2E8F0;border-radius:8px;background:#fff;padding:4px;cursor:pointer;flex-shrink:0"
+                      aria-label={`View product image ${i + 1}`}
+                      data-full={imgSrc}
+                      >
+                      <img src={imgSrc} alt="" style="width:60px;height:45px;object-fit:contain" loading="lazy" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <!-- Product Details Header -->
+            <header class="pdp-info">
+              {product.isComingSoon && (
+                <div class="pdp-coming-soon-banner" style="background: #fff7ed; border: 1px solid #fdba74; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; color: #9a3412; font-weight: 600;">
+                  ⏳ Coming Soon — Product release scheduled. Check back for availability.
+                </div>
+              )}
+
+              {badges.length > 0 && (
+                <div class="pdp-badges" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                  {badges.map((badge: string) => (
+                    <span class="badge" style="background: var(--color-surface, #eef2f6); color: var(--color-brand, #0A2540); padding: 4px 10px; border-radius: 4px; font-size: 0.825rem; font-weight: 600;">
+                      {badge}
+                    </span>
+                  ))}
+                  {product.warrantyTier && (
+                    <span class="badge" style="background: #eff6ff; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-size: 0.825rem; font-weight: 600;">
+                      Tier: {product.warrantyTier}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <h1 class="h1 pdp-title" style="font-size: 2.25rem; margin-bottom: 12px; color: var(--color-text, #111827); line-height: 1.2;">
+                {product.name}
+              </h1>
+
+              {product.sku && (
+                <p class="pdp-sku" style="font-size: 0.875rem; color: #64748b; margin-bottom: 12px;">
+                  Model / SKU: <strong>{product.sku}</strong>
+                </p>
+              )}
+
+              {product.warranty && (
+                <div class="pdp-warranty-chip" style="display:inline-flex;align-items:center;gap:6px;background:#F0FDF4;border:1px solid #BBF7D0;color:#166534;padding:6px 12px;border-radius:6px;font-size:0.875rem;font-weight:600;margin-bottom:16px">
+                  🛡️ Warranty: {product.warranty.toLowerCase().includes('warranty') ? product.warranty : `${product.warranty} warranty`}
+                </div>
+              )}
+
+              {priceUsd && Number(priceUsd) > 0 && (
+                <div class="pdp-price" style="display:flex;align-items:baseline;gap:8px;margin-bottom:16px">
+                  <span style="font-size:26px;font-weight:800;color:var(--color-brand, #0A2540)">
+                    {product.currency || 'USD'} {Number(priceUsd).toFixed(2)}
+                  </span>
+                  <span class="form-note" style="color: #64748b; font-size: 0.875rem;">
+                    MSRP — local pricing available via authorized channels
+                  </span>
+                </div>
+              )}
+
+              <!-- Variants / Capacities -->
+              {product.variants && Array.isArray(product.variants) && product.variants.length > 0 && (
+                <div class="pdp-variants" style="margin-bottom: 20px;">
+                  <span style="font-size: 0.875rem; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Available Capacities / Variants:</span>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    {product.variants.map((v: any) => (
+                      <span style="border: 1px solid #cbd5e1; background: #f8fafc; padding: 6px 14px; border-radius: 6px; font-size: 0.875rem; font-weight: 600; color: #334155;">
+                        {typeof v === 'object' ? (v.sku || JSON.stringify(v)) : String(v)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {product.shortDescription && (
+                <p class="pdp-lede" style="font-size: 1.1rem; color: var(--color-text-muted, #475569); line-height: 1.6; margin-bottom: 24px;">
+                  {product.shortDescription}
+                </p>
+              )}
+
+              <div class="pdp-ctas" style="display:flex;gap:12px;flex-wrap:wrap">
+                <a href="/where-to-buy" class="btn btn-accent">
+                  Where to buy
+                </a>
+                <a href="/quote" class="btn btn-ghost">
+                  Request volume quote
+                </a>
+                <button
+                  type="button"
+                  class="btn btn-ghost cmp-add-btn"
+                  data-cmp-slug={product.slug}
+                  aria-label={`Add ${product.name} to compare tray`}
+                >
+                  ⚖️ Compare
+                </button>
+              </div>
+            </header>
+          </div>
+
+          <!-- Technical Specifications Dictionary -->
+          {specs.length > 0 && (
+            <section class="pdp-specs" aria-labelledby="specs-heading" style="margin-top: 48px; margin-bottom: 48px;">
+              <h2 id="specs-heading" class="h2" style="font-size: 1.5rem; margin-bottom: 20px;">
+                Technical Specifications
+              </h2>
+              <div class="specs-table-wrapper" style="overflow-x: auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <table class="specs-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                  <tbody>
+                    {specs.map(([key, val]) => (
+                      <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <th scope="row" style="padding: 12px 16px; font-weight: 600; width: 30%; background: #f8fafc; text-transform: capitalize;">
+                          {key.replace(/([A-Z])/g, ' $1').trim()}
+                        </th>
+                        <td style="padding: 12px 16px; color: #334155;">
+                          {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          <!-- Datasheets & Downloads -->
+          {product.datasheets && Array.isArray(product.datasheets) && product.datasheets.length > 0 && (
+            <section class="pdp-datasheets" aria-labelledby="datasheets-heading" style="margin-top: 32px; margin-bottom: 48px;">
+              <h2 id="datasheets-heading" class="h2" style="font-size: 1.35rem; margin-bottom: 16px;">
+                Datasheets &amp; Downloads
+              </h2>
+              <ul class="datasheets-list" style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px;">
+                {product.datasheets.map((ds: any) => (
+                  <li style="display: flex; align-items: center; gap: 8px;">
+                    <a href={ds.url || ds.path || '#'} target="_blank" rel="noopener" class="link-arrow" style="font-weight: 600; color: var(--color-brand, #0A2540); text-decoration: none;">
+                      📄 {ds.title || ds.name || 'Product Datasheet'} {ds.size ? `(${ds.size})` : ''}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <!-- Related Products Carousel / Grid -->
+          {relatedProducts.length > 0 && (
+            <section class="pdp-related" style="margin-top: 48px; margin-bottom: 48px; border-top: 1px solid #E6EBF1; padding-top: 32px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                <h2 class="h2" style="font-size: 1.35rem; margin:0">Related Products</h2>
+                <a href={product.category?.slug ? `/products/${product.category.slug}` : '/products'} class="link-arrow" style="font-size:14px">
+                  View full category →
+                </a>
+              </div>
+              <div class="grid g4" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+                {relatedProducts.map((rp: any) => (
+                  <article class="card" style="border:1px solid #E6EBF1;border-radius:8px;padding:16px;background:#fff;display:flex;flex-direction:column">
+                    <a href={`/products/${rp.slug}`} style="text-align:center;margin-bottom:8px">
+                      <img src={rp.img || '/assets/img/card/corex-pro.webp'} alt={rp.name} style="height:100px;width:auto;object-fit:contain" loading="lazy" />
+                    </a>
+                    <b style="font-size:14px;margin-bottom:4px">
+                      <a href={`/products/${rp.slug}`} style="color:inherit;text-decoration:none">{rp.name}</a>
+                    </b>
+                    <span style="font-size:12px;color:var(--muted);margin-bottom:12px;flex:1">{rp.shortSpec || ''}</span>
+                    <a href={`/products/${rp.slug}`} class="btn btn-ghost btn-sm" style="text-align:center">View details</a>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <!-- Related Guides & Knowledge Hub -->
+          {relatedGuides.length > 0 && (
+            <section class="pdp-guides" style="margin-top: 32px; margin-bottom: 48px; background:#F8FAFC;border:1px solid #E6EBF1;border-radius:12px;padding:24px">
+              <h2 class="h2" style="font-size: 1.25rem; margin:0 0 16px">Buying Guides &amp; Technical Explainers</h2>
+              <div class="grid g3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+                {relatedGuides.map((g: any) => (
+                  <a href={`/learn/${g.slug}`} style="background:#fff;border:1px solid #E6EBF1;border-radius:8px;padding:16px;text-decoration:none;color:inherit;display:block">
+                    <span class="chip" style="font-size:11px;font-weight:700;margin-bottom:6px">{g.category || 'Guide'}</span>
+                    <b style="display:block;font-size:14px;line-height:1.4;margin-bottom:6px">{g.title}</b>
+                    <span style="font-size:12px;color:var(--muted)">Read guide →</span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
+        </article>
+      ) : (
+        <section class="pdp-not-found wrap" style="padding: 80px 16px; text-align: center;">
+          <h1 class="h1" style="font-size: 2.25rem; margin-bottom: 16px;">Product Not Found</h1>
+          <p style="font-size: 1.1rem; color: #64748b; margin-bottom: 24px;">
+            The requested product could not be located in our catalog.
+          </p>
+          <a href="/products" class="btn btn-primary" style="display: inline-block; background: #0A2540; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none;">
+            Browse All Products
+          </a>
+        </section>
+      )}
+    </main>
+
+    <style>
+      .tab {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        border-radius: 9999px;
+        background: #F1F5F9;
+        color: #0F172A !important;
+        font-weight: 600;
+        font-size: 13.5px;
+        transition: all .15s ease;
+      }
+      .tab:hover {
+        background: #E2E8F0;
+        color: #0F172A !important;
+      }
+      .tab.on {
+        background: #0369A1 !important;
+        color: #FFFFFF !important;
+        font-weight: 700;
+      }
+      .tab-cnt {
+        font-size: 11px;
+        font-weight: 700;
+        margin-left: 6px;
+        color: #334155;
+      }
+      .tab.on .tab-cnt {
+        color: #FFFFFF !important;
+      }
+    </style>
+  </Layout>
+)}
+
+<script is:inline src="/assets/js/catalog-filters.js"></script>

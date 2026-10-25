@@ -53,9 +53,12 @@ test.describe('public site', () => {
   });
 
   test('?q=DDR5 returns search results', async ({ page }) => {
-    await page.goto('search.html?q=DDR5');
-    await page.waitForSelector('#main a[href*="product.html"], #main a[href*="article.html"]', { timeout: 10_000 });
-    const results = page.locator('#main a[href*="product.html"], #main a[href*="article.html"]');
+    // T5.6.3: /search is server-rendered from Delivery /search with clean
+    // result URLs; the legacy search.html alias 301s here.
+    const res = await page.goto('search?q=DDR5');
+    expect(res?.status()).toBe(200);
+    await page.waitForSelector('#main a[href*="/products/"], #main a[href*="/learn/"]', { timeout: 10_000 });
+    const results = page.locator('#main a[href*="/products/"], #main a[href*="/learn/"]');
     expect(await results.count()).toBeGreaterThan(0);
   });
 

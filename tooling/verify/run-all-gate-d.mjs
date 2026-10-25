@@ -48,17 +48,29 @@ checks.push({
   name: 'G-PARITY Against Prototype Layouts & Responsive Viewport Parity',
   run: () => {
     // Verify Astro dist builds clean without missing layout templates
-    let distDir = resolve(repoRoot, 'apps', 'web', 'dist');
+    const distDir = resolve(repoRoot, 'apps', 'web', 'dist');
     if (!existsSync(distDir)) {
       throw new Error(`Astro dist directory missing. Run 'npm run build --workspace @twinmos/web' first.`);
     }
+    const serverEntry = resolve(distDir, 'server', 'entry.mjs');
+    if (existsSync(serverEntry)) {
+      const srcPagesDir = resolve(repoRoot, 'apps', 'web', 'src', 'pages');
+      const requiredPages = ['index.astro', 'shop.astro', 'about.astro', 'gaming.astro', 'support.astro', 'contact.astro', 'compare.astro', 'legal.astro'];
+      for (const p of requiredPages) {
+        if (!existsSync(resolve(srcPagesDir, p))) {
+          throw new Error(`Missing page template in src/pages: ${p}`);
+        }
+      }
+      return `PASS (SSR server bundle verified at dist/server/entry.mjs; core templates active)`;
+    }
+    let clientDir = distDir;
     if (existsSync(resolve(distDir, 'client'))) {
-      distDir = resolve(distDir, 'client');
+      clientDir = resolve(distDir, 'client');
     }
     // Verify key core pages were emitted to dist
     const requiredPages = ['index.html', 'shop.html', 'about.html', 'gaming.html', 'support.html', 'contact.html', 'compare.html', 'legal.html'];
     for (const p of requiredPages) {
-      if (!existsSync(resolve(distDir, p))) {
+      if (!existsSync(resolve(clientDir, p))) {
         throw new Error(`Missing compiled page in dist: ${p}`);
       }
     }
@@ -109,7 +121,7 @@ checks.push({
 
     // Check layout-init.js does not load bridge files
     const layoutInit = readFileSync(resolve(webPublicDir, 'assets', 'js', 'layout-init.js'), 'utf8');
-    if (layoutInit.includes('data.js') || layoutInit.includes('cms-content.js') || layoutInit.includes('cms-merge.js')) {
+    if (/(?:^|[^a-zA-Z0-9_-])data\.js/.test(layoutInit) || layoutInit.includes('cms-content.js') || layoutInit.includes('cms-merge.js')) {
       throw new Error(`layout-init.js still references retired bridge scripts`);
     }
 

@@ -159,6 +159,51 @@
     return el ? el.value : undefined;
   }
 
+  var pageLoadedAt = Date.now();
+  function fetchFormToken() {
+    if (window.__TM_FORM_TOKEN__) return;
+    try {
+      fetch(API + '/forms/token').then(function (r) {
+        if (r && r.ok) return r.json();
+      }).then(function (data) {
+        if (data && data.token) {
+          window.__TM_FORM_TOKEN__ = data.token;
+          Array.prototype.forEach.call(document.querySelectorAll('form'), function (f) {
+            var inp = f.querySelector('[name="formToken"]');
+            if (inp && !inp.value) inp.value = data.token;
+          });
+        }
+      }).catch(function () {});
+    } catch (_) {}
+  }
+  function tagForms() {
+    Array.prototype.forEach.call(document.querySelectorAll('form'), function (f) {
+      if (!f.hasAttribute('data-loaded-at')) f.setAttribute('data-loaded-at', String(Date.now()));
+    });
+    fetchFormToken();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tagForms);
+  else tagForms();
+
+  function getUtmParams() {
+    var utm = {};
+    try {
+      var sp = new URLSearchParams(window.location.search);
+      var keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+      keys.forEach(function (k) {
+        var v = sp.get(k);
+        if (v) utm[k] = v.slice(0, 200);
+      });
+      if (Object.keys(utm).length > 0) {
+        sessionStorage.setItem('tm_utm', JSON.stringify(utm));
+      } else {
+        var saved = sessionStorage.getItem('tm_utm');
+        if (saved) utm = JSON.parse(saved);
+      }
+    } catch (_) {}
+    return utm;
+  }
+
   document.addEventListener('submit', function (e) {
     var form = e.target;
     if (!form || form.nodeName !== 'FORM') return;
@@ -180,8 +225,17 @@
     var body = {
       type: type === 'job-application' ? careersType(data.payload) : type,
       email: data.email,
-      payload: data.payload,
-      consent: data.consentChecked !== false,
+      payload: Object.assign({}, data.payload, (typeof getUtmParams === 'function' ? getUtmParams() : {})),
+      leadSource: (function () {
+        var u = typeof getUtmParams === 'function' ? getUtmParams() : {};
+        return u.utm_source ? (u.utm_source + (u.utm_medium ? ' / ' + u.utm_medium : '')) : (document.referrer ? 'referrer: ' + document.referrer.slice(0, 100) : 'direct');
+      })(),
+      utm: typeof getUtmParams === 'function' ? getUtmParams() : {},
+      fillTimeMs: Math.max(0, Date.now() - (form.getAttribute('data-loaded-at') ? Number(form.getAttribute('data-loaded-at')) : (pageLoadedAt || Date.now()))),
+      ...(((form.querySelector('[name="hp"]') || form.querySelector('[name="website"]') || {}).value) ? { hp: (form.querySelector('[name="hp"]') || form.querySelector('[name="website"]')).value } : {}),
+      ...(((form.querySelector('[name="formToken"]') || {}).value || window.__TM_FORM_TOKEN__) ? { formToken: (form.querySelector('[name="formToken"]') || {}).value || window.__TM_FORM_TOKEN__ } : {}),
+      // Z-19 Fix: NEVER send consent: true on a form that has no consent checkbox.
+      consent: data.consentChecked === true,
       ...(turnstileToken(form) ? { turnstileToken: turnstileToken(form) } : {}),
     };
 

@@ -1,0 +1,219 @@
+{
+  "timestamp": "2026-10-25T09:37:23.599Z",
+  "totalJourneys": 10,
+  "totalCriticalViolations": 0,
+  "totalBrokenImages": 0,
+  "totalHorizontalOverflows": 0,
+  "journeys": [
+    {
+      "journey": "1. Homepage (/)",
+      "viewport": "1440x900",
+      "brokenImagesCount": 0,
+      "hasHorizontalScroll": false,
+      "contextName": "Journey 1: Homepage (/)",
+      "passedRules": 31,
+      "criticalOrSeriousCount": 0,
+      "orphanedInputsCount": 0,
+      "globalChecks": {
+        "lang": "en",
+        "title": "index — TwinMOS",
+        "viewport": "width=device-width,initial-scale=1",
+        "h1Count": 1
+      },
+      "contrastSample": {
+        "fg": "rgb(255, 255, 255)",
+        "bg": "rgb(255, 255, 255)",
+        "contrastRatio": 1
+      }
+    },
+    {
+      "journey": "2. Shop Catalogue (/shop)",
+      "viewport": "1440x900 & 320x600",
+      "brokenImagesCount": 0,
+      "hasHorizontalScroll": false,
+      "contextName": "Journey 2: Shop Catalogue (/shop)",
+      "passedRules": 30,
+      "criticalOrSeriousCount": 0,
+      "orphanedInputsCount": 0,
+      "globalChecks": {
+        "lang": "en",
+        "title": "shop — TwinMOS",
+        "viewport": "width=device-width,initial-scale=1",
+        "h1Count": 1
+      },
+      "contrastSample": {
+        "fg": "rgb(19, 39, 59)",
+        "bg": "rgb(255, 255, 255)",
+        "contrastRatio": 15.21
+      }
+    },
+    {
+      "journey": "3. PDP CoreX Pro Gen5",
+      "viewport": "1440x900",
+      "brokenImagesCount": 0,
+      "hasHorizontalScroll": false,
+      "contextName": "Journey 3: PDP CoreX Pro Gen5",
+      "passedRules": 31,
+      "criticalOrSeriousCount": 0,
+      "orphanedInputsCount": 0,
+      "globalChecks": {
+        "lang": "en",
+        "title": "TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD — TwinMOS",
+        "viewport": "width=device-width,initial-scale=1",
+        "h1Count": 1
+      },
+      "contrastSample": {
+        "fg": "rgb(17, 24, 39)",
+        "bg": "rgb(255, 255, 255)",
+        "contrastRatio": 17.74
+      }
+    },
+    {
+      "journey": "4. Product Compare (/compare)",
+      "viewport": "1440x900",
+      "brokenImagesCount": 0,
+      "hasHorizontalScroll": false,
+      "contextName": "Journey 4: Product Compare Matrix (/compare)",
+      "passedRules": 31,
+      "criticalOrSeriousCount": 0,
+      "orphanedInputsCount": 0,
+      "globalChecks": {
+        "lang": "en",
+        "title": "compare — TwinMOS",
+        "viewport": "width=device-width,initial-scale=1",
+        "h1Count": 1
+      },
+      "contrastSample": {
+        "fg": "rgb(19, 39, 59)",
+        "bg": "rgb(255, 255, 255)",
+        "contrastRatio": 15.21
+      }
+    },
+    {
+      "journey": "5. Search (/search?q=ddr5)",
+      "viewport": "1440x900",
+      "brokenImagesCount": 0,
+      "hasHorizontalScroll": false,
+      "contextName": "Journey 5: SSR Search (/search?q=ddr5)",
+      "passedRules": 29,
+      "criticalOrSeriousCount": 0,
+      "orphanedInputsCount": 0,
+      "globalChecks": {
+        "lang": "en",
+        "title": "Search: ddr5 — TwinMOS",
+        "viewport": "width=device-width,initial-scale=1",
+        "h1Count": 1
+      },
+      "contrastSample": {
+        "fg": "rgb(19, 39, 59)",
+        "bg": "rgb(255, 255, 255)",
+        "contrastRatio": 15.21
+      }
+    },
+    {
+      "journey": "6. Knowledge Hub (/learn/computex-2025)",
+      "viewport": "1440x900",
+      "brokenImagesCount": 0,
+      "hasHorizontalScroll": false,
+      "contextName": "Journey 6: Knowledge Hub Reader (/learn/computex-2025)",
+      "passedRules": 29,
+      "criticalOrSeriousCount": 0,
+      "orphanedInputsCount": 0,
+      "globalChecks": {
+        "lang": "en",
+        "title": "TwinMOS to Showcase Cutting-Edge Memory & Storage Solutions at COMPUTEX TAIPEI 2025 | TwinMOS Knowledge Hub — TwinMOS Knowledge Hub",
+        "viewport": "width=device-width,initial-scale=1",
+        "h1Count": 1
+      },
+      "contrastSample": {
+        "fg": "rgb(15, 23, 42)",
+        "bg": "rgb(255, 255, 255)",
+        "contrastRatio": 17.85
+      }
+    },
+    {
+      "journey": "7. Interactive Forms (/contact & /rma)",
+      "viewport": "1440x900",
+      "brokenImagesCount": 0,
+      "hasHorizontalScroll": false,
+      "contextName": "Journey 7a: Contact Form (/contact)",
+      "passedRules": 30,
+      "criticalOrSeriousCount": 0,
+      "orphanedInputsCount": 0,
+      "globalChecks": {
+        "lang": "en",
+        "title": "contact — TwinMOS",
+        "viewport": "width=device-width,initial-scale=1",
+        "h1Count": 1
+      },
+      "contrastSample": {
+        "fg": "rgb(19, 39, 59)",
+        "bg": "rgb(255, 255, 255)",
+        "contrastRatio": 15.21
+      }
+    },
+    {
+      "journey": "8. Distributor Locator (/where-to-buy)",
+      "viewport": "1440x900",
+      "brokenImagesCount": 0,
+      "hasHorizontalScroll": false,
+      "contextName": "Journey 8: Distributor Locator (/where-to-buy)",
+      "passedRules": 29,
+      "criticalOrSeriousCount": 0,
+      "orphanedInputsCount": 0,
+      "globalChecks": {
+        "lang": "en",
+        "title": "where-to-buy — TwinMOS",
+        "viewport": "width=device-width,initial-scale=1",
+        "h1Count": 1
+      },
+      "contrastSample": {
+        "fg": "rgb(19, 39, 59)",
+        "bg": "rgb(255, 255, 255)",
+        "contrastRatio": 15.21
+      }
+    },
+    {
+      "journey": "9. Arabic RTL (/ar/)",
+      "viewport": "1440x900",
+      "brokenImagesCount": 0,
+      "hasHorizontalScroll": false,
+      "contextName": "Journey 9: Arabic RTL (/ar/)",
+      "passedRules": 29,
+      "criticalOrSeriousCount": 0,
+      "orphanedInputsCount": 0,
+      "globalChecks": {
+        "lang": "ar",
+        "title": "TwinMOS — العربية",
+        "viewport": "width=device-width,initial-scale=1",
+        "h1Count": 1
+      },
+      "contrastSample": {
+        "fg": "rgb(19, 39, 59)",
+        "bg": "rgb(255, 255, 255)",
+        "contrastRatio": 15.21
+      }
+    },
+    {
+      "journey": "10. Error Handler (/404 & /410)",
+      "viewport": "1440x900",
+      "brokenImagesCount": 0,
+      "hasHorizontalScroll": false,
+      "contextName": "Journey 10: Error 404 Handler (/404)",
+      "passedRules": 29,
+      "criticalOrSeriousCount": 0,
+      "orphanedInputsCount": 0,
+      "globalChecks": {
+        "lang": "en",
+        "title": "Page not found — TwinMOS",
+        "viewport": "width=device-width,initial-scale=1",
+        "h1Count": 1
+      },
+      "contrastSample": {
+        "fg": "rgb(19, 39, 59)",
+        "bg": "rgb(255, 255, 255)",
+        "contrastRatio": 15.21
+      }
+    }
+  ]
+}

@@ -145,48 +145,11 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
     return { ...rest, locale: locale ?? 'en', status: (data.status as string) || 'draft' };
   }
 
-  // ---------- P2.2: server-side content-bridge refresh -----------------------
-  // POST /admin/content/export — regenerates cms-content.js from THIS process's
-  // DB handle (no second PGlite open can ever corrupt the store). This is the
-  // supported refresh while the API is live; the CLI exporter remains for
-  // API-stopped build windows. Editor+ gated, audit-logged.
-  // NOTE: registered BEFORE the generic /content/:entity routes — Hono matches
-  // in registration order, so a later literal would be captured as :entity.
+  // ---------- P2.2: server-side content-bridge refresh (RETIRED MS5.6) -------
+  // POST /admin/content/export is retired. All site content is served dynamically
+  // via Delivery API (/api/v1/delivery/...) and typed blocks.
   r.post('/content/export', async (c) => {
-    const guard = await editorGuard(c);
-    if (guard instanceof Response) return guard;
-    const mod = await import('../../../../tooling/content-payload.ts');
-    // Media-URL base: PUBLIC_API_URL wins when set. Otherwise '' (same-origin
-    // /api/v1 behind the production reverse proxy) — EXCEPT in dev, where the
-    // public site is cross-origin (astro :4321 vs api :8787) and same-origin
-    // URLs 404; there the API's own externally-reachable origin is the truth.
-    const apiBase = process.env.PUBLIC_API_URL
-      ?? (process.env.NODE_ENV === 'production' ? '' : (process.env.BETTER_AUTH_URL ?? 'http://127.0.0.1:8787') + '/api/v1');
-    const { counts, payload } = await mod.buildContentPayload(db, { apiBase });
-    const out = mod.contentOutPath();
-    const { mkdirSync, writeFileSync, existsSync } = await import('node:fs');
-    const { dirname, resolve } = await import('node:path');
-    mkdirSync(dirname(out), { recursive: true });
-    const scriptText = mod.contentScriptText(payload);
-    writeFileSync(out, scriptText, 'utf8');
-    // Dual-write the same bytes into the built site's dist tree so a live
-    // export reaches prod-preview/nginx-served builds without a rebuild.
-    // The mirror derives from `out` (js → assets → public → dist) and is
-    // therefore CONTENT_OUT-isolation-aware for tests. THREE hops up — two
-    // resolve to public/dist, which never exists, and the guard silently
-    // skipped the write (caught by the 2026-10-08 production audit).
-    try {
-      const distDir = resolve(dirname(out), '..', '..', '..', 'dist');
-      if (existsSync(distDir)) {
-        const distJsDir = resolve(distDir, 'assets', 'js');
-        mkdirSync(distJsDir, { recursive: true });
-        writeFileSync(resolve(distJsDir, 'cms-content.js'), scriptText, 'utf8');
-      }
-    } catch {
-      // non-blocking if dist is locked or unwritable
-    }
-    await auditRow(c, guard.user.id, 'content.export', 'bridge', String(counts.products), { counts, out });
-    return c.json({ ok: true, counts, out, generatedAt: payload.generatedAt });
+    return c.json({ ok: false, error: 'Bridge retired: all pages render via typed blocks and /api/v1/delivery' }, 410);
   });
 
   // ---------- list / detail ----------

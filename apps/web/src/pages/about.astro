@@ -1,16 +1,22 @@
 ---
 // about.astro — Dynamic SSR Page rendered from CMS Delivery API.
-// Tasks D2, D8b / GPROV-100 = 100% / G-NOHARDCODE = 0 / WCAG 2.2 AA compliant.
+// Tasks D2, D8b, T5.2.4 / GPROV-100 = 100% / G-NOHARDCODE = 0 / WCAG 2.2 AA compliant.
 import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
 const preview = Astro.url.searchParams.get('preview') ?? undefined;
 const page = await getDeliveryPage('about', 'en', preview);
+
 if (preview) {
   Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
-  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+} else if (page?.cacheTags && Array.isArray(page.cacheTags)) {
+  const tags = page.cacheTags.join(', ');
+  Astro.response.headers.set('Cache-Tag', tags);
+  Astro.response.headers.set('X-Cache-Tags', tags);
 }
+
 const title = page?.title ?? "About TwinMOS — Since 1998";
 const desc = page?.seoDescription ?? "TwinMOS Technologies: founded 1998 in Taipei; ISO 9001 quality system; offices in Dubai, Taipei, San Jose, Hong Kong and Dhaka; 93+ countries.";
 const blocks = page?.blocks ?? [];

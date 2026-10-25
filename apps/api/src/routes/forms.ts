@@ -3,6 +3,7 @@
 // (number + creation event + customer confirmation), Idempotency-Key honored.
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
+import { createHmac } from 'node:crypto';
 import {
   formSubmissionSchema, rmaIntakeSchema, problem,
   submissionRefPrefix, submissionAutoPriority, submissionSlaHours,
@@ -22,6 +23,38 @@ function clean(value: unknown, max = 200): string {
 /** Idempotency for POST /forms (TTL + bounded; Redis in prod per docs/02). */
 const IDEMPOTENT = new IdempotencyStore();
 
+/** Form anti-spam token signed with 30-minute validity (T5.5.1). */
+export function createFormToken(issuedAt: number = Date.now()): string {
+  const secret = process.env.SESSION_SECRET || 'twinmos-form-token-secret-2026';
+  const payload = `${issuedAt}:${crypto.randomUUID().slice(0, 8)}`;
+  const hmac = createHmac('sha256', secret).update(payload).digest('hex').slice(0, 16);
+  return Buffer.from(`${payload}:${hmac}`).toString('base64url');
+}
+
+export function verifyFormToken(token: string): { valid: boolean; expired: boolean; ageMs: number } {
+  try {
+    const raw = Buffer.from(token, 'base64url').toString('utf-8');
+    const parts = raw.split(':');
+    if (parts.length !== 3) return { valid: false, expired: false, ageMs: 0 };
+    const [issuedAtStr, nonce, sig] = parts;
+    const issuedAt = Number(issuedAtStr);
+    if (!issuedAt || isNaN(issuedAt)) return { valid: false, expired: false, ageMs: 0 };
+
+    const secret = process.env.SESSION_SECRET || 'twinmos-form-token-secret-2026';
+    const expectedSig = createHmac('sha256', secret).update(`${issuedAt}:${nonce}`).digest('hex').slice(0, 16);
+    if (sig !== expectedSig) return { valid: false, expired: false, ageMs: 0 };
+
+    const ageMs = Date.now() - issuedAt;
+    const MAX_AGE_MS = 30 * 60 * 1000; // 30 minutes per T5.5.1
+    if (ageMs > MAX_AGE_MS || ageMs < -60_000) {
+      return { valid: true, expired: true, ageMs };
+    }
+    return { valid: true, expired: false, ageMs };
+  } catch {
+    return { valid: false, expired: false, ageMs: 0 };
+  }
+}
+
 /** Unpredictable 6-digit suffix from the CSPRNG (RMA numbers are guessable-proof public references). */
 function randomDigits(count: number): string {
   const max = 10 ** count;
@@ -39,6 +72,12 @@ async function nextRmaNumber(db: DB): Promise<string> {
 
 export function formsRoute(db: DB) {
   const r = new Hono();
+
+  // Public CSRF/Anti-spam token with 30-minute expiry (T5.5.1)
+  r.get('/forms/token', (c) => {
+    const token = createFormToken();
+    return c.json({ ok: true, token, expiresInMs: 30 * 60 * 1000 });
+  });
 
   // --- Newsletter Double Opt-in (Task D6: FORMS-01, R0.3: Z-21) ---
   r.post('/forms/newsletter', async (c) => {
@@ -202,7 +241,37 @@ export function formsRoute(db: DB) {
       if (cached) return c.json(cached.body, cached.status as 201);
     }
 
-    const parsed = formSubmissionSchema.safeParse({ ...(await c.req.json().catch(() => ({}))), type: c.req.param('type') });
+    const rawBody = await c.req.json().catch(() => ({}));
+    const honeypot = rawBody.website || rawBody.hp;
+    const fillTimeMs = Number(rawBody.fillTimeMs || 0);
+    const formToken = rawBody.formToken || rawBody.token;
+
+    // Spam guard: honeypot (silent success to deceive automated bots)
+    if (honeypot) {
+      return c.json({
+        id: 0,
+        reference: 'TM-SPAM-' + new Date().getFullYear() + '-' + crypto.randomUUID().slice(0, 8),
+        ok: true,
+      }, 201);
+    }
+
+    // Spam guard: minimum fill time (humans take >= 800ms)
+    if (fillTimeMs > 0 && fillTimeMs < 800) {
+      return c.json(problem(400, 'Suspicious submission speed'), 400, { 'Content-Type': 'application/problem+json' });
+    }
+
+    // Spam guard: token expiring after 30 minutes (T5.5.1)
+    if (formToken) {
+      const parsedToken = verifyFormToken(formToken);
+      if (parsedToken.expired) {
+        return c.json(problem(400, 'Form session expired. Please refresh the page and try again.'), 400, { 'Content-Type': 'application/problem+json' });
+      }
+      if (!parsedToken.valid) {
+        return c.json(problem(400, 'Invalid form token'), 400, { 'Content-Type': 'application/problem+json' });
+      }
+    }
+
+    const parsed = formSubmissionSchema.safeParse({ ...rawBody, type: c.req.param('type') });
     if (!parsed.success) {
       return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': 'application/problem+json' });
     }
@@ -217,7 +286,12 @@ export function formsRoute(db: DB) {
       if (!ok) return c.json(problem(403, 'Captcha Failed'), 403, { 'Content-Type': 'application/problem+json' });
     }
 
-    const fullPayload = { ...payload, ...(name ? { name } : {}) };
+    const fullPayload = {
+      ...payload,
+      ...(name ? { name } : {}),
+      ...(rawBody.leadSource ? { leadSource: clean(rawBody.leadSource, 200) } : {}),
+      ...(rawBody.utm ? { utm: rawBody.utm } : {}),
+    };
     // P6 (ADR-009): type-aware ticket prefix + intake priority + SLA due date.
     const prefix = submissionRefPrefix(type);
     const refCode = prefix + '-' + new Date().getFullYear() + '-' + crypto.randomUUID().slice(0, 8);
@@ -296,7 +370,7 @@ export function formsRoute(db: DB) {
     if (idemKey) IDEMPOTENT.set(idemKey, { status: 201, body });    return c.json(body, 201);
   });
 
-  r.get('/rma/:number', async (c) => {
+  const rmaGetHandler = async (c: any) => {
     const number = clean(c.req.param('number'), 24).toUpperCase();
     if (!/^(TM-)?RMA-\d{4}-\d{3,8}$/.test(number)) {
       return c.json(problem(400, 'Invalid RMA number format'), 400, { 'Content-Type': 'application/problem+json' });
@@ -315,7 +389,10 @@ export function formsRoute(db: DB) {
       product: customer.product ?? rma.productSku ?? '',
     };
     return c.json({ number: rma.number, status: rma.status, createdAt: rma.createdAt, maskedInfo, timeline: events });
-  });
+  };
+
+  r.get('/rma/:number', rmaGetHandler);
+  r.get('/forms/rma/:number', rmaGetHandler);
 
   return r;
 }

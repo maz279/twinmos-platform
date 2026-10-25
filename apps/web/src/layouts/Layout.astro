@@ -25,6 +25,7 @@ interface Props {
   breadcrumbs?: BreadcrumbItem[];
   renderChrome?: boolean;
   ogImage?: string;
+  preloadImage?: string;
 }
 
 const {
@@ -37,6 +38,7 @@ const {
   breadcrumbs = [],
   renderChrome = true,
   ogImage: customOgImage,
+  preloadImage,
 } = Astro.props;
 
 const path = Astro.url.pathname === '/index.html' ? '/' : Astro.url.pathname;
@@ -124,7 +126,7 @@ const SITE_LD = JSON.stringify({
   url: 'https://www.twinmos.com/',
   potentialAction: {
     '@type': 'SearchAction',
-    target: 'https://www.twinmos.com/search.html?q={q}',
+    target: 'https://www.twinmos.com/search?q={q}',
     'query-input': 'required name=q',
   },
 });
@@ -174,6 +176,7 @@ const OG_TYPE = path === '/' ? 'website' : 'article';
     <meta name="twitter:image" content={OG_IMAGE} />
 
     <link rel="icon" href={brand.faviconUrl || '/favicon.ico'} />
+    {preloadImage && <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />}
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="/assets/css/main.css" />
     <link rel="stylesheet" href="/assets/css/a11y-overrides.css" />

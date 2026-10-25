@@ -161,6 +161,7 @@ export function buildApp(db: DB) {
   const FORM_BUCKETS = new Map<string, { count: number; resetAt: number }>();
   let bucketSweepAt = 0;
   app.use('/api/v1/forms/*', async (c, next) => {
+    if (c.req.method !== 'POST' || c.req.path === '/api/v1/forms/token') return next();
     const ip = clientIp(c);
     const now = Date.now();
     // periodic sweep: IPs that never return must not accumulate forever

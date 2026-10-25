@@ -1,18 +1,42 @@
 ---
-// 404.astro — Dynamic SSR Page rendered from CMS Delivery API.
-// Tasks D2, D8b / GPROV-100 = 100% / G-NOHARDCODE = 0 / WCAG 2.2 AA compliant.
+// 404.astro — Dynamic SSR Error Page rendered from CMS Delivery API.
+// Tasks D2, D8b, T5.2.2 / GPROV-100 / WCAG 2.2 AA compliant.
 import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
+
+Astro.response.status = 404;
 
 const page = await getDeliveryPage('404');
 const title = page?.title ?? "Page not found — TwinMOS";
 const desc = page?.seoDescription ?? "404 — page not found.";
 const blocks = page?.blocks ?? [];
+const hasCmsBlocks = Array.isArray(blocks) && blocks.length > 0;
+
+if (page?.cacheTags && Array.isArray(page.cacheTags)) {
+  const tags = page.cacheTags.join(', ');
+  Astro.response.headers.set('Cache-Tag', tags);
+  Astro.response.headers.set('X-Cache-Tags', tags);
+}
 ---
 
 <Layout title={title} desc={desc} noindex={true}>
   <main id="main">
-    <BlockDispatcher blocks={blocks} />
+    {hasCmsBlocks ? (
+      <BlockDispatcher blocks={blocks} />
+    ) : (
+      <section class="page-hero block-hero" style="min-height:55vh;display:flex;align-items:center;text-align:center" data-fallback="offline-404">
+        <div class="wrap" style="max-width:680px;margin:0 auto">
+          <span class="eyebrow" style="color:var(--accent,#E02B20);font-weight:700">404 Error</span>
+          <h1 class="h1" style="margin:12px 0 16px">This page went out of stock</h1>
+          <p class="lede" style="margin-bottom:28px">The address you followed does not exist or may have been moved. Everything else, though, is very much in stock.</p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <a class="btn btn-accent" href="/">Back to home</a>
+            <a class="btn btn-ghost" href="/shop">Browse products</a>
+            <a class="btn btn-ghost" href="/support">Contact support</a>
+          </div>
+        </div>
+      </section>
+    )}
   </main>
 </Layout>

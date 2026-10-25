@@ -14,8 +14,10 @@ import {
   getDeliveryProducts,
   getDeliveryArticles,
   getDeliveryFormDefinition,
+  getDeliveryFormToken,
   getDeliveryCompatibility,
   getDeliverySettings,
+  getDeliverySearchResults,
 } from '../../lib/delivery';
 import locatorData from '../../data/locator.json';
 import { getDeliveryDistributors } from '../../lib/delivery';
@@ -31,6 +33,10 @@ const CANONICAL_CONFIGS: Record<string, any> = {
   advisor: CANONICAL_WIDGET_ADVISORS,
   speed_visualizer: CANONICAL_WIDGET_WORKLOADS,
   flagship: CANONICAL_WIDGET_FLAGSHIPS,
+  rgb_lab: { effects: ['Static', 'Breathing', 'Rainbow', 'Wave', 'Meteor'] },
+  'rgb-lab': { effects: ['Static', 'Breathing', 'Rainbow', 'Wave', 'Meteor'] },
+  counters: { stats: [{ num: 1998, label: 'Founded in Taipei' }, { num: 93, label: 'Countries Served' }, { num: 14000, label: 'MB/s Read Speed' }] },
+  tabs: { items: [{ id: 'tab1', label: 'Overview', desc: 'TwinMOS memory and storage solutions.' }, { id: 'tab2', label: 'Specs', desc: 'Engineered to JEDEC and NVMe specifications.' }] },
 };
 
 // The shop widgets need the live category facets for their filter rail and category tiles.
@@ -134,12 +140,22 @@ const deliveryFaqs: any[] = needsFaqs ? await getDeliveryFaqs() : [];
 // MS4.8 Form Definitions for dynamic form blocks
 const formBlocks = blocks.filter((b: any) => b?.type === 'form');
 const formDefsByType: Record<string, any> = {};
+let formToken = '';
+if (formBlocks.length > 0) {
+  formToken = await getDeliveryFormToken();
+}
 for (const fb of formBlocks) {
   const fType = (fb as any).formType || (isQuotePage ? 'quote' : 'contact');
   if (!formDefsByType[fType]) {
     formDefsByType[fType] = await getDeliveryFormDefinition(fType);
   }
 }
+
+// MS5.3/MS5.6 SSR Search Results for search-results widget with type facets
+const needsSearch = blocks.some((b: any) => b?.type === 'widget:search-results');
+const rawSearchQuery = needsSearch ? (Astro.url.searchParams.get('q') || '') : '';
+const rawSearchType = needsSearch ? (Astro.url.searchParams.get('type') || 'all') : 'all';
+const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(rawSearchQuery, rawSearchType) : null;
 ---
 
 <div class={`block-stream ${className}`}>
@@ -165,9 +181,16 @@ for (const fb of formBlocks) {
             <section class="block-hero page-hero" data-block-id={blockId}>
               <div class="wrap">
                 {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
-                {(raw.title || raw.heading) && (
-                  <h1 class="h1" set:html={sanitizeRichText(replaceLogoToken(raw.title || raw.heading))} />
-                )}
+                {(() => {
+                  let headingText = raw.title || raw.heading || '';
+                  if (blockId === 'search-block-1' || (headingText.includes('Results for') && Astro.url.pathname.startsWith('/search'))) {
+                    const qParam = Astro.url.searchParams.get('q') || '';
+                    if (qParam) {
+                      headingText = `Results for "${qParam.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}"`;
+                    }
+                  }
+                  return headingText ? <h1 class="h1" set:html={sanitizeRichText(replaceLogoToken(headingText))} /> : null;
+                })()}
                 {raw.lede && <p class="lede" set:html={sanitizeRichText(replaceLogoToken(raw.lede))} />}
                 {Array.isArray(raw.chips) && raw.chips.length > 0 && (
                   <div class="pillar-row" aria-label="Business pillars" style="margin-top:16px">
@@ -218,7 +241,8 @@ for (const fb of formBlocks) {
           );
 
         case 'slider':
-        case 'hero-slider': {
+        case 'hero-slider':
+        case 'heroSlider': {
           const fallbackSlides = [
             {
               image: '/assets/img/bn/home-0.webp',
@@ -268,7 +292,10 @@ for (const fb of formBlocks) {
                       <div class="wrap sl-content">
                         <div class="sl-copy">
                           {s.kicker && <span class="sl-kicker">{s.kicker}</span>}
-                          {s.title && <h2 class="sl-title" set:html={sanitizeRichText(replaceLogoToken(s.title))} />}
+                          {s.title && (idx === 0
+                            ? <h1 class="sl-title" set:html={sanitizeRichText(replaceLogoToken(s.title))} />
+                            : <h2 class="sl-title" set:html={sanitizeRichText(replaceLogoToken(s.title))} />
+                          )}
                           {s.lede && <p class="sl-lede" set:html={sanitizeRichText(replaceLogoToken(s.lede))} />}
                           <div class="sl-ctas">
                             {Array.isArray(s.ctas) && s.ctas.length > 0 ? (
@@ -302,7 +329,7 @@ for (const fb of formBlocks) {
                   </div>
                 )}
                 {raw.pauseControl !== false && (
-                  <button class="slider-pause" type="button" aria-label="Pause slide autoplay" aria-pressed="false" style="position:absolute;bottom:20px;right:24px;z-index:15;background:rgba(10,37,64,0.85);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer">
+                  <button class="slider-pause sl-pause" data-sl-pause type="button" aria-label="Pause slide auto-rotation" aria-pressed="false" style="position:absolute;bottom:20px;left:clamp(16px,4vw,40px);z-index:20;background:rgba(5,14,26,0.65);color:#fff;border:1px solid rgba(255,255,255,0.25);border-radius:99px;padding:8px 14px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;backdrop-filter:blur(6px)">
                     <span class="pause-icon" aria-hidden="true">⏸</span>
                     <span class="pause-text">Pause</span>
                   </button>
@@ -314,6 +341,8 @@ for (const fb of formBlocks) {
 
         case 'stats':
         case 'statsCounter':
+        case 'stat-strip':
+        case 'statStrip':
         case 'stats-tiles':
         case 'stats-band-copy':
         case 'stats-demo': {
@@ -472,6 +501,8 @@ for (const fb of formBlocks) {
           );
         }
 
+        case 'rich-text':
+        case 'richText':
         case 'textMedia':
         case 'rich-text+factfile':
         case 'text-columns': {
@@ -530,12 +561,18 @@ for (const fb of formBlocks) {
                 {raw.title && <h2 class="h2" style="margin-bottom:20px">{raw.title}</h2>}
                 {raw.heading && !raw.title && <h2 class="h2" style="margin-bottom:20px">{raw.heading}</h2>}
                 <div class="faq-list" style="display:flex;flex-direction:column;gap:12px">
-                  {faqItems.map((faq: any) => (
-                    <details class="faq-item card card-pad" style="border:1px solid #E6EBF1;border-radius:8px;padding:16px">
-                      <summary style="font-weight:700;cursor:pointer;font-size:16px">{faq.question || faq.q}</summary>
-                      <p style="margin-top:12px;color:var(--body);line-height:1.6">{faq.answer || faq.a}</p>
-                    </details>
-                  ))}
+                  {faqItems.map((faq: any) => {
+                    const rawAns = faq.answer || faq.a || '';
+                    const formattedAns = rawAns
+                      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:var(--accent,#0055FF);text-decoration:underline">$1</a>')
+                      .replace(/\r?\n\r?\n/g, '<br/><br/>');
+                    return (
+                      <details class="faq-item card card-pad" style="border:1px solid #E6EBF1;border-radius:8px;padding:16px">
+                        <summary style="font-weight:700;cursor:pointer;font-size:16px">{faq.question || faq.q}</summary>
+                        <div class="faq-answer" style="margin-top:12px;color:var(--body);line-height:1.6" set:html={sanitizeRichText(formattedAns)} />
+                      </details>
+                    );
+                  })}
                 </div>
               </div>
             </section>
@@ -543,6 +580,7 @@ for (const fb of formBlocks) {
         }
 
         case 'table':
+        case 'specs-table':
         case 'spec-table':
           return (
             <section class="block-table" data-block-id={blockId} style="padding:40px 0;overflow-x:auto">
@@ -574,6 +612,8 @@ for (const fb of formBlocks) {
           );
 
         case 'productList':
+        case 'productCards':
+        case 'product-cards':
         case 'productShowcase':
         case 'product-rail': {
           const query = raw.query || {};
@@ -687,6 +727,7 @@ for (const fb of formBlocks) {
           );
         }
 
+        case 'quote-block':
         case 'testimonial':
         case 'testimonials': {
           const items = (Array.isArray(raw.items) && raw.items.length > 0)
@@ -903,6 +944,7 @@ for (const fb of formBlocks) {
           );
         }
 
+        case 'offices':
         case 'officeCards':
         case 'office-cards': {
           let officesToRender = (Array.isArray(raw.offices) && raw.offices.length > 0) ? raw.offices : deliveryOffices;
@@ -1240,17 +1282,112 @@ for (const fb of formBlocks) {
             </section>
           );
 
-        case 'widget:search-results':
+        case 'widget:search-results': {
+          const rawQ = rawSearchQuery;
+          const safeQ = rawQ
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+          const results = ssrSearchResults?.results ?? [];
+          const prods = results.filter((r: any) => r.type === 'product');
+          const arts = results.filter((r: any) => r.type === 'article');
+          const terms = results.filter((r: any) => r.type === 'glossary');
+
           return (
             <section class="block-search-results" data-block-id={blockId} style="padding-top:12px">
               <div class="wrap">
                 <p class="form-note" style="margin-bottom:12px">
-                  Results for “<span id="searchQ"></span>”
+                  Results for “<span id="searchQ">{safeQ}</span>”
+                  {rawQ && <span class="chip" style="margin-left:8px">{ssrSearchResults?.total ?? results.length} matches</span>}
                 </p>
-                <div id="searchMount" class="wrap" style="padding:0"></div>
+
+                {rawQ && (
+                  <div class="search-facets" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+                    <a href={`/search?q=${encodeURIComponent(rawQ)}`} class={`btn btn-sm ${rawSearchType === 'all' || !rawSearchType ? 'btn-accent' : 'btn-ghost'}`}>
+                      All <span class="chip" style="margin-left:6px">{ssrSearchResults?.total ?? results.length}</span>
+                    </a>
+                    <a href={`/search?q=${encodeURIComponent(rawQ)}&type=product`} class={`btn btn-sm ${rawSearchType === 'product' ? 'btn-accent' : 'btn-ghost'}`}>
+                      Products <span class="chip" style="margin-left:6px">{ssrSearchResults?.facets?.product ?? prods.length}</span>
+                    </a>
+                    <a href={`/search?q=${encodeURIComponent(rawQ)}&type=article`} class={`btn btn-sm ${rawSearchType === 'article' ? 'btn-accent' : 'btn-ghost'}`}>
+                      Media &amp; Articles <span class="chip" style="margin-left:6px">{ssrSearchResults?.facets?.article ?? arts.length}</span>
+                    </a>
+                    <a href={`/search?q=${encodeURIComponent(rawQ)}&type=glossary`} class={`btn btn-sm ${rawSearchType === 'glossary' ? 'btn-accent' : 'btn-ghost'}`}>
+                      Glossary Terms <span class="chip" style="margin-left:6px">{ssrSearchResults?.facets?.glossary ?? terms.length}</span>
+                    </a>
+                  </div>
+                )}
+
+                <div id="searchMount" class="wrap" style="padding:0">
+                  {rawQ && results.length > 0 ? (
+                    <div class="ssr-search-results" style="display:flex;flex-direction:column;gap:28px">
+                      {(rawSearchType === 'all' || rawSearchType === 'product') && prods.length > 0 && (
+                        <section>
+                          <h2 class="h3" style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                            Products <span class="chip">{prods.length}</span>
+                          </h2>
+                          <div class="grid g4" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+                            {prods.map((p: any) => (
+                              <article class="card prod-card" style="border:1px solid #E6EBF1;border-radius:10px;padding:16px;background:#fff">
+                                <span class="chip" style="font-size:11px;font-weight:700">{p.badge || 'Product'}</span>
+                                <h3 class="h4" style="font-size:15px;margin:8px 0 4px">
+                                  <a href={p.url} style="color:inherit;text-decoration:none">{p.title}</a>
+                                </h3>
+                                {p.snippet && <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px">{p.snippet}</p>}
+                                <a href={p.url} class="link-arrow" style="font-size:12.5px;font-weight:700">View product →</a>
+                              </article>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {(rawSearchType === 'all' || rawSearchType === 'article') && arts.length > 0 && (
+                        <section>
+                          <h2 class="h3" style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                            Media &amp; Articles <span class="chip">{arts.length}</span>
+                          </h2>
+                          <div class="grid g3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+                            {arts.map((a: any) => (
+                              <a class="card card-pad article-card" href={a.url} style="border:1px solid #E6EBF1;border-radius:10px;text-decoration:none;color:inherit;display:block">
+                                <span class="chip" style="font-size:11px;font-weight:700">{a.badge || a.category || 'Article'}</span>
+                                <b style="display:block;margin:8px 0 4px;font-size:15px">{a.title}</b>
+                                {a.snippet && <p style="font-size:12.5px;color:var(--muted);margin:0">{a.snippet}…</p>}
+                              </a>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {(rawSearchType === 'all' || rawSearchType === 'glossary') && terms.length > 0 && (
+                        <section>
+                          <h2 class="h3" style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                            Glossary Terms <span class="chip">{terms.length}</span>
+                          </h2>
+                          <div class="grid g3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+                            {terms.map((t: any) => (
+                              <a class="card card-pad" href={t.url} style="border:1px solid #E6EBF1;border-radius:10px;text-decoration:none;color:inherit;display:block">
+                                <span class="chip" style="font-size:11px;font-weight:700">Glossary</span>
+                                <b style="display:block;margin:8px 0 4px;font-size:15px">{t.title}</b>
+                                {t.snippet && <p style="font-size:12.5px;color:var(--muted);margin:0">{t.snippet}…</p>}
+                              </a>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+                    </div>
+                  ) : rawQ ? (
+                    <div class="empty-state" style="padding:40px 20px;text-align:center;border:1px dashed #CBD5E1;border-radius:12px;background:#F8FAFC">
+                      <h3 class="h3" style="margin-bottom:6px">No results found for “{safeQ}”</h3>
+                      <p style="color:var(--muted);margin:0">Try searching for DDR5, NVMe, VOLTX, warranty, or another keyword.</p>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </section>
           );
+        }
 
         case 'widget:locator-controls': {
           const component = String(raw.component || '');
@@ -1556,7 +1693,10 @@ for (const fb of formBlocks) {
                     method="POST"
                     novalidate
                     data-success={successMsg}
+                    data-loaded-at={Date.now()}
                   >
+                    <input type="text" name="hp" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;pointer-events:none" aria-hidden="true" />
+                    <input type="hidden" name="formToken" value={formToken} />
                     <div class="form-grid">
                       {formFields.map((f: any) => {
                         const isFull = f.type === 'textarea' || f.name === 'message' || f.name === 'specifications';

@@ -124,6 +124,102 @@
     if (micro.disclaimer) root.appendChild(el('p', 'form-note', micro.disclaimer));
   }
 
+  function mountRgbLab(root, config, micro) {
+    root.appendChild(el('h3', 'h3', micro.title || 'VOLTX RGB Effects Lab'));
+    if (micro.subtitle) root.appendChild(el('p', 'form-note', micro.subtitle));
+    var card = el('div', 'card rgb-lab');
+    card.style.marginTop = '12px';
+    var stage = el('div', 'rgb-stage');
+    var mod = el('div', 'rgb-module');
+    mod.setAttribute('role', 'img');
+    mod.setAttribute('aria-label', 'VOLTX RGB lighting preview');
+    for (var i = 0; i < 8; i++) mod.appendChild(el('i'));
+    stage.appendChild(mod);
+    card.appendChild(stage);
+    var fxRow = el('div', 'fx-row');
+    fxRow.setAttribute('role', 'radiogroup');
+    fxRow.setAttribute('aria-label', 'Lighting effect');
+    var effects = config.effects || ['Static', 'Breathing', 'Rainbow', 'Wave', 'Meteor'];
+    effects.forEach(function (fx, idx) {
+      var id = 'fx-embed-' + idx;
+      var radio = el('input');
+      radio.type = 'radio';
+      radio.name = 'rgbfx-embed';
+      radio.id = id;
+      if (idx === 0) radio.checked = true;
+      card.insertBefore(radio, stage);
+      var lbl = el('label', 'fx-chip');
+      lbl.setAttribute('for', id);
+      lbl.appendChild(el('span', '', fx));
+      fxRow.appendChild(lbl);
+    });
+    card.appendChild(fxRow);
+    if (micro.disclaimer) card.appendChild(el('p', 'form-note', micro.disclaimer));
+    root.appendChild(card);
+  }
+
+  function mountCounters(root, config, micro) {
+    root.appendChild(el('h3', 'h3', micro.title || 'Platform Metrics'));
+    if (micro.subtitle) root.appendChild(el('p', 'form-note', micro.subtitle));
+    var grid = el('div', 'grid g4');
+    grid.style.marginTop = '12px';
+    var stats = config.stats || [
+      { num: 1998, label: 'Founded' },
+      { num: 93, label: 'Countries' },
+      { num: 14000, label: 'MB/s Read' }
+    ];
+    stats.forEach(function (st) {
+      var cell = el('div', 'card card-pad');
+      var b = el('b', 'h2', String(st.num));
+      b.setAttribute('data-counter', String(st.num));
+      cell.appendChild(b);
+      cell.appendChild(el('div', 'form-note', st.label));
+      grid.appendChild(cell);
+    });
+    root.appendChild(grid);
+  }
+
+  function mountTabs(root, config, micro) {
+    root.appendChild(el('h3', 'h3', micro.title || 'Interactive Tabs'));
+    if (micro.subtitle) root.appendChild(el('p', 'form-note', micro.subtitle));
+    var tabsWrap = el('div', 'tabs');
+    tabsWrap.setAttribute('role', 'tablist');
+    tabsWrap.style.marginTop = '12px';
+    var contentWrap = el('div', 'widget-output');
+    contentWrap.style.marginTop = '12px';
+    var items = config.items || [
+      { id: 'tab1', label: 'Overview', content: 'Overview content' },
+      { id: 'tab2', label: 'Specifications', content: 'Specs content' }
+    ];
+    function renderTab(activeId) {
+      contentWrap.textContent = '';
+      items.forEach(function (item) {
+        if (item.id === activeId) {
+          var panel = el('div', 'card card-pad');
+          panel.appendChild(el('p', '', item.content || item.desc || ''));
+          contentWrap.appendChild(panel);
+        }
+      });
+    }
+    items.forEach(function (item, idx) {
+      var btn = el('button', 'tab' + (idx === 0 ? ' on' : ''), item.label);
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
+      btn.addEventListener('click', function () {
+        Array.prototype.forEach.call(tabsWrap.querySelectorAll('.tab'), function (b) {
+          var on = b === btn;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        renderTab(item.id);
+      });
+      tabsWrap.appendChild(btn);
+    });
+    root.appendChild(tabsWrap);
+    root.appendChild(contentWrap);
+    if (items.length) renderTab(items[0].id);
+  }
+
   function init() {
     Array.prototype.forEach.call(document.querySelectorAll('[data-widget]'), function (root) {
       if (root.getAttribute('data-widget-mounted') === '1') return;
@@ -134,6 +230,9 @@
       if (type === 'advisor') mountAdvisor(root, config, micro);
       else if (type === 'speed_visualizer') mountSpeed(root, config, micro);
       else if (type === 'flagship') mountFlagship(root, config, micro);
+      else if (type === 'rgb_lab' || type === 'rgb-lab') mountRgbLab(root, config, micro);
+      else if (type === 'counters') mountCounters(root, config, micro);
+      else if (type === 'tabs') mountTabs(root, config, micro);
       else mountFallback(root, micro);
     });
   }

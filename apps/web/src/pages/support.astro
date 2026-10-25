@@ -10,6 +10,12 @@ const page = await getDeliveryPage('support', 'en', preview);
 if (preview) {
   Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
   Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+} else {
+  const tags = Array.isArray(page?.cacheTags) && page.cacheTags.length > 0
+    ? page.cacheTags.join(', ')
+    : 'support, page-support, forms';
+  Astro.response.headers.set('Cache-Tag', tags);
+  Astro.response.headers.set('X-Cache-Tags', tags);
 }
 const title = page?.title ?? "Support Center — TwinMOS";
 const desc = page?.seoDescription ?? "TwinMOS support: FAQ for DRAM, SSD, flash and accessories, warranty policy and RMA tracking.";

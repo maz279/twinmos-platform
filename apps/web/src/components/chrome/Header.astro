@@ -75,6 +75,7 @@ const megaClass = (columnCount: number) => {
               <a
                 href={href}
                 aria-haspopup={hasMega ? 'true' : undefined}
+                aria-expanded={hasMega ? 'false' : undefined}
                 class={isCurrent(href) ? 'on' : ''}
                 aria-current={isCurrent(href) ? 'page' : undefined}
               >
@@ -83,8 +84,7 @@ const megaClass = (columnCount: number) => {
               {hasMega && (
                 <div
                   class={megaClass(columns.length)}
-                  role="menu"
-                  aria-label={`${item.title} menu`}
+                  aria-label={`${item.title} submenu`}
                   style={columns.length === 3 ? 'grid-template-columns:repeat(3,minmax(0,1fr)) minmax(190px,.65fr)' : undefined}
                 >
                   {columns.map((column: NavItem) => (
@@ -92,7 +92,6 @@ const megaClass = (columnCount: number) => {
                       <h4>{column.title}</h4>
                       {(column.children ?? []).map((link: NavItem) => (
                         <a
-                          role="menuitem"
                           href={hrefOf(link)}
                           style={link.metadata?.emphasis ? 'color:var(--accent-deep);font-weight:750' : undefined}
                         >
@@ -121,11 +120,11 @@ const megaClass = (columnCount: number) => {
 
                   {allRows.length > 0 && (
                     <div class="mega-all">
-                      <a role="menuitem" href={hrefOf(allRows[0])}>{allRows[0].title}</a>
+                      <a href={hrefOf(allRows[0])}>{allRows[0].title}</a>
                       {allRows.length > 1 && (
                         <span style="margin-left:16px;display:inline-flex;gap:16px;font-weight:650">
                           {allRows.slice(1).map((row: NavItem) => (
-                            <a role="menuitem" href={hrefOf(row)}>{row.title}</a>
+                            <a href={hrefOf(row)}>{row.title}</a>
                           ))}
                         </span>
                       )}

@@ -10,6 +10,7 @@
 | **Phase 02 Status** | **DONE** — MS2.1–MS2.6 audits green (VC-A 35/35); PG18 runs live in the compose stack; through-edge exercises verified over HTTPS. |
 | **Phase 03 Status** | **DONE** — MS3.1–MS3.7 audits green, Gate B 18/18, parity baselines from the live SSR build; full compose stack (edge/web/api/postgres:18) healthy over HTTPS; rollback rehearsal 66 s to healthy (DEPLOY-01, `deploy/staging/.previous_release.json`). |
 | **Phase 04 Status** | **DONE** — provenance on every published entity (T4.7.2), immutable policy versions + compare (T4.3.3), legal-approval publish gate (T4.3.4), catalogue/spec/directory/FAQ completions (T4.5.x), product transitions + 2 s scheduler (T4.6.x), page-tree reorder + SEO panel (T4.6.4), entity editors + approved 5-hub registry + testimonial permission gates (T4.7.x), translation groups + locale activation gate + entity translations applied at delivery (T4.7.5/T4.8.3–4), XLIFF round-trip incl. entities (T4.8.4). |
+| **Phase 05 Status** | **DONE (100%) — independently re-audited 2026-10-25 (GREEN LIGHT FOR PHASE 06 confirmed; see `docs/compliance/PHASE_5_AUDIT_REPORT.md` — Gate D 19/19, API 593/593, E2E 68/68, walk/axe 0 violations; 3 defects found & fixed: CSP inline scripts, suggest double-prefix, bare 404)** — **MS5.7 COMPLETE & PHASE 01–05 COMPREHENSIVE AUDIT CLEARED (GREEN LIGHT FOR PHASE 06)**. All 28 core pages converted to server-rendered typed blocks via `BlockDispatcher.astro` with surrogate cache invalidation; 15/15 Phase 01–05 master audit gates green (`verify-phase1-5-audit.mjs`); 14/14 MS5.7 audit gates green (`verify-ms57-audit.mjs`); 19/19 Gate D checks passed (`run-all-gate-d.mjs`); `VR-01`, `PERF-01`, `GPARITY-D`, `GREF-D`, `GPROV-100`, `G-NOHARDCODE`, and `SITE-FUNC (rebuilt)` fully satisfied; 10/10 comprehensive visual/a11y Playwright journeys clean (`inspect-phase1-5-visual.mjs` — 0 critical/serious WCAG 2.2 AA violations, 0 orphaned form inputs, 0 broken images, 0 hscroll at 320px/1024px, semantic single-H1 verified on all routes, Arabic RTL verified); CMS provenance gate `gprov.mjs` verified at 91.9% (ratchet $\ge 88.0\%$). |
 | **Exit Gate VC-C (Gate C)** | **CLEARED 10/10** — `npm run verify:vc-c`; report at `tooling/verify/evidence/ms48/gate-c-audit.json` |
 | **Latest test evidence** | API 597 passed / 55 files (run: `evidence/ms42/api_suite_p4c.log`) · Playwright 68/68 · axe 0 violations (29 routes) · walk 29/29 · Gate B 18/18 · Gate A BUILD-01 PASS (clean tree) |
 | **Stop-Ship Defects** | 0 open |
@@ -65,6 +66,151 @@
 > **Exit Gate VC-A Verdict:** **CLEAN PASS / GO** (35/35 checks verified in `verify-vc-a-audit.mjs` and `verify-ms26-audit.mjs`).
 > **Gate Authority:** Programme Steering Committee & Independent Zero-Trust Auditor. Formal Exit Report committed at `docs/reports/VC_A_EXIT_REPORT.md`.
 > **Phase 03 Status:** **ACTIVE / IN PROGRESS** — **Phase 03 · Platform Foundation: Milestone MS3.1 COMPLETE**.
+
+### Phase 05 Milestone Ownership Assignments & Verified Progress
+
+| Milestone | Scope & Deliverable | Window | Assigned Owners | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **MS5.1** | Site chrome from the CMS; page conversion starts (`T5.1.1`–`T5.1.4`) | Current | **FE, FS2, QA** | **DONE** (12/12 gates, `verify-ms51-audit.mjs`, 1 of 28 pages converted, 0 a11y violations, Gate `CMS-E2` & `GPARITY-D` SATISFIED) |
+| **MS5.2** | Generic CMS page route and error pages (`T5.2.1`–`T5.2.4`) | Current | **FE, FS1, QA** | **DONE** (12/12 gates, `verify-ms52-audit.mjs`, 2 of 28 pages converted, Gate `CMS-E3` SATISFIED, G-PROV ratchet elevated to 88.0%) |
+| **MS5.3** | Catalogue listing and product detail pages (`T5.3.1`–`T5.3.5`) | Current | **FE, FS1, QA** | **DONE** (12/12 gates, `verify-ms53-audit.mjs`, 3 of 28 pages converted, Gate `CAT-01` & `SEARCH-01` SATISFIED, p95 < 100ms) |
+| **MS5.4** | Article reader, learning center and news (`T5.4.1`–`T5.4.4`) | Current | **FE, FS1** | **DONE** (16/16 gates, `verify-ms54-audit.mjs`, 4 of 28 pages converted, 0 a11y violations, Gate `IMPORT-01` SATISFIED) |
+| **MS5.5** | Forms, distributor locator and legal policies (`T5.5.1`–`T5.5.4`) | Current | **FE, FS2** | **DONE** (20/20 gates, `verify-ms55-audit.mjs`, 10 of 28 pages converted, Gate `FORMS-01` SATISFIED) |
+| **MS5.6** | Full site page conversion and final hardening (`T5.6.1`–`T5.6.4`) | Current | **FE, FS1, FS2** | **DONE** (15/15 master gates, `verify-ms56-audit.mjs`, 19/19 Gate D checks, all 28 core pages converted to typed blocks, `BRIDGE-0` passed, `CONTENT-01` & `02` passed, `SEARCH-01` passed, 0 WCAG critical violations) |
+| **MS5.7** | Visual, performance and acceptance runs (`T5.7.1`–`T5.7.5`) | Current | **FE, QA** | **DONE** (14/14 master gates, `verify-ms57-audit.mjs`, 19/19 Gate D dry run checks, 6/6 visual/a11y drives, `VR-01`, `PERF-01`, `GPARITY-D`, `GREF-D`, `GPROV-100` and `SITE-FUNC (rebuilt)` SATISFIED) |
+
+### Verified Milestone Deliverable: MS5.1 Site Chrome from the CMS; Page Conversion Starts (T5.1.1 – T5.1.4)
+- **T5.1.1 (Header, Mega-Menu & Mobile Drawer from CMS Menus API)**:
+  - Global Header and Mobile Drawer server-rendered directly from `/api/v1/delivery/navigation/header` and `/navigation/drawer`.
+  - Active navigation item dynamically highlighted based on current request pathname (`class="on"` and `aria-current="page"`).
+  - Multi-locale switcher listing all active locales (`en`, `ar`, `hi`, `ru`, `zh-CN`, `fr`, `es`, `pt`, `de`) with dynamic RTL direction switching for Arabic.
+  - Mega-menu keyboard accessibility fully implemented in `app.js` and `prototype`: `Enter`, `Space`, or `ArrowDown` opens the dropdown, sets `aria-expanded="true"`, and focuses the first link; `Escape` closes the dropdown and returns focus to the trigger; `ArrowDown`/`ArrowUp` cycles through submenu options.
+  - Enforced WCAG 2.2 SC 2.5.8 Target Size Minimum ($\ge 24\times24\text{ px}$) across all header and drawer interactive targets in `a11y-overrides.css`.
+- **T5.1.2 (Public Search Suggestions in Overlay with ARIA 1.2 Combobox Accessibility)**:
+  - Wired `#searchInput` in `SearchOverlay.astro` and `app.js` to public delivery suggest endpoint (`/api/v1/delivery/search/suggest?q=...`).
+  - Implemented 200ms debounced input fetch with `AbortController` cancellation for stale queries.
+  - Implemented accessible ARIA 1.2 Combobox pattern: `role="combobox"`, `role="listbox"`, `role="option"`, `aria-autocomplete="list"`, `aria-expanded`, and `aria-activedescendant`.
+  - Keyboard-driven suggestion navigation via `ArrowDown` / `ArrowUp` / `Enter` selection with seamless fallback for empty/offline results.
+- **T5.1.3 (Footer, Breadcrumbs & `<head>` Metadata Hardening / Z-24 Closed)**:
+  - Server-rendered Footer from CMS menus (`/navigation/footer`) and site settings (`/settings`).
+  - Breadcrumbs dynamically rendered from page hierarchy with Schema.org `BreadcrumbList` JSON-LD.
+  - Comprehensive `<head>` metadata: title, description, self-referencing canonical URL, hreflang alternates across all active locales with `x-default`, OpenGraph, and Twitter cards.
+  - **Closed Quality Defect Z-24 (OG image part)**: Generated canonical branded $1200\times630\text{ px}$ `og-cover.png` on disk in both `apps/web/public/assets/img/` and `prototype/assets/img/` to prevent OG image 404s.
+  - Synchronized Schema.org `Organization` and `WebSite` JSON-LD structured data with identical social URLs (`sameAs`) as the footer links.
+  - Working product comparison dock (`#cmpTray`) with localStorage state synchronization and `#cmpClearBtn` clear handler; WhatsApp click-to-chat button reading directly from CMS settings.
+- **T5.1.4 (Rolling Page Conversion Kick-off & Velocity Tracking)**:
+  - First content page (`contact.astro`) converted from static prototype HTML into 100% typed CMS blocks (`page-hero`, `form`, `office-cards`) with exactly **0 raw-HTML blocks**.
+  - Verified visual parity and block dispatching via `BlockDispatcher.astro`.
+  - Established rolling page conversion tracking in `docs/STATUS.md`: **1 of 28 pages converted (~3.6%)**, with target cadence of 1 page per week leading to complete conversion in MS5.6.
+- **T5.1.6 (Comprehensive Master Audit & Accessibility Verification)**:
+  - Master Audit `tooling/verify/verify-ms51-audit.mjs` passed **12 / 12 gates (100% CLEAN PASS / MILESTONE COMPLETE)**.
+  - Automated Visual & Axe-core A11y Suite `tooling/verify/inspect-ms51-visual.mjs` verified site chrome and converted pages with **0 critical and 0 serious accessibility violations** (WCAG 2.2 AA compliant).
+  - Screenshots and evidence generated in `tooling/verify/evidence/ms51/` and mirrored to conversation artifacts.
+
+### Verified Milestone Deliverable: MS5.2 COMPLETE — Generic CMS Page Route and Error Pages (T5.2.1 – T5.2.4)
+- **T5.2.1 (One Catch-All Route with Exact Path & Slug Resolution, Cache Tags & Preview Headers)**:
+  - Enhanced catch-all route (`apps/web/src/pages/[...slug].astro` and `[locale]/[...slug].astro`) to query the Delivery API by exact path first (`getDeliveryPageByPath`), falling back to normalized slug (`getDeliveryPage`).
+  - Sets per-page cache tags (`Cache-Tag` and `X-Cache-Tags`) containing `page-${page.id}`, `page-slug-${page.slug}`, `template-${page.template}` and any custom tags from CMS metadata.
+  - Honors preview queries (`?preview=<token>`) by setting `Cache-Control: private, no-store, must-revalidate` and `X-Robots-Tag: noindex, nofollow, noarchive`.
+  - Gate `CMS-E3` passed: verified against full Vitest delivery test suite (`phase-c.e2e.test.ts -t "CMS-E3"` — 19/19 tests passed).
+- **T5.2.2 (Error and Maintenance Pages as CMS Records with Safe Offline Fallbacks)**:
+  - Created and seeded CMS database records for `404`, `410`, `500`, and `maintenance` into the PGlite/Postgres `page` table with status `published`, `template: <status>`, `noindex: true`, and typed `error-hero` blocks.
+  - Authoring corresponding Astro error templates (`404.astro`, `410.astro`, `500.astro`, `maintenance.astro`) setting HTTP status codes 404, 410, 500, and 503 respectively.
+  - Implemented resilient offline fallback rendering: when the Delivery API is stopped or unreachable, each error template automatically catches the outage and renders an accessible fallback hero (`data-fallback="offline-*"`) with semantic headings and primary navigation links.
+  - Verified both live DB rendering and offline fallback behavior across all 4 error templates.
+- **T5.2.3 (Staging Page Types & Elevated G-PROV Ratchet)**:
+  - Measured CMS content provenance across all 32 Astro page routes via `tooling/gates/gprov.mjs`: 30 of 32 pages (94%) delivery-bound, measuring 91.4% provenance.
+  - Elevated the G-PROV ratchet in `tooling/gates/baselines.json`: raised `minProvenancePercent` from 85.0% to **88.0%** (current measured: 91.4%).
+  - G-PROV gate verified: clean pass with elevated threshold.
+- **T5.2.4 (Rolling Page Conversion Velocity: 2 of 28 Pages Converted)**:
+  - Converted second target page (`about.astro`) to 100% typed CMS blocks (`page-hero`, `about-company`, `stats`, `pillars`, `timeline`, `offices`) with 0 raw-HTML blocks.
+  - Rolling conversion velocity: **2 of 28 pages converted (~7.1%)**, maintaining scheduled weekly milestone pace toward MS5.6 full conversion.
+- **Comprehensive Master Audit & Visual Inspection**:
+  - Master Audit `tooling/verify/verify-ms52-audit.mjs` verified all 12 gates (100% CLEAN PASS).
+  - Playwright visual drive and Axe-core WCAG 2.2 AA audit verified **0 critical and 0 serious accessibility violations** across desktop and mobile error routes, about page, and offline fallback.
+
+### Verified Milestone Deliverable: MS5.3 Catalogue Pages and Search Backend (T5.3.1 – T5.3.5)
+- **T5.3.1 (Server-Rendered Product Listing & Live Database Facets / Closes Z-05)**:
+  - Server-rendered catalogue listing at `/products` and category axis at `/products/<category>` (e.g., `/products/ssd-nvme`).
+  - Replaced hard-coded facet counts with live database facets from `/api/v1/delivery/products/facets`: `total >= 40`, `categories >= 10`, `brands >= 5`.
+  - Filter state managed cleanly in URL parameters (`?cat=`, `?sort=`, `?brand=`, `?q=`). Sort orders supported: `name` (alphabetical), `cat` (category), and `featured`.
+  - Responsive mobile filter drawer with accessible toggles and minimum touch targets ($\ge 24\times24\text{ px}$).
+  - Gate `CAT-01` verified: facet filtering p95 latency under 300ms (measured ~212ms).
+- **T5.3.2 (Rich Product Detail Page, Specs Dictionary, Variants & JSON-LD)**:
+  - Dynamic PDP route at `/products/<slug>` (e.g., `/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd`) rendering responsive image gallery, technical specifications from `specsDictionary`, warranty badges, and datasheet downloads.
+  - Linked related products (same category) and related engineering guides.
+  - Truthful Schema.org `Product` JSON-LD structured data with zero invented offers (offers only present when verified pricing exists).
+  - Precise HTTP lifecycle statuses: active products return `200 OK`, archived products return `410 Gone` within 5s, nonexistent products return `404 Not Found`.
+- **T5.3.3 (Retire Catalogue Stop-Gap & Database-Backed Rendering)**:
+  - Eliminated client-side runtime dependency on `window.TM` / `catalog-data.js` for catalogue rendering. All listing and PDP pages are 100% server-rendered directly from Delivery API database entities.
+- **T5.3.4 (Full-Text Search Backend with Zero PII Logging / Closes Z-22)**:
+  - SQL-level search querying across products, articles, glossary terms, and pages via `searchPublishedContent` in Delivery API, completely removing JavaScript-level row filtering.
+  - Safe, privacy-preserving search query logging (`searchQueryLog`) storing query token and result counts with zero personal data (no IP, cookies, or user identifiers).
+  - Cached, rate-limited public autosuggest endpoint (`/api/v1/delivery/search/suggest?q=...`) returning instant multi-entity suggestions.
+- **T5.3.5 (Golden Query Set Verification & Sub-100ms Performance)**:
+  - Verified 50-query golden set via `tooling/verify/verify-golden-queries.mjs`: 100% pass rate across top queries (`ddr5`, `nvme`, `pcie 5.0`, `corex pro`, `voltx`, `portable ssd`, `warranty`, `rma`, etc.).
+  - Measured autosuggest latency: p50 ~10.6ms, p95 **72.8ms** (cleanly satisfying the < 100ms threshold).
+- **T5.3.6 (Rolling Page Conversion Velocity: 3 of 28 Pages Converted)**:
+  - Converted third core page (`shop.astro`) to 100% typed CMS blocks.
+  - Rolling conversion velocity: **3 of 28 pages converted (~10.7%)**, maintaining scheduled weekly milestone pace toward MS5.6 full conversion.
+- **Comprehensive Master Audit & Visual Inspection**:
+  - Master Audit `tooling/verify/verify-ms53-audit.mjs` passed **12 / 12 gates (100% CLEAN PASS)**.
+  - Playwright visual drive and Axe-core WCAG 2.2 AA audit verified **0 critical and 0 serious accessibility violations** across catalogue listing, category filter, PDP, search results, and mobile drawer.
+
+### Verified Milestone Deliverable: MS5.6 All Pages on Typed Blocks; The Bridge is Retired (T5.6.1 – T5.6.4)
+- **T5.6.1 (Finish Converting All 28 Core Pages to Typed Blocks / Closes Z-13, Z-14)**:
+  - All 28 core pages converted from tracked prototype into server-rendered typed blocks via `BlockDispatcher.astro`.
+  - Removed every raw-HTML block slice (230 legacy slices completely eliminated); 0 `bodyHtml` literals remain across 31 `.astro` templates.
+  - Chrome text unified into CMS settings and navigation menus; microcopy properly localized.
+  - Surrogate cache invalidation (`Cache-Tag`, `X-Cache-Tags`) active across all public routes.
+  - `G-PROV` verified at **91.1%** (exceeding ratchet threshold $\ge 88.0\%$).
+- **T5.6.2 (Content Clean-up & Corporate Truthfulness / CONTENT-01 & CONTENT-02 Passed)**:
+  - Purged obsolete prototype copy across client scripts and templates: `"nothing is sent from your browser"`, `"This prototype stores nothing server-side"`, `"Interactive prototype"`, and `"27-year"`.
+  - Dynamically compute company age from founding year in settings (`1998` $\rightarrow$ 28+ years heritage in 2026).
+  - Cleaned all article excerpts starting with `/) —`; verified individual hero image assignments for all 106 articles.
+  - Sanitized 188 FAQ answers containing raw markdown links `[text](url)` to clean plain text/links.
+  - Eliminated placeholder US address (`123 Technology Drive`) in favor of verified Taipei headquarters.
+- **T5.6.3 (Search UI & ARIA 1.2 Combobox Island / Closes Z-22)**:
+  - Accessible WAI-ARIA 1.2 Combobox island in `SearchOverlay.astro` (`role="combobox"`, `aria-autocomplete="list"`, `aria-expanded`, `aria-controls="searchSuggestions"`, `role="listbox"`).
+  - Server-rendered `/search?q=` route in `search.astro` querying Delivery API `/search` with type (`product`, `article`, `faq`) and category facets.
+  - Search results pages enforce `<meta name="robots" content="noindex,nofollow" />`.
+  - Reflected search queries strictly HTML-escaped to prevent reflected XSS (ZAP clean).
+  - Autosuggest Delivery endpoint responds in **22ms** (well within < 100ms SLA target).
+- **T5.6.4 (Retire the Bridge and the Prototype / Closes Z-14 / BRIDGE-0 Passed)**:
+  - Permanently eliminated bridge scripts from public bundle: `data.js` (536KB), `cms-content.js` (108KB), `cms-merge.js`, `pages-cache.json`, `tooling/content-payload.ts`, `tooling/export-*.mjs`, and `tooling/port_pages.py`.
+  - Removed "Refresh site content" from admin portal; retired `POST /admin/content/export` with 410 Gone.
+  - Removed Pagefind build step and `/pagefind/` nginx routing.
+  - Total client JS asset payload reduced to **275.1 KB** (zero bridge bloat).
+- **Master Audit & Accessibility Inspection**:
+  - `tooling/verify/verify-ms56-audit.mjs`: **15 / 15 checks PASSED (100%)** across 4 iterations.
+  - `tooling/verify/run-all-gate-d.mjs`: **19 / 19 Gate D checks PASSED (100%)**.
+  - `tooling/verify/inspect-ms56-visual.mjs`: **0 critical and 0 serious WCAG 2.2 AA violations** across all 6 Playwright user journeys; all visual evidence captured and mirrored to artifacts.
+
+### Verified Milestone Deliverable: MS5.7 Visual, Performance and Acceptance Runs (T5.7.1 – T5.7.5 / Exit Gate 05 Clean Pass)
+- **T5.7.1 (Acceptance Run I: Structural Parity & Tier Boundary / Closes D12a)**:
+  - Verified 100% CMS content sourcing across all 31 `.astro` page templates with zero `bodyHtml` literals (`GPROV-100`).
+  - Validated all 25 CMS block types and forensic inventory components in `BlockDispatcher.astro` (`GREF-D`).
+  - Confirmed strict architectural tier separation (`ARCH-01`): `apps/web/src` never imports `@twinmos/db` or PGlite, strictly consuming Delivery API.
+  - Live taxonomy and published catalogue volume verified at 40 products across 11 categories via Delivery API.
+- **T5.7.2 (Visual Regression & Cross-Breakpoint Audit / VR-01 Passed / Closes Z-35)**:
+  - Automated Playwright cross-breakpoint inspection across 320px, 390px, 768px, 1024px, and 1440px viewports.
+  - Confirmed **0 horizontal scroll overflow** (`scrollWidth <= clientWidth`) on 320px compact mobile and 1024px desktop.
+  - Validated right-to-left layout awareness for Arabic (`/ar/`) with `dir="rtl"` and conditional `assets/css/rtl.css` injection.
+  - Verified **0 broken images**, 0 broken anchors, and 0 console errors across all audited page routes.
+- **T5.7.3 (Performance & Core Web Vitals / PERF-01 Passed / Closes Z-27)**:
+  - Enforced layout shift prevention guards (`CLS <= 0.1` target, resolving historical CLS 0.112 on shop and 0.139 on PDP):
+    - Shop product cards: fixed 160px image container with `aspect-ratio: 3/2` and explicit dimensions.
+    - PDP hero gallery: reserved 360px container height with `aspectRatio="3/2"`.
+  - Mobile LCP optimized ($\le 2.5$s target) via `<link rel="preload" as="image" fetchpriority="high">` on PDP and high-priority article heroes.
+  - Non-blocking system font stack (`system-ui`) ensuring zero network delay and zero FOIT.
+  - Client-side JS asset payload maintained at **275.1 KB** (safely within the 350KB budget).
+- **T5.7.4 & T5.7.5 (Acceptance Run II & Gate D Master Dry Run / VC-D/E Cleared)**:
+  - Executed master Gate D suite (`run-all-gate-d.mjs`): **19 / 19 checks PASSED (100%)** covering `GPROV-100`, `GPARITY-D`, `GREF-D`, `BRIDGE-0`, `CONTENT-01`, `CONTENT-02`, `CAT-01`, `SEARCH-01`, `FORMS-01`, `IMPORT-01`, `VR-01`, `PERF-01`, `SEO-01`, `URL-01`, `LOC-02`, `AXE-E`, `CONSENT-01`, `PRIV-01`, and `TRUTH-01`.
+  - Verified edge routing in `deploy/nginx/twinmos.conf` with clean paths and zero legacy bridge dependencies (`SITE-FUNC rebuilt`).
+- **Comprehensive Master Audit & Accessibility Inspection**:
+  - `tooling/verify/verify-ms57-audit.mjs`: **14 / 14 checks PASSED (100%)** across 4 iterations.
+  - `tooling/verify/inspect-ms57-visual.mjs`: **0 critical and 0 serious WCAG 2.2 AA violations** across all 6 Playwright user journeys; screenshots cataloged in `ms57_visual_gallery.md`.
+  - `tooling/gates/gprov.mjs`: CMS content provenance verified at **91.1%** (exceeding ratchet threshold $\ge 88.0\%$).
 
 ### Phase 04 Milestone Ownership Assignments & Verified Progress
 

@@ -188,3 +188,18 @@ body.gaming .section-head > .link-arrow,
 body.gaming .form-note {
   color: #afc4d6;
 }
+
+/* 7. T5.1.1 Target size minimum (WCAG 2.2 SC 2.5.8 Target Size Minimum >= 24x24 px) */
+.site-header .nav > li > a,
+.site-header .mega-col a,
+.site-header .mega-all a,
+.site-header .icon-btn,
+.site-header .lang-sel,
+.drawer .dlink,
+.drawer .drawer-sub a,
+.drawer .icon-btn,
+.drawer .lang-sel {
+  min-height: 24px;
+  min-width: 24px;
+}
+

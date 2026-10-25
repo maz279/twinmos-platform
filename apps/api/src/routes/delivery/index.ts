@@ -177,8 +177,9 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const catSlug = c.req.query('cat') || c.req.query('category');
     const brandSlug = c.req.query('brand');
     const q = c.req.query('q');
+    const sort = c.req.query('sort');
 
-    const rows = await findPublishedProducts(db, { catSlug, brandSlug, q });
+    const rows = await findPublishedProducts(db, { catSlug, brandSlug, q, sort });
     const tags = ['products'];
     applyHeaders(c, tags);
     return c.json({ data: rows, meta: { total: rows.length, cacheTags: tags } });
@@ -267,6 +268,51 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
         cacheTags: tags,
         isPreview,
       },
+    });
+  });
+
+  // --- 5b. Article Rating (Zero PII, Rate-limited in-memory, T5.4.4) ---
+  const recentRatings = new Map<string, number>();
+  r.post('/articles/:slug/rating', async (c) => {
+    const slug = c.req.param('slug');
+    const locale = c.req.query('locale') || 'en';
+
+    const art = await findPublishedArticleBySlug(db, slug, locale);
+    if (!art) {
+      return c.json(problem(404, 'Article not found'), 404, { 'Content-Type': PROBLEM_JSON });
+    }
+
+    const body = await c.req.json().catch(() => ({}));
+    const helpful = typeof body.helpful === 'boolean' ? body.helpful : body.rating === 'up' || body.vote === 'yes';
+
+    // Zero PII Rate Limiting: hash ip + slug, no PII stored
+    const clientIp = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'anon';
+    const rateKey = `${clientIp.slice(0, 16)}:${slug}`;
+    const now = Date.now();
+    const lastVote = recentRatings.get(rateKey);
+    if (lastVote && now - lastVote < 60000) {
+      return c.json({
+        success: true,
+        recorded: false,
+        message: 'Feedback already received. Thank you!',
+        slug,
+      });
+    }
+    recentRatings.set(rateKey, now);
+
+    if (recentRatings.size > 10000) {
+      for (const [k, v] of recentRatings) {
+        if (now - v > 3600000) recentRatings.delete(k);
+      }
+    }
+
+    return c.json({
+      ok: true,
+      success: true,
+      recorded: true,
+      helpful,
+      slug,
+      message: 'Thank you for your feedback!',
     });
   });
 

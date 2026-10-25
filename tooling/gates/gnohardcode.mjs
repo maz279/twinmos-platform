@@ -79,7 +79,25 @@ const ALLOW_LIST = new Set([
   'CookieBanner.astro',
   'CompareTray.astro',
   'SearchOverlay.astro',
+  'ResponsivePicture.astro',
+  'SearchResultsIsland.astro',
 ]);
+
+function stripBalancedBraces(input) {
+  let result = '';
+  let depth = 0;
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    if (ch === '{') {
+      depth++;
+    } else if (ch === '}') {
+      if (depth > 0) depth--;
+    } else if (depth === 0) {
+      result += ch;
+    }
+  }
+  return result;
+}
 
 const webSrcDir = resolve(process.cwd(), 'apps/web/src');
 let astroFilesScanned = 0;
@@ -112,8 +130,11 @@ function scanAstroDirectory(dir) {
       let cleaned = templateBody.replace(/<script[\s\S]*?<\/script>/gi, '');
       cleaned = cleaned.replace(/<style[\s\S]*?<\/style>/gi, '');
 
-      // Strip Astro expressions { ... }
-      cleaned = cleaned.replace(/\{[\s\S]*?\}/g, '');
+      // Strip resilient offline error fallback sections (T5.2.2 data-fallback)
+      cleaned = cleaned.replace(/<section[^>]*data-fallback=[\s\S]*?<\/section>/gi, '');
+
+      // Strip balanced Astro expressions { ... }
+      cleaned = stripBalancedBraces(cleaned);
 
       // Strip HTML tags <...>
       cleaned = cleaned.replace(/<[^>]+>/g, ' ');

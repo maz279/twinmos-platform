@@ -13,13 +13,9 @@ export const prerender = false;
 const { locale } = Astro.params;
 const isKnownLocale = LOCALES.includes(locale as any) && locale !== 'en';
 if (!isKnownLocale) {
-  Astro.response.status = 404;
-  Astro.response.statusText = 'Not Found';
-  return new Response('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>404 Not Found</title></head><body><h1>404 Not Found</h1></body></html>', {
-    status: 404,
-    statusText: 'Not Found',
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
-  });
+  // A single path segment that is not a locale is an ordinary unknown page —
+  // hand it to the branded CMS 404 (T5.2.2) instead of a bare text 404.
+  return Astro.rewrite('/404');
 }
 const dir = localeDir(locale!);
 const settings = await getDeliverySettings().catch(() => ({} as Record<string, any>));

@@ -61,7 +61,7 @@ const isCompare = (item: NavItem) => /compare/i.test(item.title);
         const subId = `dsub-${item.id ?? idx}`;
         return (
           <>
-            <a class="dlink" href="#" data-sub={subId}>
+            <a class="dlink" href="#" data-sub={subId} aria-expanded="false" aria-controls={subId} role="button">
               {item.title} <span aria-hidden="true">&#9662;</span>
             </a>
             <div class="drawer-sub" id={subId}>
