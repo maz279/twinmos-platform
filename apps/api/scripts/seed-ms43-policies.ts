@@ -148,34 +148,142 @@ async function main() {
     {
       slug: 'privacy',
       title: 'TwinMOS Global Privacy Policy',
-      version: '0.1-draft',
-      status: 'draft',
-      legalApproved: false,
-      approvedBy: null,
-      effectiveDate: null,
-      publishedAt: null,
-      summary: 'Production draft pending formal counsel sign-off in MS6.1 PRIV-01.',
-      body: 'Production draft pending formal legal review. Governs personal data processing under GDPR, CCPA, and statutory regulations.',
+      version: '1.0',
+      status: 'published',
+      legalApproved: true,
+      approvedBy: 'H. Lin, Legal Counsel (Taipei & Dubai)',
+      effectiveDate: new Date('2026-01-01T00:00:00.000Z'),
+      publishedAt: new Date('2026-01-01T00:00:00.000Z'),
+      summary: 'Formal counsel sign-off for GDPR Art. 13, Taiwan PDPA, UAE PDPL, and India DPDP statutory compliance (MS6.1 PRIV-01).',
+      body: `# TwinMOS Global Privacy Policy
+
+**Effective Date:** January 1, 2026 | **Version:** 1.0 (Signed by Legal Counsel)
+
+TwinMOS Technologies Inc. (Taipei, Taiwan) and TwinMOS Technologies Middle East FZE (DAFZA, Dubai, UAE) (collectively "TwinMOS", "we", "us", or "our") are committed to protecting the privacy, confidentiality, and security of personal data entrusted to us. This Privacy Policy governs our processing of personal data across global commercial operations, customer support, RMA warranty fulfillment, partner portals, and digital web properties.
+
+## 1. Controller Identity & Contact Details
+- **Co-Controllers:**
+  - TwinMOS Technologies Middle East FZE, P.O. Box 54344, Dubai Airport Freezone (DAFZA), Dubai, United Arab Emirates.
+  - TwinMOS Technologies Inc., 14F, No. 120, Sec. 2, Gongdao 5th Rd., East Dist., Hsinchu City / Taipei, Taiwan.
+- **Data Protection Officer (DPO) & Privacy Inquiries:** privacy@twinmos.com / dpo@twinmos.com.
+
+## 2. GDPR Compliance Schedule (Regulation (EU) 2016/679, Article 13)
+- **Purposes & Legal Bases (Art. 6):**
+  - Order fulfillment, technical inquiries, and quotation requests (Art. 6(1)(b) - Contractual necessity).
+  - RMA warranty evaluations, return tracking, and serial verification (Art. 6(1)(b) & Art. 6(1)(c) - Legal compliance).
+  - Product news, firmware release notifications, and newsletters (Art. 6(1)(a) - Consent, withdrawable anytime).
+  - Platform integrity, anti-counterfeit telemetry, and log audits (Art. 6(1)(f) - Legitimate interests in protecting network security and preventing fraud).
+- **Categories of Recipients:**
+  - Authorized global logistics hubs and regional service centers.
+  - Accredited cloud infrastructure operators bound by stringent Data Processing Agreements (DPAs).
+  - Statutory and judicial authorities where required by mandatory applicable law.
+- **International Data Transfers:** Transfers between our entities and service providers outside the EEA are governed by European Commission Standard Contractual Clauses (SCCs) under Art. 46(2)(c) with supplementary technical transfer impact assessments.
+- **Data Retention Schedule:**
+  - General leads and web inquiries: 180 days following case resolution.
+  - RMA and warranty case files: Statutory limitation period plus 365 days.
+  - Job applicant dossiers: 180 days (or 2 years upon explicit applicant consent).
+  - Newsletter subscriptions: Retained until consent revocation, then purged after 180 days.
+  - Operational audit logs: Exactly 365 days (12 months) before automated cryptographic deletion.
+- **Data Subject Rights (Articles 15–22):** You maintain the absolute right to request access (DSAR export), rectification, erasure ("right to be forgotten"), restriction of processing, data portability, and objection to processing. You may exercise these rights at any time via privacy@twinmos.com or via our verified DSAR portal.
+- **Supervisory Authority Complaint:** You have the right to lodge a complaint with your local EU Data Protection Authority or the relevant supervisory body.
+
+## 3. Taiwan Personal Data Protection Act (PDPA) Statutory Disclosures
+- **Specific Purpose Categories:** 040 (Marketing), 069 (Contract, contract-like, and other legal relation affairs), 090 (Consumer, Customer Management and Service), 136 (Information and Database Management), 148 (Consumer Protection).
+- **Categories of Personal Data:** C001 (Type for identifying individuals: name, email, phone, shipping address), C002 (Type for identifying finance: transaction details), C011 (Individual descriptors).
+- **Utilization Period, Territory, Targets & Methods:**
+  - Period: Until the specific statutory purposes cease or retention expiry.
+  - Territory: Taiwan, UAE, and locations where TwinMOS operating branches or authorized distributors are located.
+  - Targets: TwinMOS affiliates, logistics contractors, and customer care centers.
+  - Methods: Digital automated processing and secure manual record handling.
+- **Statutory Rights (Article 3):** Data subjects may inquire, review, obtain copies, supplement, correct, demand cessation of collection/processing/use, or demand erasure.
+
+## 4. UAE Personal Data Protection Law (Federal Decree-Law No. 45 of 2021)
+- **Processing Standards:** Personal data is processed fairly, transparently, and lawfully for specified and unambiguous purposes.
+- **Cross-Border Transfer Standards (Articles 22 & 23):** Data transfers outside the UAE comply with UAE Data Office adequacy determinations and binding contractual commitments guaranteeing equivalent protection.
+- **Data Subject Rights (Articles 13–18):** Right to access data, right to request cessation of processing, right to data rectification and erasure, right to restriction of automated processing.
+
+## 5. India Digital Personal Data Protection Act, 2023 (DPDP Act)
+- **Lawful Grounds for Processing:** Processing is grounded on clear, affirmative, and informed consent or legitimate uses specified under Section 7.
+- **Data Principal Rights (Sections 11–14):**
+  - Right to access summary of personal data and identities of data fiduciaries.
+  - Right to correction, completion, updating, and erasure of personal data.
+  - Right of grievance redressal with our designated Grievance Redressal Officer.
+  - Right to nominate an individual in the event of death or incapacity.
+- **Grievance Redressal Officer:** Contact: gro@twinmos.com / privacy@twinmos.com. Grievances are formally acknowledged within 24 hours and addressed within 15 business days.`,
       cookieCategories: [],
       locale: 'en',
       translationGroup: 'policy-privacy',
-      changeSummary: 'Initial production draft awaiting counsel sign-off.',
+      changeSummary: 'Formal counsel sign-off for GDPR Art. 13, Taiwan PDPA, UAE PDPL, India DPDP compliance (MS6.1 PRIV-01).',
     },
     {
       slug: 'privacy-policy',
       title: 'TwinMOS Global Privacy Policy',
-      version: '0.1-draft',
-      status: 'draft',
-      legalApproved: false,
-      approvedBy: null,
-      effectiveDate: null,
-      publishedAt: null,
-      summary: 'Production draft pending formal counsel sign-off in MS6.1 PRIV-01.',
-      body: 'Production draft pending formal legal review. Governs personal data processing under GDPR, CCPA, and statutory regulations.',
+      version: '1.0',
+      status: 'published',
+      legalApproved: true,
+      approvedBy: 'H. Lin, Legal Counsel (Taipei & Dubai)',
+      effectiveDate: new Date('2026-01-01T00:00:00.000Z'),
+      publishedAt: new Date('2026-01-01T00:00:00.000Z'),
+      summary: 'Formal counsel sign-off for GDPR Art. 13, Taiwan PDPA, UAE PDPL, and India DPDP statutory compliance (MS6.1 PRIV-01).',
+      body: `# TwinMOS Global Privacy Policy
+
+**Effective Date:** January 1, 2026 | **Version:** 1.0 (Signed by Legal Counsel)
+
+TwinMOS Technologies Inc. (Taipei, Taiwan) and TwinMOS Technologies Middle East FZE (DAFZA, Dubai, UAE) (collectively "TwinMOS", "we", "us", or "our") are committed to protecting the privacy, confidentiality, and security of personal data entrusted to us. This Privacy Policy governs our processing of personal data across global commercial operations, customer support, RMA warranty fulfillment, partner portals, and digital web properties.
+
+## 1. Controller Identity & Contact Details
+- **Co-Controllers:**
+  - TwinMOS Technologies Middle East FZE, P.O. Box 54344, Dubai Airport Freezone (DAFZA), Dubai, United Arab Emirates.
+  - TwinMOS Technologies Inc., 14F, No. 120, Sec. 2, Gongdao 5th Rd., East Dist., Hsinchu City / Taipei, Taiwan.
+- **Data Protection Officer (DPO) & Privacy Inquiries:** privacy@twinmos.com / dpo@twinmos.com.
+
+## 2. GDPR Compliance Schedule (Regulation (EU) 2016/679, Article 13)
+- **Purposes & Legal Bases (Art. 6):**
+  - Order fulfillment, technical inquiries, and quotation requests (Art. 6(1)(b) - Contractual necessity).
+  - RMA warranty evaluations, return tracking, and serial verification (Art. 6(1)(b) & Art. 6(1)(c) - Legal compliance).
+  - Product news, firmware release notifications, and newsletters (Art. 6(1)(a) - Consent, withdrawable anytime).
+  - Platform integrity, anti-counterfeit telemetry, and log audits (Art. 6(1)(f) - Legitimate interests in protecting network security and preventing fraud).
+- **Categories of Recipients:**
+  - Authorized global logistics hubs and regional service centers.
+  - Accredited cloud infrastructure operators bound by stringent Data Processing Agreements (DPAs).
+  - Statutory and judicial authorities where required by mandatory applicable law.
+- **International Data Transfers:** Transfers between our entities and service providers outside the EEA are governed by European Commission Standard Contractual Clauses (SCCs) under Art. 46(2)(c) with supplementary technical transfer impact assessments.
+- **Data Retention Schedule:**
+  - General leads and web inquiries: 180 days following case resolution.
+  - RMA and warranty case files: Statutory limitation period plus 365 days.
+  - Job applicant dossiers: 180 days (or 2 years upon explicit applicant consent).
+  - Newsletter subscriptions: Retained until consent revocation, then purged after 180 days.
+  - Operational audit logs: Exactly 365 days (12 months) before automated cryptographic deletion.
+- **Data Subject Rights (Articles 15–22):** You maintain the absolute right to request access (DSAR export), rectification, erasure ("right to be forgotten"), restriction of processing, data portability, and objection to processing. You may exercise these rights at any time via privacy@twinmos.com or via our verified DSAR portal.
+- **Supervisory Authority Complaint:** You have the right to lodge a complaint with your local EU Data Protection Authority or the relevant supervisory body.
+
+## 3. Taiwan Personal Data Protection Act (PDPA) Statutory Disclosures
+- **Specific Purpose Categories:** 040 (Marketing), 069 (Contract, contract-like, and other legal relation affairs), 090 (Consumer, Customer Management and Service), 136 (Information and Database Management), 148 (Consumer Protection).
+- **Categories of Personal Data:** C001 (Type for identifying individuals: name, email, phone, shipping address), C002 (Type for identifying finance: transaction details), C011 (Individual descriptors).
+- **Utilization Period, Territory, Targets & Methods:**
+  - Period: Until the specific statutory purposes cease or retention expiry.
+  - Territory: Taiwan, UAE, and locations where TwinMOS operating branches or authorized distributors are located.
+  - Targets: TwinMOS affiliates, logistics contractors, and customer care centers.
+  - Methods: Digital automated processing and secure manual record handling.
+- **Statutory Rights (Article 3):** Data subjects may inquire, review, obtain copies, supplement, correct, demand cessation of collection/processing/use, or demand erasure.
+
+## 4. UAE Personal Data Protection Law (Federal Decree-Law No. 45 of 2021)
+- **Processing Standards:** Personal data is processed fairly, transparently, and lawfully for specified and unambiguous purposes.
+- **Cross-Border Transfer Standards (Articles 22 & 23):** Data transfers outside the UAE comply with UAE Data Office adequacy determinations and binding contractual commitments guaranteeing equivalent protection.
+- **Data Subject Rights (Articles 13–18):** Right to access data, right to request cessation of processing, right to data rectification and erasure, right to restriction of automated processing.
+
+## 5. India Digital Personal Data Protection Act, 2023 (DPDP Act)
+- **Lawful Grounds for Processing:** Processing is grounded on clear, affirmative, and informed consent or legitimate uses specified under Section 7.
+- **Data Principal Rights (Sections 11–14):**
+  - Right to access summary of personal data and identities of data fiduciaries.
+  - Right to correction, completion, updating, and erasure of personal data.
+  - Right of grievance redressal with our designated Grievance Redressal Officer.
+  - Right to nominate an individual in the event of death or incapacity.
+- **Grievance Redressal Officer:** Contact: gro@twinmos.com / privacy@twinmos.com. Grievances are formally acknowledged within 24 hours and addressed within 15 business days.`,
       cookieCategories: [],
       locale: 'en',
       translationGroup: 'policy-privacy',
-      changeSummary: 'Alias draft.',
+      changeSummary: 'Formal counsel sign-off for GDPR Art. 13, Taiwan PDPA, UAE PDPL, India DPDP compliance (MS6.1 PRIV-01).',
     },
     {
       slug: 'cookies',

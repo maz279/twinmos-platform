@@ -18,6 +18,7 @@ import { contentRoute, previewRoute, promoteScheduled } from './routes/content.t
 import { mediaRoute, publicMediaRoute } from './routes/media.ts';
 import { settingsRoute } from './routes/settings.ts';
 import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
+import { redactPersonalData } from './lib/redact.ts';
 import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
 import { snCheckRoute, snReportRoute, serialAdminRoute } from './routes/sncheck.ts';
 import { navigationRoute } from './routes/navigation.ts';
@@ -82,7 +83,9 @@ export function buildApp(db: DB) {
   const { auth, requireRole, sessionFromRequest } = initAuth(db);
   const app = new Hono<{ Variables: { requestId: string } }>();
 
-  if (process.env.NODE_ENV !== 'test') app.use(logger());
+  if (process.env.NODE_ENV !== 'test') {
+    app.use(logger((str) => console.log(redactPersonalData(str))));
+  }
   // ---- P7: security headers on every API response (OWASP secure-headers) ----
   app.use('*', async (c, next) => {
     c.header('X-Content-Type-Options', 'nosniff');

@@ -52,6 +52,9 @@ const legalLinks = legalGroup?.children ?? [];
           <input id="nlEmail" name="email" type="email" placeholder="Email for product news" aria-label="Email for newsletter" required />
           <button class="btn btn-accent btn-sm" type="submit">Join</button>
         </form>
+        <p class="newsletter-privacy-notice" style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.4" data-newsletter-notice>
+          By joining you agree to our <a href="/legal?tab=privacy" style="color:#cbd5e1;text-decoration:underline">Privacy Policy</a>. Unsubscribe anytime.
+        </p>
 
         <div class="social-row">
           {social.facebook && <a href={social.facebook} aria-label="Facebook" target="_blank" rel="noopener">f</a>}

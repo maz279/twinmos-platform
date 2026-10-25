@@ -247,10 +247,22 @@ describe('Phase E: SEO, i18n, Accessibility & Privacy Compliance (VC-D/E)', () =
       expect(anonymized.ip).toBeNull();
       expect(anonymized.ua).toBeNull();
 
-      // Verify audit log entry was created
+      // Verify audit log entry was created without personal data (T6.1.3 / Z-26)
       const logs = await db.select().from(auditLog).where(eq(auditLog.action, 'privacy.dsar_erase'));
       expect(logs.length).toBeGreaterThan(0);
-      expect((logs[0].diff as any).targetEmail).toBe(testEmail);
+      expect((logs[0].diff as any).targetHash).toBeDefined();
+      expect((logs[0].diff as any).targetEmail).toBeUndefined();
+
+      // Zero-leak check (T6.1.3): search for testEmail across all tables finds 0 rows
+      const allAuditLogs = await db.select().from(auditLog);
+      const leakedAudit = allAuditLogs.filter((l) => JSON.stringify(l.diff || {}).includes(testEmail));
+      expect(leakedAudit.length).toBe(0);
+      const remainingSubs = await db.select().from(formSubmission).where(eq(formSubmission.email, testEmail));
+      expect(remainingSubs.length).toBe(0);
+      const remainingApps = await db.select().from(jobApplication).where(eq(jobApplication.email, testEmail));
+      expect(remainingApps.length).toBe(0);
+      const remainingNl = await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.email, testEmail));
+      expect(remainingNl.length).toBe(0);
     });
 
     it('POST /api/v1/admin/privacy/retention-sweep executes multi-table retention and logs audit', async () => {
