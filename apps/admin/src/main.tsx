@@ -18,7 +18,7 @@ import { Shell } from './shell';
 import type { Badges, Tab } from './shell';
 import SearchPalette from './search';
 import { ToastProvider } from './toast';
-import { LINE, PAGE } from './ui';
+import { btn, LINE, MUTED, PAGE } from './ui';
 
 const WRITE_ROLES = ['super_admin', 'admin', 'editor', 'author'];
 const canWrite = (role?: string) => !!role && WRITE_ROLES.includes(role);
@@ -57,13 +57,13 @@ class ModuleErrorBoundary extends React.Component<
       <div style={{ background: PAGE, padding: 40, textAlign: 'center' }}>
         <div style={{ maxWidth: 420, margin: '0 auto', border: `1px solid ${LINE}`, borderRadius: 12, background: '#fff', padding: 28 }}>
           <h2 style={{ margin: '0 0 8px', fontSize: 17, color: '#1F2A37' }}>This module could not be loaded</h2>
-          <p style={{ margin: '0 0 16px', fontSize: 13.5, color: '#66748A', lineHeight: 1.6 }}>
+          <p style={{ margin: '0 0 16px', fontSize: 13.5, color: MUTED, lineHeight: 1.6 }}>
             The console was updated since this tab opened (or the network dropped), so its code
             chunk is no longer available. Reload to pick up the current version — your other
             tabs are unaffected until then.
           </p>
           <button onClick={() => location.reload()}
-            style={{ padding: '9px 18px', border: 0, borderRadius: 8, background: '#1DBF9F', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+            style={{ ...btn, background: '#0E705A', padding: '9px 18px', color: '#fff' }}>
             Reload console
           </button>
         </div>

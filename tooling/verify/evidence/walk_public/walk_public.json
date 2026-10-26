@@ -20,7 +20,7 @@
     "status": 200,
     "title": "shop — TwinMOS",
     "hasTM": true,
-    "shopCards": 40
+    "shopCards": 39
   },
   {
     "route": "/product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd",
@@ -35,15 +35,15 @@
     "isLoading": false
   },
   {
-    "route": "/product.html?id=voltx-ddr5-udimm-16gb",
+    "route": "/product.html?id=voltx-ddr5-u-dimm-for-desktop",
     "consoleErrors": [],
     "pageErrors": [],
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "VOLTX DDR5 U-DIMM 16GB — TwinMOS",
+    "title": "TwinMOS VOLTX DDR5 U-DIMM for Desktop — TwinMOS",
     "hasTM": true,
-    "pdpH1": "VOLTX DDR5 U-DIMM 16GB",
+    "pdpH1": "TwinMOS VOLTX DDR5 U-DIMM for Desktop",
     "isLoading": false
   },
   {
@@ -293,7 +293,7 @@
     "csp": [],
     "failed": [],
     "status": 200,
-    "title": "TwinMOS — العربية",
+    "title": "توين موس — حلول الذاكرة والتخزين الرائدة منذ 1998",
     "hasTM": true
   }
 ]

@@ -124,12 +124,12 @@ export default function RmaBoard({ canWrite, me }: { canWrite: boolean; me?: { u
       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: INK, letterSpacing: -0.2 }}>RMA board</h1>
       <RmaAnalyticsStrip />
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
-        <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select style={input} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter by status">
           <option value="">All states</option>
           {RMA_STATUS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
         </select>
-        <input style={{ ...input, width: 230 }} placeholder="Search number, SKU, serial, customer…" value={q} onChange={(e) => setQ(e.target.value.trim())} />
-        <select style={input} value={assignee} onChange={(e) => setAssignee(e.target.value)} title="Technician">
+        <input style={{ ...input, width: 230 }} placeholder="Search number, SKU, serial, customer…" aria-label="Search number, SKU, serial, customer" value={q} onChange={(e) => setQ(e.target.value.trim())} />
+        <select style={input} value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Filter by technician" title="Technician">
           <option value="">Any technician</option>
           <option value="unassigned">Unassigned queue</option>
           {me?.user?.id && <option value={me.user.id}>Mine</option>}

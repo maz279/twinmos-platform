@@ -20,9 +20,12 @@ const CSP_DIRECTIVES = [
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, request } = context;
 
-  // 1. Check CMS Redirects (Task B6)
+  // 1. Check CMS Redirects (Task B6 & MS6.4)
   const redirect = await matchRedirect(url.pathname, url.search);
   if (redirect) {
+    if (redirect.status === 410 || redirect.to === '/410') {
+      return context.rewrite('/410');
+    }
     return context.redirect(redirect.to, redirect.status as 301 | 302);
   }
 

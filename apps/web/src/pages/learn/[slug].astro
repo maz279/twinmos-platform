@@ -118,13 +118,18 @@ if (article && (!relatedArticles || relatedArticles.length === 0)) {
     }));
 }
 
+const siteOrigin = Astro.site || 'https://www.twinmos.com';
+const fullHeroImg = heroImg
+  ? (heroImg.startsWith('http') ? heroImg : new URL(heroImg, siteOrigin).toString())
+  : undefined;
+
 const ARTICLE_LD = article
   ? JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Article',
       headline: article.title,
       description: desc,
-      image: heroImg ? [heroImg] : undefined,
+      image: fullHeroImg ? [fullHeroImg] : undefined,
       author: {
         '@type': 'Organization',
         name: 'TwinMOS Technologies',
@@ -134,7 +139,7 @@ const ARTICLE_LD = article
         name: 'TwinMOS Technologies',
         logo: {
           '@type': 'ImageObject',
-          url: 'https://www.twinmos.com/assets/img/logo.svg',
+          url: 'https://www.twinmos.com/assets/img/logo.webp',
         },
       },
       datePublished: articleDate,
@@ -143,9 +148,15 @@ const ARTICLE_LD = article
   : null;
 ---
 
-<Layout title={title} desc={desc} breadcrumbs={breadcrumbs} noindex={!article} ogImage={heroImg} preloadImage={heroImg}>
-  {ARTICLE_LD && <script type="application/ld+json" set:html={ARTICLE_LD} />}
-  
+<Layout
+  title={title}
+  desc={desc}
+  breadcrumbs={breadcrumbs}
+  noindex={!article}
+  ogImage={fullHeroImg}
+  preloadImage={heroImg}
+  customLd={ARTICLE_LD ? [ARTICLE_LD] : []}
+>
   <main id="main">
     {article ? (
       <article class="article-container wrap" style="padding: 48px 16px; max-width: 860px; margin: 0 auto;">
@@ -219,11 +230,11 @@ const ARTICLE_LD = article
           <button type="button" id="copyLinkBtn" class="btn btn-sm" aria-label="Copy link to clipboard" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; color: #0f172a;">
             🔗 Copy Link
           </button>
-          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; text-decoration: none; color: #0f172a;">
-            Share on X
+          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener noreferrer" class="btn btn-sm" aria-label="Share on X (opens in a new tab)" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; text-decoration: none; color: #0f172a;">
+            Share on X ↗
           </a>
-          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; text-decoration: none; color: #0f172a;">
-            LinkedIn
+          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener noreferrer" class="btn btn-sm" aria-label="Share on LinkedIn (opens in a new tab)" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; text-decoration: none; color: #0f172a;">
+            LinkedIn ↗
           </a>
           <span id="copyFeedback" aria-live="polite" style="display: none; font-size: 0.85rem; color: #16a34a; font-weight: 600;">
             ✓ Link copied to clipboard!

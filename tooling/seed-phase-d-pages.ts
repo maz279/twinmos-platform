@@ -143,6 +143,7 @@ async function main() {
         ? (pageKey === 'rma' ? 'rma'
           : pageKey === 'careers' ? 'job-application'
             : pageKey === 'partners' ? 'partner-inquiry'
+              : pageKey === 'quote' ? 'quote'
               : 'contact')
         : undefined;
       return {
@@ -221,12 +222,21 @@ async function main() {
 
   console.log(`\n[3/4] Successfully seeded ${seededCount} pages into database.`);
 
+  const fixturePath = resolve(HERE, 'data', 'tracked-fixture-pages.json');
+  writeFileSync(fixturePath, JSON.stringify(pagesCache, null, 2), 'utf8');
+  console.log(`  ✓ Updated tracked-fixture-pages.json with all ${seededCount} pages.`);
+
   const allPages = await db.query.page.findMany();
   console.log(`[4/4] Verification: total pages in DB = ${allPages.length}.`);
 
   console.log('\n================================================================');
   console.log('✓ Phase D Page Seeding Complete: 28 Pages, 230 Blocks Active!');
   console.log('================================================================\n');
+
+  try {
+    const client = (db as any).$client;
+    if (client && typeof client.close === 'function') await client.close();
+  } catch {}
   process.exit(0);
 }
 
@@ -234,3 +244,4 @@ main().catch(err => {
   console.error('Fatal error seeding pages:', err);
   process.exit(1);
 });
+

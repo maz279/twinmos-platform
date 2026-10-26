@@ -5,7 +5,7 @@
 // module (Channel & Partners group).
 import React, { useRef, useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, Empty, Err, input, Table, td, Toolbar, useAsync, usePanelScroll } from '../ui';
+import { Badge, btn, btnGhost, Empty, Err, input, MUTED, Table, td, Toolbar, useAsync, usePanelScroll } from '../ui';
 import { DISTRIBUTOR_REGIONS, DISTRIBUTOR_REGION_LABELS, DISTRIBUTOR_STATUSES, DISTRIBUTOR_STATUS_LABELS } from '@twinmos/shared';
 
 type Org = { id: number; name: string; type: string; status: string; country: string | null; contactEmail: string | null; memberCount: number; createdAt: string };
@@ -22,7 +22,7 @@ export default function Partners({ canManage }: { canManage: boolean }) {
   return (
     <div>
       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Partners &amp; channel</h1>
-      <p style={{ color: '#66748A', fontSize: 13, margin: '4px 0 0' }}>
+      <p style={{ color: MUTED, fontSize: 13, margin: "4px 0 0" }}>
         Portal organizations (approve/suspend, members, gated assets) and the public where-to-buy directory.
         Serial registry &amp; counterfeit anomaly scans live in <b>SN-check &amp; serials</b>.
       </p>
@@ -86,7 +86,7 @@ function Orgs({ canManage }: { canManage: boolean }) {
       {canManage && (
         <div style={{ display: 'flex', gap: 8, margin: '10px 0', flexWrap: 'wrap' }}>
           <input style={{ ...input, flex: '1 1 180px' }} placeholder="New organization name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-          <select style={input} value={newType} onChange={(e) => setNewType(e.target.value)}>
+          <select style={input} value={newType} onChange={(e) => setNewType(e.target.value)} aria-label="New organization type">
             <option value="distributor">distributor</option><option value="oem">oem</option><option value="si">si</option>
           </select>
           <input style={{ ...input, width: 130 }} placeholder="Country" value={newCountry} onChange={(e) => setNewCountry(e.target.value)} />
@@ -95,12 +95,12 @@ function Orgs({ canManage }: { canManage: boolean }) {
         </div>
       )}
       <Toolbar style={{ margin: '10px 0' }}>
-        <input style={{ ...input, width: 220 }} placeholder="Search name…" value={q}
+        <input style={{ ...input, width: 220 }} placeholder="Search name…" aria-label="Search organization name" value={q}
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') setQuery({ q: q.trim(), type, status }); }} />
-        <select style={input} value={type} onChange={(e) => { setType(e.target.value); setQuery({ q, type: e.target.value, status }); }}>
+        <select style={input} value={type} onChange={(e) => { setType(e.target.value); setQuery({ q, type: e.target.value, status }); }} aria-label="Filter by organization type">
           <option value="">All types</option><option value="distributor">distributor</option><option value="oem">oem</option><option value="si">si</option>
         </select>
-        <select style={input} value={status} onChange={(e) => { setStatus(e.target.value); setQuery({ q, type, status: e.target.value }); }}>
+        <select style={input} value={status} onChange={(e) => { setStatus(e.target.value); setQuery({ q, type, status: e.target.value }); }} aria-label="Filter by organization status">
           <option value="">All statuses</option><option value="pending">pending</option><option value="active">active</option><option value="suspended">suspended</option>
         </select>
         <button style={btnGhost} onClick={() => setQuery({ q: q.trim(), type, status })}>Search</button>
@@ -109,7 +109,7 @@ function Orgs({ canManage }: { canManage: boolean }) {
         <Table head={['Org', 'Type', 'Status', 'Members', 'Created', '']}>
           {data.items.map((o) => (
             <tr key={o.id} onClick={() => setOpenId(openId === o.id ? null : o.id)} style={{ cursor: 'pointer', background: openId === o.id ? '#F0F9FF' : undefined }}>
-              <td style={td}><b>{o.name}</b><div style={{ color: '#66748A', fontSize: 12 }}>{o.country ?? '—'}{o.contactEmail ? ` · ${o.contactEmail}` : ''}</div></td>
+              <td style={td}><b>{o.name}</b><div style={{ color: MUTED, fontSize: 12 }}>{o.country ?? '—'}{o.contactEmail ? ` · ${o.contactEmail}` : ''}</div></td>
               <td style={td}>{o.type}</td>
               <td style={td}><span style={{ color: STATUS_TONE[o.status] ?? '#64748B', fontWeight: 700 }}>{o.status}</span></td>
               <td style={td}>{o.memberCount}</td>
@@ -266,18 +266,18 @@ function Directory({ canWrite }: { canWrite: boolean }) {
 
   return (
     <div>
-      <p style={{ color: '#66748A', fontSize: 13, margin: '0 0 10px' }}>
+      <p style={{ color: MUTED, fontSize: 13, margin: "0 0 10px" }}>
         The directory behind the public <b>Where to Buy</b> locator — published entries flow to the site on the next
         content export (same bridge as the catalog). Region/status values match the site's filter chips.
       </p>
       <Toolbar style={{ marginBottom: 10 }}>
-        <input style={{ ...input, width: 210 }} placeholder="Search country, name, city…" value={q}
+        <input style={{ ...input, width: 210 }} placeholder="Search country, name, city…" aria-label="Search country, name, city" value={q}
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') setQuery({ q: q.trim(), region, status }); }} />
-        <select style={input} value={region} onChange={(e) => { setRegion(e.target.value); setQuery({ q, region: e.target.value, status }); }}>
+        <select style={input} value={region} onChange={(e) => { setRegion(e.target.value); setQuery({ q, region: e.target.value, status }); }} aria-label="Filter by region">
           <option value="">All regions</option>
           {DISTRIBUTOR_REGIONS.map((r) => <option key={r} value={r}>{DISTRIBUTOR_REGION_LABELS[r]}</option>)}
         </select>
-        <select style={input} value={status} onChange={(e) => { setStatus(e.target.value); setQuery({ q, region, status: e.target.value }); }}>
+        <select style={input} value={status} onChange={(e) => { setStatus(e.target.value); setQuery({ q, region, status: e.target.value }); }} aria-label="Filter by distributor status">
           <option value="">All statuses</option>
           {DISTRIBUTOR_STATUSES.map((s) => <option key={s} value={s}>{DISTRIBUTOR_STATUS_LABELS[s]}</option>)}
         </select>
@@ -289,11 +289,11 @@ function Directory({ canWrite }: { canWrite: boolean }) {
         <Table head={['Country / entry', 'Region', 'Status', 'Cities', 'Contact', '']}>
           {data.items.map((d) => (
             <tr key={d.id} onClick={() => setEditing(d)} style={{ cursor: 'pointer' }}>
-              <td style={td}><b>{d.country}</b>{d.name !== d.country && <div style={{ color: '#66748A', fontSize: 12 }}>{d.name}</div>}</td>
+              <td style={td}><b>{d.country}</b>{d.name !== d.country && <div style={{ color: MUTED, fontSize: 12 }}>{d.name}</div>}</td>
               <td style={{ ...td, fontSize: 12.5 }}>{DISTRIBUTOR_REGION_LABELS[d.region as keyof typeof DISTRIBUTOR_REGION_LABELS] ?? d.region}</td>
               <td style={td}><Badge value={d.status} /></td>
-              <td style={{ ...td, fontSize: 12, color: '#66748A', maxWidth: 180 }}>{(d.cities ?? []).join(', ') || '—'}</td>
-              <td style={{ ...td, fontSize: 12, color: '#66748A', maxWidth: 180 }}>
+              <td style={{ ...td, fontSize: 12, color: MUTED, maxWidth: 180 }}>{(d.cities ?? []).join(', ') || '—'}</td>
+              <td style={{ ...td, fontSize: 12, color: MUTED, maxWidth: 180 }}>
                 {d.contact?.website ? <a href={d.contact.website} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} style={{ color: '#0F766E' }}>{d.contact.website.replace(/^https?:\/\//, '')}</a> : d.contact?.email ?? '—'}
               </td>
               <td style={td}>{canWrite && <button style={{ ...btnGhost, padding: '3px 8px', fontSize: 12 }} disabled={busy} onClick={(e) => { e.stopPropagation(); remove(d.id); }}>✕</button>}</td>
@@ -428,11 +428,11 @@ function DistributorEditor({ row, canWrite, onDone, onCancel }: {
         <span><label style={label}>Distributor name</label>
           <input style={{ ...input, width: '100%' }} placeholder="Acme Trading" value={form.name} onChange={(e) => set('name', e.target.value)} /></span>
         <span><label style={label}>Region *</label>
-          <select style={{ ...input, width: '100%' }} value={form.region} onChange={(e) => set('region', e.target.value)}>
+          <select style={{ ...input, width: '100%' }} aria-label="Region" value={form.region} onChange={(e) => set('region', e.target.value)}>
             {DISTRIBUTOR_REGIONS.map((r) => <option key={r} value={r}>{DISTRIBUTOR_REGION_LABELS[r]}</option>)}
           </select></span>
         <span><label style={label}>Status *</label>
-          <select style={{ ...input, width: '100%' }} value={form.status} onChange={(e) => set('status', e.target.value)}>
+          <select style={{ ...input, width: '100%' }} aria-label="Status" value={form.status} onChange={(e) => set('status', e.target.value)}>
             {DISTRIBUTOR_STATUSES.map((s) => <option key={s} value={s}>{DISTRIBUTOR_STATUS_LABELS[s]}</option>)}
           </select></span>
       </div>

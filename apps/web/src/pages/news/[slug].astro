@@ -17,7 +17,7 @@ const preview = Astro.url.searchParams.get('preview') ?? undefined;
 const locale = 'en';
 let newsItem = await getDeliveryNewsPost(slug, locale, preview);
 
-// Fixture fallbacks for key roadmap events (COMPUTEX, GITEX, launches)
+// Fixture fallbacks for key roadmap events and announcements
 if (!newsItem && (slug === '2025-05-computex-2025-twinmos-showcase' || slug === 'event-computex-2025' || slug === 'computex-2025')) {
   newsItem = {
     id: 101,
@@ -44,6 +44,66 @@ if (!newsItem && (slug === '2025-05-computex-2025-twinmos-showcase' || slug === 
     tag: 'Events',
     eventDate: '2025-10-13T09:00:00Z',
     createdAt: '2025-10-13T09:00:00Z',
+    status: 'published',
+  } as any;
+} else if (!newsItem && slug === '2025-q3-corex-pro-gen5-launch') {
+  newsItem = {
+    id: 103,
+    slug,
+    title: 'TwinMOS Launches Flagship CoreX Pro Gen5 NVMe SSD',
+    deck: 'Delivering up to 14,000 MB/s sequential read performance on PCIe Gen 5.0 x4 interface with graphene thermal cooling.',
+    body: `<p>TwinMOS announced the global launch of its flagship CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD, engineered for extreme enthusiast computing, AI workstations, and high-performance gaming. Leveraging the PCIe Gen 5.0 x4 controller and 3D TLC NAND flash, CoreX Pro achieves blazing sequential read speeds of up to 14,000 MB/s.</p>
+<h2>Advanced Thermal Engineering</h2>
+<p>Each module features an ultra-thin graphene thermal dissipation label that ensures optimal thermal dissipation under sustained I/O workloads without throttling.</p>
+<h2>Reliability & Warranty</h2>
+<p>Backed by a 5-year limited warranty and comprehensive endurance ratings, CoreX Pro sets the standard for reliability in Gen 5 storage.</p>`,
+    tag: 'Product News',
+    eventDate: '2025-08-15T09:00:00Z',
+    createdAt: '2025-08-15T09:00:00Z',
+    status: 'published',
+  } as any;
+} else if (!newsItem && slug === '2025-q4-voltx-rgb-ddr5-6000-launch') {
+  newsItem = {
+    id: 104,
+    slug,
+    title: 'TwinMOS Unveils VOLTX RGB DDR5-6000 Gaming Memory',
+    deck: 'High-speed 6000MT/s desktop memory with CL36 latency, AMD EXPO, Intel XMP 3.0 support, and addressable dynamic RGB lighting sync.',
+    body: `<p>TwinMOS expanded its gaming lineup with the announcement of VOLTX RGB DDR5-6000 desktop memory. Designed for hardcore overclockers and aesthetic rig builders, VOLTX RGB combines premium aluminum heat spreaders with a vibrant 16-zone addressable RGB light bar compatible with all major motherboard RGB ecosystems.</p>
+<h2>Dual Profile Overclocking</h2>
+<p>With pre-programmed Intel XMP 3.0 and AMD EXPO profiles, enthusiasts achieve instant 6000 MT/s speeds at CL36 with one-click BIOS activation.</p>
+<h2>Lifetime Warranty</h2>
+<p>In accordance with TwinMOS quality standards, all VOLTX DRAM modules are 100% factory-tested and backed by a corporate lifetime warranty.</p>`,
+    tag: 'Product News',
+    eventDate: '2025-11-10T09:00:00Z',
+    createdAt: '2025-11-10T09:00:00Z',
+    status: 'published',
+  } as any;
+} else if (!newsItem && slug === '2026-q2-anti-counterfeit-program') {
+  newsItem = {
+    id: 105,
+    slug,
+    title: 'TwinMOS Strengthens Global Anti-Counterfeit Verification',
+    deck: 'Enhanced multi-factor security labels, cloud registry serial verification, and customer protection across 90+ export markets.',
+    body: `<p>TwinMOS Technologies announced a significant upgrade to its global brand protection and anti-counterfeit infrastructure. Deployed across all genuine memory modules, SSDs, and retail packaging, the upgraded system combines proprietary optical hologram security seals with unique encrypted serial identifiers.</p>
+<h2>Instant Verification Portal</h2>
+<p>Customers and enterprise partners worldwide can verify authentic products in seconds using the official TwinMOS online verification tool, cross-referencing serial numbers against our secure cloud registry.</p>`,
+    tag: 'Corporate',
+    eventDate: '2026-04-12T09:00:00Z',
+    createdAt: '2026-04-12T09:00:00Z',
+    status: 'published',
+  } as any;
+} else if (!newsItem && slug === '2026-q2-website-relaunch') {
+  newsItem = {
+    id: 106,
+    slug,
+    title: 'TwinMOS Launches Next-Generation Global Corporate Platform',
+    deck: 'A rebuilt corporate web experience featuring sub-second catalogue navigation, bilingual RTL Arabic support, and zero-PII privacy architecture.',
+    body: `<p>TwinMOS officially debuted its redesigned corporate digital platform, uniting 28+ years of memory and storage manufacturing heritage with cutting-edge web performance and governance standards.</p>
+<h2>Key Capabilities</h2>
+<p>The new platform features sub-300ms catalogue filtering across 39 active SKUs, full right-to-left Arabic localisation, WCAG 2.2 AA accessibility, and a granular privacy consent manager.</p>`,
+    tag: 'Corporate',
+    eventDate: '2026-06-01T09:00:00Z',
+    createdAt: '2026-06-01T09:00:00Z',
     status: 'published',
   } as any;
 }
@@ -191,11 +251,11 @@ const NEWS_LD = newsItem
           <button type="button" id="copyNewsLinkBtn" class="btn btn-sm" aria-label="Copy link to clipboard" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; color: #0f172a;">
             🔗 Copy Link
           </button>
-          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(newsItem.title)}&url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; text-decoration: none; color: #0f172a;">
-            Share on X
+          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(newsItem.title)}&url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener noreferrer" class="btn btn-sm" aria-label="Share on X (opens in a new tab)" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; text-decoration: none; color: #0f172a;">
+            Share on X ↗
           </a>
-          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; text-decoration: none; color: #0f172a;">
-            LinkedIn
+          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener noreferrer" class="btn btn-sm" aria-label="Share on LinkedIn (opens in a new tab)" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; text-decoration: none; color: #0f172a;">
+            LinkedIn ↗
           </a>
           <span id="copyNewsFeedback" aria-live="polite" style="display: none; font-size: 0.85rem; color: #16a34a; font-weight: 600;">
             ✓ Link copied!

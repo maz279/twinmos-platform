@@ -6,12 +6,12 @@ import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
 const page = await getDeliveryPage('index');
-const title = page?.title ?? "TwinMOS — Memory &amp; Storage Solutions Since 1998";
+const title = page?.title ?? "TwinMOS — Memory & Storage Solutions Since 1998";
 const desc = page?.seoDescription ?? "TwinMOS Technologies: DRAM, NVMe SSDs, portable storage and flash — trusted in 93+ countries since 1998.";
 const blocks = page?.blocks ?? [];
 ---
 
-<Layout title={title} desc={desc} >
+<Layout title={title} desc={desc} hreflangGrid={true}>
   <main id="main">
     <BlockDispatcher blocks={blocks} />
   </main>

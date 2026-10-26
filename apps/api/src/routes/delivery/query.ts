@@ -119,7 +119,15 @@ export async function applyEntityTranslations<T extends Record<string, any>>(
       const current = String(row[o.field] ?? '');
       const hash = createHash('sha256').update(current).digest('hex');
       if (o.sourceHash && o.sourceHash !== hash) continue; // source changed → outdated
-      out[o.field] = o.value;
+      if (typeof row[o.field] === 'object' && row[o.field] !== null && typeof o.value === 'string' && (o.value.startsWith('{') || o.value.startsWith('['))) {
+        try {
+          out[o.field] = JSON.parse(o.value);
+        } catch {
+          out[o.field] = o.value;
+        }
+      } else {
+        out[o.field] = o.value;
+      }
     }
     return out as T;
   } catch {
@@ -151,7 +159,8 @@ export async function findPublishedPageBySlug(
   db: DB,
   slug: string,
   locale = 'en',
-  isPreview = false
+  isPreview = false,
+  fallbackToEnglish = false
 ) {
   const now = new Date();
   const conditions: SQL[] = [
@@ -193,6 +202,51 @@ export async function findPublishedPageBySlug(
       .where(and(...pathConditions))
       .limit(1);
     rows = pathRows;
+  }
+
+  // D-8 (T4.7.5): a missing locale variant is NOT served as English from the
+  // localized URL — the caller 301s to the English URL instead. The English
+  // fallback stays available for entity translations applied at delivery
+  // (applyEntityTranslations) but must not mask a missing variant for the
+  // locale-resolution middleware. Guard it behind an explicit flag.
+  if (!rows[0] && locale !== 'en' && fallbackToEnglish) {
+    const enConditions: SQL[] = [
+      eq(page.slug, slug),
+      eq(page.locale, 'en'),
+      isNull(page.deletedAt),
+    ];
+    if (!isPreview) {
+      enConditions.push(
+        eq(page.status, 'published'),
+        or(isNull(page.publishedAt), lte(page.publishedAt, now))!
+      );
+    }
+    const enRows = await db
+      .select()
+      .from(page)
+      .where(and(...enConditions))
+      .limit(1);
+    if (enRows[0]) {
+      rows = enRows;
+    } else {
+      const normalizedPath = '/' + slug.replace(/^\//, '');
+      const enPathConditions: SQL[] = [
+        eq(page.path, normalizedPath),
+        eq(page.locale, 'en'),
+        isNull(page.deletedAt),
+      ];
+      if (!isPreview) {
+        enPathConditions.push(
+          eq(page.status, 'published'),
+          or(isNull(page.publishedAt), lte(page.publishedAt, now))!
+        );
+      }
+      rows = await db
+        .select()
+        .from(page)
+        .where(and(...enPathConditions))
+        .limit(1);
+    }
   }
 
   const raw = rows[0];

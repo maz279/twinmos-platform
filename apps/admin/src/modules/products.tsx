@@ -5,10 +5,11 @@
 // via tab ctx { kind:'product', id }.
 import React, { useEffect, useMemo, useState } from 'react';
 import { API, ApiError, apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, CommandBar, Empty, Err, Field, formGrid, input, SectionCard, Table, td, Toolbar, useAsync, usePanelScroll } from '../ui';
+import { Badge, btn, btnGhost, CommandBar, Empty, Err, Field, formGrid, input, MUTED, SectionCard, Table, td, Toolbar, useAsync, usePanelScroll } from '../ui';
 import { MediaPicker } from '../media-picker';
 import { AUTHORIZED_CURRENCIES } from '@twinmos/shared';
 import type { ModProps, TabCtx } from '../nav';
+import { useDialogA11y } from '../dialog-a11y';
 
 const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
 
@@ -82,12 +83,12 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
               <td style={td}><b>{p.sku}</b></td>
               <td style={td}>
                 <b style={{ color: NAVY }}>{p.name}</b>
-                <div style={{ color: '#93A0B4', fontSize: 11.5 }}>{brandName(p.brandId)} · {p.slug}</div>
-                {(p.badges ?? []).slice(0, 4).map((b) => <span key={b} style={{ fontSize: 10.5, background: '#E7F7F2', color: '#0E9F7E', borderRadius: 5, padding: '1px 6px', marginRight: 4 }}>{b}</span>)}
+                <div style={{ color: MUTED, fontSize: 11.5 }}>{brandName(p.brandId)} · {p.slug}</div>
+                {(p.badges ?? []).slice(0, 4).map((b) => <span key={b} style={{ fontSize: 10.5, background: '#E7F7F2', color: '#065F46', borderRadius: 5, padding: '1px 6px', marginRight: 4 }}>{b}</span>)}
               </td>
-              <td style={td}>{p.priceUsd != null ? <b>{(p.currency || 'USD')} {Number(p.priceUsd).toFixed(2)}</b> : <span style={{ color: '#93A0B4' }}>—</span>}</td>
+              <td style={td}>{p.priceUsd != null ? <b>{(p.currency || 'USD')} {Number(p.priceUsd).toFixed(2)}</b> : <span style={{ color: MUTED }}>—</span>}</td>
               <td style={td}><Badge value={p.status} /></td>
-              <td style={{ ...td, color: '#66748A', fontSize: 12 }}>{fmtDate(p.updatedAt)}</td>
+              <td style={{ ...td, color: MUTED, fontSize: 12 }}>{fmtDate(p.updatedAt)}</td>
               <td style={{ ...td, width: 70 }}>
                 <button style={{ ...btnGhost, padding: '4px 9px', fontSize: 12 }} onClick={(e) => { e.stopPropagation(); nav('products', { kind: 'product', id: String(p.id), label: p.sku }, { newTab: true }); }}>Tab ↗</button>
               </td>
@@ -195,8 +196,10 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
       launchDate: form.launchDate ? new Date(form.launchDate).toISOString() : null,
       isComingSoon: form.isComingSoon,
       warrantyTier: form.warrantyTier.trim() || null,
-      source: form.source.trim() || null,
-      approver: form.approver.trim() || null,
+    // Provenance is only sent when provided — an empty editor field must not
+    // read as "clear provenance" on a legacy row (T4.7.2 gate fires otherwise).
+    ...(form.source.trim() ? { source: form.source.trim() } : {}),
+    ...(form.approver.trim() ? { approver: form.approver.trim() } : {}),
     };
     if (isNew && !publish) body.status = 'draft';
     setBusy(true);
@@ -640,6 +643,7 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
   const [report, setReport] = useState<ImportReport | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const dialogRef = useDialogA11y({ isOpen: true, onClose });
 
   function download(path: string, fallbackName: string) {
     fetch(API + path, { credentials: 'include' })
@@ -667,7 +671,7 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
   const card: React.CSSProperties = { width: 'min(760px, 94vw)', maxHeight: '84vh', overflowY: 'auto', background: '#fff', borderRadius: 14, boxShadow: '0 30px 80px rgba(2,12,28,.5)', padding: 18 };
   return (
     <div style={overlay} onClick={onClose}>
-      <div style={card} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Bulk import and export">
+      <div ref={dialogRef} style={card} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Bulk import and export">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <b style={{ fontSize: 15, color: '#1F2A37', flex: 1 }}>Bulk import &amp; export</b>
           <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={onClose}>✕</button>
@@ -676,7 +680,7 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
 
         <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <b style={{ fontSize: 13 }}>1 · Get the data</b>
-          <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: '#66748A' }}>
+          <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: MUTED }}>
             Download the template to see the exact columns (sku, slug, name, brand, category, status, currency, priceUsd, description —
             brand and category are slugs, currency must be one of the authorized six), or export the full catalog.
           </p>
@@ -688,13 +692,13 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
 
         <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <b style={{ fontSize: 13 }}>2 · Upload your CSV</b>
-          <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: '#66748A' }}>Choose a .csv file, then validate it first — nothing is written during a dry-run.</p>
-          <input type="file" accept=".csv,text/csv" style={input} disabled={!canImport}
+          <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: MUTED }}>Choose a .csv file, then validate it first — nothing is written during a dry-run.</p>
+          <input type="file" accept=".csv,text/csv" aria-label="Upload CSV file" style={input} disabled={!canImport}
             onChange={(e) => {
               const f = e.target.files?.[0]; if (!f) return;
               f.text().then((t) => { setCsv(t); setReport(null); setErr(null); });
             }} />
-          {csv && <p style={{ margin: '8px 0 0', fontSize: 12, color: '#0E9F7E', fontWeight: 700 }}>✓ Loaded {csv.split(/\r?\n/).filter((l) => l.trim()).length - 1} data row(s)</p>}
+          {csv && <p style={{ margin: '8px 0 0', fontSize: 12, color: '#065F46', fontWeight: 700 }}>✓ Loaded {csv.split(/\r?\n/).filter((l) => l.trim()).length - 1} data row(s)</p>}
         </div>
 
         <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12 }}>
@@ -732,7 +736,7 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
                       <tr key={r.line}>
                         <td style={td}>{r.line}</td>
                         <td style={td}>{r.action === 'create'
-                          ? <span style={{ fontSize: 11, background: '#E7F7F2', color: '#0E9F7E', borderRadius: 5, padding: '1px 7px', fontWeight: 700 }}>create</span>
+                          ? <span style={{ fontSize: 11, background: '#E7F7F2', color: '#065F46', borderRadius: 5, padding: '1px 7px', fontWeight: 700 }}>create</span>
                           : <span style={{ fontSize: 11, background: '#FBF3E2', color: '#8A6420', borderRadius: 5, padding: '1px 7px', fontWeight: 700 }}>update</span>}</td>
                         <td style={td}><b>{r.sku}</b></td>
                         <td style={td}>{r.name}</td>

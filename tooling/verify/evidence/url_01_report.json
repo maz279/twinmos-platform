@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-10-26T17:17:18.700Z",
+  "milestone": "MS6.4",
+  "auditGate": "URL-01",
+  "baseUrl": "http://127.0.0.1:4321",
+  "durationMs": 10366,
+  "summary": {
+    "totalTested": 327,
+    "passedCount": 327,
+    "failedCount": 0,
+    "singleHop200Count": 294,
+    "gone410Count": 26,
+    "redirectChainsCount": 0,
+    "brokenTargetsCount": 0,
+    "massRedirectsToRootCount": 0,
+    "status": "CERTIFIED_PASS"
+  },
+  "failures": []
+}

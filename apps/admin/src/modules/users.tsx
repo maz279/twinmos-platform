@@ -5,7 +5,7 @@
 // audited actions — the IAM access-review visibility loop).
 import React, { useMemo, useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
-import { btn, btnGhost, card, Empty, Err, input, Table, td, useAsync, usePanelScroll } from '../ui';
+import { btn, btnGhost, card, Empty, Err, input, MUTED, Table, td, useAsync, usePanelScroll } from '../ui';
 import type { ModProps } from '../nav';
 
 type UserRole = 'super_admin' | 'admin' | 'editor' | 'author' | 'viewer';
@@ -120,7 +120,7 @@ export default function UsersModule({ me }: ModProps) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Users & Roles</h1>
-          <p style={{ color: '#66748A', margin: '4px 0 0' }}>
+          <p style={{ color: MUTED, margin: "4px 0 0" }}>
             Platform staff directory, role governance, MFA enforcement, and active session management.
             {data?.total != null ? ` (${data.total} registered staff account${data.total === 1 ? '' : 's'})` : ''}
           </p>
@@ -137,13 +137,10 @@ export default function UsersModule({ me }: ModProps) {
       <div style={{ ...card, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 16 }}>
         <input
           style={{ ...input, flex: '1 1 200px' }}
-          placeholder="Search by name or email…"
-          value={q}
+          placeholder="Search by name or email…" aria-label="Search staff by name or email" value={q}
           onChange={(e) => { setQ(e.target.value); setPage(1); }}
         />
-        <select
-          style={{ ...input, width: 160 }}
-          value={roleFilter}
+        <select style={{ ...input, width: 160 }} aria-label="Filter by staff role" value={roleFilter}
           onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
         >
           <option value="">All Roles</option>
@@ -168,7 +165,7 @@ export default function UsersModule({ me }: ModProps) {
       {error ? <Err error={error} /> : null}
 
       {loading ? (
-        <p style={{ color: '#66748A', padding: '16px 0' }}>Loading user directory…</p>
+        <p style={{ color: MUTED, padding: "16px 0" }}>Loading user directory…</p>
       ) : data ? (
         <Table head={['Staff Member', 'Role', 'Status', 'MFA / 2FA', 'Email Verified', 'Last Active', 'Joined', 'Actions']}>
           {data.items.map((u) => {
@@ -185,15 +182,13 @@ export default function UsersModule({ me }: ModProps) {
                       <div style={{ fontWeight: 600, color: '#0F172A' }}>
                         {u.name} {isMe && <span style={{ fontSize: 11, color: '#2563EB', fontWeight: 400 }}>(You)</span>}
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748B' }}>{u.email}</div>
+                      <div style={{ fontSize: 12, color: MUTED }}>{u.email}</div>
                     </div>
                   </div>
                 </td>
 
                 <td style={td}>
-                  <select
-                    disabled={isMe}
-                    value={u.role}
+                  <select disabled={isMe} value={u.role} aria-label={`Change role for ${u.name || u.email}`}
                     onChange={(e) => handleRoleChange(u.id, e.target.value as UserRole)}
                     style={{
                       background: roleStyle.bg,
@@ -244,7 +239,7 @@ export default function UsersModule({ me }: ModProps) {
                       ✓ Enabled
                     </span>
                   ) : (
-                    <span style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #D9E0E8', borderRadius: 99, padding: '2px 8px', fontSize: 11 }}>
+                    <span style={{ background: '#F1F5F9', color: MUTED, border: '1px solid #D9E0E8', borderRadius: 99, padding: '2px 8px', fontSize: 11 }}>
                       Disabled
                     </span>
                   )}
@@ -254,15 +249,15 @@ export default function UsersModule({ me }: ModProps) {
                   {u.emailVerified ? (
                     <span style={{ color: '#047857', fontSize: 12, fontWeight: 600 }}>✓ Verified</span>
                   ) : (
-                    <span style={{ color: '#94A3B8', fontSize: 12 }}>Unverified</span>
+                    <span style={{ color: MUTED, fontSize: 12 }}>Unverified</span>
                   )}
                 </td>
 
-                <td style={{ ...td, color: '#66748A', fontSize: 12 }}>
+                <td style={{ ...td, color: MUTED, fontSize: 12 }}>
                   {u.lastActiveAt ? fmtDate(u.lastActiveAt) : 'Never'}
                 </td>
 
-                <td style={{ ...td, color: '#64748B', fontSize: 12 }}>
+                <td style={{ ...td, color: MUTED, fontSize: 12 }}>
                   {fmtDate(u.createdAt)}
                 </td>
 
@@ -309,7 +304,7 @@ export default function UsersModule({ me }: ModProps) {
 
       {data && data.total != null && data.total > pageSize && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, flexWrap: 'wrap', gap: 12 }}>
-          <span style={{ fontSize: 13, color: '#66748A' }}>
+          <span style={{ fontSize: 13, color: MUTED }}>
             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, data.total)} of {data.total} staff accounts
           </span>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -609,14 +604,14 @@ function SecurityAnalyticsStrip() {
     <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, background: '#fff', padding: '10px 14px' }}>
       <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4' }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 800, color: tone, marginTop: 2 }}>{value}</div>
-      <div style={{ fontSize: 11.5, color: '#66748A' }}>{sub}</div>
+      <div style={{ fontSize: 11.5, color: MUTED }}>{sub}</div>
     </div>
   );
   const maxJoins = Math.max(1, ...data.series.map((x) => x.n));
   return (
     <details style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
       <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#1F2A37', userSelect: 'none' }}>
-        Security — <span style={{ color: '#66748A', fontWeight: 400 }}>
+        Security — <span style={{ color: MUTED, fontWeight: 400 }}>
           {data.total} staff · {data.mfaCoverage}% MFA · {data.activeSessions} active session{data.activeSessions === 1 ? '' : 's'}{data.suspended ? ` · ${data.suspended} suspended` : ''}
         </span>
       </summary>
@@ -631,7 +626,7 @@ function SecurityAnalyticsStrip() {
           <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>Role distribution</div>
           {data.byRole.map((r) => (
             <div key={r.role} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 30px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
-              <span style={{ fontSize: 12, color: '#66748A' }}>{r.role}</span>
+              <span style={{ fontSize: 12, color: MUTED }}>{r.role}</span>
               <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
                 <span style={{ display: 'block', width: (r.n / Math.max(1, data.total)) * 100 + '%', height: '100%', background: '#1DBF9F', borderRadius: 999 }} />
               </span>
@@ -669,7 +664,7 @@ function UserProfileDrawer({ id, onClose }: { id: string; onClose: () => void })
       {error ? <div style={{ marginTop: 10 }}><Err error={error} /></div> : loading ? <p style={{ marginTop: 10 }}>Loading…</p> : data ? (
         <>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '10px 0' }}>
-            <span style={{ fontSize: 12, color: '#66748A', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+            <span style={{ fontSize: 12, color: MUTED, background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
               {data.name || data.email} · <b>{data.role}</b>
             </span>
             <span style={{ fontSize: 12, color: data.twoFactorEnabled ? '#047857' : '#B45309', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
@@ -678,10 +673,10 @@ function UserProfileDrawer({ id, onClose }: { id: string; onClose: () => void })
             <span style={{ fontSize: 12, color: data.banned ? '#9C3230' : '#047857', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
               {data.banned ? 'Suspended' + (data.banReason ? ' — ' + data.banReason : '') : 'Active'}
             </span>
-            <span style={{ fontSize: 12, color: '#66748A', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+            <span style={{ fontSize: 12, color: MUTED, background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
               <b>{data.activeSessions}</b> active session{data.activeSessions === 1 ? '' : 's'}
             </span>
-            <span style={{ fontSize: 12, color: '#66748A', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+            <span style={{ fontSize: 12, color: MUTED, background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
               joined {fmtDate(data.createdAt)}
             </span>
           </div>
@@ -689,13 +684,13 @@ function UserProfileDrawer({ id, onClose }: { id: string; onClose: () => void })
             Recent audited actions ({data.activity.length})
           </div>
           {data.activity.length === 0 ? (
-            <span style={{ fontSize: 12.5, color: '#66748A' }}>No audited activity recorded for this account.</span>
+            <span style={{ fontSize: 12.5, color: MUTED }}>No audited activity recorded for this account.</span>
           ) : (
             <Table head={['Action', 'Entity', 'IP', 'When']}>
               {data.activity.map((a) => (
                 <tr key={a.id}>
                   <td style={td}><b style={{ color: '#1F2A37' }}>{a.action}</b></td>
-                  <td style={{ ...td, color: '#66748A', fontSize: 12 }}>{a.entity}{a.entityId ? ' #' + a.entityId : ''}</td>
+                  <td style={{ ...td, color: MUTED, fontSize: 12 }}>{a.entity}{a.entityId ? ' #' + a.entityId : ''}</td>
                   <td style={{ ...td, fontFamily: 'ui-monospace, monospace', fontSize: 12 }}>{a.ip ?? '—'}</td>
                   <td style={td}>{fmtDate(a.at)}</td>
                 </tr>

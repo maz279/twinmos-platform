@@ -6,7 +6,7 @@ import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
 const page = await getDeliveryPage('learn-guides');
-const title = page?.title ?? "Buying Guides — Memory &amp; Storage — TwinMOS";
+const title = page?.title ?? "Buying Guides — Memory & Storage — TwinMOS";
 const desc = page?.seoDescription ?? "TwinMOS buying guides: how to choose RAM and SSDs for gaming, laptops, creator workstations, PC builds and enterprise fleets — with best-for guidance for every use case.";
 const blocks = page?.blocks ?? [];
 ---

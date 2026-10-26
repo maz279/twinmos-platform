@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { API } from '../../api';
 import type { PageBlock } from './blocks';
+import { useDialogA11y } from '../../dialog-a11y';
 
 const NAVY = '#1F2A37'; const CYAN = '#1DBF9F'; const GOLD = '#E8A33D';
 const S = (o: React.CSSProperties): React.CSSProperties => o;
@@ -275,9 +276,10 @@ const VIEWPORTS: Array<[string, number]> = [['Desktop', 1200], ['Tablet', 768], 
 export function PreviewModal({ blocks, title, onClose }: { blocks: PageBlock[]; title: string; onClose: () => void }) {
   const [vp, setVp] = useState(0);
   const width = VIEWPORTS[vp][1];
+  const dialogRef = useDialogA11y({ isOpen: true, onClose });
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(10,22,40,.55)', zIndex: 70, display: 'grid', alignItems: 'start', justifyContent: 'center', padding: '3vh 16px' }}>
-      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Page preview"
+      <div ref={dialogRef} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Page preview"
         style={{ width: 'min(1280px, 96vw)', maxHeight: '92vh', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 14, boxShadow: '0 30px 80px rgba(2,12,28,.5)', overflow: 'hidden' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid #E6EBF1' }}>
           <b style={{ color: NAVY, flex: 1, fontSize: 14 }}>Preview — {title || 'Untitled page'}</b>

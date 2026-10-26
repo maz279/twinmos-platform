@@ -6,7 +6,7 @@ import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
 const page = await getDeliveryPage('solutions');
-const title = page?.title ?? "B2B &amp; OEM Memory Solutions — TwinMOS";
+const title = page?.title ?? "B2B & OEM Memory Solutions — TwinMOS";
 const desc = page?.seoDescription ?? "TwinMOS B2B and OEM solutions since 1998: regional distribution to 93+ countries, custom-labeled manufacturing in Dongguan, and fleet upgrades backed by lifetime DRAM warranty.";
 const blocks = page?.blocks ?? [];
 ---

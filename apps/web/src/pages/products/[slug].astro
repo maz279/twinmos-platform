@@ -156,12 +156,18 @@ if (product) {
 }
 
 // Schema.org Product JSON-LD without invented offers
+const siteOrigin = Astro.site || 'https://www.twinmos.com';
+const fullHeroImg = pdpHeroImg
+  ? (pdpHeroImg.startsWith('http') ? pdpHeroImg : new URL(pdpHeroImg, siteOrigin).toString())
+  : undefined;
+
 const PRODUCT_LD = product
   ? JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Product',
       name: product.name,
       description: pdpDesc,
+      image: fullHeroImg ? [fullHeroImg] : undefined,
       sku: product.sku,
       category: product.category?.name ?? 'Storage & Memory',
       brand: {
@@ -174,6 +180,7 @@ const PRODUCT_LD = product
               '@type': 'Offer',
               price: Number(priceUsd),
               priceCurrency: product.currency || 'USD',
+              availability: 'https://schema.org/InStock',
             },
           }
         : {}),
@@ -332,10 +339,10 @@ if (isCategoryPage && categoryMatch) {
     desc={pdpDesc}
     breadcrumbs={pdpBreadcrumbs}
     noindex={!product}
+    ogImage={product ? fullHeroImg : undefined}
     preloadImage={product ? pdpHeroImg : undefined}
+    customLd={PRODUCT_LD ? [PRODUCT_LD] : []}
   >
-    {PRODUCT_LD && <script type="application/ld+json" set:html={PRODUCT_LD} />}
-    
     <main id="main">
       {product ? (
         <article class="pdp-container wrap" style="padding: 40px 16px; max-width: 1200px; margin: 0 auto;">
@@ -495,8 +502,8 @@ if (isCategoryPage && categoryMatch) {
               <ul class="datasheets-list" style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px;">
                 {product.datasheets.map((ds: any) => (
                   <li style="display: flex; align-items: center; gap: 8px;">
-                    <a href={ds.url || ds.path || '#'} target="_blank" rel="noopener" class="link-arrow" style="font-weight: 600; color: var(--color-brand, #0A2540); text-decoration: none;">
-                      📄 {ds.title || ds.name || 'Product Datasheet'} {ds.size ? `(${ds.size})` : ''}
+                    <a href={ds.url || ds.path || '#'} target="_blank" rel="noopener" class="link-arrow" style="font-weight: 600; color: var(--color-brand, #0A2540); text-decoration: none;" aria-label={`${ds.title || ds.name || 'Product Datasheet'} (opens in a new tab)`}>
+                      📄 {ds.title || ds.name || 'Product Datasheet'} {ds.size ? `(${ds.size})` : ''} ↗
                     </a>
                   </li>
                 ))}

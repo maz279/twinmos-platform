@@ -4,7 +4,7 @@
 // is the "search window" for sustained lookup work (deep-link ctx { kind:'q', id }).
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiGet } from '../api';
-import { Empty, Err, input } from '../ui';
+import { Empty, Err, input, MUTED } from '../ui';
 import { Icon } from '../icons';
 import { MODULES } from '../nav';
 import type { ModProps } from '../nav';
@@ -41,11 +41,11 @@ export default function SearchPage({ ctx, nav }: ModProps) {
   return (
     <div>
       <h1 style={{ margin: '0 0 2px', fontSize: 22 }}>Search</h1>
-      <p style={{ margin: '0 0 14px', color: '#66748A', fontSize: 13 }}>
+      <p style={{ margin: '0 0 14px', color: MUTED, fontSize: 13 }}>
         Everything manageable, one query — leads, products, content, RMA, applications and media. ⌘K opens the quick palette anywhere.
       </p>
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <input autoFocus style={{ ...input, flex: 1, fontSize: 15, padding: '10px 12px' }}
+        <input autoFocus aria-label="Search by reference, SKU, title, email, or asset name" style={{ ...input, flex: 1, fontSize: 15, padding: '10px 12px' }}
           placeholder="Search by reference, SKU, title, email, asset name…" value={q} onChange={(e) => setQ(e.target.value)} />
         {q && <button style={{ ...input, background: '#F2F5F8', cursor: 'pointer' }} onClick={() => { setQ(''); setType(''); }}>Clear</button>}
       </div>

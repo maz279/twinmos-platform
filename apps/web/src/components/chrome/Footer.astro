@@ -57,12 +57,12 @@ const legalLinks = legalGroup?.children ?? [];
         </p>
 
         <div class="social-row">
-          {social.facebook && <a href={social.facebook} aria-label="Facebook" target="_blank" rel="noopener">f</a>}
-          {social.instagram && <a href={social.instagram} aria-label="Instagram" target="_blank" rel="noopener">&#9678;</a>}
-          {social.linkedin && <a href={social.linkedin} aria-label="LinkedIn" target="_blank" rel="noopener">in</a>}
-          {social.x && <a href={social.x} aria-label="X (Twitter)" target="_blank" rel="noopener">&#120143;</a>}
-          {social.youtube && <a href={social.youtube} aria-label="YouTube" target="_blank" rel="noopener">&#9654;</a>}
-          {social.pinterest && <a href={social.pinterest} aria-label="Pinterest" target="_blank" rel="noopener">P</a>}
+          {social.facebook && <a href={social.facebook} aria-label="Facebook (opens in a new tab)" target="_blank" rel="noopener">f</a>}
+          {social.instagram && <a href={social.instagram} aria-label="Instagram (opens in a new tab)" target="_blank" rel="noopener">&#9678;</a>}
+          {social.linkedin && <a href={social.linkedin} aria-label="LinkedIn (opens in a new tab)" target="_blank" rel="noopener">in</a>}
+          {social.x && <a href={social.x} aria-label="X (Twitter) (opens in a new tab)" target="_blank" rel="noopener">&#120143;</a>}
+          {social.youtube && <a href={social.youtube} aria-label="YouTube (opens in a new tab)" target="_blank" rel="noopener">&#9654;</a>}
+          {social.pinterest && <a href={social.pinterest} aria-label="Pinterest (opens in a new tab)" target="_blank" rel="noopener">P</a>}
         </div>
       </div>
 
@@ -91,7 +91,7 @@ const legalLinks = legalGroup?.children ?? [];
         </div>
         {waUrl && (
           <div style="margin-top:8px;font-size:13px">
-            <a href={waUrl} target="_blank" rel="noopener" class="link-arrow">Chat on WhatsApp</a>
+            <a href={waUrl} target="_blank" rel="noopener" class="link-arrow" aria-label="Chat on WhatsApp (opens in a new tab)">Chat on WhatsApp ↗</a>
           </div>
         )}
       </div>
@@ -103,15 +103,11 @@ const legalLinks = legalGroup?.children ?? [];
         {brandName} &copy; {currentYear}. All rights reserved.
       </span>
       <span>
+        <button id="cookiePreferencesBtn" type="button" style="background:none;border:none;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer;display:inline">Cookie Preferences</button>
+        {legalLinks.length > 0 && ' \u00b7 '}
         {legalLinks.map((link: NavItem, idx: number) => (
           <>
             {idx > 0 && ' \u00b7 '}
-            {idx === legalLinks.length - 1 && (
-              <>
-                <button id="cookiePreferencesBtn" type="button" style="background:none;border:none;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer;display:inline">Cookie Preferences</button>
-                {' \u00b7 '}
-              </>
-            )}
             <a href={hrefOf(link)} style="display:inline">{link.title}</a>
           </>
         ))}

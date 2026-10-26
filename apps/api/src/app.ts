@@ -24,6 +24,7 @@ import { snCheckRoute, snReportRoute, serialAdminRoute } from './routes/sncheck.
 import { navigationRoute } from './routes/navigation.ts';
 import { entitiesRoute } from './routes/entities.ts';
 import { privacyRoute } from './routes/privacy.ts';
+import { consentRoute } from './routes/consent.ts';
 import { makeDeliveryRouter } from './routes/delivery/index.ts';
 import { dispatchOutbox } from './services/outbox.ts';
 import { alertManager } from './services/alerts.ts';
@@ -92,6 +93,7 @@ export function buildApp(db: DB) {
     c.header('X-Frame-Options', 'DENY');
     c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
     c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+    c.header('X-Robots-Tag', 'noindex, nofollow');
     // API responses are JSON — a locked-down CSP also neutralises any future
     // HTML echo; frame-ancestors blocks clickjacking of any error pages.
     c.header('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
@@ -514,6 +516,7 @@ export function buildApp(db: DB) {
   });
 
   app.route('/api/v1', formsRoute(db));
+  app.route('/api/v1/consent', consentRoute(db, clientIp)); // T6.3.2 / CONSENT-01 public consent collection
   app.route('/api/v1', previewRoute(db)); // public, token-gated draft previews
   app.route('/api/v1/delivery', makeDeliveryRouter(db, sessionFromRequest)); // Phase B Task B3 Delivery API
   // ---- P1.4: forced password rotation guard + member role restriction ------

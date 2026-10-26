@@ -24,7 +24,7 @@ const ROUTES = [
   '/',
   '/shop.html',
   '/product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd',
-  '/product.html?id=voltx-ddr5-udimm-16gb',
+  '/product.html?id=voltx-ddr5-u-dimm-for-desktop',
   '/where-to-buy.html',
   '/compatibility.html',
   '/support.html',

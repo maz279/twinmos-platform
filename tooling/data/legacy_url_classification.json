@@ -1,0 +1,2618 @@
+[
+  {
+    "from": "/",
+    "to": "/",
+    "code": 200,
+    "category": "homepage",
+    "source": "wordpress_289",
+    "reason": "Canonical root URL"
+  },
+  {
+    "from": "/.well-known/ai-plugin.json",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/.well-known/assetlinks.json",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/.well-known/dnt-policy.txt",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/.well-known/openid-configuration",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/2009/12/30/twinmos-value-ram-series-m-tec",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/04/01/twinmos-introduces-high-capacity-16gb-microsdhc-memory-cards-one-for-all-capture-every-exciting-moment",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/04/03/twinmos-introduces-high-capacity-4gb-ddr3-1333-dimm_so-dimm-for-desktop-laptops",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/04/06/twinmos-unveiled-twister-ddr3-1600-single-stick-over-clocking-dram-module",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/04/07/speed-counts-advent-of-super-speed-for-digital-imaging-twinmos-launches-cf-600x-and-400x-super-speed-memory-cards",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/05/19/twinmos-launches-brand-new-dual-interface-usb-disk-x7-with-ultrafast-speed",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/05/22/twinmos-launches-hardware-encrypted-aes-256-usb-g4-supreme-with-the-write-protection-switch",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/05/29/twinmos-launched-brand-new-n2-makes-digital-life-more-creative-and-colorful",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/07/29/twinmos-introduces-twister-ddr3-2133-dual-channel-over-clocking-dram-modules",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/08/07/twinmos-launched-brand-new-amigo-make-your-way-to-move-more-creative-and-natural",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/08/23/the-infinite-expandability-of-mobile-devices-twinmos-launches-the-smart-32gb-class2-microsdhc",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/08/24/twinmos-launches-elegant-looks-2-5-portable-hdd-solution-hyperdrive",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/08/25/twinmos-reveals-its-next-level-2-5-combo-ssd-e2-with-more-fast-as-the-perfect-solution-for-mobile-and-home-use",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/08/27/lift-your-barrier-enjoy-super-speed-by-upgrading-your-desktop-pc-to-usb-3-0-with-twinmos-pci-e-add-in-card",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/08/27/lift-your-barrier-enjoy-superspeed-by-upgrading-your-desktop-pc-to-usb-3-0-with-twinmos-pci-e-add-in-card",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/08/27/twinmos-reveals-its-performance-series-2-5-premium-ssd-p1-pure-speed",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/08/29/twinmos-brings-a-new-way-to-store-transfer-your-data-using-hddockerz-usb-3-0-sata-hdd-2-5-3-5-docking-station",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/08/30/twinmos-reveals-its-extreme-level-performance-series-2-5-premium-ssd-p2-mobility-vibration-proof-fast",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/09/01/twinmos-introduces-apple-series-ddr3-so-dimm-for-mac",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/09/01/twinmos-unveiled-combo-gadget-usb-hub-card-reader-writer",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/09/18/twinmos-reveals-usb-internet-radio-dongle-iradiolive-be-connected-to-the-world-of-music",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/10/06/twinmos-announces-ezeehub-4-10-ports-hi-speed-usb-2-0-hub-for-your-connectivity-needs",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/10/10/twinmos-announces-usb-2-0-gigabit-ethernet-adapter-turbo-g-a-cost-effective-solution-that-converts-a-usb-port-into-a-10-100-1000base-t-ethernet-port",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/10/13/super-speed-lightweight-and-large-capacity-twinmos-announces-its-brand-new-u380-usb3-0-flash-disks",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/10/13/twinmos-has-launched-a-new-type-of-portable-hdd-with-rfid-sensing-and-aes-encryption-with-the-concept-of-data-security-and-privacy-protection-xtremdrive",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/page/2",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2010/page/3",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2011/09/05/twinmos-launched-sim-card-all-in-one-card-reader",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2011/09/13/twinmos-launched-key-shaped-waterproof-usb-k2-stainless-housing-design-ironic-looks",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2011/10/22/twinmos-launched-fully-buffered-ddr2-server-ram",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/01/03/twinmos-launched-premium-quality-mobile-disk-fio",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/04/06/twinmos-launched-premium-quality-mobile-disk-p2",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/04/14/twinmos-launched-waterproof-metal-usb-drive-piko",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/05/14/twinmos-launched-waterproof-metal-key-shaped-usb-drive-mini-k2",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/05/28/twinmos-launched-premium-quality-mobile-disk-ezee",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/05/28/twinmos-launched-premium-quality-mobile-disk-teensy",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/06/02/twinmos-launched-superspeed-usb3-0-portable-hdd-probox",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/06/05/twinmos-launched-superspeed-usb3-0-flash-drive-spark",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/07/01/twinmos-launched-high-speed-portable-hdd-smartdisk",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/10/21/twinmos-launched-premium-quality-mobile-disk-v1",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/12/04/twinmos-launched-high-performance-networking-cable-cat6-patch-cable-series",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2012/12/08/twinmos-launched-3-in-1-stylus-usb-drive-key-chain",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/02/13/twinmos-launched-superspeed-usb3-0-portable-hdd-rocker",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/02/19/twinmos-launched-ultra-high-speed-64gb-microsdxc-class-10-uhs-1",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/03/15/twinmos-has-launched-a-new-type-of-portable-hdd-with-rfid-sensing-and-aes-encryption",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/04/02/twinmos-launched-jelly-bean-4-1-android-tablet-twintab-t714",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/04/09/twinmos-launched-650w-power-supply-xpower-650wb",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/05/01/twinmos-launched-executive-laptop-backpack-6808",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/05/05/twinmos-launched-high-speed-4-ports-usb-hub-ezeehub-4x",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/05/19/twinmos-launched-case-for-samsung-galaxy-tab-2",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/05/30/twinmos-launched-high-speed-4-ports-usb-hub-ezeehub-4x-2",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/06/04/twinmos-launched-10-1-inch-ips-display-tablet",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/06/21/twinmos-introduces-ultra-stable-bootable-usb-g4-with-write-protection-switch",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/06/21/twinmos-to-expose-ultra-slim-turbo-speed-and-high-capacity-stunning-portable-hdd-prodisk",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2013/09/13/twinmos-unveils-aesthetically-pleasing-high-capacity-portable-data-storage-with-the-backup-solution-driveagent",
+    "to": "/news",
+    "code": 301,
+    "category": "press_legacy",
+    "source": "wordpress_289",
+    "reason": "BD-06: Legacy 2009-2013 announcements with broken media mapped to News"
+  },
+  {
+    "from": "/2015/11/28/the-lightest-usb-in-the-industry-twinmoss-popular-modules-usb3-0-flash-drives-hit-the-market",
+    "to": "/news",
+    "code": 301,
+    "category": "press_archived",
+    "source": "wordpress_289",
+    "reason": "BD-06: Retain archived announcements (2014-present) mapped to News"
+  },
+  {
+    "from": "/2016/04/14/twinmos-launched-ultra-thin-7mm-hyper-ssd-h2-ultra",
+    "to": "/news",
+    "code": 301,
+    "category": "press_archived",
+    "source": "wordpress_289",
+    "reason": "BD-06: Retain archived announcements (2014-present) mapped to News"
+  },
+  {
+    "from": "/2021/04/20/unleash-the-super-speed-with-twinmos-alphapro-nvme-m-2-ssd",
+    "to": "/news",
+    "code": 301,
+    "category": "press_archived",
+    "source": "wordpress_289",
+    "reason": "BD-06: Retain archived announcements (2014-present) mapped to News"
+  },
+  {
+    "from": "/2022/03/24/twinmos-technologies-uaes-superbrand-in-2022",
+    "to": "/news",
+    "code": 301,
+    "category": "press_archived",
+    "source": "wordpress_289",
+    "reason": "BD-06: Retain archived announcements (2014-present) mapped to News"
+  },
+  {
+    "from": "/2023/12",
+    "to": "/news",
+    "code": 301,
+    "category": "press_archived",
+    "source": "wordpress_289",
+    "reason": "BD-06: Retain archived announcements (2014-present) mapped to News"
+  },
+  {
+    "from": "/2024/02/28/unleashing-the-power-of-twinmos-voltx-ddr5-desktop-dram",
+    "to": "/news",
+    "code": 301,
+    "category": "press_archived",
+    "source": "wordpress_289",
+    "reason": "BD-06: Retain archived announcements (2014-present) mapped to News"
+  },
+  {
+    "from": "/2024/06/01/elevate-your-gaming-experience-with-twinmos-voltx-ddr5-desktop-dram-rgb",
+    "to": "/news",
+    "code": 301,
+    "category": "press_archived",
+    "source": "wordpress_289",
+    "reason": "BD-06: Retain archived announcements (2014-present) mapped to News"
+  },
+  {
+    "from": "/2024/09",
+    "to": "/news",
+    "code": 301,
+    "category": "press_archived",
+    "source": "wordpress_289",
+    "reason": "BD-06: Retain archived announcements (2014-present) mapped to News"
+  },
+  {
+    "from": "/a-generational-leap-in-ssd-technology-understanding-nvme-speeds-gen3-gen4-gen5-explained",
+    "to": "/learn/nvme-gen3-gen4-gen5-explained",
+    "code": 301,
+    "category": "article_single",
+    "source": "both",
+    "reason": "1-to-1 article match to active learn section"
+  },
+  {
+    "from": "/about-us",
+    "to": "/about",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "live_crawl_69",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/author/twinmos24",
+    "to": "/news",
+    "code": 301,
+    "category": "author_archive",
+    "source": "wordpress_289",
+    "reason": "Author archive mapped to News"
+  },
+  {
+    "from": "/author/twinmos24/page/2",
+    "to": "/news",
+    "code": 301,
+    "category": "author_archive",
+    "source": "wordpress_289",
+    "reason": "Author archive mapped to News"
+  },
+  {
+    "from": "/author/twinmos24/page/6",
+    "to": "/news",
+    "code": 301,
+    "category": "author_archive",
+    "source": "wordpress_289",
+    "reason": "Author archive mapped to News"
+  },
+  {
+    "from": "/author/twinmos24/page/7",
+    "to": "/news",
+    "code": 301,
+    "category": "author_archive",
+    "source": "wordpress_289",
+    "reason": "Author archive mapped to News"
+  },
+  {
+    "from": "/bad-block-management/failed-blocks-of-flash-will-be-replaced-with-new-ones-by-the-ssd",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/blog",
+    "to": "/learn-blog",
+    "code": 301,
+    "category": "blog_hub",
+    "source": "live_crawl_69",
+    "reason": "Blog archive mapped to Learn Blog"
+  },
+  {
+    "from": "/blog/page/3",
+    "to": "/learn-blog",
+    "code": 301,
+    "category": "blog_hub",
+    "source": "wordpress_289",
+    "reason": "Blog archive mapped to Learn Blog"
+  },
+  {
+    "from": "/blog/page/5",
+    "to": "/learn-blog",
+    "code": 301,
+    "category": "blog_hub",
+    "source": "wordpress_289",
+    "reason": "Blog archive mapped to Learn Blog"
+  },
+  {
+    "from": "/blog/page/6",
+    "to": "/learn-blog",
+    "code": 301,
+    "category": "blog_hub",
+    "source": "wordpress_289",
+    "reason": "Blog archive mapped to Learn Blog"
+  },
+  {
+    "from": "/blog/page/7",
+    "to": "/learn-blog",
+    "code": 301,
+    "category": "blog_hub",
+    "source": "wordpress_289",
+    "reason": "Blog archive mapped to Learn Blog"
+  },
+  {
+    "from": "/bridge-controller-mtbf/1000000-hours",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/career",
+    "to": "/careers",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/cart",
+    "to": "/shop",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "wordpress_289",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/category/articles",
+    "to": "/learn",
+    "code": 301,
+    "category": "learn_hub",
+    "source": "both",
+    "reason": "Articles category archive mapped to Learn hub"
+  },
+  {
+    "from": "/category/news",
+    "to": "/news",
+    "code": 301,
+    "category": "news_hub",
+    "source": "live_crawl_69",
+    "reason": "News category archive mapped to News hub"
+  },
+  {
+    "from": "/category/news/page/2",
+    "to": "/news",
+    "code": 301,
+    "category": "news_hub",
+    "source": "wordpress_289",
+    "reason": "News category archive mapped to News hub"
+  },
+  {
+    "from": "/category/news/page/6",
+    "to": "/news",
+    "code": 301,
+    "category": "news_hub",
+    "source": "wordpress_289",
+    "reason": "News category archive mapped to News hub"
+  },
+  {
+    "from": "/compatible-os/android",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/compatible-os/ios",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/compatible-os/linux",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/compatible-os/mac-os",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/compatible-os/windows",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/computex-2026",
+    "to": "/news",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "live_crawl_69",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/contact",
+    "to": "/contact",
+    "code": 200,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/decoding-the-language-of-ram-your-ultimate-computer-memory-glossary",
+    "to": "/learn/ram-glossary",
+    "code": 301,
+    "category": "article_single",
+    "source": "both",
+    "reason": "1-to-1 article match to active learn section"
+  },
+  {
+    "from": "/elementor-hf/footer-1",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/elementor-hf/footer-3",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/elementor-hf/footer-bar",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/elementor-hf/header-1",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/elementor-hf/header-2",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/elementor-hf/header-3",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/elevate-your-gaming-experience-with-twinmos-voltx-ddr5-desktop-dram-rgb",
+    "to": "/learn/voltx-ddr5-rgb-gaming",
+    "code": 301,
+    "category": "article_single",
+    "source": "both",
+    "reason": "1-to-1 article match to active learn section"
+  },
+  {
+    "from": "/endurance/1000-tb-or-900-gb-day",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/endurance/1400-tbw-for-2tb",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/endurance/2000-tbw",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/endurance/700-tbw-for-1tb",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/explaining-direct-storage-how-our-gen5-ssd-will-change-your-gaming",
+    "to": "/learn/directstorage-gen5-gaming",
+    "code": 301,
+    "category": "article_single",
+    "source": "both",
+    "reason": "1-to-1 article match to active learn section"
+  },
+  {
+    "from": "/faq-accessories",
+    "to": "/support",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/faq-dram",
+    "to": "/support",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/faq-ssd",
+    "to": "/support",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/faq-ssd-copy",
+    "to": "/support",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "wordpress_289",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/feeds/all.atom.xml",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/form-factor/ddr5",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/heat-sink/black-heat-sink",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/heat-sink/black-heat-sink-black-bar",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/heat-sink/black-heat-sink-golden-bar",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/heat-sink/blue-heat-sink",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/heat-sink/dark-maroon-heat-sink",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/heat-sink/no-heat-sink",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/heat-sink/silver-heat-sink",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/how-to-check-your-motherboard-and-ram-compatibility",
+    "to": "/learn/how-to-check-motherboard-ram-compatibility",
+    "code": 301,
+    "category": "article_single",
+    "source": "both",
+    "reason": "1-to-1 article match to active learn section"
+  },
+  {
+    "from": "/index.php",
+    "to": "/",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "wordpress_289",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/interface/pcie-gen4-x4",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/interface/pcie-gen5x4",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/interface/usb-3-0",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/interface/usb-3-0-type-c",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/interface/usb-3-2",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/interface/usb-type-c",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "compatibility",
+    "source": "wordpress_289",
+    "reason": "Legacy compatibility filter mapped to Compatibility Finder"
+  },
+  {
+    "from": "/introducing-the-twinmos-corex-pcie-gen4-nvme-ssd-next-level-storage-performance",
+    "to": "/learn/corex-pro-gen5-launch",
+    "code": 301,
+    "category": "article_single",
+    "source": "both",
+    "reason": "1-to-1 article match to active learn section"
+  },
+  {
+    "from": "/latency-cas/cl11",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/latency-cas/cl15",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/latency-cas/cl16",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/latency-cas/cl17",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/latency-cas/cl18",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/latency-cas/cl19",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/latency-cas/cl22",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/latency-cas/cl36",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/latency-cas/cl40",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/latency-cas/cl42",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/latency-cas/cl46",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/latency-cas/cl9",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/llms.txt",
+    "to": "/llms.txt",
+    "code": 200,
+    "category": "llms",
+    "source": "live_crawl_69",
+    "reason": "Canonical llms.txt"
+  },
+  {
+    "from": "/low-density-parity-check/yes",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/media-events",
+    "to": "/news",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/my-account/lost-password",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/nand-flash-brand/micron-hynix",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/nand-flash-brand/micron-intel",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/nand-type/tlc-3d-nand",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/notice",
+    "to": "/news",
+    "code": 301,
+    "category": "notice_hub",
+    "source": "both",
+    "reason": "Corporate notices mapped to News center"
+  },
+  {
+    "from": "/notice/awarded-best-ssd-manufacturer-2023",
+    "to": "/news",
+    "code": 301,
+    "category": "notice_hub",
+    "source": "wordpress_289",
+    "reason": "Corporate notices mapped to News center"
+  },
+  {
+    "from": "/notice/latest-announcements",
+    "to": "/news",
+    "code": 301,
+    "category": "notice_hub",
+    "source": "both",
+    "reason": "Corporate notices mapped to News center"
+  },
+  {
+    "from": "/notice/twinmos-at-computex-2024",
+    "to": "/news",
+    "code": 301,
+    "category": "notice_hub",
+    "source": "wordpress_289",
+    "reason": "Corporate notices mapped to News center"
+  },
+  {
+    "from": "/partners",
+    "to": "/partners",
+    "code": 200,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/power-loose-protection/yes",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/privacy-policy-2",
+    "to": "/legal",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/product-brand/twinmos",
+    "to": "/shop",
+    "code": 301,
+    "category": "brand_pagination",
+    "source": "wordpress_289",
+    "reason": "Brand filter or pagination mapped to catalog"
+  },
+  {
+    "from": "/product-brand/twinmos/page/2",
+    "to": "/shop",
+    "code": 301,
+    "category": "brand_pagination",
+    "source": "wordpress_289",
+    "reason": "Brand filter or pagination mapped to catalog"
+  },
+  {
+    "from": "/product-brand/twinmos/page/3",
+    "to": "/shop",
+    "code": 301,
+    "category": "brand_pagination",
+    "source": "wordpress_289",
+    "reason": "Brand filter or pagination mapped to catalog"
+  },
+  {
+    "from": "/product-category/accessories/power-supply",
+    "to": "/shop?cat=psu",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "wordpress_289",
+    "reason": "PSU category"
+  },
+  {
+    "from": "/product-category/dram-module",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "Desktop DRAM category"
+  },
+  {
+    "from": "/product-category/dram-module/desktop-dram-dram-module",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "Desktop DRAM category"
+  },
+  {
+    "from": "/product-category/dram-module/desktop-dram-dram-module/page/2",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "wordpress_289",
+    "reason": "Desktop DRAM category"
+  },
+  {
+    "from": "/product-category/dram-module/gaming-dram",
+    "to": "/shop?cat=dram-gaming",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "wordpress_289",
+    "reason": "Gaming DRAM category"
+  },
+  {
+    "from": "/product-category/dram-module/gaming-dram-dram-module",
+    "to": "/shop?cat=dram-gaming",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "Gaming DRAM category"
+  },
+  {
+    "from": "/product-category/dram-module/memory-for-desktop",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "wordpress_289",
+    "reason": "Desktop DRAM category"
+  },
+  {
+    "from": "/product-category/dram-module/notebook-dram-dram-module",
+    "to": "/shop?cat=dram-notebook",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "Notebook DRAM category"
+  },
+  {
+    "from": "/product-category/dram-module/page/2",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "wordpress_289",
+    "reason": "Desktop DRAM category"
+  },
+  {
+    "from": "/product-category/flash-drive",
+    "to": "/shop?cat=flash",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "USB Flash category"
+  },
+  {
+    "from": "/product-category/flash-products/flash-drive-flash-products",
+    "to": "/shop?cat=flash",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "wordpress_289",
+    "reason": "USB Flash category"
+  },
+  {
+    "from": "/product-category/flash-products/flash-drive-flash-products/usb-3-0",
+    "to": "/shop?cat=flash",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "wordpress_289",
+    "reason": "USB Flash category"
+  },
+  {
+    "from": "/product-category/flash-products/flash-drive-flash-products/usb-3-2",
+    "to": "/shop?cat=flash",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "wordpress_289",
+    "reason": "USB Flash category"
+  },
+  {
+    "from": "/product-category/microsd-card",
+    "to": "/shop?cat=microsd",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "MicroSD category"
+  },
+  {
+    "from": "/product-category/portable-drives",
+    "to": "/shop?cat=portable-ssd",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "Portable SSD category"
+  },
+  {
+    "from": "/product-category/portable-drives/portable-hdd",
+    "to": "/shop?cat=portable-hdd",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "wordpress_289",
+    "reason": "Portable HDD category"
+  },
+  {
+    "from": "/product-category/portable-drives/portable-hdd-portable-drives",
+    "to": "/shop?cat=portable-hdd",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "Portable HDD category"
+  },
+  {
+    "from": "/product-category/portable-drives/portable-ssd-portable-drives",
+    "to": "/shop?cat=portable-ssd",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "Portable SSD category"
+  },
+  {
+    "from": "/product-category/power-supply",
+    "to": "/shop?cat=psu",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "PSU category"
+  },
+  {
+    "from": "/product-category/solid-state-drive",
+    "to": "/shop?cat=ssd",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "SSD master category"
+  },
+  {
+    "from": "/product-category/solid-state-drive/nvme-ssd-solid-state-drive",
+    "to": "/shop?cat=ssd-nvme",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "NVMe SSD category"
+  },
+  {
+    "from": "/product-category/solid-state-drive/sata-ssd",
+    "to": "/shop?cat=ssd-sata",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "SATA SSD category"
+  },
+  {
+    "from": "/product-category/usb-hub",
+    "to": "/shop?cat=hub",
+    "code": 301,
+    "category": "catalog_category",
+    "source": "both",
+    "reason": "USB Hub category"
+  },
+  {
+    "from": "/product/twinmos-4-port-usb3-0-hub-ezeehub-34l-m",
+    "to": "/products/4-port-usb3-0-hub-ezeehub-34l-m",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "wordpress_289",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-64gb-microsdxc-class-10-uhs-1",
+    "to": "/products/microsdxc-class-10-v30-uhs-3",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-alphapro-nvme-m-2-2280-new-ssd",
+    "to": "/products/alphapro-nvme-m2-2280-new-ssd",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-corex-m-2-pcie-gen-4-0-nvme-ssd",
+    "to": "/products/corex-m2-pcie-gen-4-0-nvme-ssd",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-corex-pro-m-2-pcie-gen-5-0-nvme-ssd",
+    "to": "/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-ddr3-1333mhz-u-dimm",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "product_fallback",
+    "source": "wordpress_289",
+    "reason": "Legacy DRAM product mapped to DRAM catalog"
+  },
+  {
+    "from": "/product/twinmos-ddr4-2400mhz-u-dimm-for-desktop",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "product_fallback",
+    "source": "wordpress_289",
+    "reason": "Legacy DRAM product mapped to DRAM catalog"
+  },
+  {
+    "from": "/product/twinmos-ddr4-2666mhz-u-dimm-for-desktop",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "product_fallback",
+    "source": "wordpress_289",
+    "reason": "Legacy DRAM product mapped to DRAM catalog"
+  },
+  {
+    "from": "/product/twinmos-hyper-ssd-h2-ultra",
+    "to": "/products/hyper-ssd-h2-ultra",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-m16-usb-3-2-flash-drive",
+    "to": "/products/m16-usb-3-2-flash-drive",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-nvme-m-2-2280-ssd",
+    "to": "/products/nvme-m2-2280-ssd",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-portable-external-ssd-elitedrive-usb-3-0-type-c",
+    "to": "/products/portable-ssd-elitedrive-usb-3-0-type-c",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-portable-hdd-prodrive-ultra-usb-3-0",
+    "to": "/products/portable-hdd-prodrive-ultra-usb-3-0",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-portable-hdd-prodrive-usb-3-0",
+    "to": "/products/portable-hdd-prodrive-usb-3-0",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "wordpress_289",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-portable-ssd-elite-drive-pro-usb-type-c",
+    "to": "/products/portable-ssd-elite-drive-pro-usb-type-c",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-smartx-rgb-80-plus-bronze-power-supply-450w",
+    "to": "/products/smartx-rgb-80-plus-bronze-power-supply-450w",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "live_crawl_69",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-smartx-rgb-80-plus-bronze-power-supply-550w",
+    "to": "/products/smartx-rgb-80-plus-bronze-power-supply-550w",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "live_crawl_69",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-thunder-gx-ddr4-u-dimm-for-desktop",
+    "to": "/products/thunder-gx-ddr4-u-dimm-for-desktop",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-tornadox6-ddr4-3200mhz-u-dimm-for-desktop",
+    "to": "/products/tornadox6-ddr4-3200mhz-u-dimm-for-desktop",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "live_crawl_69",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop",
+    "to": "/products/tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-tornadox7-pro-ddr4-3200mhz-cl16-gaming-ram",
+    "to": "/products/tornadox7-pro-ddr4-3200mhz-cl16-u-dimm-for-desktop",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-tornadox7-pro-ddr4-3200mhz-cl16-u-dimm-for-desktop",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "product_fallback",
+    "source": "wordpress_289",
+    "reason": "Legacy DRAM product mapped to DRAM catalog"
+  },
+  {
+    "from": "/product/twinmos-tornadox7-pro-ddr4-3200mhz-cl22-u-dimm-for-desktop",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "product_fallback",
+    "source": "wordpress_289",
+    "reason": "Legacy DRAM product mapped to DRAM catalog"
+  },
+  {
+    "from": "/product/twinmos-voltx-ddr5-so-dimm-for-laptop",
+    "to": "/products/voltx-ddr5-so-dimm-for-laptop",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-voltx-ddr5-u-dimm-for-desktop",
+    "to": "/products/voltx-ddr5-u-dimm-for-desktop",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-voltx-ddr5-u-dimm-for-desktop-copy",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "product_fallback",
+    "source": "wordpress_289",
+    "reason": "Legacy DRAM product mapped to DRAM catalog"
+  },
+  {
+    "from": "/product/twinmos-voltx-rgb-ddr5-u-dimm-for-desktop",
+    "to": "/products/voltx-rgb-ddr5-u-dimm-for-desktop",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-x3-ultra-usb-3-2-flash-drive",
+    "to": "/products/x3-ultra-usb-3-2-flash-drive",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-x3-usb-3-2-flash-drive",
+    "to": "/shop",
+    "code": 301,
+    "category": "product_fallback",
+    "source": "wordpress_289",
+    "reason": "Legacy product mapped to catalog"
+  },
+  {
+    "from": "/product/twinmos-xpower-80-plus-bronze-450w",
+    "to": "/products/xpower-80-plus-bronze-450w",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "live_crawl_69",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-xpower-80-plus-bronze-550w",
+    "to": "/products/xpower-80-plus-bronze-550w",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "live_crawl_69",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/product/twinmos-xtreme-gen4-x4-nvme-pro-m-2-2280-ssd",
+    "to": "/products/xtreme-gen4x4-nvme-pro-m2-2280-ssd",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "both",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/quality-assurance",
+    "to": "/about",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/random-read-speed-4k-files/90k",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/random-read-speed-4k-files/up-to-120-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/random-read-speed-4k-files/up-to-260-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/random-read-speed-4k-files/up-to-32k",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/random-read-speed-4k-files/upto-750k",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/random-write-speed-4k-files/90k",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/random-write-speed-4k-files/up-to-155-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/random-write-speed-4k-files/up-to-270-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/random-write-speed-4k-files/up-to-32k",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/random-write-speed-4k-files/up-to-680k",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/razox-breadcrumb/breadcrumb",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/razox-breadcrumb/breadcrumb-blog",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/razox-breadcrumb/breadcrumb-single",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/rd",
+    "to": "/technology",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/request-a-quote",
+    "to": "/quote",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/sample-page",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/sequential-read-speed/up-to-1100-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-read-speed/up-to-120-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-read-speed/up-to-125mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-read-speed/up-to-14000-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-read-speed/up-to-225mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-read-speed/up-to-3500-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-read-speed/up-to-3550-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-read-speed/up-to-450-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-read-speed/up-to-5000-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-read-speed/up-to-580-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-read-speed/up-to-7500-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-write-speed/up-to-10000-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-write-speed/up-to-1050-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-write-speed/up-to-3225-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-write-speed/up-to-3250-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-write-speed/up-to-410-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-write-speed/up-to-4800-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-write-speed/up-to-550-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-write-speed/up-to-60-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/sequential-write-speed/up-to-6800-mb-s",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/shop",
+    "to": "/shop",
+    "code": 200,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/shop-2",
+    "to": "/shop",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "wordpress_289",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/shop/page/2",
+    "to": "/shop",
+    "code": 301,
+    "category": "brand_pagination",
+    "source": "wordpress_289",
+    "reason": "Brand filter or pagination mapped to catalog"
+  },
+  {
+    "from": "/shop/page/3",
+    "to": "/shop",
+    "code": 301,
+    "category": "brand_pagination",
+    "source": "wordpress_289",
+    "reason": "Brand filter or pagination mapped to catalog"
+  },
+  {
+    "from": "/shop/page/4",
+    "to": "/shop",
+    "code": 301,
+    "category": "brand_pagination",
+    "source": "wordpress_289",
+    "reason": "Brand filter or pagination mapped to catalog"
+  },
+  {
+    "from": "/since1998",
+    "to": "/about",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/sitemap.xml",
+    "to": "/sitemap.xml",
+    "code": 200,
+    "category": "sitemap",
+    "source": "wordpress_289",
+    "reason": "Canonical dynamic sitemap"
+  },
+  {
+    "from": "/smart/yes",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/speed/1333mhz",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/speed/1600mhz",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/speed/2133mhz",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/speed/2400mhz",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/speed/2666mhz",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/speed/3200mhz",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/speed/4800mhz",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/speed/5200mhz",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/speed/5600mhz",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/speed/6000mhz",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/ssd-controller-brand/innogrit-realtek",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/ssd-controller-brand/maxiotek",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/ssd-controller-brand/phison",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/ssd-controller-brand/smi",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/support",
+    "to": "/support",
+    "code": 200,
+    "category": "corporate_page",
+    "source": "live_crawl_69",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/terms-of-use",
+    "to": "/legal",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/twinmos-h2-ultra-ssd",
+    "to": "/products/hyper-ssd-h2-ultra",
+    "code": 301,
+    "category": "product_pdp",
+    "source": "wordpress_289",
+    "reason": "1-to-1 product match to active catalog"
+  },
+  {
+    "from": "/twinmos-introduces-high-capacity-4gb-ddr3-1333-dimm_so-dimm-for-desktop-laptops",
+    "to": "/shop?cat=dram-desktop",
+    "code": 301,
+    "category": "dram_fallback",
+    "source": "wordpress_289",
+    "reason": "Legacy memory query mapped to DRAM catalog"
+  },
+  {
+    "from": "/twinmos-launches-the-all-new-voltx-series-7200mhz-cl34-high-performance-memory",
+    "to": "/learn/voltx-ddr5-rgb-gaming",
+    "code": 301,
+    "category": "article_single",
+    "source": "wordpress_289",
+    "reason": "1-to-1 article match to active learn section"
+  },
+  {
+    "from": "/twinmos-to-showcase-cutting-edge-memory-storage-solutions-at-computex-2025",
+    "to": "/learn/computex-2025",
+    "code": 301,
+    "category": "article_single",
+    "source": "wordpress_289",
+    "reason": "1-to-1 article match to active learn section"
+  },
+  {
+    "from": "/twinmos-unleashes-unprecedented-speed-with-corex-pro-m-2-pcie-gen-5-0-nvme-ssd-redefining-storage-performance",
+    "to": "/learn/corex-pro-gen5-launch",
+    "code": 301,
+    "category": "article_single",
+    "source": "both",
+    "reason": "1-to-1 article match to active learn section"
+  },
+  {
+    "from": "/twinmos-unveils-the-voltx-series-6000mhz-cl34-power-and-performance-redefined",
+    "to": "/learn/voltx-ddr5-rgb-gaming",
+    "code": 301,
+    "category": "article_single",
+    "source": "wordpress_289",
+    "reason": "1-to-1 article match to active learn section"
+  },
+  {
+    "from": "/unleashing-the-power-of-twinmos-voltx-ddr5-desktop-dram",
+    "to": "/learn/voltx-ddr5-rgb-gaming",
+    "code": 301,
+    "category": "article_single",
+    "source": "both",
+    "reason": "1-to-1 article match to active learn section"
+  },
+  {
+    "from": "/warranty-policy",
+    "to": "/legal",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "both",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/warranty/1-year",
+    "to": "/legal",
+    "code": 301,
+    "category": "warranty",
+    "source": "wordpress_289",
+    "reason": "Warranty tier page mapped to Legal policy hub"
+  },
+  {
+    "from": "/warranty/3-years",
+    "to": "/legal",
+    "code": 301,
+    "category": "warranty",
+    "source": "wordpress_289",
+    "reason": "Warranty tier page mapped to Legal policy hub"
+  },
+  {
+    "from": "/warranty/5-years",
+    "to": "/legal",
+    "code": 301,
+    "category": "warranty",
+    "source": "wordpress_289",
+    "reason": "Warranty tier page mapped to Legal policy hub"
+  },
+  {
+    "from": "/warranty/product-lifetime",
+    "to": "/legal",
+    "code": 301,
+    "category": "warranty",
+    "source": "wordpress_289",
+    "reason": "Warranty tier page mapped to Legal policy hub"
+  },
+  {
+    "from": "/wattage/450w",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/wattage/550w",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/wear-leveling/static-and-dynamic-wear-leveling-algorithm",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "tech_spec",
+    "source": "wordpress_289",
+    "reason": "Hardware spec filter mapped to Learn Explained hub"
+  },
+  {
+    "from": "/wishlist",
+    "to": "/shop",
+    "code": 301,
+    "category": "corporate_page",
+    "source": "wordpress_289",
+    "reason": "1-to-1 canonical page migration"
+  },
+  {
+    "from": "/wp-content/plugins",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/wp-content/plugins/litespeed-cache/guest.vary.php",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/wp-content/plugins/revslider",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/wp-json/oembed/1.0/embed",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/wp-json/wp/v2/categories/253",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/wp-json/wp/v2/pages/11875",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/wp-json/wp/v2/pages/11902",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/wp-json/wp/v2/pages/310",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/wp-json/wp/v2/pages/4138",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/wp-login.php",
+    "to": "/410",
+    "code": 410,
+    "category": "purged_system",
+    "source": "wordpress_289",
+    "reason": "Obsolete WordPress endpoint removed on purpose (410 Gone)"
+  },
+  {
+    "from": "/about.html",
+    "to": "/about",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/careers.html",
+    "to": "/careers",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/compare.html",
+    "to": "/compare",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/compatibility.html",
+    "to": "/compatibility",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/contact.html",
+    "to": "/contact",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/gaming.html",
+    "to": "/gaming",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/index.html",
+    "to": "/",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/learn-benchmarks.html",
+    "to": "/learn-benchmarks",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/learn-blog.html",
+    "to": "/learn-blog",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/learn-explained.html",
+    "to": "/learn-explained",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/learn-glossary.html",
+    "to": "/learn-glossary",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/learn-guides.html",
+    "to": "/learn-guides",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/learn.html",
+    "to": "/learn",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/legal.html",
+    "to": "/legal",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/news.html",
+    "to": "/news",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/partners.html",
+    "to": "/partners",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/quote.html",
+    "to": "/quote",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/rma.html",
+    "to": "/rma",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/search.html",
+    "to": "/search",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/shop.html",
+    "to": "/shop",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/sitemap.html",
+    "to": "/sitemap",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/solutions.html",
+    "to": "/solutions",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/support.html",
+    "to": "/support",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/technology.html",
+    "to": "/technology",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/where-to-buy.html",
+    "to": "/where-to-buy",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype .html extension canonical redirect to clean URL"
+  },
+  {
+    "from": "/product.html",
+    "to": "/shop",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype product.html without query mapped to shop"
+  },
+  {
+    "from": "/article.html",
+    "to": "/learn",
+    "code": 301,
+    "category": "prototype_html",
+    "source": "prototype_html",
+    "reason": "Prototype article.html without query mapped to learn"
+  }
+]

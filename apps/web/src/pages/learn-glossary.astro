@@ -6,7 +6,7 @@ import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
 const page = await getDeliveryPage('learn-glossary');
-const title = page?.title ?? "Glossary A–Z — Memory &amp; Storage Terms — TwinMOS";
+const title = page?.title ?? "Glossary A–Z — Memory & Storage Terms — TwinMOS";
 const desc = page?.seoDescription ?? "A–Z TwinMOS glossary of memory and storage terminology: DDR, DIMM, NVMe, NAND, TBW, MTBF, XMP and 105 more terms with plain-language definitions.";
 const blocks = page?.blocks ?? [];
 ---

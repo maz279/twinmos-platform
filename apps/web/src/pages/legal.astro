@@ -1,8 +1,9 @@
 ---
 // legal.astro — Dynamic SSR Page rendered from CMS Delivery API.
-// Tasks D2, D8b / GPROV-100 = 100% / G-NOHARDCODE = 0 / WCAG 2.2 AA compliant.
+// Tasks D2, D8b, MS6.3 T6.3.1.5 / GPROV-100 = 100% / G-NOHARDCODE = 0 / WCAG 2.2 AA compliant.
 import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
+import CookieTable from '../components/chrome/CookieTable.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
 const preview = Astro.url.searchParams.get('preview') ?? undefined;
@@ -11,14 +12,24 @@ if (preview) {
   Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
   Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
 }
-const title = page?.title ?? "Legal &amp; Warranty Policy — TwinMOS";
+const title = page?.title ?? "Legal & Warranty Policy — TwinMOS";
 const desc = page?.seoDescription ?? "TwinMOS warranty policy (lifetime DRAM, 5-year NVMe/flash, 3-year SATA SSD), terms and privacy.";
 const blocks = page?.blocks ?? [];
 const noindex = Boolean(preview) || Boolean(page?.noindex);
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Legal' },
+];
 ---
 
-<Layout title={title} desc={desc} noindex={noindex}>
+<Layout title={title} desc={desc} breadcrumbs={breadcrumbs} noindex={noindex}>
   <main id="main">
     <BlockDispatcher blocks={blocks} />
+    <section class="wrap legal-cookie-registry-section" style="max-width:960px;margin:30px auto;padding:0 16px">
+      <CookieTable />
+      <div style="margin-top:16px;display:flex;gap:12px;align-items:center">
+        <button id="cookiePrefsSave" class="btn btn-primary btn-sm" type="button">Manage Cookie Preferences</button>
+      </div>
+    </section>
   </main>
 </Layout>

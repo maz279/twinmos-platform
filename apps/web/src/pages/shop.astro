@@ -21,9 +21,13 @@ const title = page?.title ?? "Shop All Products — TwinMOS";
 const desc = page?.seoDescription ?? "Browse the full TwinMOS catalog: DRAM, NVMe and SATA SSDs, portable storage, flash drives, microSD, power supplies and hubs.";
 const blocks = page?.blocks ?? [];
 const noindex = Boolean(preview) || Boolean(page?.noindex);
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Shop' },
+];
 ---
 
-<Layout title={title} desc={desc} noindex={noindex}>
+<Layout title={title} desc={desc} breadcrumbs={breadcrumbs} noindex={noindex}>
   <main id="main">
     <BlockDispatcher blocks={blocks} />
   </main>

@@ -232,8 +232,14 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     }
     const patchData = prunePatch(rawJson, parsed.data);
     // Publish-time provenance is enforced on the transition endpoint; a PATCH
-    // that touches provenance fields must keep the row publishable.
-    if (['source', 'approver'].some((k) => k in patchData)) {
+    // must not be able to CLEAR provenance on a published row. An explicit
+    // null that matches the current (legacy) value is a no-op, not a clearing.
+    const clearsProvenance = (['source', 'approver'] as const).some((k) => {
+      if (!(k in patchData)) return false;
+      const next = (patchData as any)[k];
+      return (next == null || String(next).trim() === '') !== (current[k] == null || String(current[k] ?? '').trim() === '');
+    });
+    if (clearsProvenance) {
       const provIssue = provenanceIssue({ ...current, ...patchData }, current.status);
       if (provIssue) return c.json(problem(422, 'Missing provenance', provIssue.message, [provIssue]), 422, { 'Content-Type': P });
     }

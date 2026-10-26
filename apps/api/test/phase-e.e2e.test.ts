@@ -129,10 +129,10 @@ describe('Phase E: SEO, i18n, Accessibility & Privacy Compliance (VC-D/E)', () =
       expect(existsSync(mapPath)).toBe(true);
       const content = readFileSync(mapPath, 'utf8');
 
-      expect(content).toContain('/product-category/solid-state-drive /shop.html?cat=ssd;');
-      expect(content).toContain('/about-us /about.html;');
-      expect(content).toContain('/career /careers.html;');
-      expect(content).toContain('/warranty /legal.html#warranty;');
+      expect(content).toContain('/product-category/solid-state-drive /shop?cat=ssd;');
+      expect(content).toContain('/about.html /about;');
+      expect(content).toContain('/careers.html /careers;');
+      expect(content).toContain('/warranty-policy /legal;');
     });
 
     it('apps/web/public/.well-known/security.txt complies with RFC 9116', () => {
@@ -141,10 +141,10 @@ describe('Phase E: SEO, i18n, Accessibility & Privacy Compliance (VC-D/E)', () =
       const sec = readFileSync(secPath, 'utf8');
 
       expect(sec).toContain('Contact: mailto:security@twinmos.com');
-      expect(sec).toContain('Expires: 2027-12-31T23:59:59.000Z');
+      expect(sec).toContain('Expires: 2027-10-25T23:59:59.000Z');
       expect(sec).toContain('Preferred-Languages:');
       expect(sec).toContain('Canonical: https://www.twinmos.com/.well-known/security.txt');
-      expect(sec).toContain('Policy: https://www.twinmos.com/legal.html#security');
+      expect(sec).toContain('Policy: https://www.twinmos.com/legal#security');
     });
 
     it('apps/web/public/humans.txt and the dynamic robots route exist', () => {

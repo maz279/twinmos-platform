@@ -9,8 +9,10 @@ export const GET: APIRoute = async ({ request }) => {
   const format = url.searchParams.get('format');
   const locale = url.searchParams.get('locale');
 
-  // On-demand sitemap index (T3.5.2)
-  if (format === 'index') {
+  // Per-locale sitemap index (T6.2.3 / T3.5.2)
+  // Default shape is the sitemap index (SEO-01 per-locale sitemaps): /sitemap.xml
+  // lists the 9 per-locale children; each child serves its urlset via ?locale=.
+  if (format === 'index' || (!locale && format !== 'urls')) {
     const activeLocales = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'];
     const sitemapsXml = activeLocales
       .map((code) => {
@@ -51,15 +53,35 @@ export const GET: APIRoute = async ({ request }) => {
     }
   }
 
+  const activeLocales = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'];
+
   const urlsXml = entries
     .map((e) => {
       const loc = e.loc.startsWith('http') ? e.loc : `${origin}${e.loc.startsWith('/') ? '' : '/'}${e.loc}`;
+      const urlObj = new URL(loc);
+      const rawPath = urlObj.pathname;
+      const basePath = rawPath.replace(/^\/(?:ar|hi|ru|zh-cn|fr|es|pt|de)(?=\/|$)/, '') || '/';
+      
       const lastmod = e.lastmod ? `<lastmod>${e.lastmod}</lastmod>` : '';
-      return `  <url>\n    <loc>${loc}</loc>${lastmod ? '\n    ' + lastmod : ''}\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>`;
+      const priority = basePath === '/' ? '1.0' : '0.8';
+
+      const xhtmlLinks = activeLocales
+        .map((lang) => {
+          const altHref = lang === 'en'
+            ? `${origin}${basePath}`
+            : `${origin}/${lang}${basePath === '/' ? '' : basePath}`;
+          const hreflangAttr = lang === 'zh-cn' ? 'zh-CN' : lang;
+          return `    <xhtml:link rel="alternate" hreflang="${hreflangAttr}" href="${altHref}" />`;
+        })
+        .join('\n');
+
+      const xDefaultLink = `    <xhtml:link rel="alternate" hreflang="x-default" href="${origin}${basePath}" />`;
+
+      return `  <url>\n    <loc>${loc}</loc>${lastmod ? '\n    ' + lastmod : ''}\n${xhtmlLinks}\n${xDefaultLink}\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
     })
     .join('\n');
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlsXml}\n</urlset>`;
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urlsXml}\n</urlset>`;
 
   return new Response(xml, {
     status: 200,

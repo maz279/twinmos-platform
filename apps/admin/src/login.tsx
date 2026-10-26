@@ -157,10 +157,10 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
               <p style={{ margin: '0 0 24px', color: '#66748A', fontSize: 13.5, textAlign: 'center' }}>
                 Authorised TwinMOS personnel only. Activity is logged.
               </p>
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>User ID (email)</label>
-              <input className="tm-in" autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="name@twinmos.com" type="email" required autoComplete="username" style={cardIn} />
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Password</label>
-              <input className="tm-in" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••" type="password" required autoComplete="current-password" style={cardIn} />
+              <label htmlFor="login-email" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>User ID (email)</label>
+              <input id="login-email" aria-label="User ID (email)" className="tm-in" autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="name@twinmos.com" type="email" required autoComplete="username" style={cardIn} />
+              <label htmlFor="login-password" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Password</label>
+              <input id="login-password" aria-label="Password" className="tm-in" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••" type="password" required autoComplete="current-password" style={cardIn} />
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -6, marginBottom: 14 }}>
                 <button
                   type="button"
@@ -193,7 +193,8 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
                 Enter the 6-digit code from your authenticator app.<br />
                 <span style={{ fontSize: 12.5 }}>You may also enter a recovery code (format XXXX-XXXX).</span>
               </p>
-              <input className="tm-in" autoFocus value={code} onChange={e => setCode(e.target.value)} placeholder="123 456" inputMode="numeric" autoComplete="one-time-code" required
+              <label htmlFor="login-totp-code" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Authentication code</label>
+              <input id="login-totp-code" aria-label="Authentication code" className="tm-in" autoFocus value={code} onChange={e => setCode(e.target.value)} placeholder="123 456" inputMode="numeric" autoComplete="one-time-code" required
                 style={{ ...cardIn, textAlign: 'center', fontSize: 22, letterSpacing: 6, fontWeight: 700 }} />
               <button className="tm-btn" disabled={busy} style={{ ...btnMain, opacity: busy ? 0.65 : 1 }}>{busy ? 'Checking…' : 'Verify'}</button>
               {err && <p role="alert" style={{ color: '#C2453C', fontSize: 13.5, margin: '14px 0 0' }}>{err}</p>}

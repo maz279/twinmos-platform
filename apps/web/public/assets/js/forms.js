@@ -88,7 +88,43 @@
     return { payload: payload, email: email, name: name, consentChecked: consentChecked };
   }
 
+  var errSeq = 0;
+
+  function ensurePrivacyNotice(form) {
+    if (form.querySelector('.form-privacy-notice, [data-form-privacy-notice], [data-newsletter-notice]')) return;
+    var p = document.createElement('p');
+    p.className = 'form-privacy-notice form-note';
+    p.setAttribute('data-form-privacy-notice', '1');
+    p.style.cssText = 'font-size:12px;color:#4E6579;margin-top:10px;line-height:1.4';
+    p.innerHTML = 'By submitting, you agree to the <a href="/legal?tab=privacy" style="color:#00729C;text-decoration:underline">TwinMOS Privacy Policy</a>. Your data is protected.';
+    var submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn && submitBtn.parentElement) {
+      submitBtn.parentElement.insertBefore(p, submitBtn);
+    } else {
+      form.appendChild(p);
+    }
+  }
+
+  var errSeq = 0;
+
+  function ensurePrivacyNotice(form) {
+    if (form.querySelector('.form-privacy-notice, [data-form-privacy-notice], [data-newsletter-notice]')) return;
+    var p = document.createElement('p');
+    p.className = 'form-privacy-notice form-note';
+    p.setAttribute('data-form-privacy-notice', '1');
+    p.style.cssText = 'font-size:12px;color:#4E6579;margin-top:10px;line-height:1.4';
+    p.innerHTML = 'By submitting, you agree to the <a href="/legal?tab=privacy" style="color:#00729C;text-decoration:underline">TwinMOS Privacy Policy</a>. Your data is protected.';
+    var submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn && submitBtn.parentElement) {
+      submitBtn.parentElement.insertBefore(p, submitBtn);
+    } else {
+      form.appendChild(p);
+    }
+  }
+
   function validate(form) {
+    ensurePrivacyNotice(form);
+    ensurePrivacyNotice(form);
     var ok = true;
     Array.prototype.forEach.call(form.querySelectorAll('.fg[data-req]'), function (fg) {
       var ctl = fg.querySelector('input, select, textarea');
@@ -98,6 +134,13 @@
       var min = fg.getAttribute('data-min');
       if (!bad && min && v.length < Number(min)) bad = true;
       fg.classList.toggle('invalid', bad);
+      if (ctl) {
+        if (bad) {
+          ctl.setAttribute('aria-invalid', 'true');
+        } else {
+          ctl.removeAttribute('aria-invalid');
+        }
+      }
       if (bad) ok = false;
     });
     var consent = form.querySelector('input[name="consent"]');
@@ -124,8 +167,11 @@
     p.className = 'tm-api-error';
     p.setAttribute('role', 'alert');
     p.style.cssText = 'color:#B3261E;font-size:13.5px;margin:10px 0 0';
+    var errId = 'form-err-' + (++errSeq);
+    p.id = errId;
     p.textContent = message;
     form.appendChild(p);
+    form.setAttribute('aria-describedby', errId);
   }
 
   /* Turnstile (optional): when a site key is configured, render the widget into

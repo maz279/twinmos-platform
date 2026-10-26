@@ -150,7 +150,7 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
           {ENTITIES.map((e) => (
             <button key={e.key} style={entity === e.key ? btn : btnGhost} onClick={() => switchEntity(e.key)}>{e.label}</button>
           ))}
-          <select style={input} value={status} onChange={(e) => { setStatus(e.target.value); setPage(0); }}>
+          <select style={input} value={status} onChange={(e) => { setStatus(e.target.value); setPage(0); }} aria-label="Filter by status">
             <option value="">All statuses</option>
             {CONTENT_STATUS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
           </select>
@@ -161,13 +161,13 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
       {view === 'review' ? (
         queue.error ? <Err error={queue.error} /> : queue.loading ? <p>Loading…</p> : (
           <>
-            <p style={{ color: '#66748A', fontSize: 13, margin: '0 0 10px' }}>Items submitted for review across articles, news and pages — open one to diff it against the live version, leave feedback, then publish or send back.</p>
+            <p style={{ color: MUTED, fontSize: 13, margin: '0 0 10px' }}>Items submitted for review across articles, news and pages — open one to diff it against the live version, leave feedback, then publish or send back.</p>
             <Table head={['Title', 'Type', 'Submitted', '']}>
               {queueRows.map(({ row, entity: e }) => (
                 <tr key={`${e}-${row.id}`}>
                   <td style={td}><b>{row.title ?? row.question}</b></td>
                   <td style={td}>{e}</td>
-                  <td style={{ ...td, color: '#66748A' }}>{fmtDate(row.updatedAt)}</td>
+                  <td style={{ ...td, color: MUTED }}>{fmtDate(row.updatedAt)}</td>
                   <td style={td}><button style={btnGhost} onClick={() => openFromQueue(row, e)}>Review</button></td>
                 </tr>
               ))}
@@ -186,8 +186,8 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
             <span style={{ flex: 1 }} />
             {canPublish && publishable.length > 0 && (
               <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <label style={{ fontSize: 12.5, color: '#66748A', display: 'flex', gap: 4, alignItems: 'center', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={selPublishable.length === publishable.length && publishable.length > 0}
+                <label style={{ fontSize: 12.5, color: MUTED, display: 'flex', gap: 4, alignItems: 'center', cursor: 'pointer' }}>
+                  <input type="checkbox" aria-label="Select all publishable on page" checked={selPublishable.length === publishable.length && publishable.length > 0}
                     onChange={(e) => setSel(e.target.checked ? new Set(publishable.map((r) => r.id)) : new Set())} />
                   Select page ({publishable.length} publishable)
                 </label>
@@ -215,13 +215,13 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
                     {canPublish && (
                       <td style={{ ...td, width: 30 }}>
                         {selectable && (
-                          <input type="checkbox" checked={sel.has(row.id)}
+                          <input type="checkbox" aria-label={`Select ${row.title ?? row.question ?? 'item'}`} checked={sel.has(row.id)}
                             onChange={(e) => setSel((prev) => { const next = new Set(prev); e.target.checked ? next.add(row.id) : next.delete(row.id); return next; })} />
                         )}
                       </td>
                     )}
                     <td style={td}><b>{row.title ?? row.question}</b></td>
-                    <td style={{ ...td, color: '#66748A' }}>{row.slug ?? row.groupKey}</td>
+                    <td style={{ ...td, color: MUTED }}>{row.slug ?? row.groupKey}</td>
                     <td style={td}><Badge value={row.status} /></td>
                     <td style={td}>{fmtDate(row.updatedAt ?? row.publishAt)}</td>
                     <td style={{ ...td, whiteSpace: 'nowrap' }}>
@@ -242,7 +242,7 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
           ) : null}
           {data && data.items.length === 0 && <Empty text={q ? `No ${entity} matches “${q}”.` : 'No content — create the first item.'} />}
           {view === 'library' && total != null && total > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, fontSize: 12.5, color: '#66748A' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, fontSize: 12.5, color: MUTED }}>
               <button style={{ ...btnGhost, padding: '4px 10px' }} disabled={page === 0} onClick={() => { setPage((p) => Math.max(0, p - 1)); setSel(new Set()); }}>← Prev</button>
               <span>Page {page + 1} of {pages} · {total} item{total === 1 ? '' : 's'}{q ? ` matching “${q}”` : ''}</span>
               <button style={{ ...btnGhost, padding: '4px 10px' }} disabled={page + 1 >= pages} onClick={() => { setPage((p) => p + 1); setSel(new Set()); }}>Next →</button>

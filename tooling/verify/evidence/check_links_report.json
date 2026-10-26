@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-10-26T06:55:30.978Z",
+  "baseUrl": "http://127.0.0.1:4321",
+  "summary": {
+    "routesScanned": 34,
+    "totalLinksEvaluated": 608,
+    "internalLinksCount": 324,
+    "externalLinksCount": 250,
+    "anchorLinksCount": 34,
+    "uniqueUrlsChecked": 40,
+    "brokenLinksCount": 0,
+    "policyViolationsCount": 0,
+    "status": "PASS"
+  },
+  "brokenLinks": [],
+  "policyViolations": []
+}

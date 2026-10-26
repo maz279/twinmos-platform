@@ -6,10 +6,10 @@
 //     privacy copy (T4.7.4); routing email stays internal.
 import React, { useEffect, useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, CommandBar, Empty, Err, input, PageHeader, Table, td, useAsync, usePanelScroll } from '../ui';
+import { Badge, btn, btnGhost, CommandBar, Empty, Err, input, MUTED, PageHeader, Table, td, useAsync, usePanelScroll } from '../ui';
 import type { ModProps } from '../nav';
 
-const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: '#93A0B4', display: 'block', margin: '10px 0 4px' };
+const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: MUTED, display: 'block', margin: '10px 0 4px' };
 const card: React.CSSProperties = { border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 16px', background: '#fff' };
 
 type Policy = { id: number; slug: string; title: string; version: string; status: string; effectiveDate: string | null; publishedAt: string | null; legalApproved: boolean; approvedBy: string | null; changeSummary: string | null; summary: string | null; body: string; cookieCategories: unknown; locale: string; source: string | null; approver: string | null };
@@ -66,13 +66,13 @@ function Policies({ canWrite }: { canWrite: boolean }) {
         {canWrite && <button style={btn} onClick={() => setEditing('new')}>+ New policy version</button>}
         {versions && <button style={btnGhost} onClick={() => { setVersions(null); setCompare(null); }}>← All policies</button>}
         <span style={{ flex: 1 }} />
-        <span style={{ color: '#66748A', fontSize: 12 }}>{versions ? `Version history — ${versions.slug}` : `${items.length} policy rows`}</span>
+        <span style={{ color: MUTED, fontSize: 12 }}>{versions ? `Version history — ${versions.slug}` : `${items.length} policy rows`}</span>
       </CommandBar>
       {!versions && (
         <Table head={['Policy', 'Version', 'Status', 'Legal', 'Effective', '']}>
           {items.map((p) => (
             <tr key={p.id}>
-              <td style={td}><b>{p.title}</b><div style={{ color: '#66748A', fontSize: 11.5 }}>{p.slug} · {p.locale}</div></td>
+              <td style={td}><b>{p.title}</b><div style={{ color: MUTED, fontSize: 11.5 }}>{p.slug} · {p.locale}</div></td>
               <td style={td}>v{p.version}</td>
               <td style={td}><Badge value={p.status} /></td>
               <td style={td}>{p.legalApproved ? `✓ ${p.approvedBy ?? 'approved'}` : '—'}</td>
@@ -89,7 +89,7 @@ function Policies({ canWrite }: { canWrite: boolean }) {
       {versions && (
         <div style={card}>
           <h3 style={{ fontSize: 15 }}>Version history — {versions.slug}</h3>
-          <p style={{ color: '#66748A', fontSize: 12.5, margin: '4px 0 10px' }}>Publishing a new version archives the previous one — rows are never overwritten (T4.3.3).</p>
+          <p style={{ color: MUTED, fontSize: 12.5, margin: '4px 0 10px' }}>Publishing a new version archives the previous one — rows are never overwritten (T4.3.3).</p>
           <Table head={['Version', 'Status', 'Effective', 'Published', 'Change summary', 'Compare']}>
             {versions.rows.map((v) => (
               <tr key={v.id}>
@@ -232,7 +232,7 @@ function Offices({ canWrite }: { canWrite: boolean }) {
     <div style={{ display: 'grid', gap: 12 }}>
       <CommandBar style={{ gap: 10 }}>
         {canWrite && <button style={btn} onClick={() => setEditing('new')}>+ New office</button>}
-        <span style={{ flex: 1 }} /><span style={{ color: '#66748A', fontSize: 12 }}>{items.length} offices · BD-03 approved registry</span>
+        <span style={{ flex: 1 }} /><span style={{ color: MUTED, fontSize: 12 }}>{items.length} offices · BD-03 approved registry</span>
       </CommandBar>
       <Table head={['Title', 'Role', 'Address', 'Status', 'Provenance', '']}>
         {items.map((o) => (
@@ -241,7 +241,7 @@ function Offices({ canWrite }: { canWrite: boolean }) {
             <td style={td}>{o.role}</td>
             <td style={td}>{o.address}</td>
             <td style={td}><Badge value={o.status} /></td>
-            <td style={{ ...td, fontSize: 11.5, color: '#66748A' }}>{o.source ? `${o.source} · ${o.approver}` : '—'}</td>
+            <td style={{ ...td, fontSize: 11.5, color: MUTED }}>{o.source ? `${o.source} · ${o.approver}` : '—'}</td>
             <td style={{ ...td, textAlign: 'right' }}>{canWrite && <button style={{ ...btnGhost, fontSize: 12 }} onClick={() => setEditing(o)}>Edit</button>}</td>
           </tr>
         ))}
@@ -279,16 +279,16 @@ function Testimonials({ canWrite }: { canWrite: boolean }) {
     <div style={{ display: 'grid', gap: 12 }}>
       <CommandBar style={{ gap: 10 }}>
         {canWrite && <button style={btn} onClick={() => setEditing('new')}>+ New testimonial</button>}
-        <span style={{ flex: 1 }} /><span style={{ color: '#66748A', fontSize: 12 }}>{items.length} testimonials</span>
+        <span style={{ flex: 1 }} /><span style={{ color: MUTED, fontSize: 12 }}>{items.length} testimonials</span>
       </CommandBar>
       <Table head={['Author', 'Quote', 'Status', 'Release', 'Provenance', '']}>
         {items.map((t) => (
           <tr key={t.id}>
-            <td style={td}><b>{t.author}</b><div style={{ color: '#66748A', fontSize: 11.5 }}>{t.role ?? ''}</div></td>
+            <td style={td}><b>{t.author}</b><div style={{ color: MUTED, fontSize: 11.5 }}>{t.role ?? ''}</div></td>
             <td style={{ ...td, maxWidth: 320 }}>{t.quote.slice(0, 110)}…</td>
             <td style={td}><Badge value={t.status} /></td>
             <td style={td}>{t.permissionFlag ? '✓ written' : '—'}</td>
-            <td style={{ ...td, fontSize: 11.5, color: '#66748A' }}>{t.source ? `${t.source} · ${t.approver}` : '—'}</td>
+            <td style={{ ...td, fontSize: 11.5, color: MUTED }}>{t.source ? `${t.source} · ${t.approver}` : '—'}</td>
             <td style={{ ...td, textAlign: 'right' }}>{canWrite && <button style={{ ...btnGhost, fontSize: 12 }} onClick={() => setEditing(t)}>Edit</button>}</td>
           </tr>
         ))}
@@ -338,7 +338,7 @@ function Forms({ canWrite }: { canWrite: boolean }) {
         <span style={{ fontWeight: 700, fontSize: 15 }}>{editing ? `${editing.type} definition` : 'Form definitions'}</span>
         {editing && <button style={btnGhost} onClick={() => setEditing(null)}>← All forms</button>}
         <span style={{ flex: 1 }} />
-        <span style={{ color: '#66748A', fontSize: 12 }}>routing email is internal-only (C6b)</span>
+        <span style={{ color: MUTED, fontSize: 12 }}>routing email is internal-only (C6b)</span>
       </CommandBar>
       {!editing && (
         <Table head={['Type', 'Title', 'Active', '']}>
@@ -368,20 +368,20 @@ function Forms({ canWrite }: { canWrite: boolean }) {
           </div>
           {canWrite && <button style={{ ...btn, marginTop: 12 }} onClick={() => void saveDef()}>Save definition</button>}
           <h4 style={{ fontSize: 13, marginTop: 16 }}>Fields (label, help text, order, options)</h4>
-          {fields === null && <p style={{ color: '#66748A', fontSize: 12 }}>Loading fields…</p>}
+          {fields === null && <p style={{ color: MUTED, fontSize: 12 }}>Loading fields…</p>}
           {fields?.map((f, i) => (
             <div key={f.id} style={{ borderTop: '1px solid #E6EBF1', padding: '8px 0', display: 'grid', gridTemplateColumns: 'minmax(120px,1fr) minmax(120px,1fr) 60px 70px minmax(140px,1.4fr)', gap: 8, alignItems: 'center' }}>
-              <input style={{ ...input, width: '100%' }} value={f.label} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, label: e.target.value }; setFields(next); }} />
-              <input style={{ ...input, width: '100%' }} placeholder="help text" value={f.helpText ?? ''} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, helpText: e.target.value }; setFields(next); }} />
-              <input style={{ ...input, width: '100%' }} type="number" value={f.sort} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, sort: Number(e.target.value) }; setFields(next); }} />
+              <input style={{ ...input, width: '100%' }} aria-label="Field label" value={f.label} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, label: e.target.value }; setFields(next); }} />
+              <input style={{ ...input, width: '100%' }} aria-label="Field help text" placeholder="help text" value={f.helpText ?? ''} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, helpText: e.target.value }; setFields(next); }} />
+              <input style={{ ...input, width: '100%' }} aria-label="Sort order" type="number" value={f.sort} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, sort: Number(e.target.value) }; setFields(next); }} />
               <label style={{ fontSize: 12, display: 'flex', gap: 4, alignItems: 'center' }}>
-                <input type="checkbox" checked={f.required} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, required: e.target.checked }; setFields(next); }} /> req
+                <input type="checkbox" aria-label="Required" checked={f.required} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, required: e.target.checked }; setFields(next); }} /> req
               </label>
-              <input style={{ ...input, width: '100%' }} placeholder="options (comma-separated)" value={Array.isArray(f.options) ? f.options.join(', ') : ''} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, options: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) }; setFields(next); }} />
+              <input style={{ ...input, width: '100%' }} aria-label="Field options" placeholder="options (comma-separated)" value={Array.isArray(f.options) ? f.options.join(', ') : ''} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, options: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) }; setFields(next); }} />
               {canWrite && <button style={{ ...btnGhost, fontSize: 11 }} onClick={() => void saveField(fields![i])}>Save</button>}
             </div>
           ))}
-          <p style={{ color: '#66748A', fontSize: 11.5 }}>Product options come from the catalogue at render time — leave the productInterest options empty to stay data-bound.</p>
+          <p style={{ color: MUTED, fontSize: 11.5 }}>Product options come from the catalogue at render time — leave the productInterest options empty to stay data-bound.</p>
         </div>
       )}
     </div>

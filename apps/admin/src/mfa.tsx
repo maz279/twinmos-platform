@@ -91,7 +91,7 @@ export default function MfaSetup({
       {phase === 'idle' && (
         <>
           <label htmlFor="mfa-pw" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 5 }}>Confirm your password to begin</label>
-          <input id="mfa-pw" autoFocus type="password" autoComplete="current-password" value={pw} onChange={e => setPw(e.target.value)} placeholder="••••••••••" style={cardIn} />
+          <input id="mfa-pw" aria-label="Confirm password to enable MFA" autoFocus type="password" autoComplete="current-password" value={pw} onChange={e => setPw(e.target.value)} placeholder="••••••••••" style={cardIn} />
           <div style={{ display: 'flex', gap: 10 }}>
             <button disabled={busy || !pw} onClick={start} style={{ ...btnMain, opacity: busy || !pw ? 0.5 : 1 }}>{busy ? 'Starting…' : 'Begin setup'}</button>
             {!required && onSkip && <button onClick={onSkip} style={btnGhost}>Not now</button>}

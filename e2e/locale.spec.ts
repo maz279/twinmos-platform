@@ -43,22 +43,35 @@ test.describe('localised landings', () => {
     expect(painted / (png.width * png.height), 'Arabic page rendered blank').toBeGreaterThan(0.05);
   });
 
-  test('English home keeps a single en alternate and no locale grid', async ({ page }) => {
+  test('English home carries the full reciprocal hreflang grid (T6.2.3/SEO-01)', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    // exactly one en + one x-default, and every locale alternate declared
+    // once (reciprocal pairs validated per-locale in their own tests).
     await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveCount(1);
     await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveCount(1);
-    await expect(page.locator('link[rel="alternate"][hreflang="de"]')).toHaveCount(0);
+    for (const alternate of LOCALES.filter((l) => l !== 'en')) {
+      const code = alternate === 'zh-cn' ? 'zh-CN' : alternate;
+      await expect(page.locator(`link[rel="alternate"][hreflang="${code}"]`)).toHaveCount(1);
+    }
   });
 
-  test('sitemap lists the eight locale landings and no .html aliases', async ({ request }) => {
-    const res = await request.get('/sitemap.xml');
-    expect(res.status()).toBe(200);
-    const xml = await res.text();
+  test('sitemap index links all 9 locale sitemaps; each lists its landing, no .html aliases', async ({ request }) => {
+    const idx = await request.get('/sitemap.xml');
+    expect(idx.status()).toBe(200);
+    const indexXml = await idx.text();
+    expect(indexXml).toContain('<sitemapindex');
     for (const code of LOCALES) {
-      expect(xml, `sitemap missing /${code}`).toContain(`<loc>https://www.twinmos.com/${code}</loc>`);
+      expect(indexXml, `index missing ${code} child`).toContain(`sitemap.xml?locale=${code}`);
     }
-    expect(xml).not.toMatch(/<loc>[^<]*\.html(<|\?)/);
+    for (const code of ['ar', 'fr', 'de']) {
+      const child = await request.get(`/sitemap.xml?locale=${code}`);
+      expect(child.status()).toBe(200);
+      const childXml = await child.text();
+      expect(childXml).toContain('<urlset');
+      expect(childXml, `${code} child missing its landing`).toContain(`<loc>https://www.twinmos.com/${code}</loc>`);
+      expect(childXml).not.toMatch(/<loc>[^<]*\.html(<|\?)/);
+    }
   });
 
   test('untranslated locale path 301s to its English route', async ({ request }) => {

@@ -40,8 +40,12 @@ test.describe('public site', () => {
   });
 
   test('?product=<db-slug> prefills the quote select (P2.5)', async ({ page }) => {
-    await page.goto('quote.html?product=voltx-ddr5-udimm-16gb');
-    await expect(page.locator('#qProduct')).toHaveValue(/VOLTX DDR5/i);
+    // Corpus-reconciled product (old udimm-16gb fixture removed by the MS6
+    // importer reconciliation back to the 39-item corpus).
+    await page.goto('quote.html?product=voltx-ddr5-u-dimm-for-desktop');
+    // The prefill runs from the lazily-loaded app layer (requestIdleCallback),
+    // so give the assertion the same budget the interaction allows.
+    await expect(page.locator('#qProduct')).toHaveValue(/VOLTX DDR5/i, { timeout: 15_000 });
   });
 
   test('?cat=dram-gaming filters the shop grid', async ({ page }) => {
@@ -63,7 +67,9 @@ test.describe('public site', () => {
   });
 
   test('PDP shows MSRP for a priced product and omits offers for a priceless one (P2.4)', async ({ page }) => {
-    await page.goto('product.html?id=voltx-ddr5-udimm-16gb');
+    // Corpus-reconciled priced product (the old udimm-16gb fixture row was
+    // removed by the MS6 importer reconciliation back to the 39-item corpus).
+    await page.goto('product.html?id=voltx-ddr5-u-dimm-for-desktop');
     await expect(page.locator('.pdp-info')).toContainText(/USD 89\.99/);
     await page.goto('product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd');
     const ld = await page.evaluate(() => {

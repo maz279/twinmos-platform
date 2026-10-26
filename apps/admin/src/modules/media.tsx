@@ -9,7 +9,7 @@
 // the file is referenced + admin/public URLs).
 import React, { useRef, useState } from 'react';
 import { API, apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, Empty, Err, input, useAsync, usePanelScroll } from '../ui';
+import { Badge, btn, btnGhost, Empty, Err, input, MUTED, useAsync, usePanelScroll } from '../ui';
 
 type Asset = {
   id: number; key: string; kind: string; alt: string | null; width: number | null; height: number | null;
@@ -193,13 +193,13 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
       <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Media library</h1>
       <AnalyticsStrip />
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
-        <input style={{ ...input, width: 220 }} placeholder="Search key or alt text…" value={q}
+        <input style={{ ...input, width: 220 }} placeholder="Search key or alt text…" aria-label="Search key or alt text" value={q}
           onChange={(e) => setQ(e.target.value)} />
         <select style={input} value={kind} onChange={(e) => setKind(e.target.value)} title="Kind">
           <option value="">All kinds</option>
           <option value="image">image</option><option value="video">video</option><option value="document">document</option>
         </select>
-        <span style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: missing ? '#FCECEB' : '#E7F6EE', color: missing ? '#C2453C' : '#1F9D62' }}>
+        <span style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: missing ? '#FCECEB' : '#E7F6EE', color: missing ? '#C2453C' : '#0F6B54' }}>
           {total - missing}/{total} alt-text compliant
         </span>
         <button style={{ ...btnGhost, fontWeight: missingOnly ? 800 : 400, borderColor: missingOnly ? '#1DBF9F' : undefined, color: missingOnly ? '#0E9F7E' : undefined }}
@@ -213,7 +213,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
         </button>
       </div>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
-        <input ref={fileRef} type="file" style={input} accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.avif,.pdf,.webm,.mp4" />
+        <input ref={fileRef} type="file" style={input} accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.avif,.pdf,.webm,.mp4" aria-label="Upload media file" />
         <input style={{ ...input, flex: '1 1 200px' }} placeholder={isDecorative ? "Decorative image (alt omitted)" : "Alt text (required)"} disabled={isDecorative} value={alt} onChange={(e) => setAlt(e.target.value)} />
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12.5, color: '#475467', cursor: 'pointer', whiteSpace: 'nowrap' }}>
           <input type="checkbox" checked={isDecorative} onChange={(e) => setIsDecorative(e.target.checked)} />
@@ -221,7 +221,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
         </label>
         <button style={btn} disabled={busy} onClick={upload}>Upload{typeof folder === 'number' ? ` → ${folderName(folder)}` : ''}</button>
         <span style={{ borderLeft: '1px solid #E6EBF1', paddingLeft: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input ref={bulkRef} type="file" multiple style={{ ...input, maxWidth: 240 }} accept=".png,.jpg,.jpeg,.webp,.gif,.avif,.pdf" title="Bulk upload — alt is derived from each filename" />
+          <input ref={bulkRef} type="file" multiple style={{ ...input, maxWidth: 240 }} accept=".png,.jpg,.jpeg,.webp,.gif,.avif,.pdf" aria-label="Bulk upload media files" title="Bulk upload — alt is derived from each filename" />
           <button style={btnGhost} disabled={busy} onClick={bulkUpload} title="Uploads each file with alt text derived from its filename">Bulk ↑</button>
         </span>
       </div>
@@ -238,15 +238,15 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px,240px) 1fr', gap: 14, alignItems: 'start' }}>
         {/* ---- Phase 4.3 folder tree ---- */}
         <aside style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: 12, position: 'sticky', top: 12 }}>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: '#93A0B4', margin: '2px 0 8px' }}>Folders</div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: MUTED, margin: '2px 0 8px' }}>Folders</div>
           <button onClick={() => setFolder('all')}
-            style={{ display: 'flex', gap: 8, width: '100%', textAlign: 'left', border: 0, background: folder === 'all' ? '#E7F7F2' : 'none', color: folder === 'all' ? '#0E9F7E' : '#475467', fontWeight: folder === 'all' ? 800 : 500, borderRadius: 7, padding: '5px 8px', cursor: 'pointer', fontSize: 13 }}>
+            style={{ display: 'flex', gap: 8, width: '100%', textAlign: 'left', border: 0, background: folder === 'all' ? '#E7F7F2' : 'none', color: folder === 'all' ? '#065F46' : MUTED, fontWeight: folder === 'all' ? 800 : 500, borderRadius: 7, padding: '5px 8px', cursor: 'pointer', fontSize: 13 }}>
             <span style={{ flex: 1 }}>📁 All media</span>
           </button>
           <button onClick={() => setFolder('none')}
-            style={{ display: 'flex', gap: 8, width: '100%', textAlign: 'left', border: 0, background: folder === 'none' ? '#E7F7F2' : 'none', color: folder === 'none' ? '#0E9F7E' : '#475467', fontWeight: folder === 'none' ? 800 : 500, borderRadius: 7, padding: '5px 8px', cursor: 'pointer', fontSize: 13 }}>
+            style={{ display: 'flex', gap: 8, width: '100%', textAlign: 'left', border: 0, background: folder === 'none' ? '#E7F7F2' : 'none', color: folder === 'none' ? '#065F46' : MUTED, fontWeight: folder === 'none' ? 800 : 500, borderRadius: 7, padding: '5px 8px', cursor: 'pointer', fontSize: 13 }}>
             <span style={{ flex: 1 }}>📄 Unfiled</span>
-            <span style={{ color: '#93A0B4', fontSize: 11.5 }}>{folders.data?.unfiledCount ?? 0}</span>
+            <span style={{ color: MUTED, fontSize: 11.5 }}>{folders.data?.unfiledCount ?? 0}</span>
           </button>
           {(folders.data?.items ?? []).map((f) => (
             <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -258,12 +258,12 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
               ) : (
                 <>
                   <button onClick={() => setFolder(f.id)} title="Show this folder's assets"
-                    style={{ display: 'flex', gap: 8, flex: 1, textAlign: 'left', border: 0, background: folder === f.id ? '#E7F7F2' : 'none', color: folder === f.id ? '#0E9F7E' : '#475467', fontWeight: folder === f.id ? 800 : 500, borderRadius: 7, padding: '5px 8px', cursor: 'pointer', fontSize: 13, minWidth: 0 }}>
+                    style={{ display: 'flex', gap: 8, flex: 1, textAlign: 'left', border: 0, background: folder === f.id ? '#E7F7F2' : 'none', color: folder === f.id ? '#065F46' : MUTED, fontWeight: folder === f.id ? 800 : 500, borderRadius: 7, padding: '5px 8px', cursor: 'pointer', fontSize: 13, minWidth: 0 }}>
                     <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.parentId == null ? '📁' : '↳'} {f.name}</span>
-                    <span style={{ color: '#93A0B4', fontSize: 11.5 }}>{f.assetCount}</span>
+                    <span style={{ color: MUTED, fontSize: 11.5 }}>{f.assetCount}</span>
                   </button>
-                  <button title="Rename" style={{ border: 0, background: 'none', color: '#93A0B4', cursor: 'pointer', padding: '2px 4px', fontSize: 11 }} onClick={() => { setRenaming(f.id); setRenameVal(f.name); }}>✎</button>
-                  <button title="Delete (must be empty)" style={{ border: 0, background: 'none', color: '#93A0B4', cursor: 'pointer', padding: '2px 4px', fontSize: 11 }} disabled={busy} onClick={() => deleteFolder(f.id)}>✕</button>
+                  <button title="Rename" aria-label="Rename folder" style={{ border: 0, background: "none", color: MUTED, cursor: "pointer", padding: "6px 8px", fontSize: 13, minWidth: 26, minHeight: 26 }} onClick={() => { setRenaming(f.id); setRenameVal(f.name); }}>✎</button>
+                  <button title="Delete (must be empty)" aria-label="Delete folder" style={{ border: 0, background: "none", color: MUTED, cursor: "pointer", padding: "6px 8px", fontSize: 13, minWidth: 26, minHeight: 26 }} disabled={busy} onClick={() => deleteFolder(f.id)}>✕</button>
                 </>
               )}
             </div>
@@ -272,7 +272,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
             <input style={{ ...input, flex: 1, minWidth: 0, padding: '5px 8px', fontSize: 12.5 }} placeholder="New folder name…" value={newFolder} onChange={(e) => setNewFolder(e.target.value)} />
             <button style={{ ...btn, padding: '5px 10px', fontSize: 12 }} disabled={busy || !newFolder.trim()} onClick={createFolder}>+</button>
           </div>
-          <p style={{ margin: '10px 0 0', fontSize: 11, color: '#93A0B4', lineHeight: 1.5 }}>
+          <p style={{ margin: '10px 0 0', fontSize: 11, color: MUTED, lineHeight: 1.5 }}>
             Uploads land in the selected folder. Deleting a folder never deletes its assets — they become unfiled.
           </p>
         </aside>
@@ -289,7 +289,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                       <a href={fileUrl(m.id)} target="_blank" rel="noopener" style={{ display: 'block', aspectRatio: '4/3', background: '#EEF1F5' }}>
                         {m.kind === 'image'
                           ? <img src={thumbUrl(m)} alt={m.alt ?? ''} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                          : <span style={{ display: 'grid', placeItems: 'center', height: '100%', color: '#93A0B4', fontSize: 12 }}>{m.kind}</span>}
+                          : <span style={{ display: 'grid', placeItems: 'center', height: '100%', color: MUTED, fontSize: 12 }}>{m.kind}</span>}
                       </a>
                       <div style={{ padding: '8px 10px' }}>
                         <b style={{ display: 'block', fontSize: 12, color: '#1F2A37', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.meta?.origName ?? m.key}>{m.meta?.origName ?? m.key}</b>
@@ -313,7 +313,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                           </span>
                         )}
                         <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
-                          <select style={{ ...input, flex: 1, minWidth: 0, padding: '3px 6px', fontSize: 11.5, color: '#66748A' }} value={moveFor === m.id ? undefined : m.folderId ?? ''} onChange={(e) => moveTo(m.id, e.target.value)} title="Move to folder">
+                          <select style={{ ...input, flex: 1, minWidth: 0, padding: '3px 6px', fontSize: 11.5, color: MUTED }} value={moveFor === m.id ? undefined : m.folderId ?? ''} onChange={(e) => moveTo(m.id, e.target.value)} title="Move to folder">
                             <option value="">{folderName(m.folderId)}…</option>
                             <option value="">— Unfiled —</option>
                             {(folders.data?.items ?? []).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
@@ -335,11 +335,11 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                     <tr key={m.id}>
                       <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
                         <b>{m.meta?.origName ?? m.key}</b>
-                        <div style={{ color: '#93A0B4', fontSize: 12 }}>{m.key}{m.width != null ? ` · ${m.width}×${m.height}` : ''}</div>
+                        <div style={{ color: MUTED, fontSize: 12 }}>{m.key}{m.width != null ? ` · ${m.width}×${m.height}` : ''}</div>
                         <a href={fileUrl(m.id)} target="_blank" rel="noopener" style={{ fontSize: 12 }}>View file ↗</a>
                       </td>
                       <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}><Badge value={m.kind} /></td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7', color: '#66748A' }}>{folderName(m.folderId)}</td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7', color: MUTED }}>{folderName(m.folderId)}</td>
                       <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
                         {editing === m.id ? (
                           <span style={{ display: 'flex', gap: 6 }}>
@@ -353,7 +353,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                           </span>
                         )}
                       </td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7', fontSize: 11.5, color: '#66748A' }}>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7', fontSize: 11.5, color: MUTED }}>
                         {Object.keys(m.meta?.variants ?? {}).join(', ') || (m.meta?.variantError ? '—' : '—')}
                       </td>
                       <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{m.meta?.bytes ? Math.round(m.meta.bytes / 1024) + ' KB' : '—'}</td>
@@ -389,15 +389,15 @@ function AnalyticsStrip() {
   const maxArrivals = Math.max(1, ...data.series.map((x) => x.n));
   const kpi = (label: string, value: string, sub: string, tone = '#1F2A37') => (
     <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, background: '#fff', padding: '10px 14px' }}>
-      <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4' }}>{label}</div>
+      <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: MUTED }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 800, color: tone, marginTop: 2 }}>{value}</div>
-      <div style={{ fontSize: 11.5, color: '#66748A' }}>{sub}</div>
+      <div style={{ fontSize: 11.5, color: MUTED }}>{sub}</div>
     </div>
   );
   return (
     <details style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
       <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#1F2A37', userSelect: 'none' }}>
-        Analytics — <span style={{ color: '#66748A', fontWeight: 400 }}>
+        Analytics — <span style={{ color: MUTED, fontWeight: 400 }}>
           {data.total} assets · {data.altCompliance}% alt compliance · {fmtBytes(data.storageBytes)} storage{data.lowRes ? ` · ${data.lowRes} low-res` : ''}
         </span>
       </summary>
@@ -409,7 +409,7 @@ function AnalyticsStrip() {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 16, marginTop: 14 }}>
         <div>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>Uploads — last 14 days</div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: MUTED, marginBottom: 6 }}>Uploads — last 14 days</div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60, borderBottom: '1px solid #E6EBF1' }}>
             {data.series.map((x) => (
               <div key={x.d} title={x.d + ': ' + x.n} style={{ flex: 1, display: 'flex', alignItems: 'flex-end', height: '100%' }}>
@@ -419,9 +419,9 @@ function AnalyticsStrip() {
           </div>
         </div>
         <div>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>By kind</div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: MUTED, marginBottom: 6 }}>By kind</div>
           {data.byKind.map((k) => (
-            <div key={k.kind} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: '#66748A', padding: '3px 0' }}>
+            <div key={k.kind} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: MUTED, padding: '3px 0' }}>
               <span>{k.kind}</span>
               <span><b style={{ color: '#1F2A37' }}>{k.n}</b> · {fmtBytes(k.bytes)}</span>
             </div>
@@ -459,16 +459,16 @@ function UsageDrawer({ id, onClose }: { id: number; onClose: () => void }) {
               {copied === 'pub' ? 'Copied ✓' : 'Copy public URL'}
             </button>
             {data.urls.variants.length > 0 && (
-              <span style={{ fontSize: 11.5, color: '#93A0B4', alignSelf: 'center' }}>
+              <span style={{ fontSize: 11.5, color: MUTED, alignSelf: 'center' }}>
                 variants: {data.urls.variants.join(', ')}
               </span>
             )}
           </div>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', margin: '8px 0 6px' }}>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: MUTED, margin: '8px 0 6px' }}>
             Referenced by ({data.usage.length})
           </div>
           {data.usage.length === 0 ? (
-            <span style={{ fontSize: 12.5, color: '#66748A' }}>Not referenced — safe to delete (subject to role).</span>
+            <span style={{ fontSize: 12.5, color: MUTED }}>Not referenced — safe to delete (subject to role).</span>
           ) : (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {data.usage.map((u) => (

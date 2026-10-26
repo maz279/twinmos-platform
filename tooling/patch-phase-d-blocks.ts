@@ -11,6 +11,7 @@ const FORM_TYPES: Record<string, string> = {
   careers: 'job-application',
   partners: 'partner-inquiry',
   contact: 'contact',
+  quote: 'quote',
 };
 
 const PARTNER_STEPS = [

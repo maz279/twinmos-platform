@@ -159,7 +159,8 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
   field: FieldDef; value: unknown; basePath: (number | string)[];
   onChange: (path: (number | string)[], v: unknown) => void; onMediaPick: (path: (number | string)[]) => void;
 }) {
-  const label = <label style={{ fontSize: 11.5, fontWeight: 700, color: '#66748A', display: 'block', marginBottom: 3 }}>{field.label}</label>;
+  const inputId = `pb-field-${basePath.join('-')}-${(field.key || field.label).replace(/\s+/g, '-').toLowerCase()}`;
+  const label = <label htmlFor={inputId} style={{ fontSize: 11.5, fontWeight: 700, color: '#66748A', display: 'block', marginBottom: 3 }}>{field.label}</label>;
 
   if (field.k === 'list') {
     const items = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
@@ -216,7 +217,7 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
     return (
       <div>
         {label}
-        <select style={{ ...input, width: '100%' }} value={String(value ?? '')} onChange={(e) => onChange(basePath, e.target.value)}>
+        <select id={inputId} aria-label={field.label} style={{ ...input, width: '100%' }} value={String(value ?? '')} onChange={(e) => onChange(basePath, e.target.value)}>
           {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
       </div>
@@ -226,7 +227,7 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
     return (
       <div>
         {label}
-        <textarea style={{ ...input, width: '100%', minHeight: 70, fontFamily: 'inherit' }} placeholder={field.placeholder}
+        <textarea id={inputId} aria-label={field.label} style={{ ...input, width: '100%', minHeight: 70, fontFamily: 'inherit' }} placeholder={field.placeholder}
           value={String(value ?? '')} onChange={(e) => onChange(basePath, e.target.value)} />
       </div>
     );
@@ -235,7 +236,7 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
     return (
       <div>
         {label}
-        <input type="number" style={{ ...input, width: '100%' }} min={field.min} max={field.max}
+        <input id={inputId} aria-label={field.label} type="number" style={{ ...input, width: '100%' }} min={field.min} max={field.max}
           value={value == null ? '' : Number(value)} onChange={(e) => onChange(basePath, e.target.value === '' ? null : Number(e.target.value))} />
       </div>
     );
@@ -243,7 +244,7 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
   return (
     <div>
       {label}
-      <input style={{ ...input, width: '100%' }} placeholder={field.placeholder} value={String(value ?? '')}
+      <input id={inputId} aria-label={field.label} style={{ ...input, width: '100%' }} placeholder={field.placeholder} value={String(value ?? '')}
         onChange={(e) => onChange(basePath, e.target.value)} />
     </div>
   );

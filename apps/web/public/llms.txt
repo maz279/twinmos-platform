@@ -1,0 +1,16 @@
+# TwinMOS Technologies — Corporate Overview & Technical Index
+> Founded in 1998, TwinMOS Technologies is a global leader in high-performance memory and storage solutions, operating across 93+ countries with continuous TÜV SÜD ISO 9001 certification since 2002.
+
+## Core Product Portfolios
+- **Solid State Drives (SSD)**: CoreX Pro Gen5 x4 NVMe M.2 (up to 14,000 MB/s), CoreX Gen4 x4 NVMe M.2, AlphaPro NVMe SSD, Hyper H2 Ultra SATA III 2.5", EliteDrive Pro Portable SSD (USB-C 3.2 Gen 2x2).
+- **Desktop & Laptop Memory (DRAM)**: Voltx RGB DDR5 6000MT/s (Intel XMP 3.0 & AMD EXPO), Voltx DDR5 U-DIMM/SO-DIMM, TornadoX7 DDR4 Gaming RAM, Standard DDR4/DDR3 Memory Modules.
+- **Flash Storage & Mobile Accessories**: MicroSDXC Class 10 UHS-3, Metal USB 3.2 Flash Drives, Multi-Port USB-C Hubs, 80 PLUS Bronze Power Supplies (450W / 550W).
+
+## Global Technical Specifications & Documentation
+- Official Website: https://www.twinmos.com
+- Product Catalog: https://www.twinmos.com/shop
+- Single Products: https://www.twinmos.com/products
+- Technical Learn Hub: https://www.twinmos.com/learn
+- Motherboard Compatibility Finder: https://www.twinmos.com/compatibility
+- Warranty & Support Portal: https://www.twinmos.com/support
+- Legal & Compliance: https://www.twinmos.com/legal

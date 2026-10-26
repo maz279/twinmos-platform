@@ -1836,9 +1836,11 @@ var TM = window.TM || {};
         });
       });
     }
-    // F1.7 — cookie preference save (legal tab)
+    // T6.3.1.3 — Real cookie preference interaction (legal tab) — closes Z-19
     var cps = $('#cookiePrefsSave');
-    if (cps) cps.addEventListener('click', function () { toast('Preferences saved — the production site stores granular consent', 'ok'); });
+    if (cps) cps.addEventListener('click', function () {
+      window.dispatchEvent(new CustomEvent('twinmos:open-consent'));
+    });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

@@ -21,9 +21,13 @@ const title = page?.title ?? "About TwinMOS — Since 1998";
 const desc = page?.seoDescription ?? "TwinMOS Technologies: founded 1998 in Taipei; ISO 9001 quality system; offices in Dubai, Taipei, San Jose, Hong Kong and Dhaka; 93+ countries.";
 const blocks = page?.blocks ?? [];
 const noindex = Boolean(preview) || Boolean(page?.noindex);
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'About' },
+];
 ---
 
-<Layout title={title} desc={desc} noindex={noindex}>
+<Layout title={title} desc={desc} breadcrumbs={breadcrumbs} noindex={noindex}>
   <main id="main">
     <BlockDispatcher blocks={blocks} />
   </main>

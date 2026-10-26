@@ -43,15 +43,15 @@ const isCompare = (item: NavItem) => /compare/i.test(item.title);
 
     <label for="drawerLangSel" style="display:block;font-size:12px;font-weight:700;color:var(--muted);margin:2px 0 6px">Language / region</label>
     <select id="drawerLangSel" class="lang-sel drawer-lang" aria-label="Language / region">
-      <option value="en" selected={currentLocale === 'en'}>EN</option>
-      <option value="ar" selected={currentLocale === 'ar'}>AR (RTL)</option>
-      <option value="hi" selected={currentLocale === 'hi'}>HI</option>
-      <option value="ru" selected={currentLocale === 'ru'}>RU</option>
-      <option value="zh-CN" selected={currentLocale === 'zh-CN'}>ZH-CN</option>
-      <option value="fr" selected={currentLocale === 'fr'}>FR</option>
-      <option value="es" selected={currentLocale === 'es'}>ES</option>
-      <option value="pt" selected={currentLocale === 'pt'}>PT</option>
-      <option value="de" selected={currentLocale === 'de'}>DE</option>
+      <option value="en" selected={!currentLocale || currentLocale.toLowerCase() === 'en'}>EN</option>
+      <option value="ar" selected={currentLocale?.toLowerCase() === 'ar'}>AR (RTL)</option>
+      <option value="hi" selected={currentLocale?.toLowerCase() === 'hi'}>HI</option>
+      <option value="ru" selected={currentLocale?.toLowerCase() === 'ru'}>RU</option>
+      <option value="zh-cn" selected={currentLocale?.toLowerCase() === 'zh-cn'}>ZH-CN</option>
+      <option value="fr" selected={currentLocale?.toLowerCase() === 'fr'}>FR</option>
+      <option value="es" selected={currentLocale?.toLowerCase() === 'es'}>ES</option>
+      <option value="pt" selected={currentLocale?.toLowerCase() === 'pt'}>PT</option>
+      <option value="de" selected={currentLocale?.toLowerCase() === 'de'}>DE</option>
     </select>
 
     {items.map((item: NavItem, idx: number) => {

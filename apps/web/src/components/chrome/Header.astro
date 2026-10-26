@@ -57,7 +57,7 @@ const megaClass = (columnCount: number) => {
 
 <header class="site-header">
   <div class="wrap header-in">
-    <a class="logo" href="index.html" aria-label={`${brandName} home`}>
+    <a class="logo" href="/" aria-label={`${brandName} home`}>
       <img src={logoUrl} alt={brandName} />
     </a>
 
@@ -140,15 +140,15 @@ const megaClass = (columnCount: number) => {
 
     <div class="header-cta">
       <select id="langSel" class="lang-sel" aria-label="Language">
-        <option value="en" selected={currentLocale === 'en'}>EN</option>
-        <option value="ar" selected={currentLocale === 'ar'}>AR (RTL)</option>
-        <option value="hi" selected={currentLocale === 'hi'}>HI</option>
-        <option value="ru" selected={currentLocale === 'ru'}>RU</option>
-        <option value="zh-CN" selected={currentLocale === 'zh-CN'}>ZH-CN</option>
-        <option value="fr" selected={currentLocale === 'fr'}>FR</option>
-        <option value="es" selected={currentLocale === 'es'}>ES</option>
-        <option value="pt" selected={currentLocale === 'pt'}>PT</option>
-        <option value="de" selected={currentLocale === 'de'}>DE</option>
+        <option value="en" selected={!currentLocale || currentLocale.toLowerCase() === 'en'}>EN</option>
+        <option value="ar" selected={currentLocale?.toLowerCase() === 'ar'}>AR (RTL)</option>
+        <option value="hi" selected={currentLocale?.toLowerCase() === 'hi'}>HI</option>
+        <option value="ru" selected={currentLocale?.toLowerCase() === 'ru'}>RU</option>
+        <option value="zh-cn" selected={currentLocale?.toLowerCase() === 'zh-cn'}>ZH-CN</option>
+        <option value="fr" selected={currentLocale?.toLowerCase() === 'fr'}>FR</option>
+        <option value="es" selected={currentLocale?.toLowerCase() === 'es'}>ES</option>
+        <option value="pt" selected={currentLocale?.toLowerCase() === 'pt'}>PT</option>
+        <option value="de" selected={currentLocale?.toLowerCase() === 'de'}>DE</option>
       </select>
 
       <button class="icon-btn" id="searchBtn" aria-label="Search" type="button">

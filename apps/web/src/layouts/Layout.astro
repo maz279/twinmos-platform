@@ -26,6 +26,8 @@ interface Props {
   renderChrome?: boolean;
   ogImage?: string;
   preloadImage?: string;
+  canonical?: string;
+  customLd?: (string | null | undefined)[];
 }
 
 const {
@@ -39,10 +41,21 @@ const {
   renderChrome = true,
   ogImage: customOgImage,
   preloadImage,
+  canonical: customCanonical,
+  customLd,
 } = Astro.props;
 
 const path = Astro.url.pathname === '/index.html' ? '/' : Astro.url.pathname;
-const canonical = new URL(path, Astro.site || 'https://www.twinmos.com');
+const siteOrigin = Astro.site || 'https://www.twinmos.com';
+const canonical = customCanonical
+  ? (customCanonical.startsWith('http') ? new URL(customCanonical) : new URL(customCanonical, siteOrigin))
+  : new URL(path, siteOrigin);
+
+const isPreview = Astro.url.searchParams.get('preview') === 'true';
+const shouldNoindex = Boolean(noindex || isPreview);
+if (shouldNoindex) {
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+}
 
 const LOCALES = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'];
 const RTL = ['ar'];
@@ -76,18 +89,28 @@ const integrations = { ...SETTINGS_GROUP_DEFAULTS['integrations'], ...(settings[
 const cookieSettings = { ...SETTINGS_GROUP_DEFAULTS['site.cookie'], ...(settings['site.cookie'] || {}) };
 const whatsapp = { ...SETTINGS_GROUP_DEFAULTS['site.whatsapp'], ...(settings['site.whatsapp'] || {}) };
 
-const pageTitle = applyLiveFigures(title || seo.defaultTitle);
-const pageDesc = applyLiveFigures(desc || seo.defaultDescription);
+function cleanSeoText(text: string): string {
+  if (!text) return '';
+  return String(text)
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
 
 // Copy authored against the original baseline ("since 1998", "93+ countries")
 // follows site.figures when the operator changes it. Other years (e.g. the
 // ISO 9001 "since 2002" certification) are deliberately left untouched.
 function applyLiveFigures(text: string): string {
-  return String(text)
+  return cleanSeoText(text)
     .replace(/\b(since|founded)\s+1998\b/gi, (_m, word) => `${word} ${figures.foundingYear}`)
     .replace(/\b93\+\s+countries\b/gi, `${figures.countriesCount} countries`);
 }
-const siteOrigin = Astro.site || 'https://www.twinmos.com';
+
+const pageTitle = applyLiveFigures(title || seo.defaultTitle);
+const pageDesc = applyLiveFigures(desc || seo.defaultDescription);
+
 const ogImage = customOgImage
   ? (customOgImage.startsWith('http') ? customOgImage : new URL(customOgImage, siteOrigin).toString())
   : new URL(seo.defaultOgImage || '/assets/img/og-cover.png', siteOrigin).toString();
@@ -136,13 +159,14 @@ const BREADCRUMB_LD = breadcrumbs && breadcrumbs.length > 0 ? JSON.stringify({
   itemListElement: breadcrumbs.map((b: { label: string; href?: string }, idx: number) => ({
     '@type': 'ListItem',
     position: idx + 1,
-    name: b.label,
+    name: cleanSeoText(b.label),
     item: b.href ? new URL(b.href, Astro.site || 'https://www.twinmos.com').toString() : undefined,
   })),
 }) : null;
 
 const OG_IMAGE = ogImage;
-const OG_TYPE = path === '/' ? 'website' : 'article';
+const isHomepage = path === '/' || path === '';
+const OG_TYPE = isHomepage ? 'website' : (path.startsWith('/learn/') ? 'article' : 'website');
 ---
 <!doctype html>
 <html lang={locale} dir={dir}>
@@ -151,13 +175,17 @@ const OG_TYPE = path === '/' ? 'website' : 'article';
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#0A2540" />
     <meta name="description" content={pageDesc} />
-    {noindex ? <meta name="robots" content="noindex,nofollow" /> : <meta name="robots" content={seo.defaultRobots} />}
-    <title>{pageTitle}</title>
-    <link rel="canonical" href={canonical} />
-    {hreflangGrid ? (
-      LOCALES.map((code) => <link rel="alternate" hreflang={code} href={localeUrl(code)} />)
+    {shouldNoindex ? (
+      <meta name="robots" content="noindex,nofollow" />
     ) : (
-      <link rel="alternate" hreflang={locale} href={canonical} />
+      <meta name="robots" content={seo.defaultRobots || 'index,follow'} />
+    )}
+    <title>{pageTitle}</title>
+    <link rel="canonical" href={canonical.toString()} />
+    {hreflangGrid ? (
+      LOCALES.map((code) => <link rel="alternate" hreflang={code === 'zh-cn' ? 'zh-CN' : code} href={localeUrl(code)} />)
+    ) : (
+      <link rel="alternate" hreflang={locale === 'zh-cn' ? 'zh-CN' : locale} href={canonical} />
     )}
     <link rel="alternate" hreflang="x-default" href={localeUrl('en')} />
 
@@ -180,7 +208,7 @@ const OG_TYPE = path === '/' ? 'website' : 'article';
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="/assets/css/main.css" />
     <link rel="stylesheet" href="/assets/css/a11y-overrides.css" />
-    {locale !== 'en' && <link rel="stylesheet" href="/assets/css/rtl.css" />}
+    {locale === 'ar' && <link rel="stylesheet" href="/assets/css/rtl.css" />}
     <meta name="twinmos-api" content={import.meta.env.PUBLIC_API_URL ?? ''} />
     <meta name="turnstile-site-key" content={integrations.turnstileSiteKey || import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''} />
     <meta
@@ -188,9 +216,16 @@ const OG_TYPE = path === '/' ? 'website' : 'article';
       content={integrations.analyticsEnabled && integrations.googleAnalyticsId ? integrations.googleAnalyticsId : ''}
     />
 
-    <script type="application/ld+json" set:html={ORG_LD} />
-    <script type="application/ld+json" set:html={SITE_LD} />
+    {isHomepage && (
+      <>
+        <script type="application/ld+json" set:html={ORG_LD} />
+        <script type="application/ld+json" set:html={SITE_LD} />
+      </>
+    )}
     {BREADCRUMB_LD && <script type="application/ld+json" set:html={BREADCRUMB_LD} />}
+    {customLd && customLd.filter(Boolean).map((ld) => (
+      <script type="application/ld+json" set:html={ld} />
+    ))}
   </head>
   <body class={bodyClass}>
     {renderChrome && (

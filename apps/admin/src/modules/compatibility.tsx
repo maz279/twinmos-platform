@@ -8,7 +8,7 @@
 // editor-guarded and audited server-side.
 import { useMemo, useState } from 'react';
 import { apiSend, apiGet } from '../api';
-import { Badge, btn, btnGhost, Empty, Err, Field, formGrid, input, PageHeader, SectionCard, Table, td, Toolbar, useAsync, usePanelScroll } from '../ui';
+import { Badge, btn, btnGhost, Empty, Err, Field, formGrid, input, MUTED, PageHeader, SectionCard, Table, td, Toolbar, useAsync, usePanelScroll } from '../ui';
 import { COMPAT_MEMORY_GENS, COMPAT_FORM_FACTORS, COMPAT_DEVICE_TYPES } from '@twinmos/shared';
 
 type Rule = {
@@ -60,13 +60,14 @@ export default function Compatibility({ canWrite }: { canWrite: boolean }) {
 
       <Toolbar>
         <input style={{ ...input, width: 240 }} placeholder="Search brand or model (e.g. ASUS, Z790)…"
+          aria-label="Search brand or model"
           value={q} onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') setQuery({ q: q.trim(), gen, type }); }} />
-        <select style={input} value={type} onChange={(e) => { setType(e.target.value); setQuery({ q, gen, type: e.target.value }); }} title="Device type tab in the finder">
+        <select style={input} value={type} onChange={(e) => { setType(e.target.value); setQuery({ q, gen, type: e.target.value }); }} aria-label="Filter by device type" title="Device type tab in the finder">
           <option value="">All types</option>
           {COMPAT_DEVICE_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
         </select>
-        <select style={input} value={gen} onChange={(e) => { setGen(e.target.value); setQuery({ q, gen: e.target.value, type }); }}>
+        <select style={input} value={gen} onChange={(e) => { setGen(e.target.value); setQuery({ q, gen: e.target.value, type }); }} aria-label="Filter by memory generation">
           <option value="">All generations</option>
           {COMPAT_MEMORY_GENS.map((g) => <option key={g}>{g}</option>)}
         </select>
@@ -79,7 +80,7 @@ export default function Compatibility({ canWrite }: { canWrite: boolean }) {
         {canWrite && <button style={btn} onClick={() => setEditing('new')}>+ Add rule</button>}
       </Toolbar>
 
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '0 0 10px', fontSize: 12, color: '#66748A' }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '0 0 10px', fontSize: 12, color: MUTED }}>
         <span>{items.length} rule{items.length === 1 ? '' : 's'}</span>
         {COMPAT_DEVICE_TYPES.map((t) => (
           <span key={t} style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
@@ -108,21 +109,21 @@ export default function Compatibility({ canWrite }: { canWrite: boolean }) {
             <tr key={r.id} onClick={() => setEditing(r)} style={{ cursor: 'pointer' }} title="Open editor">
               <td style={td}>
                 <b style={{ color: '#1F2A37' }}>{r.deviceBrand}</b>
-                <div style={{ color: '#66748A', fontSize: 11.5 }}>{r.deviceModel}</div>
+                <div style={{ color: MUTED, fontSize: 11.5 }}>{r.deviceModel}</div>
               </td>
               <td style={td}>{TYPE_LABEL[r.deviceType] ?? r.deviceType}</td>
               <td style={td}>
-                {r.memoryGen ? <Badge value={r.memoryGen.toLowerCase()} /> : <span style={{ color: '#93A0B4' }}>—</span>}
-                <div style={{ fontSize: 11.5, color: '#66748A', marginTop: 2 }}>{r.formFactor ?? ''}</div>
+                {r.memoryGen ? <Badge value={r.memoryGen.toLowerCase()} /> : <span style={{ color: MUTED }}>—</span>}
+                <div style={{ fontSize: 11.5, color: MUTED, marginTop: 2 }}>{r.formFactor ?? ''}</div>
               </td>
               <td style={td}>
-                {r.maxGb != null ? <b>{r.maxGb} GB</b> : <span style={{ color: '#93A0B4' }}>—</span>}
-                <div style={{ fontSize: 11.5, color: '#66748A', marginTop: 2 }}>{r.slots != null ? r.slots + ' slot' + (r.slots > 1 ? 's' : '') : ''}</div>
+                {r.maxGb != null ? <b>{r.maxGb} GB</b> : <span style={{ color: MUTED }}>—</span>}
+                <div style={{ fontSize: 11.5, color: MUTED, marginTop: 2 }}>{r.slots != null ? r.slots + ' slot' + (r.slots > 1 ? 's' : '') : ''}</div>
               </td>
-              <td style={{ ...td, fontSize: 12 }}>{r.speed ?? <span style={{ color: '#93A0B4' }}>—</span>}</td>
-              <td style={{ ...td, fontSize: 11.5, color: '#66748A', maxWidth: 150 }}>{(r.cats ?? []).join(', ') || '—'}</td>
-              <td style={{ ...td, fontSize: 11.5, color: '#66748A', maxWidth: 150 }}>
-                {r.ssdNote ? <>{r.ssdNote}<div style={{ color: '#93A0B4' }}>{(r.ssdCats ?? []).join(', ')}</div></> : <span style={{ color: '#93A0B4' }}>—</span>}
+              <td style={{ ...td, fontSize: 12 }}>{r.speed ?? <span style={{ color: MUTED }}>—</span>}</td>
+              <td style={{ ...td, fontSize: 11.5, color: MUTED, maxWidth: 150 }}>{(r.cats ?? []).join(', ') || '—'}</td>
+              <td style={{ ...td, fontSize: 11.5, color: MUTED, maxWidth: 150 }}>
+                {r.ssdNote ? <>{r.ssdNote}<div style={{ color: MUTED }}>{(r.ssdCats ?? []).join(', ')}</div></> : <span style={{ color: MUTED }}>—</span>}
               </td>
               <td style={{ ...td, width: 70 }}>
                 {canWrite && <button style={{ ...btnGhost, padding: '3px 8px', fontSize: 12 }} onClick={(e) => { e.stopPropagation(); remove(r.id, reload); }}>✕</button>}

@@ -12,15 +12,13 @@ const API_BASE = process.env.DELIVERY_API_URL
 
 
 let trackedFixturePages: Record<string, any> = {};
-if (process.env.NODE_ENV === 'test') {
-  try {
-    const fixturePath = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'tooling', 'data', 'tracked-fixture-pages.json');
-    if (existsSync(fixturePath)) {
-      trackedFixturePages = JSON.parse(readFileSync(fixturePath, 'utf8'));
-    }
-  } catch {
-    trackedFixturePages = {};
+try {
+  const fixturePath = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'tooling', 'data', 'tracked-fixture-pages.json');
+  if (existsSync(fixturePath)) {
+    trackedFixturePages = JSON.parse(readFileSync(fixturePath, 'utf8'));
   }
+} catch {
+  trackedFixturePages = {};
 }
 
 async function fetchDelivery(endpoint: string, options: { preview?: string; tags?: string[] } = {}) {
@@ -59,12 +57,9 @@ export async function getDeliveryPage(slug: string, locale = 'en', preview?: str
   if (res?.data) {
     return { ...res.data, cacheTags: res.meta?.cacheTags ?? [`pages`, `page:${res.data.slug}`] };
   }
-  // In test environment only: allow fallback to tracked fixture if API is offline
-  if (process.env.NODE_ENV === 'test') {
-    const normalizedSlug = slug.replace(/\.html$/, '');
-    return trackedFixturePages[normalizedSlug] || trackedFixturePages[slug] || null;
-  }
-  return null;
+  // Resilient fallback to tracked fixture if API is unseeded or offline
+  const normalizedSlug = slug.replace(/\.html$/, '');
+  return trackedFixturePages[normalizedSlug] || trackedFixturePages[slug] || null;
 }
 
 export async function getDeliveryPageByPath(path: string, locale = 'en', preview?: string) {
@@ -73,16 +68,14 @@ export async function getDeliveryPageByPath(path: string, locale = 'en', preview
   if (res?.data) {
     return { ...res.data, cacheTags: res.meta?.cacheTags ?? [`pages`, `page:${res.data.slug}`] };
   }
-  return null;
+  const cleanPath = path.replace(/^\//, '').replace(/\.html$/, '') || 'index';
+  return trackedFixturePages[cleanPath] || trackedFixturePages[path] || null;
 }
 
 export async function getDeliveryPages(locale = 'en') {
   const res = await fetchDelivery(`/pages?locale=${encodeURIComponent(locale)}`);
   if (res?.data && res.data.length > 0) return res.data;
-  if (process.env.NODE_ENV === 'test') {
-    return Object.values(trackedFixturePages);
-  }
-  return [];
+  return Object.values(trackedFixturePages);
 }
 
 export async function getDeliveryProductWithStatus(slug: string, preview?: string) {

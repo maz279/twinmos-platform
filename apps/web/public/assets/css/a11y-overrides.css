@@ -189,7 +189,7 @@ body.gaming .form-note {
   color: #afc4d6;
 }
 
-/* 7. T5.1.1 Target size minimum (WCAG 2.2 SC 2.5.8 Target Size Minimum >= 24x24 px) */
+/* 7. T5.1.1 & T6.6.1 Target size minimum (WCAG 2.2 SC 2.5.8 Target Size Minimum >= 24x24 px) */
 .site-header .nav > li > a,
 .site-header .mega-col a,
 .site-header .mega-all a,
@@ -198,8 +198,47 @@ body.gaming .form-note {
 .drawer .dlink,
 .drawer .drawer-sub a,
 .drawer .icon-btn,
-.drawer .lang-sel {
+.drawer .lang-sel,
+button,
+a.btn,
+.sl-dot,
+.tab,
+.variant-row button {
   min-height: 24px;
   min-width: 24px;
 }
+
+/* 8. T6.6.1 Focus Not Obscured (WCAG 2.2 SC 2.4.11) & Focus Visible (SC 2.4.7) */
+html {
+  scroll-padding-top: 80px;
+  scroll-padding-bottom: 96px;
+}
+
+:focus-visible {
+  outline: 2px solid #00a3e0 !important;
+  outline-offset: 2px !important;
+}
+
+body.gaming :focus-visible,
+.dark :focus-visible {
+  outline-color: #00f0ff !important;
+}
+
+/* Skip link accessible visual reveal on keyboard focus */
+.skip-link:focus,
+.skip-link:focus-visible {
+  position: fixed !important;
+  top: 12px !important;
+  left: 12px !important;
+  z-index: 99999 !important;
+  padding: 10px 18px !important;
+  background: #0a2540 !important;
+  color: #ffffff !important;
+  border: 2px solid #00a3e0 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+}
+
 

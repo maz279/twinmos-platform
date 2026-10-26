@@ -716,8 +716,8 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                 {raw.heading && !raw.title && <h3 class="h3">{raw.heading}</h3>}
                 <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
                   {renderFiles.map((f: any) => (
-                    <a class="download-link" href={f.url || f.href || '#'} target="_blank" rel="noopener noreferrer" style="color:#0A2540;font-weight:600">
-                      📄 {f.title || f.label || f.name}{f.sku ? ` · ${f.sku}` : ''}
+                    <a class="download-link" href={f.url || f.href || '#'} target="_blank" rel="noopener noreferrer" style="color:#0A2540;font-weight:600" aria-label={`${f.title || f.label || f.name} (opens in a new tab)`}>
+                      📄 {f.title || f.label || f.name}{f.sku ? ` · ${f.sku}` : ''} ↗
                     </a>
                   ))}
                   {renderFiles.length === 0 && <p class="form-note">Datasheets are being prepared for this selection.</p>}
@@ -1650,7 +1650,9 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
 
         case 'form': {
           const formType = raw.formType || (isQuotePage ? 'quote' : 'contact');
-          const AUTOCOMPLETE_TOKENS = new Set(['name','email','organization','phone','country-name','street-address','postal-code','tel']);
+          // axe autocomplete-valid: only WCAG/HTML autofill field tokens
+          // ('phone' is not one — the tel token covers type=tel inputs).
+          const AUTOCOMPLETE_TOKENS = new Set(['name','email','organization','tel','country-name','street-address','postal-code']);
           const autocompleteFor = (f: any) => AUTOCOMPLETE_TOKENS.has(String(f.autocomplete || '')) ? f.autocomplete : (AUTOCOMPLETE_TOKENS.has(String(f.name || '')) ? f.name : undefined);
           const formDef = formDefsByType[formType];
           const formFields = ((formDef && Array.isArray(formDef.fields) && formDef.fields.length > 0)
@@ -1695,7 +1697,7 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                     data-success={successMsg}
                     data-loaded-at={Date.now()}
                   >
-                    <input type="text" name="hp" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;pointer-events:none" aria-hidden="true" />
+                    <input type="text" name="hp" tabindex="-1" style="position:absolute;left:-9999px;opacity:0;pointer-events:none" aria-hidden="true" />
                     <input type="hidden" name="formToken" value={formToken} />
                     <div class="form-grid">
                       {formFields.map((f: any) => {

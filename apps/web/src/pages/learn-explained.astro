@@ -6,7 +6,7 @@ import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
 const page = await getDeliveryPage('learn-explained');
-const title = page?.title ?? "Technology Explainers — Memory &amp; Storage — TwinMOS";
+const title = page?.title ?? "Technology Explainers — Memory & Storage — TwinMOS";
 const desc = page?.seoDescription ?? "TwinMOS technology explainers: DDR5 architecture, NVMe, PCIe generations, NAND flash, ECC, wear leveling and more — the memory and storage concepts behind the spec sheet, demystified.";
 const blocks = page?.blocks ?? [];
 ---

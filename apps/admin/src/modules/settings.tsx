@@ -9,7 +9,7 @@ import React, { useState } from 'react';
 import { SETTINGS_GROUP_DEFAULTS } from '@twinmos/shared';
 import MenuEditor from './menu-editor';
 import { apiGet, apiSend, fmtDate } from '../api';
-import { btn, btnGhost, Empty, Err, input, useAsync } from '../ui';
+import { btn, btnGhost, Empty, Err, input, MUTED, useAsync } from '../ui';
 
 type Redirect = { id: number; from: string; to: string; code: number };
 type Setting = { key: string; value: unknown; updatedAt: string };

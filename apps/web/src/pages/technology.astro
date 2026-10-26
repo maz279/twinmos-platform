@@ -6,7 +6,7 @@ import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
 import { getDeliveryPage } from '../lib/delivery';
 
 const page = await getDeliveryPage('technology');
-const title = page?.title ?? "Technology &amp; R&amp;D — TwinMOS";
+const title = page?.title ?? "Technology & R&D — TwinMOS";
 const desc = page?.seoDescription ?? "TwinMOS technology hub: DRAM, NAND, controllers, thermal design and PCIe Gen 5 engineering.";
 const blocks = page?.blocks ?? [];
 ---

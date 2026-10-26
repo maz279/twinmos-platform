@@ -18,9 +18,12 @@ const { migrate } = await import('drizzle-orm/pglite/migrator');
 const { buildApp } = await import('../src/app.ts');
 const { eq } = await import('drizzle-orm');
 
+import { resolve } from 'node:path';
+const MIGRATIONS = resolve(import.meta.dirname, '../../../packages/db/migrations');
+
 const db = createDb();
 await db.$client.exec('CREATE SCHEMA IF NOT EXISTS drizzle');
-await migrate(db, { migrationsFolder: '../../packages/db/migrations' });
+await migrate(db, { migrationsFolder: MIGRATIONS });
 const app = buildApp(db);
 
 let superCookie = '';

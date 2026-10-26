@@ -1,12 +1,3821 @@
 {
-  "index": {
-    "slug": "index",
-    "title": "TwinMOS Technologies",
-    "blocks": []
+  "404": {
+    "slug": "404",
+    "locale": "en",
+    "title": "404 — TwinMOS",
+    "seoTitle": "404 — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/404.html",
+    "template": "404",
+    "blocks": [
+      {
+        "id": "404-block-1",
+        "type": "error-hero",
+        "heading": "This page went out of stock",
+        "eyebrow": "",
+        "title": "This page went out of stock",
+        "sectionId": "",
+        "component": "div.wrap",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "CTAs",
+          "items": 3
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.363Z"
   },
   "about": {
     "slug": "about",
-    "title": "About TwinMOS",
-    "blocks": []
+    "locale": "en",
+    "title": "about — TwinMOS",
+    "seoTitle": "about — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/about.html",
+    "template": "about",
+    "blocks": [
+      {
+        "id": "about-block-1",
+        "type": "page-hero",
+        "heading": "A legendary memory brand since 1998",
+        "eyebrow": "Company",
+        "title": "A legendary memory brand since 1998",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "4 chips",
+          "items": 1
+        }
+      },
+      {
+        "id": "about-block-2",
+        "type": "anchor-nav",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "nav.about-nav",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "links",
+          "items": 7
+        }
+      },
+      {
+        "id": "about-block-3",
+        "type": "rich-text+factfile",
+        "heading": "Engineering confidence since 1998",
+        "eyebrow": "Who we are",
+        "title": "Engineering confidence since 1998",
+        "sectionId": "overview",
+        "component": "div.wrap.about-cols",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "facts",
+          "items": 6
+        }
+      },
+      {
+        "id": "about-block-4",
+        "type": "stats-tiles",
+        "heading": "Engineering confidence since 1998",
+        "eyebrow": "",
+        "title": "Engineering confidence since 1998",
+        "sectionId": "overview",
+        "component": "div.grid.g4",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "stats",
+          "items": 4
+        }
+      },
+      {
+        "id": "about-block-5",
+        "type": "card-grid",
+        "heading": "Mission, vision & values",
+        "eyebrow": "Our DNA",
+        "title": "Mission, vision & values",
+        "sectionId": "mission",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "cards",
+          "items": 2
+        }
+      },
+      {
+        "id": "about-block-6",
+        "type": "stats-tiles",
+        "heading": "Mission, vision & values",
+        "eyebrow": "",
+        "title": "Mission, vision & values",
+        "sectionId": "mission",
+        "component": "div.v2030-strip.rv",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "targets",
+          "items": 3
+        }
+      },
+      {
+        "id": "about-block-7",
+        "type": "icon-card-grid",
+        "heading": "Mission, vision & values",
+        "eyebrow": "",
+        "title": "Mission, vision & values",
+        "sectionId": "mission",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 7,
+          "what": "cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "about-block-8",
+        "type": "timeline",
+        "heading": "Milestones",
+        "eyebrow": "Our story",
+        "title": "Milestones",
+        "sectionId": "history",
+        "component": "div.timeline",
+        "html": "",
+        "meta": {
+          "order": 8,
+          "what": "milestones in 3 eras",
+          "items": 9
+        }
+      },
+      {
+        "id": "about-block-9",
+        "type": "stats-band-copy",
+        "heading": "We don’t just manufacture memory — we engineer confidence",
+        "eyebrow": "Why — by the numbers",
+        "title": "We don’t just manufacture memory — we engineer confidence",
+        "sectionId": "",
+        "component": "div.reach-band.why-band",
+        "html": "",
+        "meta": {
+          "order": 9,
+          "what": "stats + 0 chips",
+          "items": 4
+        }
+      },
+      {
+        "id": "about-block-10",
+        "type": "kpi-meters+steps",
+        "heading": "Quality is engineered in, not inspected on",
+        "eyebrow": "Quality assurance",
+        "title": "Quality is engineered in, not inspected on",
+        "sectionId": "quality",
+        "component": "div.about-cols",
+        "html": "",
+        "meta": {
+          "order": 10,
+          "what": "5 meters + 5 steps + 4 chips",
+          "items": 10
+        }
+      },
+      {
+        "id": "about-block-11",
+        "type": "card-grid",
+        "heading": "Quality is engineered in, not inspected on",
+        "eyebrow": "",
+        "title": "Quality is engineered in, not inspected on",
+        "sectionId": "quality",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 11,
+          "what": "cards",
+          "items": 2
+        }
+      },
+      {
+        "id": "about-block-12",
+        "type": "icon-card-grid",
+        "heading": "ESG, in practice",
+        "eyebrow": "Sustainability & community",
+        "title": "ESG, in practice",
+        "sectionId": "esg",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 12,
+          "what": "cards (9 list items)",
+          "items": 3
+        }
+      },
+      {
+        "id": "about-block-13",
+        "type": "callout",
+        "heading": "ESG, in practice",
+        "eyebrow": "",
+        "title": "ESG, in practice",
+        "sectionId": "esg",
+        "component": "div.note-box.esg-note",
+        "html": "",
+        "meta": {
+          "order": 13,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "about-block-14",
+        "type": "office-cards",
+        "heading": "Five offices, one standard",
+        "eyebrow": "Global presence",
+        "title": "Five offices, one standard",
+        "sectionId": "global",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 14,
+          "what": "offices",
+          "items": 5
+        }
+      },
+      {
+        "id": "about-block-15",
+        "type": "callout",
+        "heading": "Five offices, one standard",
+        "eyebrow": "",
+        "title": "Five offices, one standard",
+        "sectionId": "global",
+        "component": "div.note-box",
+        "html": "",
+        "meta": {
+          "order": 15,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "about-block-16",
+        "type": "card-grid",
+        "heading": "Press room, media kit & facts",
+        "eyebrow": "Media & investors",
+        "title": "Press room, media kit & facts",
+        "sectionId": "press",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 16,
+          "what": "cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "about-block-17",
+        "type": "callout",
+        "heading": "Press room, media kit & facts",
+        "eyebrow": "",
+        "title": "Press room, media kit & facts",
+        "sectionId": "press",
+        "component": "div.note-box",
+        "html": "",
+        "meta": {
+          "order": 17,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "about-block-18",
+        "type": "cta-banner",
+        "heading": "Partner with a 27-year memory specialist",
+        "eyebrow": "Work with",
+        "title": "Partner with a 27-year memory specialist",
+        "sectionId": "",
+        "component": "div.about-cta.rv",
+        "html": "",
+        "meta": {
+          "order": 18,
+          "what": "CTAs",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.377Z"
+  },
+  "article": {
+    "slug": "article",
+    "locale": "en",
+    "title": "article — TwinMOS",
+    "seoTitle": "article — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/article.html",
+    "template": "article",
+    "blocks": [
+      {
+        "id": "article-block-1",
+        "type": "widget:article-reader",
+        "heading": "Loading article…",
+        "eyebrow": "",
+        "title": "Loading article…",
+        "sectionId": "",
+        "component": "div#artRoot",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "runtime",
+          "items": 0
+        }
+      },
+      {
+        "id": "article-block-2",
+        "type": "article-cards",
+        "heading": "Related reading",
+        "eyebrow": "Keep reading",
+        "title": "Related reading",
+        "sectionId": "",
+        "component": "div#artMore.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "runtime",
+          "items": 0
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.410Z"
+  },
+  "careers": {
+    "slug": "careers",
+    "locale": "en",
+    "title": "careers — TwinMOS",
+    "seoTitle": "careers — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/careers.html",
+    "template": "careers",
+    "blocks": [
+      {
+        "id": "careers-block-1",
+        "type": "page-hero",
+        "heading": "Build memory with us",
+        "eyebrow": "Careers",
+        "title": "Build memory with us",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "3 trust-stats, 8 jump-links, 2 CTAs",
+          "items": 3
+        }
+      },
+      {
+        "id": "careers-block-2",
+        "type": "card-grid",
+        "heading": "Six reasons to build here",
+        "eyebrow": "Why",
+        "title": "Six reasons to build here",
+        "sectionId": "why",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "cards",
+          "items": 6
+        }
+      },
+      {
+        "id": "careers-block-3",
+        "type": "card-grid",
+        "heading": "Four values, one motto — “Innovation, Perfection, and Quality”",
+        "eyebrow": "What we value",
+        "title": "Four values, one motto — “Innovation, Perfection, and Quality”",
+        "sectionId": "values",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "cards",
+          "items": 4
+        }
+      },
+      {
+        "id": "careers-block-4",
+        "type": "table",
+        "heading": "Representative openings",
+        "eyebrow": "Openings",
+        "title": "Representative openings",
+        "sectionId": "openings",
+        "component": "div",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "rows",
+          "items": 5
+        }
+      },
+      {
+        "id": "careers-block-5",
+        "type": "callout",
+        "heading": "Representative openings",
+        "eyebrow": "",
+        "title": "Representative openings",
+        "sectionId": "openings",
+        "component": "div.note-box",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "careers-block-6",
+        "type": "card-grid",
+        "heading": "Find your place in the technology",
+        "eyebrow": "Departments",
+        "title": "Find your place in the technology",
+        "sectionId": "departments",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "cards (24 bullets)",
+          "items": 6
+        }
+      },
+      {
+        "id": "careers-block-7",
+        "type": "callout",
+        "heading": "Find your place in the technology",
+        "eyebrow": "",
+        "title": "Find your place in the technology",
+        "sectionId": "departments",
+        "component": "div.note-box",
+        "html": "",
+        "meta": {
+          "order": 7,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "careers-block-8",
+        "type": "card-grid",
+        "heading": "More than a job — a career with purpose",
+        "eyebrow": "Life at",
+        "title": "More than a job — a career with purpose",
+        "sectionId": "life",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 8,
+          "what": "cards",
+          "items": 2
+        }
+      },
+      {
+        "id": "careers-block-9",
+        "type": "card-grid",
+        "heading": "More than a job — a career with purpose",
+        "eyebrow": "",
+        "title": "More than a job — a career with purpose",
+        "sectionId": "life",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 9,
+          "what": "cards",
+          "items": 4
+        }
+      },
+      {
+        "id": "careers-block-10",
+        "type": "testimonials",
+        "heading": "What colleagues say",
+        "eyebrow": "Voices from the team",
+        "title": "What colleagues say",
+        "sectionId": "life",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 10,
+          "what": "quotes",
+          "items": 2
+        }
+      },
+      {
+        "id": "careers-block-11",
+        "type": "callout",
+        "heading": "More than a job — a career with purpose",
+        "eyebrow": "",
+        "title": "More than a job — a career with purpose",
+        "sectionId": "life",
+        "component": "p.form-note",
+        "html": "",
+        "meta": {
+          "order": 11,
+          "what": "small note",
+          "items": 1
+        }
+      },
+      {
+        "id": "careers-block-12",
+        "type": "callout",
+        "heading": "More than a job — a career with purpose",
+        "eyebrow": "",
+        "title": "More than a job — a career with purpose",
+        "sectionId": "life",
+        "component": "div.note-box",
+        "html": "",
+        "meta": {
+          "order": 12,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "careers-block-13",
+        "type": "card-grid",
+        "heading": "Rewarding excellence, supporting wellbeing",
+        "eyebrow": "Benefits",
+        "title": "Rewarding excellence, supporting wellbeing",
+        "sectionId": "benefits",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 13,
+          "what": "cards",
+          "items": 4
+        }
+      },
+      {
+        "id": "careers-block-14",
+        "type": "table",
+        "heading": "Extras on top of the core package",
+        "eyebrow": "Also included",
+        "title": "Extras on top of the core package",
+        "sectionId": "benefits",
+        "component": "div",
+        "html": "",
+        "meta": {
+          "order": 14,
+          "what": "rows",
+          "items": 6
+        }
+      },
+      {
+        "id": "careers-block-15",
+        "type": "card-grid",
+        "heading": "Rewarding excellence, supporting wellbeing",
+        "eyebrow": "",
+        "title": "Rewarding excellence, supporting wellbeing",
+        "sectionId": "benefits",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 15,
+          "what": "cards",
+          "items": 4
+        }
+      },
+      {
+        "id": "careers-block-16",
+        "type": "callout",
+        "heading": "Rewarding excellence, supporting wellbeing",
+        "eyebrow": "",
+        "title": "Rewarding excellence, supporting wellbeing",
+        "sectionId": "benefits",
+        "component": "div.note-box",
+        "html": "",
+        "meta": {
+          "order": 16,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "careers-block-17",
+        "type": "card-grid",
+        "heading": "A global network, a local presence",
+        "eyebrow": "Locations",
+        "title": "A global network, a local presence",
+        "sectionId": "locations",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 17,
+          "what": "cards",
+          "items": 5
+        }
+      },
+      {
+        "id": "careers-block-18",
+        "type": "callout",
+        "heading": "A global network, a local presence",
+        "eyebrow": "",
+        "title": "A global network, a local presence",
+        "sectionId": "locations",
+        "component": "div.note-box",
+        "html": "",
+        "meta": {
+          "order": 18,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "careers-block-19",
+        "type": "card-grid",
+        "heading": "Internships & graduate programs",
+        "eyebrow": "Early careers",
+        "title": "Internships & graduate programs",
+        "sectionId": "internships",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 19,
+          "what": "cards",
+          "items": 2
+        }
+      },
+      {
+        "id": "careers-block-20",
+        "type": "card-grid",
+        "heading": "Ambitious, curious, hands-on",
+        "eyebrow": "Who we look for",
+        "title": "Ambitious, curious, hands-on",
+        "sectionId": "internships",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 20,
+          "what": "cards",
+          "items": 4
+        }
+      },
+      {
+        "id": "careers-block-21",
+        "type": "link-chips",
+        "heading": "Internships & graduate programs",
+        "eyebrow": "",
+        "title": "Internships & graduate programs",
+        "sectionId": "internships",
+        "component": "div",
+        "html": "",
+        "meta": {
+          "order": 21,
+          "what": "chips",
+          "items": 5
+        }
+      },
+      {
+        "id": "careers-block-22",
+        "type": "card-grid",
+        "heading": "Five internship tracks",
+        "eyebrow": "Tracks",
+        "title": "Five internship tracks",
+        "sectionId": "internships",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 22,
+          "what": "cards (20 bullets)",
+          "items": 5
+        }
+      },
+      {
+        "id": "careers-block-23",
+        "type": "card-grid",
+        "heading": "Internships & graduate programs",
+        "eyebrow": "",
+        "title": "Internships & graduate programs",
+        "sectionId": "internships",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 23,
+          "what": "cards",
+          "items": 4
+        }
+      },
+      {
+        "id": "careers-block-24",
+        "type": "callout",
+        "heading": "Internships & graduate programs",
+        "eyebrow": "",
+        "title": "Internships & graduate programs",
+        "sectionId": "internships",
+        "component": "div.note-box",
+        "html": "",
+        "meta": {
+          "order": 24,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "careers-block-25",
+        "type": "form",
+        "formType": "job-application",
+        "heading": "Take the first step",
+        "eyebrow": "Apply",
+        "title": "Take the first step",
+        "sectionId": "apply",
+        "component": "div.grid.g2.apply-grid",
+        "html": "",
+        "meta": {
+          "order": 25,
+          "what": "fields + 5 steps + 2 notes",
+          "items": 15
+        }
+      },
+      {
+        "id": "careers-block-26",
+        "type": "json-ld",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "script",
+        "html": "",
+        "meta": {
+          "order": 26,
+          "what": "FAQPage questions",
+          "items": 24
+        }
+      },
+      {
+        "id": "careers-block-27",
+        "type": "tabbed-faq",
+        "heading": "Everything about joining",
+        "eyebrow": "FAQ",
+        "title": "Everything about joining",
+        "sectionId": "faq",
+        "component": "div.__tabbed",
+        "html": "",
+        "meta": {
+          "order": 27,
+          "what": "Q&As in 7 tabs",
+          "items": 24
+        }
+      },
+      {
+        "id": "careers-block-28",
+        "type": "callout",
+        "heading": "Everything about joining",
+        "eyebrow": "",
+        "title": "Everything about joining",
+        "sectionId": "faq",
+        "component": "div.note-box",
+        "html": "",
+        "meta": {
+          "order": 28,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "careers-block-29",
+        "type": "card-grid",
+        "heading": "Job Applicant Privacy Notice — key points",
+        "eyebrow": "",
+        "title": "Job Applicant Privacy Notice — key points",
+        "sectionId": "privacy",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 29,
+          "what": "cards",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.431Z"
+  },
+  "compare": {
+    "slug": "compare",
+    "locale": "en",
+    "title": "compare — TwinMOS",
+    "seoTitle": "compare — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/compare.html",
+    "template": "compare",
+    "blocks": [
+      {
+        "id": "compare-block-1",
+        "type": "page-hero",
+        "heading": "Compare products",
+        "eyebrow": "Decision tool",
+        "title": "Compare products",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "compare-block-2",
+        "type": "widget:compare",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div#cmpMount.wrap",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "runtime",
+          "items": 0
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.441Z"
+  },
+  "compatibility": {
+    "slug": "compatibility",
+    "locale": "en",
+    "title": "compatibility — TwinMOS",
+    "seoTitle": "compatibility — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/compatibility.html",
+    "template": "compatibility",
+    "blocks": [
+      {
+        "id": "compatibility-block-1",
+        "type": "page-hero",
+        "heading": "Compatibility finder",
+        "eyebrow": "Flagship tool",
+        "title": "Compatibility finder",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "3 trust-stats",
+          "items": 1
+        }
+      },
+      {
+        "id": "compatibility-block-2",
+        "type": "widget:compat-finder",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div#compatRoot.wrap",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "quick picks",
+          "items": 4
+        }
+      },
+      {
+        "id": "compatibility-block-3",
+        "type": "steps",
+        "heading": "Matching logic, in the open",
+        "eyebrow": "How it works",
+        "title": "Matching logic, in the open",
+        "sectionId": "",
+        "component": "div.steps",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "steps",
+          "items": 4
+        }
+      },
+      {
+        "id": "compatibility-block-4",
+        "type": "faq-accordion",
+        "heading": "Upgrade questions, answered",
+        "eyebrow": "Good to know",
+        "title": "Upgrade questions, answered",
+        "sectionId": "",
+        "component": "div.acc",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "Q&As",
+          "items": 5
+        }
+      },
+      {
+        "id": "compatibility-block-5",
+        "type": "article-cards",
+        "heading": "Go deeper before you buy",
+        "eyebrow": "Learn hub",
+        "title": "Go deeper before you buy",
+        "sectionId": "",
+        "component": "div.grid.g4",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "article cards",
+          "items": 4
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.448Z"
+  },
+  "contact": {
+    "slug": "contact",
+    "locale": "en",
+    "title": "contact — TwinMOS",
+    "seoTitle": "contact — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/contact.html",
+    "template": "contact",
+    "blocks": [
+      {
+        "id": "contact-block-1",
+        "type": "page-hero",
+        "heading": "Talk to",
+        "eyebrow": "Contact",
+        "title": "Talk to",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "contact-block-2",
+        "type": "form",
+        "formType": "contact",
+        "heading": "Send a message",
+        "eyebrow": "",
+        "title": "Send a message",
+        "sectionId": "",
+        "component": "div.wrap.contact-cols",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "fields + 2 contact cards",
+          "items": 5
+        }
+      },
+      {
+        "id": "contact-block-3",
+        "type": "office-cards",
+        "heading": "Find your region",
+        "eyebrow": "Global offices",
+        "title": "Find your region",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "offices",
+          "items": 5
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.467Z"
+  },
+  "gaming": {
+    "slug": "gaming",
+    "locale": "en",
+    "title": "gaming — TwinMOS",
+    "seoTitle": "gaming — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/gaming.html",
+    "template": "gaming",
+    "blocks": [
+      {
+        "id": "gaming-block-1",
+        "type": "hero-slider",
+        "heading": "Built to dominate every frame",
+        "eyebrow": "VOLTX · TwinMOS Gaming",
+        "title": "Built to dominate every frame",
+        "sectionId": "",
+        "component": "div.slider.hero-slider",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "slides",
+          "items": 3
+        }
+      },
+      {
+        "id": "gaming-block-2",
+        "type": "stats-tiles",
+        "heading": "Built to dominate every frame",
+        "eyebrow": "",
+        "title": "Built to dominate every frame",
+        "sectionId": "",
+        "component": "div.hero-stats-band",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "stats",
+          "items": 3
+        }
+      },
+      {
+        "id": "gaming-block-3",
+        "type": "stats-tiles",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.wrap.gstat-in",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "stats",
+          "items": 4
+        }
+      },
+      {
+        "id": "gaming-block-4",
+        "type": "product-rail",
+        "heading": "VOLTX & gaming-grade gear",
+        "eyebrow": "The arsenal",
+        "title": "VOLTX & gaming-grade gear",
+        "sectionId": "arsenal",
+        "component": "div.grid.g4",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "cards (runtime)",
+          "items": 0
+        }
+      },
+      {
+        "id": "gaming-block-5",
+        "type": "spec-table",
+        "heading": "VOLTX & gaming-grade gear",
+        "eyebrow": "",
+        "title": "VOLTX & gaming-grade gear",
+        "sectionId": "arsenal",
+        "component": "div#specs.gspec-wrap",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "rows",
+          "items": 4
+        }
+      },
+      {
+        "id": "gaming-block-6",
+        "type": "badge-strip",
+        "heading": "Lights that obey your board",
+        "eyebrow": "Sync ecosystems",
+        "title": "Lights that obey your board",
+        "sectionId": "sync",
+        "component": "div.rgb-sync-strip",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "badges",
+          "items": 4
+        }
+      },
+      {
+        "id": "gaming-block-7",
+        "type": "widget:rgb-lab",
+        "heading": "Pick your glow",
+        "eyebrow": "RGB lab",
+        "title": "Pick your glow",
+        "sectionId": "rgb",
+        "component": "div.card.rgb-lab",
+        "html": "",
+        "meta": {
+          "order": 7,
+          "what": "effects",
+          "items": 5
+        }
+      },
+      {
+        "id": "gaming-block-8",
+        "type": "bento-grid",
+        "heading": "Load worlds, not bars",
+        "eyebrow": "",
+        "title": "Load worlds, not bars",
+        "sectionId": "",
+        "component": "div.grid.g4",
+        "html": "",
+        "meta": {
+          "order": 8,
+          "what": "cells",
+          "items": 3
+        }
+      },
+      {
+        "id": "gaming-block-9",
+        "type": "card-grid",
+        "heading": "Flip the switch: XMP 3.0 & EXPO",
+        "eyebrow": "Tuning",
+        "title": "Flip the switch: XMP 3.0 & EXPO",
+        "sectionId": "tuning",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 9,
+          "what": "cells",
+          "items": 2
+        }
+      },
+      {
+        "id": "gaming-block-10",
+        "type": "cta-inline-card",
+        "heading": "Build the full rig",
+        "eyebrow": "",
+        "title": "Build the full rig",
+        "sectionId": "",
+        "component": "div.card.card-pad",
+        "html": "",
+        "meta": {
+          "order": 10,
+          "what": "CTAs",
+          "items": 1
+        }
+      },
+      {
+        "id": "gaming-block-11",
+        "type": "link-chips",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.brand-row",
+        "html": "",
+        "meta": {
+          "order": 11,
+          "what": "chips",
+          "items": 5
+        }
+      },
+      {
+        "id": "gaming-block-12",
+        "type": "card-grid",
+        "heading": "VOLTX, explained",
+        "eyebrow": "The brand",
+        "title": "VOLTX, explained",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 12,
+          "what": "cells",
+          "items": 3
+        }
+      },
+      {
+        "id": "gaming-block-13",
+        "type": "card-grid",
+        "heading": "VOLTX, explained",
+        "eyebrow": "",
+        "title": "VOLTX, explained",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 13,
+          "what": "cells",
+          "items": 3
+        }
+      },
+      {
+        "id": "gaming-block-14",
+        "type": "card-grid",
+        "heading": "Rigs from the scene",
+        "eyebrow": "Community",
+        "title": "Rigs from the scene",
+        "sectionId": "builds",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 14,
+          "what": "build cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "gaming-block-15",
+        "type": "cta-row",
+        "heading": "Rigs from the scene",
+        "eyebrow": "",
+        "title": "Rigs from the scene",
+        "sectionId": "builds",
+        "component": "div",
+        "html": "",
+        "meta": {
+          "order": 15,
+          "what": "CTAs",
+          "items": 1
+        }
+      },
+      {
+        "id": "gaming-block-16",
+        "type": "downloads-gallery",
+        "heading": "Take the vibe with you",
+        "eyebrow": "Downloads",
+        "title": "Take the vibe with you",
+        "sectionId": "downloads",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 16,
+          "what": "files",
+          "items": 3
+        }
+      },
+      {
+        "id": "gaming-block-17",
+        "type": "callout",
+        "heading": "Take the vibe with you",
+        "eyebrow": "",
+        "title": "Take the vibe with you",
+        "sectionId": "downloads",
+        "component": "p.form-note",
+        "html": "",
+        "meta": {
+          "order": 17,
+          "what": "small note",
+          "items": 1
+        }
+      },
+      {
+        "id": "gaming-block-18",
+        "type": "article-cards",
+        "heading": "From the VOLTX desk",
+        "eyebrow": "Gaming stories",
+        "title": "From the VOLTX desk",
+        "sectionId": "stories",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 18,
+          "what": "article cards",
+          "items": 3
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.497Z"
+  },
+  "index": {
+    "slug": "index",
+    "locale": "en",
+    "title": "index — TwinMOS",
+    "seoTitle": "index — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/",
+    "template": "index",
+    "blocks": [
+      {
+        "id": "index-block-1",
+        "type": "hero-slider",
+        "heading": "Memory & storage, engineered to last",
+        "eyebrow": "Legendary memory brand since 1998",
+        "title": "Memory & storage, engineered to last",
+        "sectionId": "",
+        "component": "div.slider.hero-slider",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "slides",
+          "items": 5
+        }
+      },
+      {
+        "id": "index-block-2",
+        "type": "stats-tiles",
+        "heading": "Memory & storage, engineered to last",
+        "eyebrow": "",
+        "title": "Memory & storage, engineered to last",
+        "sectionId": "",
+        "component": "div.hero-stats-band",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "stats",
+          "items": 4
+        }
+      },
+      {
+        "id": "index-block-3",
+        "type": "widget:upgrade-advisor",
+        "heading": "Find Your Hardware Upgrade in 2 Clicks",
+        "eyebrow": "Interactive Upgrade Advisor",
+        "title": "Find Your Hardware Upgrade in 2 Clicks",
+        "sectionId": "",
+        "component": "div.upgrade-advisor-box",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "device pills (+11 recs in app.js)",
+          "items": 4
+        }
+      },
+      {
+        "id": "index-block-4",
+        "type": "stats-tiles",
+        "heading": "Trusted worldwide for 28 years",
+        "eyebrow": "Certified quality & compliance",
+        "title": "Trusted worldwide for 28 years",
+        "sectionId": "certifications",
+        "component": "div.cb-stats",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "stats",
+          "items": 5
+        }
+      },
+      {
+        "id": "index-block-5",
+        "type": "badge-strip",
+        "heading": "Trusted worldwide for 28 years",
+        "eyebrow": "",
+        "title": "Trusted worldwide for 28 years",
+        "sectionId": "certifications",
+        "component": "div.cb-badges",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "badges",
+          "items": 9
+        }
+      },
+      {
+        "id": "index-block-6",
+        "type": "category-tiles",
+        "heading": "Engineered for Every Platform",
+        "eyebrow": "Product Ecosystem",
+        "title": "Engineered for Every Platform",
+        "sectionId": "",
+        "component": "div.grid.g4",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "tiles",
+          "items": 8
+        }
+      },
+      {
+        "id": "index-block-7",
+        "type": "link-chips",
+        "heading": "Engineered for Every Platform",
+        "eyebrow": "",
+        "title": "Engineered for Every Platform",
+        "sectionId": "",
+        "component": "div.brand-row",
+        "html": "",
+        "meta": {
+          "order": 7,
+          "what": "chips",
+          "items": 9
+        }
+      },
+      {
+        "id": "index-block-8",
+        "type": "widget:speed-visualizer",
+        "heading": "Experience the 14,000 MB/s Gen 5.0 Velocity",
+        "eyebrow": "Real-World Speed Visualizer",
+        "title": "Experience the 14,000 MB/s Gen 5.0 Velocity",
+        "sectionId": "",
+        "component": "div.speed-sim-container",
+        "html": "",
+        "meta": {
+          "order": 8,
+          "what": "workload tabs (+15 rows in app.js)",
+          "items": 3
+        }
+      },
+      {
+        "id": "index-block-9",
+        "type": "product-rail",
+        "heading": "Featured Flagship Hardware",
+        "eyebrow": "Season Highlights",
+        "title": "Featured Flagship Hardware",
+        "sectionId": "",
+        "component": "div#homeFlagshipGrid.grid.g4",
+        "html": "",
+        "meta": {
+          "order": 9,
+          "what": "cards (runtime)",
+          "items": 0
+        }
+      },
+      {
+        "id": "index-block-10",
+        "type": "cta-row",
+        "heading": "Featured Flagship Hardware",
+        "eyebrow": "",
+        "title": "Featured Flagship Hardware",
+        "sectionId": "",
+        "component": "div",
+        "html": "",
+        "meta": {
+          "order": 10,
+          "what": "CTAs",
+          "items": 1
+        }
+      },
+      {
+        "id": "index-block-11",
+        "type": "bento-grid",
+        "heading": "Why Builders & Enterprises Trust",
+        "eyebrow": "Engineering Excellence",
+        "title": "Why Builders & Enterprises Trust",
+        "sectionId": "",
+        "component": "div.bento",
+        "html": "",
+        "meta": {
+          "order": 11,
+          "what": "cells",
+          "items": 6
+        }
+      },
+      {
+        "id": "index-block-12",
+        "type": "stats-band-copy",
+        "heading": "One brand, five continents",
+        "eyebrow": "Global reach",
+        "title": "One brand, five continents",
+        "sectionId": "",
+        "component": "div.wrap.reach-in",
+        "html": "",
+        "meta": {
+          "order": 12,
+          "what": "stats + 5 chips",
+          "items": 3
+        }
+      },
+      {
+        "id": "index-block-13",
+        "type": "testimonials",
+        "heading": "What the channel says",
+        "eyebrow": "Voices from the field",
+        "title": "What the channel says",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 13,
+          "what": "quotes",
+          "items": 3
+        }
+      },
+      {
+        "id": "index-block-14",
+        "type": "callout",
+        "heading": "What the channel says",
+        "eyebrow": "",
+        "title": "What the channel says",
+        "sectionId": "",
+        "component": "p.form-note",
+        "html": "",
+        "meta": {
+          "order": 14,
+          "what": "small note",
+          "items": 1
+        }
+      },
+      {
+        "id": "index-block-15",
+        "type": "cta-split",
+        "heading": "Sourcing Memory & Storage at Volume?",
+        "eyebrow": "Enterprise & Channel Distribution",
+        "title": "Sourcing Memory & Storage at Volume?",
+        "sectionId": "",
+        "component": "div.b2b-card",
+        "html": "",
+        "meta": {
+          "order": 15,
+          "what": "perks",
+          "items": 3
+        }
+      },
+      {
+        "id": "index-block-16",
+        "type": "article-cards",
+        "heading": "Latest from",
+        "eyebrow": "Media & Industry Events",
+        "title": "Latest from",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 16,
+          "what": "article cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "index-block-17",
+        "type": "link-chips",
+        "heading": "Latest from",
+        "eyebrow": "",
+        "title": "Latest from",
+        "sectionId": "",
+        "component": "div.brand-row",
+        "html": "",
+        "meta": {
+          "order": 17,
+          "what": "chips",
+          "items": 5
+        }
+      },
+      {
+        "id": "index-block-18",
+        "type": "cta-banner",
+        "heading": "Ready to Upgrade Your Hardware?",
+        "eyebrow": "",
+        "title": "Ready to Upgrade Your Hardware?",
+        "sectionId": "",
+        "component": "div.cta-band",
+        "html": "",
+        "meta": {
+          "order": 18,
+          "what": "CTAs",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.510Z"
+  },
+  "learn": {
+    "slug": "learn",
+    "locale": "en",
+    "title": "learn — TwinMOS",
+    "seoTitle": "learn — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/learn.html",
+    "template": "learn",
+    "blocks": [
+      {
+        "id": "learn-block-1",
+        "type": "page-hero",
+        "heading": "Learn memory & storage",
+        "eyebrow": "Knowledge hub",
+        "title": "Learn memory & storage",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "search form",
+          "items": 1
+        }
+      },
+      {
+        "id": "learn-block-2",
+        "type": "stats-tiles",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.cb-stats.learn-stats.learn-stats5",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "stats",
+          "items": 5
+        }
+      },
+      {
+        "id": "learn-block-3",
+        "type": "section-tiles",
+        "heading": "Where do you want to go?",
+        "eyebrow": "Browse by section",
+        "title": "Where do you want to go?",
+        "sectionId": "",
+        "component": "div.grid.g3.lsec-grid",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "tiles",
+          "items": 6
+        }
+      },
+      {
+        "id": "learn-block-4",
+        "type": "learning-paths",
+        "heading": "Learning paths, step by step",
+        "eyebrow": "Guided paths",
+        "title": "Learning paths, step by step",
+        "sectionId": "",
+        "component": "div.grid.g4.lpath-grid",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "paths (13 steps)",
+          "items": 4
+        }
+      },
+      {
+        "id": "learn-block-5",
+        "type": "featured-articles",
+        "heading": "The essentials",
+        "eyebrow": "Start here",
+        "title": "The essentials",
+        "sectionId": "",
+        "component": "div.learn-essentials",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "feature + picks",
+          "items": 6
+        }
+      },
+      {
+        "id": "learn-block-6",
+        "type": "cta-banner",
+        "heading": "Still choosing?",
+        "eyebrow": "",
+        "title": "Still choosing?",
+        "sectionId": "",
+        "component": "div.cta-band",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "CTAs",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.515Z"
+  },
+  "learn-benchmarks": {
+    "slug": "learn-benchmarks",
+    "locale": "en",
+    "title": "learn-benchmarks — TwinMOS",
+    "seoTitle": "learn-benchmarks — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/learn-benchmarks.html",
+    "template": "learn-benchmarks",
+    "blocks": [
+      {
+        "id": "learn-benchmarks-block-1",
+        "type": "page-hero",
+        "heading": "Performance benchmarks",
+        "eyebrow": "Knowledge hub · Benchmarks",
+        "title": "Performance benchmarks",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "3 chips",
+          "items": 1
+        }
+      },
+      {
+        "id": "learn-benchmarks-block-2",
+        "type": "card-grid",
+        "heading": "How we test",
+        "eyebrow": "Methodology",
+        "title": "How we test",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "learn-benchmarks-block-3",
+        "type": "article-index",
+        "heading": "Benchmark library",
+        "eyebrow": "Results",
+        "title": "Benchmark library",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "article cards",
+          "items": 2
+        }
+      },
+      {
+        "id": "learn-benchmarks-block-4",
+        "type": "article-index",
+        "heading": "Gaming Performance",
+        "eyebrow": "",
+        "title": "Gaming Performance",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "article cards",
+          "items": 1
+        }
+      },
+      {
+        "id": "learn-benchmarks-block-5",
+        "type": "article-index",
+        "heading": "Content Creation",
+        "eyebrow": "",
+        "title": "Content Creation",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "article cards",
+          "items": 1
+        }
+      },
+      {
+        "id": "learn-benchmarks-block-6",
+        "type": "text-columns",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "5 kv + 4 bullets",
+          "items": 9
+        }
+      },
+      {
+        "id": "learn-benchmarks-block-7",
+        "type": "link-chips",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.learn-band",
+        "html": "",
+        "meta": {
+          "order": 7,
+          "what": "links",
+          "items": 5
+        }
+      },
+      {
+        "id": "learn-benchmarks-block-8",
+        "type": "cta-banner",
+        "heading": "Compare the products themselves",
+        "eyebrow": "",
+        "title": "Compare the products themselves",
+        "sectionId": "",
+        "component": "div.cta-band",
+        "html": "",
+        "meta": {
+          "order": 8,
+          "what": "CTAs",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.523Z"
+  },
+  "learn-blog": {
+    "slug": "learn-blog",
+    "locale": "en",
+    "title": "learn-blog — TwinMOS",
+    "seoTitle": "learn-blog — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/learn-blog.html",
+    "template": "learn-blog",
+    "blocks": [
+      {
+        "id": "learn-blog-block-1",
+        "type": "page-hero",
+        "heading": "Tech insights & blog",
+        "eyebrow": "Knowledge hub · Blog",
+        "title": "Tech insights & blog",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "3 chips",
+          "items": 1
+        }
+      },
+      {
+        "id": "learn-blog-block-2",
+        "type": "article-cards",
+        "heading": "Recent posts",
+        "eyebrow": "Latest",
+        "title": "Recent posts",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "article cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "learn-blog-block-3",
+        "type": "text-columns",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "3 upcoming + 5 category cards",
+          "items": 8
+        }
+      },
+      {
+        "id": "learn-blog-block-4",
+        "type": "link-chips",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.learn-band",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "links",
+          "items": 5
+        }
+      },
+      {
+        "id": "learn-blog-block-5",
+        "type": "cta-banner",
+        "heading": "Never miss a launch",
+        "eyebrow": "",
+        "title": "Never miss a launch",
+        "sectionId": "",
+        "component": "div.cta-band",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "CTAs",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.545Z"
+  },
+  "learn-explained": {
+    "slug": "learn-explained",
+    "locale": "en",
+    "title": "learn-explained — TwinMOS",
+    "seoTitle": "learn-explained — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/learn-explained.html",
+    "template": "learn-explained",
+    "blocks": [
+      {
+        "id": "learn-explained-block-1",
+        "type": "page-hero",
+        "heading": "Technology explainers",
+        "eyebrow": "Knowledge hub · Explainers",
+        "title": "Technology explainers",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "3 chips",
+          "items": 1
+        }
+      },
+      {
+        "id": "learn-explained-block-2",
+        "type": "article-index",
+        "heading": "Memory (DRAM) Technology",
+        "eyebrow": "Topic",
+        "title": "Memory (DRAM) Technology",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "article cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "learn-explained-block-3",
+        "type": "article-index",
+        "heading": "Memory Generations",
+        "eyebrow": "",
+        "title": "Memory Generations",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "article cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "learn-explained-block-4",
+        "type": "article-index",
+        "heading": "Performance Concepts",
+        "eyebrow": "",
+        "title": "Performance Concepts",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "article cards",
+          "items": 4
+        }
+      },
+      {
+        "id": "learn-explained-block-5",
+        "type": "article-index",
+        "heading": "Advanced Features",
+        "eyebrow": "",
+        "title": "Advanced Features",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "article cards",
+          "items": 4
+        }
+      },
+      {
+        "id": "learn-explained-block-6",
+        "type": "article-index",
+        "heading": "Storage (SSD) Technology",
+        "eyebrow": "Topic",
+        "title": "Storage (SSD) Technology",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "article cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "learn-explained-block-7",
+        "type": "article-index",
+        "heading": "NAND Flash Technology",
+        "eyebrow": "",
+        "title": "NAND Flash Technology",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 7,
+          "what": "article cards",
+          "items": 1
+        }
+      },
+      {
+        "id": "learn-explained-block-8",
+        "type": "article-index",
+        "heading": "SSD Architecture and Features",
+        "eyebrow": "",
+        "title": "SSD Architecture and Features",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 8,
+          "what": "article cards",
+          "items": 5
+        }
+      },
+      {
+        "id": "learn-explained-block-9",
+        "type": "article-index",
+        "heading": "Specialized Topics",
+        "eyebrow": "Topic",
+        "title": "Specialized Topics",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 9,
+          "what": "article cards",
+          "items": 2
+        }
+      },
+      {
+        "id": "learn-explained-block-10",
+        "type": "article-index",
+        "heading": "Enterprise and Reliability",
+        "eyebrow": "",
+        "title": "Enterprise and Reliability",
+        "sectionId": "",
+        "component": "div.lgrp",
+        "html": "",
+        "meta": {
+          "order": 10,
+          "what": "article cards",
+          "items": 4
+        }
+      },
+      {
+        "id": "learn-explained-block-11",
+        "type": "link-chips",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.learn-band",
+        "html": "",
+        "meta": {
+          "order": 11,
+          "what": "links",
+          "items": 5
+        }
+      },
+      {
+        "id": "learn-explained-block-12",
+        "type": "cta-banner",
+        "heading": "Prefer specs to stories?",
+        "eyebrow": "",
+        "title": "Prefer specs to stories?",
+        "sectionId": "",
+        "component": "div.cta-band",
+        "html": "",
+        "meta": {
+          "order": 12,
+          "what": "CTAs",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.554Z"
+  },
+  "learn-glossary": {
+    "slug": "learn-glossary",
+    "locale": "en",
+    "title": "learn-glossary — TwinMOS",
+    "seoTitle": "learn-glossary — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/learn-glossary.html",
+    "template": "learn-glossary",
+    "blocks": [
+      {
+        "id": "learn-glossary-block-1",
+        "type": "page-hero",
+        "heading": "Technology glossary, A–Z",
+        "eyebrow": "Knowledge hub · Glossary",
+        "title": "Technology glossary, A–Z",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "3 chips",
+          "items": 1
+        }
+      },
+      {
+        "id": "learn-glossary-block-2",
+        "type": "widget:glossary-filter",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.lidx-bar",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "letters",
+          "items": 26
+        }
+      },
+      {
+        "id": "learn-glossary-block-3",
+        "type": "glossary-letter",
+        "heading": "Letter A",
+        "eyebrow": "",
+        "title": "Letter A",
+        "sectionId": "gLA",
+        "component": "section#gLA.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "terms",
+          "items": 4
+        }
+      },
+      {
+        "id": "learn-glossary-block-4",
+        "type": "glossary-letter",
+        "heading": "Letter B",
+        "eyebrow": "",
+        "title": "Letter B",
+        "sectionId": "gLB",
+        "component": "section#gLB.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "terms",
+          "items": 6
+        }
+      },
+      {
+        "id": "learn-glossary-block-5",
+        "type": "glossary-letter",
+        "heading": "Letter C",
+        "eyebrow": "",
+        "title": "Letter C",
+        "sectionId": "gLC",
+        "component": "section#gLC.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "terms",
+          "items": 8
+        }
+      },
+      {
+        "id": "learn-glossary-block-6",
+        "type": "glossary-letter",
+        "heading": "Letter D",
+        "eyebrow": "",
+        "title": "Letter D",
+        "sectionId": "gLD",
+        "component": "section#gLD.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "terms",
+          "items": 8
+        }
+      },
+      {
+        "id": "learn-glossary-block-7",
+        "type": "glossary-letter",
+        "heading": "Letter E",
+        "eyebrow": "",
+        "title": "Letter E",
+        "sectionId": "gLE",
+        "component": "section#gLE.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 7,
+          "what": "terms",
+          "items": 5
+        }
+      },
+      {
+        "id": "learn-glossary-block-8",
+        "type": "glossary-letter",
+        "heading": "Letter F",
+        "eyebrow": "",
+        "title": "Letter F",
+        "sectionId": "gLF",
+        "component": "section#gLF.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 8,
+          "what": "terms",
+          "items": 6
+        }
+      },
+      {
+        "id": "learn-glossary-block-9",
+        "type": "glossary-letter",
+        "heading": "Letter G",
+        "eyebrow": "",
+        "title": "Letter G",
+        "sectionId": "gLG",
+        "component": "section#gLG.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 9,
+          "what": "terms",
+          "items": 4
+        }
+      },
+      {
+        "id": "learn-glossary-block-10",
+        "type": "glossary-letter",
+        "heading": "Letter H",
+        "eyebrow": "",
+        "title": "Letter H",
+        "sectionId": "gLH",
+        "component": "section#gLH.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 10,
+          "what": "terms",
+          "items": 4
+        }
+      },
+      {
+        "id": "learn-glossary-block-11",
+        "type": "glossary-letter",
+        "heading": "Letter I",
+        "eyebrow": "",
+        "title": "Letter I",
+        "sectionId": "gLI",
+        "component": "section#gLI.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 11,
+          "what": "terms",
+          "items": 3
+        }
+      },
+      {
+        "id": "learn-glossary-block-12",
+        "type": "glossary-letter",
+        "heading": "Letter J",
+        "eyebrow": "",
+        "title": "Letter J",
+        "sectionId": "gLJ",
+        "component": "section#gLJ.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 12,
+          "what": "terms",
+          "items": 2
+        }
+      },
+      {
+        "id": "learn-glossary-block-13",
+        "type": "glossary-letter",
+        "heading": "Letter K",
+        "eyebrow": "",
+        "title": "Letter K",
+        "sectionId": "gLK",
+        "component": "section#gLK.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 13,
+          "what": "terms",
+          "items": 2
+        }
+      },
+      {
+        "id": "learn-glossary-block-14",
+        "type": "glossary-letter",
+        "heading": "Letter L",
+        "eyebrow": "",
+        "title": "Letter L",
+        "sectionId": "gLL",
+        "component": "section#gLL.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 14,
+          "what": "terms",
+          "items": 5
+        }
+      },
+      {
+        "id": "learn-glossary-block-15",
+        "type": "glossary-letter",
+        "heading": "Letter M",
+        "eyebrow": "",
+        "title": "Letter M",
+        "sectionId": "gLM",
+        "component": "section#gLM.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 15,
+          "what": "terms",
+          "items": 8
+        }
+      },
+      {
+        "id": "learn-glossary-block-16",
+        "type": "glossary-letter",
+        "heading": "Letter N",
+        "eyebrow": "",
+        "title": "Letter N",
+        "sectionId": "gLN",
+        "component": "section#gLN.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 16,
+          "what": "terms",
+          "items": 4
+        }
+      },
+      {
+        "id": "learn-glossary-block-17",
+        "type": "glossary-letter",
+        "heading": "Letter O",
+        "eyebrow": "",
+        "title": "Letter O",
+        "sectionId": "gLO",
+        "component": "section#gLO.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 17,
+          "what": "terms",
+          "items": 2
+        }
+      },
+      {
+        "id": "learn-glossary-block-18",
+        "type": "glossary-letter",
+        "heading": "Letter P",
+        "eyebrow": "",
+        "title": "Letter P",
+        "sectionId": "gLP",
+        "component": "section#gLP.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 18,
+          "what": "terms",
+          "items": 4
+        }
+      },
+      {
+        "id": "learn-glossary-block-19",
+        "type": "glossary-letter",
+        "heading": "Letter Q",
+        "eyebrow": "",
+        "title": "Letter Q",
+        "sectionId": "gLQ",
+        "component": "section#gLQ.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 19,
+          "what": "terms",
+          "items": 2
+        }
+      },
+      {
+        "id": "learn-glossary-block-20",
+        "type": "glossary-letter",
+        "heading": "Letter R",
+        "eyebrow": "",
+        "title": "Letter R",
+        "sectionId": "gLR",
+        "component": "section#gLR.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 20,
+          "what": "terms",
+          "items": 8
+        }
+      },
+      {
+        "id": "learn-glossary-block-21",
+        "type": "glossary-letter",
+        "heading": "Letter S",
+        "eyebrow": "",
+        "title": "Letter S",
+        "sectionId": "gLS",
+        "component": "section#gLS.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 21,
+          "what": "terms",
+          "items": 7
+        }
+      },
+      {
+        "id": "learn-glossary-block-22",
+        "type": "glossary-letter",
+        "heading": "Letter T",
+        "eyebrow": "",
+        "title": "Letter T",
+        "sectionId": "gLT",
+        "component": "section#gLT.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 22,
+          "what": "terms",
+          "items": 6
+        }
+      },
+      {
+        "id": "learn-glossary-block-23",
+        "type": "glossary-letter",
+        "heading": "Letter U",
+        "eyebrow": "",
+        "title": "Letter U",
+        "sectionId": "gLU",
+        "component": "section#gLU.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 23,
+          "what": "terms",
+          "items": 3
+        }
+      },
+      {
+        "id": "learn-glossary-block-24",
+        "type": "glossary-letter",
+        "heading": "Letter V",
+        "eyebrow": "",
+        "title": "Letter V",
+        "sectionId": "gLV",
+        "component": "section#gLV.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 24,
+          "what": "terms",
+          "items": 2
+        }
+      },
+      {
+        "id": "learn-glossary-block-25",
+        "type": "glossary-letter",
+        "heading": "Letter W",
+        "eyebrow": "",
+        "title": "Letter W",
+        "sectionId": "gLW",
+        "component": "section#gLW.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 25,
+          "what": "terms",
+          "items": 3
+        }
+      },
+      {
+        "id": "learn-glossary-block-26",
+        "type": "glossary-letter",
+        "heading": "Letter X",
+        "eyebrow": "",
+        "title": "Letter X",
+        "sectionId": "gLX",
+        "component": "section#gLX.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 26,
+          "what": "terms",
+          "items": 2
+        }
+      },
+      {
+        "id": "learn-glossary-block-27",
+        "type": "glossary-letter",
+        "heading": "Letter Y",
+        "eyebrow": "",
+        "title": "Letter Y",
+        "sectionId": "gLY",
+        "component": "section#gLY.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 27,
+          "what": "terms",
+          "items": 1
+        }
+      },
+      {
+        "id": "learn-glossary-block-28",
+        "type": "glossary-letter",
+        "heading": "Letter Z",
+        "eyebrow": "",
+        "title": "Letter Z",
+        "sectionId": "gLZ",
+        "component": "section#gLZ.lsec-letter",
+        "html": "",
+        "meta": {
+          "order": 28,
+          "what": "terms",
+          "items": 4
+        }
+      },
+      {
+        "id": "learn-glossary-block-29",
+        "type": "empty-state",
+        "heading": "No matching terms",
+        "eyebrow": "",
+        "title": "No matching terms",
+        "sectionId": "",
+        "component": "div.empty-state.lterm-empty",
+        "html": "",
+        "meta": {
+          "order": 29,
+          "what": "message",
+          "items": 1
+        }
+      },
+      {
+        "id": "learn-glossary-block-30",
+        "type": "link-chips",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.learn-band",
+        "html": "",
+        "meta": {
+          "order": 30,
+          "what": "links",
+          "items": 5
+        }
+      },
+      {
+        "id": "learn-glossary-block-31",
+        "type": "cta-banner",
+        "heading": "A term piqued your interest?",
+        "eyebrow": "",
+        "title": "A term piqued your interest?",
+        "sectionId": "",
+        "component": "div.cta-band",
+        "html": "",
+        "meta": {
+          "order": 31,
+          "what": "CTAs",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.563Z"
+  },
+  "learn-guides": {
+    "slug": "learn-guides",
+    "locale": "en",
+    "title": "learn-guides — TwinMOS",
+    "seoTitle": "learn-guides — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/learn-guides.html",
+    "template": "learn-guides",
+    "blocks": [
+      {
+        "id": "learn-guides-block-1",
+        "type": "page-hero",
+        "heading": "Memory & storage buying guides",
+        "eyebrow": "Knowledge hub · Buying guides",
+        "title": "Memory & storage buying guides",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "3 chips",
+          "items": 1
+        }
+      },
+      {
+        "id": "learn-guides-block-2",
+        "type": "article-cards",
+        "heading": "Memory (RAM) Guides",
+        "eyebrow": "First-time builders and upgraders",
+        "title": "Memory (RAM) Guides",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "article cards",
+          "items": 6
+        }
+      },
+      {
+        "id": "learn-guides-block-3",
+        "type": "article-cards",
+        "heading": "Storage (SSD) Guides",
+        "eyebrow": "Understanding SSD specifications",
+        "title": "Storage (SSD) Guides",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "article cards",
+          "items": 7
+        }
+      },
+      {
+        "id": "learn-guides-block-4",
+        "type": "article-cards",
+        "heading": "PC Build Guides",
+        "eyebrow": "Entry-level builds",
+        "title": "PC Build Guides",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "article cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "learn-guides-block-5",
+        "type": "article-cards",
+        "heading": "Enterprise & Procurement Guides",
+        "eyebrow": "OEMs and integrators",
+        "title": "Enterprise & Procurement Guides",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "article cards",
+          "items": 2
+        }
+      },
+      {
+        "id": "learn-guides-block-6",
+        "type": "link-chips",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.learn-band",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "links",
+          "items": 5
+        }
+      },
+      {
+        "id": "learn-guides-block-7",
+        "type": "cta-banner",
+        "heading": "Narrow it down in seconds",
+        "eyebrow": "",
+        "title": "Narrow it down in seconds",
+        "sectionId": "",
+        "component": "div.cta-band",
+        "html": "",
+        "meta": {
+          "order": 7,
+          "what": "CTAs",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.573Z"
+  },
+  "legal": {
+    "slug": "legal",
+    "locale": "en",
+    "title": "legal — TwinMOS",
+    "seoTitle": "legal — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/legal.html",
+    "template": "legal",
+    "blocks": [
+      {
+        "id": "legal-block-1",
+        "type": "page-hero",
+        "heading": "Policies & legal",
+        "eyebrow": "Legal",
+        "title": "Policies & legal",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "legal-block-2",
+        "type": "tabbed-rich-text",
+        "heading": "tabs: Warranty Policy / Terms of Use / Privacy Policy / Cookie Policy / More Policies / EO",
+        "eyebrow": "",
+        "title": "tabs: Warranty Policy / Terms of Use / Privacy Policy / Cookie Policy / More Policies / EO",
+        "sectionId": "",
+        "component": "div.__tabbed",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "policy tabs (7 headings, 21 paragraphs, 10 list items)",
+          "items": 6
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.598Z"
+  },
+  "news": {
+    "slug": "news",
+    "locale": "en",
+    "title": "news — TwinMOS",
+    "seoTitle": "news — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/news.html",
+    "template": "news",
+    "blocks": [
+      {
+        "id": "news-block-1",
+        "type": "page-hero",
+        "heading": "Newsroom",
+        "eyebrow": "Media & events",
+        "title": "Newsroom",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "news-block-2",
+        "type": "article-cards",
+        "heading": "Events",
+        "eyebrow": "On the calendar",
+        "title": "Events",
+        "sectionId": "",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "article cards",
+          "items": 2
+        }
+      },
+      {
+        "id": "news-block-3",
+        "type": "filter-chips",
+        "heading": "Latest news & articles",
+        "eyebrow": "Library",
+        "title": "Latest news & articles",
+        "sectionId": "",
+        "component": "div#newsChips.tabs",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "category chips (filters #newsGrid)",
+          "items": 9
+        }
+      },
+      {
+        "id": "news-block-4",
+        "type": "article-feed",
+        "heading": "Events",
+        "eyebrow": "",
+        "title": "Events",
+        "sectionId": "",
+        "component": "div#newsGrid.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "article cards",
+          "items": 66
+        }
+      },
+      {
+        "id": "news-block-5",
+        "type": "cta-inline-card",
+        "heading": "For the press",
+        "eyebrow": "",
+        "title": "For the press",
+        "sectionId": "",
+        "component": "div.card.card-pad",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "CTAs",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.606Z"
+  },
+  "partners": {
+    "slug": "partners",
+    "locale": "en",
+    "title": "partners — TwinMOS",
+    "seoTitle": "partners — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/partners.html",
+    "template": "partners",
+    "blocks": [
+      {
+        "id": "partners-block-1",
+        "type": "page-hero",
+        "heading": "Grow with the channel",
+        "eyebrow": "Partners",
+        "title": "Grow with the channel",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "partners-block-2",
+        "type": "card-grid",
+        "heading": "Distributors",
+        "eyebrow": "",
+        "title": "Distributors",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "partners-block-3",
+        "type": "steps",
+        "heading": "From application to first container",
+        "eyebrow": "Onboarding",
+        "title": "From application to first container",
+        "sectionId": "",
+        "component": "div.steps",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "steps",
+          "items": 4
+        }
+      },
+      {
+        "id": "partners-block-4",
+        "type": "callout",
+        "heading": "Distributors",
+        "eyebrow": "",
+        "title": "Distributors",
+        "sectionId": "",
+        "component": "div.note-box",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "partners-block-5",
+        "type": "stats-demo",
+        "heading": "Inside the portal Demo",
+        "eyebrow": "Partner portal",
+        "title": "Inside the portal Demo",
+        "sectionId": "",
+        "component": "div.portal-shell",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "stats",
+          "items": 4
+        }
+      },
+      {
+        "id": "partners-block-6",
+        "type": "form",
+        "formType": "partner-inquiry",
+        "heading": "Distributors",
+        "eyebrow": "",
+        "title": "Distributors",
+        "sectionId": "",
+        "component": "div.grid.g2.partner-cols",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "forms (6 fields)",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.613Z"
+  },
+  "product": {
+    "slug": "product",
+    "locale": "en",
+    "title": "product — TwinMOS",
+    "seoTitle": "product — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/product.html",
+    "template": "product",
+    "blocks": [
+      {
+        "id": "product-block-1",
+        "type": "breadcrumb",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.wrap",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "crumbs (runtime name)",
+          "items": 3
+        }
+      },
+      {
+        "id": "product-block-2",
+        "type": "widget:pdp",
+        "heading": "Loading product…",
+        "eyebrow": "",
+        "title": "Loading product…",
+        "sectionId": "",
+        "component": "div#pdpRoot.wrap",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "runtime",
+          "items": 0
+        }
+      },
+      {
+        "id": "product-block-3",
+        "type": "widget:pdp-guides",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div#pdpGuides",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "runtime",
+          "items": 0
+        }
+      },
+      {
+        "id": "product-block-4",
+        "type": "product-rail",
+        "heading": "Related products",
+        "eyebrow": "Same category",
+        "title": "Related products",
+        "sectionId": "",
+        "component": "div#relatedGrid.grid.g4",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "cards (runtime)",
+          "items": 0
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.619Z"
+  },
+  "quote": {
+    "slug": "quote",
+    "locale": "en",
+    "title": "quote — TwinMOS",
+    "seoTitle": "quote — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/quote.html",
+    "template": "quote",
+    "blocks": [
+      {
+        "id": "quote-block-1",
+        "type": "page-hero",
+        "heading": "Volume & OEM quotations",
+        "eyebrow": "Request a quote",
+        "title": "Volume & OEM quotations",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "quote-block-2",
+        "type": "form",
+        "formType": "contact",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.card.card-pad",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "fields",
+          "items": 7
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.626Z"
+  },
+  "rma": {
+    "slug": "rma",
+    "locale": "en",
+    "title": "rma — TwinMOS",
+    "seoTitle": "rma — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/rma.html",
+    "template": "rma",
+    "blocks": [
+      {
+        "id": "rma-block-1",
+        "type": "page-hero",
+        "heading": "RMA center",
+        "eyebrow": "Warranty service",
+        "title": "RMA center",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "rma-block-2",
+        "type": "steps",
+        "heading": "Four steps, no surprises",
+        "eyebrow": "How it works",
+        "title": "Four steps, no surprises",
+        "sectionId": "",
+        "component": "div.steps",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "steps",
+          "items": 4
+        }
+      },
+      {
+        "id": "rma-block-3",
+        "type": "form",
+        "formType": "rma",
+        "heading": "Start an RMA",
+        "eyebrow": "",
+        "title": "Start an RMA",
+        "sectionId": "",
+        "component": "div.wrap.rma-cols",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "fields + tracker",
+          "items": 5
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.655Z"
+  },
+  "search": {
+    "slug": "search",
+    "locale": "en",
+    "title": "search — TwinMOS",
+    "seoTitle": "search — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/search.html",
+    "template": "search",
+    "blocks": [
+      {
+        "id": "search-block-1",
+        "type": "page-hero",
+        "heading": "Results for \"\"",
+        "eyebrow": "Search",
+        "title": "Results for \"\"",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "search-block-2",
+        "type": "widget:search-results",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div#searchMount.wrap",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "runtime",
+          "items": 0
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.663Z"
+  },
+  "shop": {
+    "slug": "shop",
+    "locale": "en",
+    "title": "shop — TwinMOS",
+    "seoTitle": "shop — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/shop.html",
+    "template": "shop",
+    "blocks": [
+      {
+        "id": "shop-block-1",
+        "type": "page-hero",
+        "heading": "All products",
+        "eyebrow": "Catalog",
+        "title": "All products",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "shop-block-2",
+        "type": "widget:category-chips",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div#catChips.tabs",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "runtime chips",
+          "items": 0
+        }
+      },
+      {
+        "id": "shop-block-3",
+        "type": "widget:product-listing",
+        "heading": "Category",
+        "eyebrow": "",
+        "title": "Category",
+        "sectionId": "",
+        "component": "div.shop-layout",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "filter options (counts baked)",
+          "items": 29
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.674Z"
+  },
+  "sitemap": {
+    "slug": "sitemap",
+    "locale": "en",
+    "title": "sitemap — TwinMOS",
+    "seoTitle": "sitemap — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/sitemap.html",
+    "template": "sitemap",
+    "blocks": [
+      {
+        "id": "sitemap-block-1",
+        "type": "page-hero",
+        "heading": "All pages",
+        "eyebrow": "Sitemap",
+        "title": "All pages",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "sitemap-block-2",
+        "type": "link-list",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "ul.card.card-pad",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "links",
+          "items": 27
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.681Z"
+  },
+  "solutions": {
+    "slug": "solutions",
+    "locale": "en",
+    "title": "solutions — TwinMOS",
+    "seoTitle": "solutions — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/solutions.html",
+    "template": "solutions",
+    "blocks": [
+      {
+        "id": "solutions-block-1",
+        "type": "page-hero",
+        "heading": "Memory solutions at scale",
+        "eyebrow": "B2B & OEM",
+        "title": "Memory solutions at scale",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "solutions-block-2",
+        "type": "stats-tiles",
+        "heading": "Regional distribution",
+        "eyebrow": "",
+        "title": "Regional distribution",
+        "sectionId": "",
+        "component": "div.grid.g4",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "stats",
+          "items": 4
+        }
+      },
+      {
+        "id": "solutions-block-3",
+        "type": "card-grid",
+        "heading": "Regional distribution",
+        "eyebrow": "",
+        "title": "Regional distribution",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "solutions-block-4",
+        "type": "card-grid",
+        "heading": "Built on the real catalogue",
+        "eyebrow": "By workload",
+        "title": "Built on the real catalogue",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "cards",
+          "items": 7
+        }
+      },
+      {
+        "id": "solutions-block-5",
+        "type": "steps",
+        "heading": "From requirement to rollout",
+        "eyebrow": "Process",
+        "title": "From requirement to rollout",
+        "sectionId": "",
+        "component": "div.steps",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "steps",
+          "items": 4
+        }
+      },
+      {
+        "id": "solutions-block-6",
+        "type": "card-grid",
+        "heading": "Where we operate",
+        "eyebrow": "Footprint",
+        "title": "Where we operate",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "cards",
+          "items": 5
+        }
+      },
+      {
+        "id": "solutions-block-7",
+        "type": "trust-badges",
+        "heading": "Regional distribution",
+        "eyebrow": "",
+        "title": "Regional distribution",
+        "sectionId": "",
+        "component": "div.trust-band",
+        "html": "",
+        "meta": {
+          "order": 7,
+          "what": "badges",
+          "items": 4
+        }
+      },
+      {
+        "id": "solutions-block-8",
+        "type": "card-grid",
+        "heading": "Regional distribution",
+        "eyebrow": "",
+        "title": "Regional distribution",
+        "sectionId": "",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 8,
+          "what": "cards",
+          "items": 2
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.690Z"
+  },
+  "support": {
+    "slug": "support",
+    "locale": "en",
+    "title": "support — TwinMOS",
+    "seoTitle": "support — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/support.html",
+    "template": "support",
+    "blocks": [
+      {
+        "id": "support-block-1",
+        "type": "page-hero",
+        "heading": "We’ve got your back",
+        "eyebrow": "Support center",
+        "title": "We’ve got your back",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "search form",
+          "items": 1
+        }
+      },
+      {
+        "id": "support-block-2",
+        "type": "badge-strip",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.wrap.wty-in",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "chips + policy link",
+          "items": 4
+        }
+      },
+      {
+        "id": "support-block-3",
+        "type": "icon-card-grid",
+        "heading": "Warranty & RMA",
+        "eyebrow": "",
+        "title": "Warranty & RMA",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "cards",
+          "items": 6
+        }
+      },
+      {
+        "id": "support-block-4",
+        "type": "promo-card",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "a.card.card-pad.learn-band",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "card",
+          "items": 1
+        }
+      },
+      {
+        "id": "support-block-5",
+        "type": "widget:rma-tracker+serial",
+        "heading": "Track your RMA Live service status",
+        "eyebrow": "",
+        "title": "Track your RMA Live service status",
+        "sectionId": "",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "cards (tracker + serial-check steps 3)",
+          "items": 2
+        }
+      },
+      {
+        "id": "support-block-6",
+        "type": "tabbed-faq",
+        "heading": "Frequently asked questions",
+        "eyebrow": "Knowledge",
+        "title": "Frequently asked questions",
+        "sectionId": "faq",
+        "component": "div.__tabbed",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "Q&As in 11 tabs",
+          "items": 126
+        }
+      },
+      {
+        "id": "support-block-7",
+        "type": "article-cards",
+        "heading": "Step-by-step guides from the support team",
+        "eyebrow": "Knowledge base",
+        "title": "Step-by-step guides from the support team",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 7,
+          "what": "article cards",
+          "items": 9
+        }
+      },
+      {
+        "id": "support-block-8",
+        "type": "callout",
+        "heading": "Step-by-step guides from the support team",
+        "eyebrow": "",
+        "title": "Step-by-step guides from the support team",
+        "sectionId": "",
+        "component": "p.form-note",
+        "html": "",
+        "meta": {
+          "order": 8,
+          "what": "small note",
+          "items": 1
+        }
+      },
+      {
+        "id": "support-block-9",
+        "type": "icon-card-grid",
+        "heading": "Firmware, manuals & quick-start guides",
+        "eyebrow": "Downloads",
+        "title": "Firmware, manuals & quick-start guides",
+        "sectionId": "downloads",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 9,
+          "what": "cards",
+          "items": 3
+        }
+      },
+      {
+        "id": "support-block-10",
+        "type": "stats-tiles",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.sla-band",
+        "html": "",
+        "meta": {
+          "order": 10,
+          "what": "stats",
+          "items": 4
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.734Z"
+  },
+  "technology": {
+    "slug": "technology",
+    "locale": "en",
+    "title": "technology — TwinMOS",
+    "seoTitle": "technology — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/technology.html",
+    "template": "technology",
+    "blocks": [
+      {
+        "id": "technology-block-1",
+        "type": "page-hero",
+        "heading": "27+ years of memory engineering",
+        "eyebrow": "Technology & R&D",
+        "title": "27+ years of memory engineering",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "eyebrow+h1+lede",
+          "items": 0
+        }
+      },
+      {
+        "id": "technology-block-2",
+        "type": "card-grid",
+        "heading": "How the hardware works",
+        "eyebrow": "Deep dives",
+        "title": "How the hardware works",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "cards",
+          "items": 9
+        }
+      },
+      {
+        "id": "technology-block-3",
+        "type": "stats-tiles",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "stats",
+          "items": 3
+        }
+      },
+      {
+        "id": "technology-block-4",
+        "type": "cta-banner",
+        "heading": "Engineering questions?",
+        "eyebrow": "",
+        "title": "Engineering questions?",
+        "sectionId": "",
+        "component": "div.cta-band",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "CTAs",
+          "items": 1
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.743Z"
+  },
+  "where-to-buy": {
+    "slug": "where-to-buy",
+    "locale": "en",
+    "title": "where-to-buy — TwinMOS",
+    "seoTitle": "where-to-buy — TwinMOS",
+    "seoDescription": "TwinMOS Technologies since 1998.",
+    "path": "/where-to-buy.html",
+    "template": "where-to-buy",
+    "blocks": [
+      {
+        "id": "where-to-buy-block-1",
+        "type": "page-hero",
+        "heading": "Get products",
+        "eyebrow": "Where to buy",
+        "title": "Get products",
+        "sectionId": "",
+        "component": "div.page-hero",
+        "html": "",
+        "meta": {
+          "order": 1,
+          "what": "4 jump-links",
+          "items": 1
+        }
+      },
+      {
+        "id": "where-to-buy-block-2",
+        "type": "marketplace-cards",
+        "heading": "Shop online",
+        "eyebrow": "Verified marketplaces",
+        "title": "Shop online",
+        "sectionId": "marketplaces",
+        "component": "div.grid.g2",
+        "html": "",
+        "meta": {
+          "order": 2,
+          "what": "marketplaces",
+          "items": 2
+        }
+      },
+      {
+        "id": "where-to-buy-block-3",
+        "type": "callout",
+        "heading": "Shop online",
+        "eyebrow": "",
+        "title": "Shop online",
+        "sectionId": "marketplaces",
+        "component": "p.mp-pending",
+        "html": "",
+        "meta": {
+          "order": 3,
+          "what": "note",
+          "items": 1
+        }
+      },
+      {
+        "id": "where-to-buy-block-4",
+        "type": "stats-tiles",
+        "heading": "Find the channel in your country",
+        "eyebrow": "Distributor locator",
+        "title": "Find the channel in your country",
+        "sectionId": "locator",
+        "component": "div.loc-stats",
+        "html": "",
+        "meta": {
+          "order": 4,
+          "what": "stats",
+          "items": 4
+        }
+      },
+      {
+        "id": "where-to-buy-block-5",
+        "type": "widget:locator-controls",
+        "heading": "Find the channel in your country",
+        "eyebrow": "",
+        "title": "Find the channel in your country",
+        "sectionId": "locator",
+        "component": "div#geoBar.geo-bar",
+        "html": "",
+        "meta": {
+          "order": 5,
+          "what": "controls",
+          "items": 0
+        }
+      },
+      {
+        "id": "where-to-buy-block-6",
+        "type": "widget:locator-controls",
+        "heading": "Find the channel in your country",
+        "eyebrow": "",
+        "title": "Find the channel in your country",
+        "sectionId": "locator",
+        "component": "div.loc-controls",
+        "html": "",
+        "meta": {
+          "order": 6,
+          "what": "controls",
+          "items": 6
+        }
+      },
+      {
+        "id": "where-to-buy-block-7",
+        "type": "widget:locator-controls",
+        "heading": "Find the channel in your country",
+        "eyebrow": "",
+        "title": "Find the channel in your country",
+        "sectionId": "locator",
+        "component": "div#locChips.loc-chips",
+        "html": "",
+        "meta": {
+          "order": 7,
+          "what": "controls",
+          "items": 7
+        }
+      },
+      {
+        "id": "where-to-buy-block-8",
+        "type": "widget:locator-controls",
+        "heading": "Find the channel in your country",
+        "eyebrow": "",
+        "title": "Find the channel in your country",
+        "sectionId": "locator",
+        "component": "div.loc-meta",
+        "html": "",
+        "meta": {
+          "order": 8,
+          "what": "controls",
+          "items": 0
+        }
+      },
+      {
+        "id": "where-to-buy-block-9",
+        "type": "distributor-locator",
+        "heading": "Find the channel in your country",
+        "eyebrow": "",
+        "title": "Find the channel in your country",
+        "sectionId": "locator",
+        "component": "div#locGrid.grid.g3.dgrid",
+        "html": "",
+        "meta": {
+          "order": 9,
+          "what": "country cards",
+          "items": 35
+        }
+      },
+      {
+        "id": "where-to-buy-block-10",
+        "type": "widget:locator-controls",
+        "heading": "Find the channel in your country",
+        "eyebrow": "",
+        "title": "Find the channel in your country",
+        "sectionId": "locator",
+        "component": "div#locEmpty.loc-empty",
+        "html": "",
+        "meta": {
+          "order": 10,
+          "what": "controls",
+          "items": 0
+        }
+      },
+      {
+        "id": "where-to-buy-block-11",
+        "type": "office-cards",
+        "heading": "TwinMOS offices & hubs",
+        "eyebrow": "Global network",
+        "title": "TwinMOS offices & hubs",
+        "sectionId": "offices",
+        "component": "div.grid.g3",
+        "html": "",
+        "meta": {
+          "order": 11,
+          "what": "offices",
+          "items": 5
+        }
+      },
+      {
+        "id": "where-to-buy-block-12",
+        "type": "office-cards",
+        "heading": "TwinMOS offices & hubs",
+        "eyebrow": "",
+        "title": "TwinMOS offices & hubs",
+        "sectionId": "offices",
+        "component": "div.card.office",
+        "html": "",
+        "meta": {
+          "order": 12,
+          "what": "office-style card (distributors)",
+          "items": 1
+        }
+      },
+      {
+        "id": "where-to-buy-block-13",
+        "type": "trust-badges",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "trust",
+        "component": "div.card.card-pad.wtb-trust",
+        "html": "",
+        "meta": {
+          "order": 13,
+          "what": "badges",
+          "items": 4
+        }
+      },
+      {
+        "id": "where-to-buy-block-14",
+        "type": "callout",
+        "heading": "",
+        "eyebrow": "",
+        "title": "",
+        "sectionId": "trust",
+        "component": "div.note-box",
+        "html": "",
+        "meta": {
+          "order": 14,
+          "what": "note",
+          "items": 1
+        }
+      }
+    ],
+    "status": "published",
+    "publishedAt": "2026-10-26T14:21:20.749Z"
   }
 }

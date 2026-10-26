@@ -7,6 +7,7 @@ import { apiGet } from './api';
 import { Icon } from './icons';
 import { MODULES } from './nav';
 import type { NavOpen } from './nav';
+import { useDialogA11y } from './dialog-a11y';
 
 type Hit = { id: number; title: string; sub?: string; module: string; kind: string };
 type Row =
@@ -29,8 +30,7 @@ export default function SearchPalette({ onClose, open }: { onClose: () => void; 
   const [busy, setBusy] = useState(false);
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  const dialogRef = useDialogA11y({ isOpen: true, onClose, initialFocusRef: inputRef });
 
   // debounced server search (≥2 chars)
   useEffect(() => {
@@ -84,11 +84,12 @@ export default function SearchPalette({ onClose, open }: { onClose: () => void; 
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(10,22,40,.45)', display: 'grid', alignItems: 'start', justifyContent: 'center', paddingTop: '11vh', zIndex: 60 }}>
-      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Global search" onKeyDown={key}
+      <div ref={dialogRef} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Global search" onKeyDown={key}
         style={{ width: 'min(620px, 92vw)', background: '#fff', borderRadius: 14, boxShadow: '0 30px 80px rgba(2,12,28,.5)', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: '1px solid #E6EBF1' }}>
           <Icon name="search" size={17} style={{ color: '#1DBF9F' }} />
           <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)}
+            aria-label="Search query"
             placeholder="Search leads, products, content, RMA, media… or jump to a module"
             style={{ flex: 1, border: 0, outline: 'none', fontSize: 15.5, color: '#1F2A37' }} />
           {busy && <span style={{ fontSize: 11.5, color: '#93A0B4' }}>searching…</span>}

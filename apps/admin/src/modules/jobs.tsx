@@ -12,7 +12,7 @@
 // openings table through the export/merge bridge.
 import React, { useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, CommandBar, Empty, Err, input, Table, td, Toolbar, useAsync, usePanelScroll } from '../ui';
+import { Badge, btn, btnGhost, CommandBar, Empty, Err, input, MUTED, Table, td, Toolbar, useAsync, usePanelScroll } from '../ui';
 import { JOB_DEPARTMENTS, JOB_LOCATIONS, JOB_TYPES, JOB_LEVELS, JOB_POSTING_STATUSES } from '@twinmos/shared';
 import type { ModProps } from '../nav';
 
@@ -64,15 +64,15 @@ function AnalyticsStrip() {
   const maxArrivals = Math.max(1, ...data.series.map((x) => x.n));
   const kpi = (label: string, value: string, sub: string) => (
     <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, background: '#fff', padding: '10px 14px' }}>
-      <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4' }}>{label}</div>
+      <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: MUTED }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 800, color: '#1F2A37', marginTop: 2 }}>{value}</div>
-      <div style={{ fontSize: 11.5, color: '#66748A' }}>{sub}</div>
+      <div style={{ fontSize: 11.5, color: MUTED }}>{sub}</div>
     </div>
   );
   return (
     <details style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
       <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#1F2A37', userSelect: 'none' }}>
-        Analytics — <span style={{ color: '#66748A', fontWeight: 400 }}>{published} live postings · {newApps} new applications · {totalApps} total</span>
+        Analytics — <span style={{ color: MUTED, fontWeight: 400 }}>{published} live postings · {newApps} new applications · {totalApps} total</span>
       </summary>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10, marginTop: 12 }}>
         {kpi('Live postings', String(published), data.postings.reduce((s, x) => s + x.n, 0) + ' total')}
@@ -82,17 +82,17 @@ function AnalyticsStrip() {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 16, marginTop: 14 }}>
         <div>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>Top roles by applications</div>
-          {data.topPostings.length === 0 && <span style={{ fontSize: 12.5, color: '#93A0B4' }}>no published postings yet</span>}
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: MUTED, marginBottom: 6 }}>Top roles by applications</div>
+          {data.topPostings.length === 0 && <span style={{ fontSize: 12.5, color: MUTED }}>no published postings yet</span>}
           {data.topPostings.map((x) => (
             <div key={x.id} style={{ display: 'grid', gridTemplateColumns: '1fr 34px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
-              <span style={{ fontSize: 12.5, color: '#66748A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</span>
+              <span style={{ fontSize: 12.5, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</span>
               <b style={{ fontSize: 12.5, color: '#1F2A37', textAlign: 'right' }}>{x.n}</b>
             </div>
           ))}
         </div>
         <div>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>Applications — last 14 days</div>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: MUTED, marginBottom: 6 }}>Applications — last 14 days</div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 70, borderBottom: '1px solid #E6EBF1' }}>
             {data.series.map((x) => (
               <div key={x.d} title={x.d + ': ' + x.n} style={{ flex: 1, display: 'flex', alignItems: 'flex-end', height: '100%' }}>
@@ -132,26 +132,26 @@ function Postings({ canWrite }: { canWrite: boolean }) {
       onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />;
   }
 
-  const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: '#93A0B4' };
+  const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: MUTED };
   /** Deadline tone: red past due, amber within 7 days. */
   function deadline(applyBy: string | null): { text: string; color: string } | null {
     if (!applyBy) return null;
     const days = Math.ceil((new Date(applyBy).getTime() - Date.now()) / 86400_000);
     if (days < 0) return { text: `closed ${-days}d ago`, color: '#C2453C' };
     if (days <= 7) return { text: `closes in ${days}d`, color: '#B45309' };
-    return { text: `closes in ${days}d`, color: '#66748A' };
+    return { text: `closes in ${days}d`, color: MUTED };
   }
 
   return (
     <div>
       <Toolbar style={{ marginBottom: 10 }}>
-        <input style={{ ...input, width: 220 }} placeholder="Search title, location, body…" value={q}
+        <input style={{ ...input, width: 220 }} placeholder="Search title, location, body…" aria-label="Search title, location, body" value={q}
           onChange={(e) => setQ(e.target.value)} />
-        <select style={input} value={dept} onChange={(e) => setDept(e.target.value)}>
+        <select style={input} value={dept} onChange={(e) => setDept(e.target.value)} aria-label="Filter by department">
           <option value="">All departments</option>
           {JOB_DEPARTMENTS.map((d) => <option key={d}>{d}</option>)}
         </select>
-        <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select style={input} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter by status">
           <option value="">All statuses</option>
           {JOB_POSTING_STATUSES.map((s) => <option key={s}>{s}</option>)}
         </select>
@@ -169,7 +169,7 @@ function Postings({ canWrite }: { canWrite: boolean }) {
               return (
                 <tr key={p.id}>
                   <td style={td}><b style={{ color: '#1F2A37' }}>{p.title}</b>
-                    {p.salaryBand && <div style={{ color: '#66748A', fontSize: 11.5 }}>{p.salaryBand}</div>}
+                    {p.salaryBand && <div style={{ color: MUTED, fontSize: 11.5 }}>{p.salaryBand}</div>}
                     {dl && <div style={{ color: dl.color, fontSize: 11.5, fontWeight: dl.color !== '#66748A' ? 700 : 400 }}>{dl.text}</div>}
                   </td>
                   <td style={td}>{p.dept}</td>
@@ -191,7 +191,7 @@ function Postings({ canWrite }: { canWrite: boolean }) {
         )}
         </>
       ) : null}
-      {!canWrite && <p style={{ color: '#93A0B4', fontSize: 12.5 }}>Read-only — editor role required to manage postings.</p>}
+      {!canWrite && <p style={{ color: MUTED, fontSize: 12.5 }}>Read-only — editor role required to manage postings.</p>}
     </div>
   );
 }
@@ -220,7 +220,7 @@ function PostingEditor({ id, canWrite, onDone, onCancel }: {
   if (!isNew && loading) return <p>Loading…</p>;
   if (!isNew && error) return <Err error={error} />;
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
-  const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: '#93A0B4', display: 'block', margin: '10px 0 4px' };
+  const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: MUTED, display: 'block', margin: '10px 0 4px' };
   const card: React.CSSProperties = { border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 16px', background: '#fff' };
 
   async function save(publish?: boolean) {
@@ -290,7 +290,7 @@ function PostingEditor({ id, canWrite, onDone, onCancel }: {
         <textarea style={{ ...input, width: '100%', minHeight: 180, fontFamily: 'inherit' }}
           placeholder={'## Responsibilities\n- …\n\n## Qualifications\n- …'}
           value={form.body} onChange={(e) => set('body', e.target.value)} />
-        <div style={{ color: '#93A0B4', fontSize: 11.5, marginTop: 4 }}>
+        <div style={{ color: MUTED, fontSize: 11.5, marginTop: 4 }}>
           {form.body.trim() ? `${form.body.trim().split(/\s+/).length} words — the first paragraph ships to the public careers page as the role summary` : 'The first non-heading paragraph becomes the public careers page summary'}
         </div>
         <label style={{ ...label, display: 'flex', alignItems: 'center', gap: 8, textTransform: 'none', letterSpacing: 0, fontSize: 12.5, color: '#475467' }}>
@@ -328,18 +328,18 @@ function Applications({ canWrite }: { canWrite: boolean }) {
   return (
     <div>
       <Toolbar style={{ marginBottom: 10 }}>
-        <input style={{ ...input, width: 210 }} placeholder="Search candidate, email, ref, content…" value={q}
+        <input style={{ ...input, width: 210 }} placeholder="Search candidate, email, ref, content…" aria-label="Search candidate, email, ref, content" value={q}
           onChange={(e) => setQ(e.target.value)} />
-        <select style={input} value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select style={input} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter by application status">
           <option value="">All statuses</option>
           {APP_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select style={input} value={postingId} onChange={(e) => setPostingId(e.target.value)} title="Posting">
+        <select style={input} value={postingId} onChange={(e) => setPostingId(e.target.value)} aria-label="Filter by posting role" title="Posting">
           <option value="">All roles</option>
           {(postings.data?.items ?? []).map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
         </select>
         {(status || q || postingId) && <button style={btnGhost} onClick={() => { setStatus(''); setQ(''); setPostingId(''); }}>Reset</button>}
-        {data?.total != null && <span style={{ fontSize: 12.5, color: '#66748A', alignSelf: 'center' }}>{data.total} application{data.total === 1 ? '' : 's'}</span>}
+        {data?.total != null && <span style={{ fontSize: 12.5, color: MUTED, alignSelf: 'center' }}>{data.total} application{data.total === 1 ? '' : 's'}</span>}
       </Toolbar>
       {error ? <Err error={error} /> : null}
       {actionError ? <Err error={actionError} /> : null}
@@ -350,7 +350,7 @@ function Applications({ canWrite }: { canWrite: boolean }) {
               <td style={td}>{app.refCode}</td>
               <td style={td}>
                 <b>{String(app.payload?.name ?? app.email)}</b>
-                <div style={{ color: '#66748A', fontSize: 12.5 }}>{app.email}</div>
+                <div style={{ color: MUTED, fontSize: 12.5 }}>{app.email}</div>
                 {typeof app.payload?.portfolio === 'string' && (
                   <div style={{ fontSize: 12.5 }}>Portfolio: {String(app.payload.portfolio).slice(0, 80)}</div>
                 )}
@@ -360,7 +360,7 @@ function Applications({ canWrite }: { canWrite: boolean }) {
               <td style={td}><Badge value={app.status} /></td>
               <td style={td}>
                 {canWrite && (
-                  <select style={input} value={app.status} disabled={busyId === app.id} onClick={(e) => e.stopPropagation()} onChange={(e) => setStatusFor(app.id, e.target.value)}>
+                  <select style={input} value={app.status} disabled={busyId === app.id} onClick={(e) => e.stopPropagation()} onChange={(e) => setStatusFor(app.id, e.target.value)} aria-label={`Change status for application ${app.refCode}`}>
                     {APP_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 )}
@@ -403,13 +403,13 @@ function AppDetail({ id, canWrite, onChanged }: { id: number; canWrite: boolean;
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <b>{data.refCode} — {String(data.payload?.name ?? data.email)}</b>
         <Badge value={data.status} />
-        <span style={{ color: '#66748A', fontSize: 13 }}>{data.postingTitle ?? 'General application'} · received {fmtDate(data.createdAt)}</span>
+        <span style={{ color: MUTED, fontSize: 13 }}>{data.postingTitle ?? 'General application'} · received {fmtDate(data.createdAt)}</span>
       </div>
       {err ? <Err error={err} /> : null}
       {replyMsg && <div role="status" style={{ margin: '10px 0', padding: '7px 12px', borderRadius: 8, background: '#EDFAF6', border: '1px solid #BFE8DC', color: '#0F6B54', fontSize: 13 }}>{replyMsg}</div>}
       <Table head={['Field', 'Value']}>
         {Object.entries({ email: data.email, ...data.payload }).map(([k, v]) => (
-          <tr key={k}><td style={{ ...td, width: 160, color: '#66748A' }}>{k}</td><td style={td}>{String(v)}</td></tr>
+          <tr key={k}><td style={{ ...td, width: 160, color: MUTED }}>{k}</td><td style={td}>{String(v)}</td></tr>
         ))}
       </Table>
       {canWrite && (
@@ -419,7 +419,7 @@ function AppDetail({ id, canWrite, onChanged }: { id: number; canWrite: boolean;
             value={reply} onChange={(e) => setReply(e.target.value)} />
           <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
             <button style={btn} disabled={busy || !reply.trim()} onClick={sendReply}>Reply to candidate</button>
-            <span style={{ color: '#93A0B4', fontSize: 11.5 }}>Emailed to {data.email} · moves a new application into review · audited</span>
+            <span style={{ color: MUTED, fontSize: 11.5 }}>Emailed to {data.email} · moves a new application into review · audited</span>
           </div>
         </div>
       )}
