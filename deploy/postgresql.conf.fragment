@@ -1,0 +1,16 @@
+# ==============================================================================
+# TwinMOS PostgreSQL 18 Configuration Fragment — WAL Archiving & PITR (T7.1.2)
+# Include this fragment in /etc/postgresql/18/main/postgresql.conf or conf.d/
+# ==============================================================================
+
+# 1. Continuous Archiving (RPO <= 15 min)
+wal_level = replica
+archive_mode = on
+archive_command = 'pgbackrest --stanza=twinmos archive-push %p'
+archive_timeout = 900  # Forces a WAL file switch every 15 minutes if idle
+
+# 2. Point-in-Time Recovery (PITR) Template
+# Used during disaster recovery replay:
+restore_command = 'pgbackrest --stanza=twinmos archive-get %f "%p"'
+# recovery_target_time = '2026-10-27 12:00:00 UTC'
+# recovery_target_action = 'promote'

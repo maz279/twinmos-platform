@@ -39,6 +39,8 @@
     "verify:ms44": "node --experimental-strip-types --no-warnings tooling/verify/verify-ms44-audit.mjs",
     "verify:ms44:parity": "node tooling/verify/verify-ms44-parity.mjs",
     "verify:deploy": "node tooling/verify/verify-rollback.mjs",
+    "verify:dr-01": "node tooling/verify/dr-01-audit.mjs",
+    "verify:ms71": "node tooling/verify/verify-ms71-audit.mjs",
     "verify:qj": "node tooling/verify/verify-quality-jobs.mjs",
     "verify:manual": "node tooling/verify/manual-test-suite.mjs",
     "verify:visual": "node tooling/verify/visual-a11y-audit.mjs",

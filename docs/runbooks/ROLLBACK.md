@@ -60,9 +60,9 @@ If an incompatible database change occurred that cannot run n-1 code:
 sudo systemctl stop twinmos-api
 
 # Execute restore to immediate pre-deployment timestamp
-# (Backups taken automatically prior to migration)
-sudo /opt/twinmos/deploy/restore.sh --drill /var/backups/twinmos/backup_pre_deploy.dump
-sudo /opt/twinmos/deploy/restore.sh /var/backups/twinmos/backup_pre_deploy.dump
+# (Backups taken automatically prior to migration into dated/named backup directory)
+sudo /opt/twinmos/deploy/restore.sh /var/backups/twinmos/backup_pre_deploy --drill
+sudo /opt/twinmos/deploy/restore.sh /var/backups/twinmos/backup_pre_deploy
 
 # Restart API
 sudo systemctl start twinmos-api

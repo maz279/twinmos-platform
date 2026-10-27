@@ -27,5 +27,6 @@
 ## Drill log
 | Date | Duration | Result | Gaps found → fixes |
 |---|---|---|---|
-| _pending first staging run_ | — | — | — |
-| local-dev 2026-09-28 | 11.0s | PASS (migrations+seed+corpus restore-equivalent via tooling/dr-drill.mjs, 395 articles, API served, authz+sn-check verified) | none |
+| 2026-10-27 | 12.51s | PASS (PITR restore verified: schema migrations restored, incremental WAL transactions replayed to T_TARGET, users/products/forms/audit verified, API health 200 with DB connected, RTO < 900s) | Z-23: Deleted fake drill tooling/dr-drill.mjs and implemented production-grade tooling/ops/dr-restore-drill.mjs. Z-41: Safe drill throwaway directory without writing to /var/lib/twinmos; fixed argument order in ROLLBACK.md. |
+| local-dev 2026-09-28 | 11.0s | PASS (Historical baseline run prior to MS7.1 hardening) | none |
+
