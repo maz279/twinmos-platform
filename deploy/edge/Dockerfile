@@ -18,6 +18,7 @@ RUN apk add --no-cache openssl && \
 # Copy edge configurations
 COPY deploy/nginx/realip_cloudflare.conf /etc/nginx/snippets/realip_cloudflare.conf
 COPY deploy/nginx/twinmos-redirects.map /etc/nginx/twinmos-redirects.map
+COPY deploy/nginx/certs/cloudflare-origin-pull-ca.pem /etc/nginx/certs/cloudflare-origin-pull-ca.pem
 COPY deploy/nginx/twinmos.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80 443

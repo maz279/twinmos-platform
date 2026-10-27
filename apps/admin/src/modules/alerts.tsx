@@ -32,7 +32,7 @@ export default function AlertsModule({ canWrite, me }: ModProps) {
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
-  const { data, err, reload } = useAsync(async () => {
+  const { data, error, reload } = useAsync(async () => {
     return apiGet<{ alerts: AlertItem[]; summary: AlertSummary }>('/admin/alerts');
   }, []);
 
@@ -59,7 +59,7 @@ export default function AlertsModule({ canWrite, me }: ModProps) {
     }
   };
 
-  if (err) return <Err msg={err} />;
+  if (error) return <Err error={error} />;
   if (!data) return <div style={{ padding: 24, color: MUTED }}>Loading live telemetry and alerts...</div>;
 
   const { alerts, summary } = data;

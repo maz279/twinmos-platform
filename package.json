@@ -43,6 +43,8 @@
     "verify:ms71": "node tooling/verify/verify-ms71-audit.mjs",
     "verify:ms72": "node tooling/verify/verify-ms72-audit.mjs",
     "verify:obs-01": "node tooling/verify/obs-01-audit.mjs",
+    "verify:hard-01": "node tooling/verify/hard-01-audit.mjs",
+    "verify:ms73": "node tooling/verify/verify-ms73-audit.mjs",
     "verify:qj": "node tooling/verify/verify-quality-jobs.mjs",
     "verify:manual": "node tooling/verify/manual-test-suite.mjs",
     "verify:visual": "node tooling/verify/visual-a11y-audit.mjs",

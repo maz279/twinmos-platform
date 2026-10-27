@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# TwinMOS Production Origin Isolation & Firewall Setup (Task F3 / HARD-01)
-# Enforces that all inbound HTTP/HTTPS traffic to the origin arrives ONLY via
-# Cloudflare reverse proxy edge network, blocking direct origin IP scraping,
-# bypass attempts, and internal port exposures (8787, 4321, 5432).
+# TwinMOS Production Origin Isolation & Firewall Setup (Task F3 / T7.3.2 / HARD-01)
+# Closes: Finding Z-23 (Hardening hollow), Finding Z-28 (Firewall part)
+#
+# Enforces:
+# 1. DOCKER-USER iptables chain filtering so Docker cannot bypass host firewall rules.
+# 2. Ports 80 and 443 allowed ONLY from published Cloudflare IPv4 & IPv6 ranges.
+# 3. Port 22 (SSH) allowed ONLY from authorized admin/bastion IP ranges, with rate-limiting.
+# 4. SSH keys only (PasswordAuthentication no).
+# 5. Unattended security updates configured and active.
+# 6. Internal application ports (8787, 4321, 5432) strictly blocked from public interfaces.
 # ==============================================================================
 set -euo pipefail
 
@@ -21,25 +27,13 @@ run_cmd() {
   fi
 }
 
-echo "=== TwinMOS Host Firewall Configuration ==="
+echo "=== TwinMOS Host & Container Firewall Configuration (T7.3.2) ==="
 
-# 1. Reset UFW to clean baseline
-run_cmd ufw --force reset
-run_cmd ufw default deny incoming
-run_cmd ufw default allow outgoing
+# ------------------------------------------------------------------------------
+# 1. Define Authorized IP Ranges
+# ------------------------------------------------------------------------------
 
-# 2. Allow Loopback (Inter-process communication 127.0.0.1 / ::1)
-run_cmd ufw allow in on lo to any
-
-# 3. Secure SSH access with brute-force rate limiting
-run_cmd ufw limit 22/tcp comment "SSH rate-limited"
-
-# 4. Deny internal application ports from external access explicitly
-run_cmd ufw deny 8787/tcp comment "Block external Node API direct port"
-run_cmd ufw deny 4321/tcp comment "Block external Astro SSR direct port"
-run_cmd ufw deny 5432/tcp comment "Block external PostgreSQL direct port"
-
-# 5. Cloudflare Official Published IP Ranges (15 IPv4 + 7 IPv6 = 22 total)
+# Cloudflare Official Published IP Ranges (15 IPv4 + 7 IPv6 = 22 total)
 CF_IPV4=(
   "173.245.48.0/20"
   "103.21.244.0/22"
@@ -68,16 +62,126 @@ CF_IPV6=(
   "2c0f:f248::/32"
 )
 
-echo "Allowing Cloudflare IPv4 ranges on 80/tcp and 443/tcp..."
+# Admin Bastion / Management CIDRs (configurable via ADMIN_CIDRS env var)
+# Defaults to private enterprise RFC 1918 / loopback management subnets if not overridden
+ADMIN_SSH_CIDRS=(${ADMIN_CIDRS:-"10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16" "127.0.0.1/32"})
+
+# ------------------------------------------------------------------------------
+# 2. Configure iptables DOCKER-USER Chain (Docker Bypass Prevention)
+# ------------------------------------------------------------------------------
+echo "[*] Configuring DOCKER-USER chain to enforce container port isolation..."
+
+# Ensure DOCKER-USER chain exists and flush existing rules in DOCKER-USER
+run_cmd iptables -N DOCKER-USER 2>/dev/null || true
+run_cmd iptables -F DOCKER-USER
+
+# Allow established and related connections first
+run_cmd iptables -A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+# Allow internal docker network loopback / inter-container communication
+run_cmd iptables -A DOCKER-USER -i lo -j ACCEPT
+run_cmd iptables -A DOCKER-USER -s 127.0.0.1 -j ACCEPT
+run_cmd iptables -A DOCKER-USER -s 172.16.0.0/12 -j ACCEPT
+
+# Allow Cloudflare IPv4 ranges on published web ports (80, 443)
+echo "[*] Allowing Cloudflare IPv4 ingress in DOCKER-USER for ports 80 and 443..."
+for cidr in "${CF_IPV4[@]}"; do
+  run_cmd iptables -A DOCKER-USER -s "$cidr" -p tcp -m multiport --dports 80,443 -j ACCEPT
+done
+
+# Block all unauthorized direct external traffic to container web & internal ports
+# (Prevents direct IP bypass of Cloudflare proxy and prevents reaching published containers)
+run_cmd iptables -A DOCKER-USER -p tcp -m multiport --dports 80,443,8787,4321,5432 -j DROP
+run_cmd iptables -A DOCKER-USER -j RETURN
+
+# IPv6 DOCKER-USER configuration if ip6tables is available
+if command -v ip6tables >/dev/null 2>&1; then
+  echo "[*] Configuring ip6tables DOCKER-USER chain..."
+  run_cmd ip6tables -N DOCKER-USER 2>/dev/null || true
+  run_cmd ip6tables -F DOCKER-USER
+  run_cmd ip6tables -A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+  run_cmd ip6tables -A DOCKER-USER -i lo -j ACCEPT
+  for cidr in "${CF_IPV6[@]}"; do
+    run_cmd ip6tables -A DOCKER-USER -s "$cidr" -p tcp -m multiport --dports 80,443 -j ACCEPT
+  done
+  run_cmd ip6tables -A DOCKER-USER -p tcp -m multiport --dports 80,443,8787,4321,5432 -j DROP
+  run_cmd ip6tables -A DOCKER-USER -j RETURN
+fi
+
+# ------------------------------------------------------------------------------
+# 3. Configure Host UFW Baseline
+# ------------------------------------------------------------------------------
+echo "[*] Configuring host UFW policy..."
+run_cmd ufw --force reset
+run_cmd ufw default deny incoming
+run_cmd ufw default allow outgoing
+
+# Allow Loopback (127.0.0.1 / ::1)
+run_cmd ufw allow in on lo to any
+
+# Allow SSH only from authorized admin/bastion CIDRs with brute-force rate-limiting
+echo "[*] Configuring SSH access strictly for admin addresses..."
+for admin_cidr in "${ADMIN_SSH_CIDRS[@]}"; do
+  run_cmd ufw limit proto tcp from "$admin_cidr" to any port 22 comment "SSH admin rate-limited"
+done
+
+# Explicitly deny internal application ports from external host interfaces
+run_cmd ufw deny 8787/tcp comment "Block external Node API direct port"
+run_cmd ufw deny 4321/tcp comment "Block external Astro SSR direct port"
+run_cmd ufw deny 5432/tcp comment "Block external PostgreSQL direct port"
+
+# Allow Cloudflare IPv4 ranges on host UFW
+echo "[*] Allowing Cloudflare IPv4 on host UFW (ports 80, 443)..."
 for cidr in "${CF_IPV4[@]}"; do
   run_cmd ufw allow proto tcp from "$cidr" to any port 80,443 comment "Cloudflare IPv4"
 done
 
-echo "Allowing Cloudflare IPv6 ranges on 80/tcp and 443/tcp..."
+# Allow Cloudflare IPv6 ranges on host UFW
+echo "[*] Allowing Cloudflare IPv6 on host UFW (ports 80, 443)..."
 for cidr in "${CF_IPV6[@]}"; do
   run_cmd ufw allow proto tcp from "$cidr" to any port 80,443 comment "Cloudflare IPv6"
 done
 
-# 6. Enable UFW
+# Enable UFW
 run_cmd ufw --force enable
-echo "=== Firewall setup complete: Origin isolated to Cloudflare ingress only ==="
+
+# ------------------------------------------------------------------------------
+# 4. Enforce SSH Keys Only & Disable Password Authentication
+# ------------------------------------------------------------------------------
+echo "[*] Enforcing SSH keys only (PasswordAuthentication no)..."
+if [[ -d /etc/ssh/sshd_config.d ]]; then
+  SSHD_HARDENING="/etc/ssh/sshd_config.d/99-twinmos-hardening.conf"
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "[dry-run] Writing $SSHD_HARDENING with PasswordAuthentication no and PermitRootLogin prohibit-password"
+  else
+    cat <<'EOF' > "$SSHD_HARDENING"
+# TwinMOS SSH Hardening (T7.3.2)
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin prohibit-password
+PubkeyAuthentication yes
+X11Forwarding no
+MaxAuthTries 3
+EOF
+    systemctl reload sshd || service ssh reload || true
+  fi
+fi
+
+# ------------------------------------------------------------------------------
+# 5. Configure Unattended Security Updates
+# ------------------------------------------------------------------------------
+echo "[*] Configuring unattended security updates..."
+if [[ -d /etc/apt/apt.conf.d ]]; then
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "[dry-run] Enabling unattended security updates in /etc/apt/apt.conf.d/20auto-upgrades"
+  else
+    cat <<'EOF' > /etc/apt/apt.conf.d/20auto-upgrades
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";
+EOF
+  fi
+fi
+
+echo "=== Firewall & Hardening Setup Complete: DOCKER-USER chain & UFW active ==="

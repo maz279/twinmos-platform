@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-10-27T13:56:45.156Z",
+  "targetUrl": "http://127.0.0.1:8787",
+  "totalRequests": 23,
+  "totalFindings": 0,
+  "highFindings": 0,
+  "failViolations": 0,
+  "passed": true,
+  "findings": []
+}

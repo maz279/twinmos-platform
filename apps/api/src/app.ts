@@ -85,7 +85,7 @@ function startAuditRetention(db: DB): void {
 
 export function buildApp(db: DB) {
   const { auth, requireRole, sessionFromRequest } = initAuth(db);
-  const app = new Hono<{ Variables: { requestId: string } }>();
+  const app = new Hono<{ Variables: { requestId: string; logger: ReturnType<typeof createRequestLogger> } }>();
 
   if (process.env.NODE_ENV !== 'test') {
     app.use(logger((str) => console.log(redactPersonalData(str))));

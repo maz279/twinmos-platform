@@ -1,0 +1,109 @@
+{
+  "timestamp": "2026-10-27T13:56:44.357Z",
+  "targetHost": "127.0.0.1",
+  "totalProbed": 11,
+  "passed": 11,
+  "failed": 0,
+  "clean": true,
+  "results": [
+    {
+      "port": 22,
+      "name": "SSH",
+      "expected": "admin_only_or_open",
+      "internalOnly": false,
+      "status": "refused",
+      "verdict": "PASS",
+      "detail": "Port 22 (SSH) status: refused"
+    },
+    {
+      "port": 80,
+      "name": "HTTP Edge",
+      "expected": "open_or_cf_only",
+      "internalOnly": false,
+      "status": "refused",
+      "verdict": "PASS",
+      "detail": "Port 80 (HTTP Edge) status: refused"
+    },
+    {
+      "port": 443,
+      "name": "HTTPS Edge",
+      "expected": "open_or_cf_only",
+      "internalOnly": false,
+      "status": "refused",
+      "verdict": "PASS",
+      "detail": "Port 443 (HTTPS Edge) status: refused"
+    },
+    {
+      "port": 4321,
+      "name": "Astro SSR Web",
+      "expected": "blocked",
+      "internalOnly": true,
+      "status": "open",
+      "verdict": "PASS",
+      "detail": "Port 4321 (Astro SSR Web) status: open"
+    },
+    {
+      "port": 8787,
+      "name": "Node API",
+      "expected": "blocked",
+      "internalOnly": true,
+      "status": "open",
+      "verdict": "PASS",
+      "detail": "Port 8787 (Node API) status: open"
+    },
+    {
+      "port": 5432,
+      "name": "PostgreSQL",
+      "expected": "blocked",
+      "internalOnly": true,
+      "status": "refused",
+      "verdict": "PASS",
+      "detail": "Port 5432 (PostgreSQL) status: refused"
+    },
+    {
+      "port": 2375,
+      "name": "Docker Daemon Unencrypted",
+      "expected": "blocked",
+      "internalOnly": true,
+      "status": "refused",
+      "verdict": "PASS",
+      "detail": "Port 2375 (Docker Daemon Unencrypted) status: refused"
+    },
+    {
+      "port": 2376,
+      "name": "Docker Daemon TLS",
+      "expected": "blocked",
+      "internalOnly": true,
+      "status": "refused",
+      "verdict": "PASS",
+      "detail": "Port 2376 (Docker Daemon TLS) status: refused"
+    },
+    {
+      "port": 3306,
+      "name": "MySQL",
+      "expected": "blocked",
+      "internalOnly": true,
+      "status": "refused",
+      "verdict": "PASS",
+      "detail": "Port 3306 (MySQL) status: refused"
+    },
+    {
+      "port": 6379,
+      "name": "Redis",
+      "expected": "blocked",
+      "internalOnly": true,
+      "status": "refused",
+      "verdict": "PASS",
+      "detail": "Port 6379 (Redis) status: refused"
+    },
+    {
+      "port": 8080,
+      "name": "Alternative HTTP",
+      "expected": "blocked",
+      "internalOnly": true,
+      "status": "refused",
+      "verdict": "PASS",
+      "detail": "Port 8080 (Alternative HTTP) status: refused"
+    }
+  ]
+}

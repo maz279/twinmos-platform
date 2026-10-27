@@ -1,7 +1,22 @@
-# Production deployment overlay
+# Production deployment overlay — Security Hardened (T7.3.4 / HARD-01)
+# Enforces non-root execution, read-only file systems, capability drops, and no Docker socket mounts
 services:
   edge:
     restart: always
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETGID
+      - SETUID
+    tmpfs:
+      - /var/run:rw,noexec,nosuid,size=16m
+      - /run:rw,noexec,nosuid,size=16m
+      - /tmp:rw,noexec,nosuid,size=64m
     volumes:
       - /etc/letsencrypt:/etc/nginx/certs:ro
       - ssr_cache:/var/cache/nginx
@@ -13,6 +28,14 @@ services:
 
   web:
     restart: always
+    read_only: true
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
     deploy:
       resources:
         limits:
@@ -21,6 +44,15 @@ services:
 
   api:
     restart: always
+    read_only: true
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      - /app/apps/api/data:rw,noexec,nosuid,size=128m
     deploy:
       resources:
         limits:
@@ -29,6 +61,8 @@ services:
 
   postgres:
     restart: always
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:

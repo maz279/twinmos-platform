@@ -32,9 +32,30 @@ export function bootConfigErrors(env: Record<string, string | undefined> = proce
     errs.push('TURNSTILE_SECRET_KEY is required in production');
   }
 
-  // Better Auth config guards
-  if (!env.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET === 'secret' || env.BETTER_AUTH_SECRET.length < 16) {
-    errs.push('BETTER_AUTH_SECRET is required, must not be default, and must be at least 16 characters in production');
+  // Better Auth config guards (T7.3.3 / Z-23: supports versioned BETTER_AUTH_SECRETS)
+  if (env.BETTER_AUTH_SECRETS) {
+    const entries = env.BETTER_AUTH_SECRETS.split(',').map((s) => s.trim()).filter(Boolean);
+    if (entries.length === 0) {
+      errs.push('BETTER_AUTH_SECRETS is present but empty');
+    } else {
+      for (const entry of entries) {
+        const colonIdx = entry.indexOf(':');
+        if (colonIdx === -1) {
+          errs.push(`Invalid BETTER_AUTH_SECRETS entry: "${entry}". Expected format: "<version>:<secret>"`);
+          continue;
+        }
+        const v = parseInt(entry.slice(0, colonIdx), 10);
+        if (!Number.isInteger(v) || v < 0) {
+          errs.push(`Invalid version in BETTER_AUTH_SECRETS: "${entry.slice(0, colonIdx)}". Must be non-negative integer`);
+        }
+        const secretVal = entry.slice(colonIdx + 1).trim();
+        if (!secretVal || secretVal.length < 16) {
+          errs.push(`BETTER_AUTH_SECRETS entry for version ${v} must be at least 16 characters in production`);
+        }
+      }
+    }
+  } else if (!env.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET === 'secret' || env.BETTER_AUTH_SECRET.length < 16) {
+    errs.push('BETTER_AUTH_SECRET (or versioned BETTER_AUTH_SECRETS) is required, must not be default, and must be at least 16 characters in production');
   }
 
   if (!env.BETTER_AUTH_URL || !env.BETTER_AUTH_URL.startsWith('https://')) {

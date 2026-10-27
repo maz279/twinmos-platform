@@ -25,7 +25,8 @@ try {
     // Real env files are secrets; committed *.example/*.template files are
     // documentation with placeholder values and must stay committable.
     { test: (f) => /\.env($|\.)/.test(f) && !/\.(example|template)$/.test(f) },
-    { test: (f) => /\.pem$/.test(f) },
+    // Public CA certificates (e.g. Cloudflare Origin Pull CA) are not private keys
+    { test: (f) => /\.pem$/.test(f) && !/cloudflare-origin-pull-ca\.pem$/.test(f) },
     { test: (f) => /\.key$/.test(f) },
     { test: (f) => /id_rsa/.test(f) },
     { test: (f) => /secrets?\.(json|ya?ml)/.test(f) },
