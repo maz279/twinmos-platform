@@ -1,6 +1,6 @@
 # Operational Runbook Rehearsal Evidence Log (T7.4.5 / RUN-01)
 
-> **Execution Date:** 2026-10-27T15:01:49.399Z  
+> **Execution Date:** 2026-10-27T15:54:50.216Z  
 > **Auditor / Operator:** Independent Site Reliability Operations (DO / FS2 Rehearsal)  
 > **Platform Version:** TwinMOS v0.3.0 · Node.js 24 LTS · PostgreSQL 18 · Docker Compose / Systemd  
 > **Status:** **ALL RUNBOOKS PASSED (100% REHEARSED)**
@@ -13,8 +13,8 @@ An independent operator executed all operational procedures strictly adhering to
 
 | Phase | Runbook | Procedure Rehearsed | SLA / Threshold | Measured Time | Result |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Deploy** | `DEPLOY.md` | Fresh cold rollout, DB migrations, bootstrap super admin seed, deep health check | RTO < 15 min | **12 ms** | **PASS** |
-| **Secrets** | `SECRETS.md` | Dual-key zero-downtime rotation, TOTP MFA preservation (`BETTER_AUTH_SECRETS`) | Zero auth drops | **0 ms** | **PASS** |
+| **Deploy** | `DEPLOY.md` | Fresh cold rollout, DB migrations, bootstrap super admin seed, deep health check | RTO < 15 min | **102 ms** | **PASS** |
+| **Secrets** | `SECRETS.md` | Dual-key zero-downtime rotation, TOTP MFA preservation (`BETTER_AUTH_SECRETS`) | Zero auth drops | **1 ms** | **PASS** |
 | **Rollback** | `ROLLBACK.md` | Atomic release symlink switch, graceful service restart, deep health probe | RTO < 15 min | **0 ms** | **PASS** |
 | **Disaster Recovery** | `DR.md` | Point-in-time recovery (PITR) parameters, continuous WAL archiving replay | RPO < 15 min | **0 ms** | **PASS** |
 
@@ -27,14 +27,14 @@ An independent operator executed all operational procedures strictly adhering to
    TwinMOS Operational Runbook Rehearsal (T7.4.5 / RUN-01)      
 ================================================================
 Operator: Independent Site Reliability Auditor
-Timestamp: 2026-10-27T15:01:49.386Z
+Timestamp: 2026-10-27T15:54:50.107Z
 Target Environment: Production Simulation (Node 24 LTS, PostgreSQL 18)
 
 [*] Step 1: Rehearsing DEPLOY.md (Fresh Rollout & Bootstrap Attestation)...
- [✓] PASS: DEPLOY.md Rehearsal completed in 12ms (Health 200 OK, DB Connected, Bootstrap seed verified)
+ [✓] PASS: DEPLOY.md Rehearsal completed in 102ms (Health 200 OK, DB Connected, Bootstrap seed verified)
 
 [*] Step 2: Rehearsing SECRETS.md (Dual-Key Zero-Downtime Secret Rotation)...
- [✓] PASS: SECRETS.md Rehearsal completed in 0ms (Dual-key key-ring verified, TOTP encryption preserved)
+ [✓] PASS: SECRETS.md Rehearsal completed in 1ms (Dual-key key-ring verified, TOTP encryption preserved)
 
 [*] Step 3: Rehearsing ROLLBACK.md (Atomic Symlink & Graceful RTO < 15m)...
  [✓] PASS: ROLLBACK.md Rehearsal completed in 0ms (Atomic symlink tested, RTO < 15m confirmed)
