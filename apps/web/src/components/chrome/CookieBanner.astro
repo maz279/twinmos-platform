@@ -15,7 +15,7 @@ const policyUrl = settings.policyUrl || '/legal.html#cookies';
 <!-- First Layer: Symmetrical Cookie Bar with equal prominence for Customize, Decline, and Accept -->
 <div class="cookie-bar" id="cookieBar" role="region" aria-label={title}>
   <span>
-    🍪 {description} <a href={policyUrl} style="text-decoration:underline">Learn more</a>.
+    🍪 {description} <a href={policyUrl} style="text-decoration:underline;display:inline-block;padding:3px 6px">Learn more</a>.
   </span>
   <div class="cookie-actions" style="display:inline-flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap">
     <button class="btn btn-ghost btn-sm cookie-customize" id="cookieCustomize" type="button" aria-expanded="false" aria-controls="cookieModal" style="color:#ffffff!important;border:1px solid rgba(255,255,255,0.7)!important;background:rgba(255,255,255,0.1)!important">Customize</button>
