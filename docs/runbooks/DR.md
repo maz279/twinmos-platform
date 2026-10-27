@@ -1,6 +1,6 @@
 # DR — Disaster Recovery drill & guide (P7)
 
-**Targets (docs/01 §4.6): RTO 4 hours · RPO 15 minutes.**
+**Targets (docs/01 §4.6): Bare-Metal Disaster Recovery RTO < 4 hours · Service Rollback RTO < 15 minutes (< 900s) · RPO 15 minutes (continuous WAL archiving).**
 
 ## Architecture facts a responder needs
 - Web + admin are STATIC bundles — instantly redeployable from git (`npm run build`), no state.

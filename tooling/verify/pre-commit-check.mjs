@@ -60,7 +60,7 @@ try {
 // 2. ESLint check
 console.log("[*] 2. Running ESLint on admin console...");
 try {
-  execSync("npm run lint --workspace @twinmos/admin", { stdio: "pipe" });
+  execSync("npx eslint apps/admin/src --max-warnings 0", { stdio: "pipe" });
   console.log("[+] PASS: ESLint zero warnings.");
 } catch (e) {
   console.error("[-] FAIL: ESLint detected warnings or errors:", e.stdout?.toString() || e.message);

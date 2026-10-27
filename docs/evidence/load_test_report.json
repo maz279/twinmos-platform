@@ -1,0 +1,205 @@
+{
+  "suite": "LOAD-01 Production Load & Concurrency Benchmark",
+  "timestamp": "2026-10-27T15:01:34.399Z",
+  "liveHttp": true,
+  "passed": true,
+  "targets": {
+    "cachedRps": 200,
+    "cachedP95Ms": 300,
+    "dynamicRps": 30,
+    "dynamicP95Ms": 800,
+    "searchP95Ms": 400,
+    "formsP95Ms": 500,
+    "maxErrors": 0
+  },
+  "summary": {
+    "totalRequests": 240,
+    "totalErrors": 0,
+    "errorRatePercent": 0,
+    "overallVerdict": "PASS (100% SLA COMPLIANT)"
+  },
+  "scenarios": [
+    {
+      "scenario": "Browsing on Cache Hits",
+      "totalRequests": 150,
+      "concurrency": 25,
+      "durationSec": 0.476,
+      "throughputReqPerSec": 315,
+      "latencies": {
+        "min": 34.96,
+        "p50": 73.13,
+        "p90": 96.58,
+        "p95": 98.12,
+        "p99": 111.52,
+        "max": 113.31
+      },
+      "successCount": 150,
+      "errors": 0,
+      "errorRatePercent": 0
+    },
+    {
+      "scenario": "Browsing on Cache Misses",
+      "totalRequests": 30,
+      "concurrency": 10,
+      "durationSec": 0.09,
+      "throughputReqPerSec": 333,
+      "latencies": {
+        "min": 16.32,
+        "p50": 26.32,
+        "p90": 32.34,
+        "p95": 35.2,
+        "p99": 36.29,
+        "max": 36.29
+      },
+      "successCount": 30,
+      "errors": 0,
+      "errorRatePercent": 0
+    },
+    {
+      "scenario": "Catalog & Delivery Search",
+      "totalRequests": 20,
+      "concurrency": 10,
+      "durationSec": 0.184,
+      "throughputReqPerSec": 109,
+      "latencies": {
+        "min": 9.53,
+        "p50": 77.59,
+        "p90": 101.46,
+        "p95": 104.94,
+        "p99": 104.94,
+        "max": 104.94
+      },
+      "successCount": 20,
+      "errors": 0,
+      "errorRatePercent": 0
+    },
+    {
+      "scenario": "Form & Consent Submissions",
+      "totalRequests": 20,
+      "concurrency": 8,
+      "durationSec": 0.143,
+      "throughputReqPerSec": 139,
+      "latencies": {
+        "min": 34.63,
+        "p50": 52.46,
+        "p90": 62.65,
+        "p95": 64.4,
+        "p99": 64.4,
+        "max": 64.4
+      },
+      "successCount": 20,
+      "errors": 0,
+      "errorRatePercent": 0
+    },
+    {
+      "scenario": "Publishing Under Load",
+      "totalRequests": 20,
+      "concurrency": 6,
+      "durationSec": 0.257,
+      "throughputReqPerSec": 78,
+      "latencies": {
+        "min": 11.29,
+        "p50": 63.37,
+        "p90": 125.86,
+        "p95": 127.45,
+        "p99": 127.45,
+        "max": 127.45
+      },
+      "successCount": 20,
+      "errors": 0,
+      "errorRatePercent": 0
+    }
+  ],
+  "metrics": {
+    "cached": {
+      "scenario": "Browsing on Cache Hits",
+      "totalRequests": 150,
+      "concurrency": 25,
+      "durationSec": 0.476,
+      "throughputReqPerSec": 315,
+      "latencies": {
+        "min": 34.96,
+        "p50": 73.13,
+        "p90": 96.58,
+        "p95": 98.12,
+        "p99": 111.52,
+        "max": 113.31
+      },
+      "successCount": 150,
+      "errors": 0,
+      "errorRatePercent": 0
+    },
+    "dynamic": {
+      "scenario": "Browsing on Cache Misses",
+      "totalRequests": 30,
+      "concurrency": 10,
+      "durationSec": 0.09,
+      "throughputReqPerSec": 333,
+      "latencies": {
+        "min": 16.32,
+        "p50": 26.32,
+        "p90": 32.34,
+        "p95": 35.2,
+        "p99": 36.29,
+        "max": 36.29
+      },
+      "successCount": 30,
+      "errors": 0,
+      "errorRatePercent": 0
+    },
+    "search": {
+      "scenario": "Catalog & Delivery Search",
+      "totalRequests": 20,
+      "concurrency": 10,
+      "durationSec": 0.184,
+      "throughputReqPerSec": 109,
+      "latencies": {
+        "min": 9.53,
+        "p50": 77.59,
+        "p90": 101.46,
+        "p95": 104.94,
+        "p99": 104.94,
+        "max": 104.94
+      },
+      "successCount": 20,
+      "errors": 0,
+      "errorRatePercent": 0
+    },
+    "forms": {
+      "scenario": "Form & Consent Submissions",
+      "totalRequests": 20,
+      "concurrency": 8,
+      "durationSec": 0.143,
+      "throughputReqPerSec": 139,
+      "latencies": {
+        "min": 34.63,
+        "p50": 52.46,
+        "p90": 62.65,
+        "p95": 64.4,
+        "p99": 64.4,
+        "max": 64.4
+      },
+      "successCount": 20,
+      "errors": 0,
+      "errorRatePercent": 0
+    },
+    "publishing": {
+      "scenario": "Publishing Under Load",
+      "totalRequests": 20,
+      "concurrency": 6,
+      "durationSec": 0.257,
+      "throughputReqPerSec": 78,
+      "latencies": {
+        "min": 11.29,
+        "p50": 63.37,
+        "p90": 125.86,
+        "p95": 127.45,
+        "p99": 127.45,
+        "max": 127.45
+      },
+      "successCount": 20,
+      "errors": 0,
+      "errorRatePercent": 0
+    }
+  }
+}

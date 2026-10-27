@@ -120,3 +120,72 @@ sudo ./deploy/staging/bootstrap-vm.sh
 - **CI overlay**: `deploy/compose/docker-compose.ci.yml` (tmpfs postgres, automated runner port maps)
 - **Dev overlay**: `deploy/compose/docker-compose.dev.yml` (loopback bind for local debugging)
 
+---
+
+## 9. Self-Hosted CI Runner Architecture (A10 Runner)
+
+Continuous integration and automated staging validation execute on the **A10 Self-Hosted Runner**:
+- **Hardware Profile**: 8 vCPU, 16 GB RAM, 100 GB NVMe storage on dedicated isolated VPC.
+- **Operating System**: Ubuntu 24.04 LTS (pinned Docker Engine 27.x, Node.js 24 LTS, PostgreSQL 18 client).
+- **Security & Privilege Isolation**:
+  - The runner service executes under an unprivileged system user (`github-runner`).
+  - Read-only filesystem layers for base container images; containers run with `USER node:node` (UID 1000).
+  - No host Docker socket (`/var/run/docker.sock`) mounts exposed to test workloads.
+  - Ephemeral runner containers are destroyed and recreated per job execution.
+
+---
+
+## 10. Host Firewall & DOCKER-USER Isolation (Finding S-11 / Hardening)
+
+To prevent Docker's default iptables rules from bypassing host UFW and exposing PostgreSQL (5432) or upstream API (8787) to the public internet:
+```bash
+# 1. Enforce DOCKER-USER chain filtering in iptables:
+sudo iptables -I DOCKER-USER -i eth0 ! -s 127.0.0.1 -p tcp --dport 5432 -j DROP
+sudo iptables -I DOCKER-USER -i eth0 ! -s 127.0.0.1 -p tcp --dport 8787 -j DROP
+
+# 2. UFW default deny with explicit ingress rules (deploy/firewall/setup-firewall.sh):
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp comment 'SSH'
+sudo ufw allow 80/tcp comment 'HTTP (Cloudflare Proxy / Certbot)'
+sudo ufw allow 443/tcp comment 'HTTPS (Cloudflare Proxy)'
+sudo ufw enable
+
+# 3. Verify external ports are closed (returns connection refused or timeout from external probe):
+nc -zv <PUBLIC_IP> 5432 # FAIL / Closed
+nc -zv <PUBLIC_IP> 8787 # FAIL / Closed
+```
+
+---
+
+## 11. Cloudflare IP Range Refresh Automation (`EDGE-01`)
+
+To guarantee that client IP addresses are accurately resolved and spoofed `X-Forwarded-For` headers are discarded:
+```bash
+# Cross-platform Node.js synchronization:
+node tooling/refresh-cf-ranges.mjs
+
+# Generates deploy/nginx/realip_cloudflare.conf:
+# set_real_ip_from 173.245.48.0/20;
+# ...
+# real_ip_header X-Forwarded-For;
+# real_ip_recursive on;
+
+# Automated weekly crontab (root):
+0 3 * * 0 /usr/bin/node /opt/twinmos/code/tooling/refresh-cf-ranges.mjs && /usr/bin/systemctl reload nginx
+```
+
+---
+
+## 12. Administrative Role Hierarchy & Governance (`adminRoles` / NEW-07)
+
+Administrative access is gated using the normalized `adminRoles` mapping across `@twinmos/db` and API middlewares:
+- **`super_admin`**: Full platform control (security settings, MFA revocation, user management, and DSAR erasure).
+- **`admin`**: Content publishing, SKU catalog unlocks, support routing, RMA adjudication, and setting configurations.
+- **`editor`**: Multi-locale content authoring, review, publishing, and audit inspection.
+- **`author`**: Draft content creation (cannot publish directly).
+- **`viewer`**: Read-only oversight across CRM, RMA, and analytics.
+
+All administrative routes enforce `requireRole(['super_admin', 'admin'])` at the API handler level (`NEW-07`).
+
+

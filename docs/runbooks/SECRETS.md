@@ -16,11 +16,11 @@ All production secrets reside in `/etc/twinmos/api.env` (permissions `0600`, own
 
 ---
 
-## 2. Zero-Downtime Versioned Key-Ring Rotation Procedure (T7.3.3)
+## 2. Zero-Downtime Dual-Key Versioned Key-Ring Rotation Procedure (T7.3.3)
 
 > [!IMPORTANT]
-> **CRITICAL ARCHITECTURAL REQUIREMENT (Finding Z-23)**:
-> Better Auth uses the auth secret to symmetrically encrypt twoFactor (TOTP) credentials in PostgreSQL.
+> **CRITICAL ARCHITECTURAL REQUIREMENT (Finding Z-23 / Dual-Key Rotation)**:
+> Better Auth uses the auth secret (`BETTER_AUTH_SECRET` / `BETTER_AUTH_SECRETS`) to symmetrically encrypt twoFactor (TOTP) credentials in PostgreSQL.
 > Better Auth **never reads `BETTER_AUTH_OLD_SECRETS`**. If rotated with `BETTER_AUTH_OLD_SECRETS`, all existing enrolled users are permanently locked out because their TOTP secrets cannot be decrypted!
 > Instead, Better Auth natively requires versioned `BETTER_AUTH_SECRETS` formatted as `<current_version>:<current_secret>,<prev_version>:<prev_secret>`.
 > During verification, Better Auth uses the current version for new encryptions while checking previous versions in the key ring to decrypt existing enrolled TOTP secrets.

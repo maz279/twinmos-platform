@@ -17,8 +17,9 @@ All alerts emit structured JSON logs to `stderr` and are buffered in-memory for 
 | **API Response Latency (p95)** | < 300ms | Rolling 1 hour | > 1000ms latency spike |
 | **Form Notification Delivery** | 99.99% | Continuous | Any failed SMTP dispatch (V-09) |
 | **Serial Anti-Counterfeit Verification** | < 250ms | Rolling 24 hours | > 5 unique IPs on single SN |
-| **Disaster Recovery RTO** | 4 hours | Per drill/incident (DR.md / 01 §4.6) | > 4 hours restore time |
-| **Disaster Recovery RPO** | 15 min | Continuous WAL archiving (DR.md) | Backup gap > 15 minutes |
+| **Service Rollback RTO** | < 15 min (< 900s) | Per software rollback (ROLLBACK.md) | > 15 minutes rollback duration |
+| **Disaster Recovery RTO** | < 4 hours | Bare-metal recovery (DR.md / 01 §4.6) | > 4 hours restore time |
+| **Disaster Recovery RPO** | < 15 min | Continuous WAL archiving (DR.md) | Backup gap > 15 minutes |
 
 ---
 

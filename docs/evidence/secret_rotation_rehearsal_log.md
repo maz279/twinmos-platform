@@ -1,35 +1,35 @@
 # Secret Rotation Rehearsal Log (MS7.3 / T7.3.3 / Finding Z-23)
 
-**Execution Date:** 2026-10-27T13:56:44.371Z
+**Execution Date:** 2026-10-27T14:52:54.136Z
 **Environment:** Staging / Pre-Cutover Verification
 **Auditor / Operator:** Operations Lead (DO) & Antigravity Quality Gate
 **Result:** PASS (100% Zero-Downtime Session & TOTP Preservation)
 
 ## Rehearsal Transcript
 ```
-[*] Rehearsal Timestamp: 2026-10-27T13:56:44.362Z
+[*] Rehearsal Timestamp: 2026-10-27T14:52:54.132Z
 [*] Host / Node: win32 / Node v22.23.3
 
 --- Step 1: Initial State with Secret Version 1 ---
-[+] Version 1 Secret Fingerprint: 4a82073b... (256 bits)
+[+] Version 1 Secret Fingerprint: 5065c878... (256 bits)
 [+] Enrolled Admin User (user_id: adm_sec_lead) with TOTP
-[+] Stored Encrypted TOTP Field in DB: $ba$1$c783099ae37a98b784...
-[✓] Initial TOTP Generation & Decryption Validated (Code: 756299)
+[+] Stored Encrypted TOTP Field in DB: $ba$1$db8dd84960ce42b834...
+[✓] Initial TOTP Generation & Decryption Validated (Code: 099218)
 
 --- Step 2: Demonstrating Defect Z-23 (Broken BETTER_AUTH_OLD_SECRETS) ---
-[+] Generating New Secret Version 2: d0778b16...
+[+] Generating New Secret Version 2: a0f7b58b...
 [!] Expected Defect Reproduced: Secret version 1 not found in keys (key may have been retired)
     (Better Auth threw because Version 1 key was missing from key ring!)
 
 --- Step 3: Executing Versioned BETTER_AUTH_SECRETS Rotation ---
-[+] Configuring BETTER_AUTH_SECRETS="2:d0778b16069bfc3879..."
+[+] Configuring BETTER_AUTH_SECRETS="2:a0f7b58b88a3521ee5..."
 [+] Key Ring Active Versions: [2, 1]
 [+] Primary Active Version: 2
 [✓] SUCCESS: Existing enrolled TOTP secret decrypted cleanly via Key Version 1
-[✓] Enrolled User Successfully Authenticated with TOTP after Secret Rotation (Code: 756299)
+[✓] Enrolled User Successfully Authenticated with TOTP after Secret Rotation (Code: 099218)
 
 --- Step 4: Verifying New Enrollments Use Primary Version 2 ---
-[+] New User 2FA Envelope: $ba$2$9589e41d9b0a62f870...
+[+] New User 2FA Envelope: $ba$2$c165725fd743000058...
 [✓] SUCCESS: New credentials are encrypted with Version 2
 ```
 
