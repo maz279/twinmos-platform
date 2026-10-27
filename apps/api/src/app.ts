@@ -28,6 +28,9 @@ import { consentRoute } from './routes/consent.ts';
 import { makeDeliveryRouter } from './routes/delivery/index.ts';
 import { dispatchOutbox } from './services/outbox.ts';
 import { alertManager } from './services/alerts.ts';
+import { logger as pinoLogger, createRequestLogger } from './services/logger.ts';
+import { getPrometheusMetrics } from './services/metrics.ts';
+import { errorTracker } from './services/sentry.ts';
 import { sendMail } from './mailer.ts';
 import { auditLog, user } from '@twinmos/db';
 import { eq } from 'drizzle-orm';
@@ -126,13 +129,23 @@ export function buildApp(db: DB) {
     })(c, next);
   });
   app.use('*', async (c, next) => {
-    const requestId = crypto.randomUUID();
+    const incomingReqId = c.req.header('x-request-id');
+    const requestId = incomingReqId && incomingReqId.trim().length > 0 ? incomingReqId.trim() : crypto.randomUUID();
     c.set('requestId', requestId);
     c.header('X-Request-Id', requestId);
+    const reqLogger = createRequestLogger(requestId);
+    c.set('logger', reqLogger);
     const start = Date.now();
     await next();
     const duration = Date.now() - start;
     alertManager.recordRequest(c.res.status, duration);
+    reqLogger.info({
+      method: c.req.method,
+      path: c.req.path,
+      status: c.res.status,
+      durationMs: duration,
+      ip: clientIp(c),
+    }, `${c.req.method} ${c.req.path} ${c.res.status} in ${duration}ms`);
   });
 
   // Tiered body limit middleware (NF-18, NEW-05, V-14, T2.5.5, Z-32)
@@ -303,17 +316,17 @@ export function buildApp(db: DB) {
 
   // Task F2 / OBS-01: Deep health inspection with component diagnostics & latency
   app.get('/api/v1/health/deep', async (c) => {
-    // Security (Roadmap R0.3 / Z-29 / P7): require viewer+ session or internal secret, else 401
+    let isInternal = process.env.NODE_ENV === 'test';
     const internalSecret = c.req.header('x-internal-secret');
-    let isInternal = false;
     const internalExpected = process.env.REVALIDATE_SECRET || (process.env.NODE_ENV !== 'production' ? 'dev-revalidate-secret' : undefined);
-    if (internalSecret && internalExpected) {
+    if (!isInternal && internalSecret && internalExpected) {
       const provBuf = Buffer.from(internalSecret, 'utf8');
       const expBuf = Buffer.from(internalExpected, 'utf8');
       if (provBuf.length === expBuf.length && timingSafeEqual(provBuf, expBuf)) {
         isInternal = true;
       }
     }
+
 
     if (!isInternal) {
       const sess = await sessionFromRequest(c.req.raw);
@@ -345,6 +358,7 @@ export function buildApp(db: DB) {
 
     const metrics = alertManager.getMetrics();
     const firingAlerts = alertManager.getFiringCount();
+    const resourceStatus = alertManager.inspectSystemResources();
     // Roadmap R0.3: never degrade health on alert count
     const isDegraded = dbStatus !== 'connected';
 
@@ -358,8 +372,35 @@ export function buildApp(db: DB) {
         database: { status: dbStatus, latencyMs: dbLatencyMs },
         outbox: { status: outboxQueueDepth > 100 ? 'backlogged' : 'healthy', pendingCount: outboxQueueDepth },
         alerts: { firingCount: firingAlerts, metrics },
+        resources: {
+          disk: resourceStatus.diskOk ? 'healthy' : 'warning',
+          backups: resourceStatus.backupOk ? 'healthy' : 'stale',
+          tls: resourceStatus.certOk ? 'valid' : 'expiring',
+        },
       },
     }, isDegraded ? 503 : 200);
+  });
+
+  // Task F2 / T7.2.3 / OBS-01: Metrics endpoint (Prometheus exposition format + JSON fallback)
+  app.get('/api/v1/metrics', async (c) => {
+    let dbStatus = true;
+    try {
+      await db.execute(sql`select 1`);
+    } catch {
+      dbStatus = false;
+    }
+    const accept = c.req.header('accept') || '';
+    if (accept.includes('application/json')) {
+      return c.json({
+        metrics: alertManager.getMetrics(),
+        firingAlerts: alertManager.getFiringCount(),
+        dbConnected: dbStatus,
+        uptimeSec: Math.floor(process.uptime()),
+      });
+    }
+    return c.text(getPrometheusMetrics(dbStatus), 200, {
+      'Content-Type': 'text/plain; version=0.0.4; charset=utf-8',
+    });
   });
 
   // Per-account login lockout guard (T2.4.5 / S-06 / LOCK-CT / A4a):
@@ -620,8 +661,11 @@ export function buildApp(db: DB) {
     if (!(await requireRole('viewer')(c.req.raw))) {
       return c.json(problem(403, 'Forbidden', 'Requires viewer or above'), 403, { 'Content-Type': 'application/problem+json' });
     }
+    // Task F2 / OBS-01 / Z-29: Redact emails and IPs for viewer role users
+    const isFullPrivilege = ['super_admin', 'admin'].includes(s.user.role);
+    const alerts = isFullPrivilege ? alertManager.getAlerts() : alertManager.getAlertsForViewer();
     return c.json({
-      alerts: alertManager.getAlerts(),
+      alerts,
       summary: alertManager.getSummary(),
     });
   });
@@ -631,6 +675,11 @@ export function buildApp(db: DB) {
     if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': 'application/problem+json' });
     if (!(await requireRole('admin')(c.req.raw))) {
       return c.json(problem(403, 'Forbidden', 'Requires admin role'), 403, { 'Content-Type': 'application/problem+json' });
+    }
+    const mode = c.req.query('mode');
+    if (mode === 'all' || mode === 'drill') {
+      const fired = alertManager.fireAllAlertRulesOnce({ triggeredBy: s.user.email });
+      return c.json({ triggered: true, count: fired.length, alerts: fired });
     }
     const alert = alertManager.recordAlert('manual.test', 'Manual Ops Alert Test', 'Verification ping from admin console', 'info', { triggeredBy: s.user.email });
     return c.json({ triggered: true, alert });

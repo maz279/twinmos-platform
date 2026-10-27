@@ -1,6 +1,7 @@
 // Gate F Check OBS-01: Observability, Metrics & Alerting Audit
 // Verifies alerting rules, latency/5xx telemetry, V-09 mail alert hook, deep health probes.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -13,7 +14,7 @@ export async function verifyOBS01() {
   process.env.AUDIT_RETENTION_DISABLED = '1';
 
   // 1. Alert Manager & Rules Verification
-  const { alertManager } = await mod('apps/api/src/services/alerts.ts');
+  const { alertManager, sanitizeAlertForViewer } = await mod('apps/api/src/services/alerts.ts');
   alertManager.clear();
 
   // Test 5xx alert trigger
@@ -42,9 +43,22 @@ export async function verifyOBS01() {
   const alertLockout = alerts.find((a) => a.ruleId === 'auth.account_locked');
   if (!alertLockout) throw new Error('Rule auth.account_locked failed to trigger on account lockout');
 
+  // Test PII redaction for viewer-role access (Closing Z-29)
+  const viewerAlerts = alertManager.getAlertsForViewer();
+  const redactedLockout = viewerAlerts.find((a) => a.ruleId === 'auth.account_locked');
+  if (!redactedLockout || redactedLockout.message.includes('attacker@bad.actor') || redactedLockout.message.includes('192.168.1.1')) {
+    throw new Error('Viewer alerts failed to redact email/IP (Z-29 violation)');
+  }
+
+  // Fire all 9 rules drill (T7.2.6)
+  const allFired = alertManager.fireAllAlertRulesOnce({ test: true });
+  if (allFired.length !== 9) {
+    throw new Error(`fireAllAlertRulesOnce expected 9 rules, got ${allFired.length}`);
+  }
+
   // Test summary & resolution
   const summary = alertManager.getSummary();
-  if (summary.totalAlerts < 4 || summary.severities.high < 2) {
+  if (summary.totalAlerts < 9) {
     throw new Error('alertManager.getSummary() returned unexpected counts');
   }
 
@@ -53,7 +67,9 @@ export async function verifyOBS01() {
     throw new Error('alertManager.resolveAlert() failed to remove resolved alert');
   }
 
-  // 2. Health & Deep Health HTTP Probes
+  // 2. Health & Deep Health HTTP Probes (Isolated Ephemeral DB)
+  const TMP = mkdtempSync(join(tmpdir(), 'twinmos-obs-drill-'));
+  process.env.PGLITE_DATA = join(TMP, 'db');
   const { createDb } = await mod('packages/db/src/index.ts');
   const { buildApp } = await mod('apps/api/src/app.ts');
   const db = await createDb();

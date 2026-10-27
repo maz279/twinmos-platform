@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-10-27T08:38:52.714Z",
+  "source": "C:\\Software_Project\\TwinMOS_Corporate_Website\\TwinMOS_Corporate_Website\\twinmso_codebase\\apps\\api\\data\\access.json.log",
+  "totalRequests": 10,
+  "statusCodeCounts": {
+    "200": 5,
+    "301": 3,
+    "404": 2
+  },
+  "redirects": {
+    "totalRedirects": 3,
+    "topRedirectedPaths": [
+      {
+        "uri": "/about-us",
+        "hits": 1,
+        "status": 301
+      },
+      {
+        "uri": "/product/nvme-gen5",
+        "hits": 1,
+        "status": 301
+      },
+      {
+        "uri": "/contact_us",
+        "hits": 1,
+        "status": 301
+      }
+    ]
+  },
+  "errors404": {
+    "total404s": 2,
+    "topMissingPaths": [
+      {
+        "uri": "/old-driver-download.exe",
+        "hits": 1,
+        "referrers": [
+          "https://forum.hardware.com"
+        ]
+      },
+      {
+        "uri": "/wp-login.php",
+        "hits": 1,
+        "referrers": []
+      }
+    ]
+  },
+  "latency": {
+    "meanMs": 21,
+    "p50Ms": 12,
+    "p95Ms": 52,
+    "maxMs": 52
+  },
+  "correlation": {
+    "requestsWithCorrelationId": 10,
+    "correlationCoveragePct": 100,
+    "validFormat": true
+  }
+}

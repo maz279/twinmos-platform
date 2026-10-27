@@ -1,6 +1,7 @@
 import { eq, and, sql, asc } from 'drizzle-orm';
 import type { DB } from '@twinmos/db';
 import { outbox } from '@twinmos/db';
+import { alertManager } from './alerts.ts';
 
 export interface OutboxPayload {
   tags?: string[];
@@ -49,6 +50,11 @@ export async function dispatchOutbox(db: DB): Promise<{ processed: number; faile
 
   if (pendingRows.length === 0) {
     return { processed: 0, failed: 0 };
+  }
+
+  // T7.2.4: Check for outbox queue stall / backlog
+  if (pendingRows.length >= 50) {
+    alertManager.recordOutboxStall(pendingRows.length);
   }
 
   const isProd = process.env.NODE_ENV === 'production';
@@ -112,6 +118,7 @@ export async function dispatchOutbox(db: DB): Promise<{ processed: number; faile
           })
           .where(eq(outbox.id, row.id));
         failed++;
+        alertManager.recordOutboxFailure(pendingRows.length, `HTTP ${res.status}: ${errText.slice(0, 200)}`);
       }
     } catch (err: any) {
       const nextAttempts = attempts + 1;
@@ -125,6 +132,7 @@ export async function dispatchOutbox(db: DB): Promise<{ processed: number; faile
         })
         .where(eq(outbox.id, row.id));
       failed++;
+      alertManager.recordOutboxFailure(pendingRows.length, err.message ? String(err.message).slice(0, 200) : 'Network error');
     }
   }
 

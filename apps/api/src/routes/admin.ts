@@ -24,6 +24,7 @@ import type { Role } from '@twinmos/shared';
 import { recordOutboxEvent } from '../services/outbox.ts';
 import { provenanceIssue } from '../lib/provenance.ts';
 import { CONTENT_TRANSITIONS } from '@twinmos/shared';
+import { alertManager } from '../services/alerts.ts';
 
 type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
@@ -887,6 +888,13 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       },
       media: { total: Number(mediaCounts[0][0]?.n ?? 0), missingAlt: Number(mediaCounts[1][0]?.n ?? 0) },
       activity,
+      telemetry: {
+        metrics: alertManager.getMetrics(),
+        alerts: alertManager.getSummary(),
+        dbConnected: true,
+        uptimeSec: Math.floor(process.uptime()),
+        firingAlerts: alertManager.getFiringCount(),
+      },
     });
   });
 

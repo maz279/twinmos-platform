@@ -30,6 +30,7 @@ const AuditLog = lazy(() => import('./modules/audit'));
 const Settings = lazy(() => import('./modules/settings'));
 const Entities = lazy(() => import('./modules/entities'));
 const PrivacyModule = lazy(() => import('./modules/privacy'));
+const AlertsModule = lazy(() => import('./modules/alerts'));
 
 /** Per-tab context for deep links, e.g. { kind:'lead', id:'42', label:'QT-0042' }. */
 export type TabCtx = { kind: string; id?: string; label?: string };
@@ -90,4 +91,5 @@ export const MODULES: ModuleDef[] = [
   { id: 'entities', label: 'Truth & Entities', group: 'Content Studio', icon: 'shield', minRole: 'editor', desc: 'Versioned policies, approved offices, permission-backed testimonials and form definitions.', comp: (p) => h(Entities, { canWrite: p.canWrite, me: p.me, nav: p.nav }) },
   { id: 'settings', label: 'Settings', group: 'Administration', icon: 'sliders', minRole: 'admin', desc: 'Site settings, redirects and locale management.', comp: (p) => h(Settings, { canManage: isAdminRole(p.me.user?.role), isSuperAdmin: p.me.user?.role === 'super_admin' }) },
   { id: 'privacy', label: 'Privacy & DSAR', group: 'Administration', icon: 'shield', minRole: 'super_admin', desc: 'Privacy operations: DSAR data export, verified erasure (zero PII audit trail), and automated retention sweeps.', comp: PrivacyModule },
+  { id: 'alerts', label: 'Alerts & Telemetry', group: 'Administration', icon: 'zap', minRole: 'viewer', desc: 'Real-time cluster monitoring, durable alert logs, and operational health drills.', comp: AlertsModule },
 ];

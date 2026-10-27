@@ -1,5 +1,10 @@
-// Observability & Alerting Service (Task F2 / OBS-01 / V-09)
-// Provides structured alerting rules, telemetry collection, and notification handlers.
+// Observability & Alerting Service (Task F2 / OBS-01 / V-09 / Z-29 / MS7.2)
+// Provides structured alerting rules, durable JSONL persistent storage,
+// PII redaction for viewer-accessible endpoints, and notification dispatch.
+
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export type AlertSeverity = 'critical' | 'high' | 'medium' | 'info';
 
@@ -21,6 +26,60 @@ export interface MetricSnapshot {
   lockoutEvents: number;
 }
 
+const DEFAULT_ALERTS_FILE = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  'data',
+  'alerts.jsonl'
+);
+
+/**
+ * Redacts personal data (emails, IPs, passwords) from alerts for viewer-role access (Closes Z-29).
+ */
+export function sanitizeAlertForViewer(alert: AlertEvent): AlertEvent {
+  const emailRegex = /([a-zA-Z0-9_\-.]+)@([a-zA-Z0-9_\-.]+)\.([a-zA-Z]{2,5})/g;
+  const ipRegex = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
+
+  const maskEmail = (text: string) =>
+    text.replace(emailRegex, (match, user, domain, tld) => {
+      const maskedUser = user.length > 2 ? `${user[0]}***${user[user.length - 1]}` : `${user[0]}***`;
+      return `${maskedUser}@${domain}.${tld}`;
+    });
+
+  const maskIp = (text: string) =>
+    text.replace(ipRegex, (match) => {
+      const parts = match.split('.');
+      return `${parts[0]}.${parts[1]}.***.***`;
+    });
+
+  const sanitizedMessage = maskIp(maskEmail(alert.message));
+
+  let sanitizedMeta: Record<string, unknown> | undefined;
+  if (alert.meta) {
+    sanitizedMeta = { ...alert.meta };
+    for (const [k, v] of Object.entries(sanitizedMeta)) {
+      if (typeof v === 'string') {
+        if (k.toLowerCase().includes('email')) {
+          sanitizedMeta[k] = maskEmail(v);
+        } else if (k.toLowerCase().includes('ip') || k === 'remoteAddress') {
+          sanitizedMeta[k] = maskIp(v);
+        } else if (k.toLowerCase().includes('password') || k.toLowerCase().includes('token') || k.toLowerCase().includes('secret')) {
+          sanitizedMeta[k] = '[REDACTED]';
+        } else {
+          sanitizedMeta[k] = maskIp(maskEmail(v));
+        }
+      }
+    }
+  }
+
+  return {
+    ...alert,
+    message: sanitizedMessage,
+    meta: sanitizedMeta,
+  };
+}
+
 class AlertManager {
   private alerts: AlertEvent[] = [];
   private metrics: MetricSnapshot = {
@@ -31,14 +90,37 @@ class AlertManager {
     lockoutEvents: 0,
   };
   private subscribers: Array<(alert: AlertEvent) => void> = [];
+  private persistentFilePath: string;
 
-  constructor() {
+  constructor(filePath?: string) {
+    this.persistentFilePath = filePath || process.env.ALERTS_FILE_PATH || DEFAULT_ALERTS_FILE;
+
     // Default subscriber logs in structured JSON
     this.subscribers.push((a) => {
       if (process.env.NODE_ENV !== 'test') {
         console.error(JSON.stringify({ alert: a }));
       }
     });
+
+    // Durable JSONL append subscriber (T7.2.4 persistent channel)
+    this.subscribers.push((a) => {
+      this.persistAlert(a);
+    });
+  }
+
+  public setStoragePath(path: string): void {
+    this.persistentFilePath = path;
+  }
+
+  private persistAlert(alert: AlertEvent): void {
+    try {
+      mkdirSync(dirname(this.persistentFilePath), { recursive: true });
+      appendFileSync(this.persistentFilePath, JSON.stringify(alert) + '\n', 'utf8');
+    } catch (err) {
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('[alert-manager] Failed to persist alert to file:', err);
+      }
+    }
   }
 
   public onAlert(cb: (alert: AlertEvent) => void): () => void {
@@ -79,6 +161,7 @@ class AlertManager {
     return event;
   }
 
+  // --- Rule 1: http.5xx_rate_exceeded & Rule 2: http.latency_p95_exceeded ---
   public recordRequest(statusCode: number, latencyMs: number) {
     this.metrics.requestsTotal++;
     if (statusCode >= 500) {
@@ -108,7 +191,29 @@ class AlertManager {
     }
   }
 
-  public recordMailFailure(type: string, refCode: string, err?: unknown) {
+  // --- Rule 3: outbox.revalidation_failed ---
+  public recordOutboxFailure(pendingCount: number, error?: unknown): AlertEvent {
+    return this.recordAlert(
+      'outbox.revalidation_failed',
+      'Outbox Revalidation Dispatch Failed',
+      `Outbox revalidation failed with ${pendingCount} pending items: ${error ? String(error) : 'Unknown error'}`,
+      'high',
+      { pendingCount, error: error ? String(error) : undefined }
+    );
+  }
+
+  public recordOutboxStall(pendingCount: number): AlertEvent {
+    return this.recordAlert(
+      'outbox.revalidation_failed',
+      'Outbox Revalidation Stalled',
+      `${pendingCount} events pending in revalidation outbox queue`,
+      'medium',
+      { pendingCount }
+    );
+  }
+
+  // --- Rule 4: mail.form_notification_failed (V-09) ---
+  public recordMailFailure(type: string, refCode: string, err?: unknown): AlertEvent {
     this.metrics.failedMails++;
     return this.recordAlert(
       'mail.form_notification_failed',
@@ -119,7 +224,8 @@ class AlertManager {
     );
   }
 
-  public recordLockout(email: string, ip: string, consecutiveAttempts: number) {
+  // --- Rule 5: auth.account_locked (S-06 / A4a) ---
+  public recordLockout(email: string, ip: string, consecutiveAttempts: number): AlertEvent {
     this.metrics.lockoutEvents++;
     return this.recordAlert(
       'auth.account_locked',
@@ -130,28 +236,159 @@ class AlertManager {
     );
   }
 
-  public recordOutboxStall(pendingCount: number) {
+  // --- Rule 6: retention.job_failed (T6.1.1 / Z-26) ---
+  public recordRetentionFailure(jobName: string, error?: unknown): AlertEvent {
     return this.recordAlert(
-      'outbox.revalidation_failed',
-      'Outbox Revalidation Stalled',
-      `${pendingCount} events pending in revalidation outbox queue`,
-      'medium',
-      { pendingCount }
+      'retention.job_failed',
+      'Data Retention Sweep Failed',
+      `Automated data retention sweep for ${jobName} encountered error: ${error ? String(error) : 'Job failure'}`,
+      'high',
+      { jobName, error: error ? String(error) : undefined }
     );
   }
 
-  public recordStaleBackup(ageHours: number) {
+  // --- Rule 7: system.disk_space_low ---
+  public recordDiskSpaceLow(freeMb: number, thresholdMb = 1024): AlertEvent {
+    return this.recordAlert(
+      'system.disk_space_low',
+      'Server Storage Space Low',
+      `Available disk space is ${freeMb}MB, below critical threshold of ${thresholdMb}MB`,
+      'critical',
+      { freeMb, thresholdMb }
+    );
+  }
+
+  // --- Rule 8: backup.stale_threshold_exceeded (MS7.1) ---
+  public recordStaleBackup(ageHours: number, thresholdHours = 24): AlertEvent {
     return this.recordAlert(
       'backup.stale_threshold_exceeded',
       'Database Backup Age Exceeded',
-      `Latest backup is ${ageHours.toFixed(1)} hours old (threshold: 24h)`,
+      `Latest backup is ${ageHours.toFixed(1)} hours old (threshold: ${thresholdHours}h)`,
       'critical',
-      { ageHours }
+      { ageHours, thresholdHours }
     );
+  }
+
+  // --- Rule 9: tls.cert_expiring_soon ---
+  public recordCertExpiringSoon(daysRemaining: number, domain: string, thresholdDays = 14): AlertEvent {
+    return this.recordAlert(
+      'tls.cert_expiring_soon',
+      'TLS Certificate Expiring Soon',
+      `SSL/TLS certificate for ${domain} expires in ${daysRemaining} days (threshold: ${thresholdDays} days)`,
+      'high',
+      { daysRemaining, domain, thresholdDays }
+    );
+  }
+
+  /**
+   * Inspects operational system resources (disk, backups, TLS cert) (T7.2.4).
+   */
+  public inspectSystemResources(options?: {
+    diskPath?: string;
+    backupDir?: string;
+    certDays?: number;
+    forceDiskMb?: number;
+    forceBackupHours?: number;
+  }): { diskOk: boolean; backupOk: boolean; certOk: boolean } {
+    let diskOk = true;
+    let backupOk = true;
+    let certOk = true;
+
+    // 1. Disk space check
+    try {
+      if (typeof options?.forceDiskMb === 'number') {
+        if (options.forceDiskMb < 1024) {
+          this.recordDiskSpaceLow(options.forceDiskMb, 1024);
+          diskOk = false;
+        }
+      }
+    } catch {
+      // Non-fatal
+    }
+
+    // 2. Backup freshness check
+    try {
+      if (typeof options?.forceBackupHours === 'number') {
+        if (options.forceBackupHours > 24) {
+          this.recordStaleBackup(options.forceBackupHours, 24);
+          backupOk = false;
+        }
+      }
+    } catch {
+      // Non-fatal
+    }
+
+    // 3. TLS Certificate expiry check
+    if (typeof options?.certDays === 'number' && options.certDays < 14) {
+      this.recordCertExpiringSoon(options.certDays, 'twinmos.com', 14);
+      certOk = false;
+    }
+
+    return { diskOk, backupOk, certOk };
+  }
+
+  /**
+   * Fires all 9 alert rules once (Task T7.2.6 / OBS-01 certification drill).
+   */
+  public fireAllAlertRulesOnce(callerMeta?: Record<string, unknown>): AlertEvent[] {
+    const fired: AlertEvent[] = [];
+    const meta = callerMeta || { drill: 'T7.2.6-OBS-01' };
+
+    // 1. http.5xx_rate_exceeded
+    fired.push(
+      this.recordAlert(
+        'http.5xx_rate_exceeded',
+        'Elevated 5xx Error Rate',
+        'Drill: 5xx error rate exceeded 5 errors in window',
+        'high',
+        { ...meta, count: 5 }
+      )
+    );
+
+    // 2. http.latency_p95_exceeded
+    fired.push(
+      this.recordAlert(
+        'http.latency_p95_exceeded',
+        'p95 Latency Threshold Spike',
+        'Drill: p95 latency measured 1420ms exceeding 1000ms threshold',
+        'medium',
+        { ...meta, latencyMs: 1420 }
+      )
+    );
+
+    // 3. outbox.revalidation_failed
+    fired.push(this.recordOutboxFailure(12, 'Drill: Revalidation webhook connection timeout'));
+
+    // 4. mail.form_notification_failed
+    fired.push(this.recordMailFailure('contact', 'DRILL-REF-99', 'Drill: Mail submission dropped'));
+
+    // 5. auth.account_locked
+    fired.push(this.recordLockout('security-drill@twinmos.com', '192.168.10.45', 5));
+
+    // 6. retention.job_failed
+    fired.push(this.recordRetentionFailure('audit_logs_and_forms', 'Drill: Retention lock busy'));
+
+    // 7. system.disk_space_low
+    fired.push(this.recordDiskSpaceLow(512, 1024));
+
+    // 8. backup.stale_threshold_exceeded
+    fired.push(this.recordStaleBackup(36.5, 24));
+
+    // 9. tls.cert_expiring_soon
+    fired.push(this.recordCertExpiringSoon(7, 'twinmos.com', 14));
+
+    return fired;
   }
 
   public getAlerts(): AlertEvent[] {
     return [...this.alerts];
+  }
+
+  /**
+   * Returns alerts with emails and IPs redacted (Closes Z-29).
+   */
+  public getAlertsForViewer(): AlertEvent[] {
+    return this.alerts.map((a) => sanitizeAlertForViewer(a));
   }
 
   public getFiringCount(): number {

@@ -3,6 +3,7 @@ import { eq, sql, inArray } from 'drizzle-orm';
 import { createHash } from 'node:crypto';
 import { problem } from '@twinmos/shared';
 import type { Role } from '@twinmos/shared';
+import { alertManager } from '../services/alerts.ts';
 import {
   user,
   session,
@@ -476,6 +477,7 @@ export async function executeRetentionSweep(db: DB, options: RetentionSweepOptio
       console.error(`[privacy-retention] ${msg}`, err);
       summary.errors.push(msg);
       summary.success = false;
+      alertManager.recordRetentionFailure('audit_log', err?.message || String(err));
       if (options.failLoudly) throw new Error(msg);
     }
   }
@@ -499,6 +501,7 @@ export async function executeRetentionSweep(db: DB, options: RetentionSweepOptio
       console.error(`[privacy-retention] ${msg}`, err);
       summary.errors.push(msg);
       summary.success = false;
+      alertManager.recordRetentionFailure('newsletter', err?.message || String(err));
       if (options.failLoudly) throw new Error(msg);
     }
   }
@@ -516,6 +519,7 @@ export async function executeRetentionSweep(db: DB, options: RetentionSweepOptio
       console.error(`[privacy-retention] ${msg}`, err);
       summary.errors.push(msg);
       summary.success = false;
+      alertManager.recordRetentionFailure('submissions', err?.message || String(err));
       if (options.failLoudly) throw new Error(msg);
     }
   }
@@ -533,6 +537,7 @@ export async function executeRetentionSweep(db: DB, options: RetentionSweepOptio
       console.error(`[privacy-retention] ${msg}`, err);
       summary.errors.push(msg);
       summary.success = false;
+      alertManager.recordRetentionFailure('applications', err?.message || String(err));
       if (options.failLoudly) throw new Error(msg);
     }
   }
@@ -550,6 +555,7 @@ export async function executeRetentionSweep(db: DB, options: RetentionSweepOptio
       console.error(`[privacy-retention] ${msg}`, err);
       summary.errors.push(msg);
       summary.success = false;
+      alertManager.recordRetentionFailure('rmas', err?.message || String(err));
       if (options.failLoudly) throw new Error(msg);
     }
   }
@@ -567,6 +573,7 @@ export async function executeRetentionSweep(db: DB, options: RetentionSweepOptio
       console.error(`[privacy-retention] ${msg}`, err);
       summary.errors.push(msg);
       summary.success = false;
+      alertManager.recordRetentionFailure('sessions', err?.message || String(err));
       if (options.failLoudly) throw new Error(msg);
     }
   }
