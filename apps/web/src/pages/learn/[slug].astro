@@ -17,35 +17,7 @@ const preview = Astro.url.searchParams.get('preview') ?? undefined;
 const locale = 'en';
 let article = await getDeliveryArticle(slug, locale, preview);
 
-// Special fixture fallback for test suites (e.g. what-is-xmp, portable-ssd-vs-external-hdd)
-if (!article && slug === 'what-is-xmp') {
-  article = {
-    id: 1,
-    slug: 'what-is-xmp',
-    title: 'What is Intel XMP (Extreme Memory Profile)?',
-    excerpt: 'Learn how Intel Extreme Memory Profiles (XMP) unlock higher DDR4 and DDR5 memory frequencies with a single BIOS toggle.',
-    content: '<p>Intel Extreme Memory Profile (XMP) is an automated overclocking technology that allows compatible DDR4 and DDR5 memory modules to run at their rated performance settings above standard JEDEC specifications.</p>',
-    publishedAt: new Date().toISOString(),
-    status: 'published',
-    category: 'Guides',
-    readingTime: 4,
-    tags: ['Overclocking', 'DDR4', 'DDR5', 'BIOS'],
-  } as any;
-} else if (!article && slug === 'portable-ssd-vs-external-hdd') {
-  article = {
-    id: 2,
-    slug: 'portable-ssd-vs-external-hdd',
-    title: 'Portable SSD vs External HDD',
-    excerpt: 'Comparing speed, durability, power consumption, and cost between portable solid state drives and external hard disk drives.',
-    content: '<p>When choosing between a portable SSD and an external HDD, the primary deciding factors are transfer speed, physical durability, and price per gigabyte.</p>',
-    publishedAt: new Date().toISOString(),
-    status: 'published',
-    category: 'Guides',
-    readingTime: 5,
-    tags: ['Storage', 'Portable SSD', 'External HDD'],
-  } as any;
-}
-
+// No fixture fallback articles: unpublishing in the CMS must take the page down (ZT-043).
 if (!article) {
   Astro.response.status = 404;
   Astro.response.statusText = 'Not Found';

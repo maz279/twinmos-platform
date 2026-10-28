@@ -12,6 +12,7 @@ export type FieldDef =
   | { k: 'number'; key: string; label: string; min?: number; max?: number }
   | { k: 'select'; key: string; label: string; options: readonly string[] }
   | { k: 'media'; key: string; label: string }
+  | { k: 'lines'; key: string; label: string }
   | { k: 'list'; key: string; label: string; itemLabel: string; max?: number; defaultItem: Record<string, unknown>; itemFields: FieldDef[] };
 
 export type BlockDef = {
@@ -559,3 +560,31 @@ export const BLOCK_DEFS: BlockDef[] = [
 export const blockDef = (type: string): BlockDef | undefined => BLOCK_DEFS.find((b) => b.type === type);
 
 export type PageBlock = Record<string, unknown> & { type: string };
+
+// Section blocks imported from the approved prototype use the renderer's own
+// vocabulary (stats-tiles, card-grid, timeline, …), not the 30 builder types.
+// Their editor is derived from the content they already hold, so every field
+// an editor can see on the site is editable here (ZT-039).
+const LONG = /^(lede|body|subtitle|description|desc|message|intro|excerpt|answer|quote)$/;
+const SKIP = new Set(['id', 'type', 'component', 'meta', 'sectionId', 'html', 'version', 'jsonld']);
+const human = (k: string) => k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());
+function scalarField(key: string, sample: unknown): FieldDef | null {
+  if (typeof sample === 'number') return { k: 'number', key, label: human(key) };
+  if (typeof sample === 'string') return LONG.test(key) || sample.length > 80 ? { k: 'textarea', key, label: human(key) } : { k: 'text', key, label: human(key) };
+  if (Array.isArray(sample) && sample.every((x) => typeof x === 'string')) return { k: 'lines', key, label: `${human(key)} (one per line)` };
+  return null;
+}
+export function inferFields(block: Record<string, unknown>): FieldDef[] {
+  const out: FieldDef[] = [];
+  for (const [key, val] of Object.entries(block)) {
+    if (SKIP.has(key)) continue;
+    const scalar = scalarField(key, val);
+    if (scalar) { out.push(scalar); continue; }
+    if (Array.isArray(val) && val.length && val.every((x) => x && typeof x === 'object' && !Array.isArray(x))) {
+      const keys = [...new Set(val.flatMap((x) => Object.keys(x as object)))];
+      const itemFields = keys.map((k) => scalarField(k, (val.find((x) => (x as Record<string, unknown>)[k] != null) as Record<string, unknown>)?.[k] ?? '')).filter(Boolean) as FieldDef[];
+      out.push({ k: 'list', key, label: human(key), itemLabel: human(key).replace(/s$/, ''), defaultItem: Object.fromEntries(itemFields.map((f) => [f.key, f.k === 'lines' ? [] : ''])), itemFields });
+    }
+  }
+  return out;
+}

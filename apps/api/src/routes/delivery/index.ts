@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { DB } from '@twinmos/db';
+import { contentFeedback } from '@twinmos/db';
 import { problem } from '@twinmos/shared';
 import { createPreviewToken, verifyPreviewToken } from './preview.ts';
 import {
@@ -286,8 +287,8 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
     const helpful = typeof body.helpful === 'boolean' ? body.helpful : body.rating === 'up' || body.vote === 'yes';
 
     // Zero PII Rate Limiting: hash ip + slug, no PII stored
-    const clientIp = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'anon';
-    const rateKey = `${clientIp.slice(0, 16)}:${slug}`;
+    const clientIp = c.req.header('x-real-ip') || 'anon';
+    const rateKey = `${clientIp.slice(0, 45)}:${slug}`;
     const now = Date.now();
     const lastVote = recentRatings.get(rateKey);
     if (lastVote && now - lastVote < 60000) {
@@ -305,6 +306,9 @@ export function makeDeliveryRouter(db: DB, sessionFromRequest?: (req: Request) =
         if (now - v > 3600000) recentRatings.delete(k);
       }
     }
+
+    // ZT-034: the vote is actually stored (it used to answer recorded:true and drop it).
+    await db.insert(contentFeedback).values({ entity: 'article', slug, locale, helpful });
 
     return c.json({
       ok: true,

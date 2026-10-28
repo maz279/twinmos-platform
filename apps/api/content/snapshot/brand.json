@@ -1,0 +1,47 @@
+[
+ {
+  "id": 1,
+  "slug": "twinmos",
+  "name": "TwinMOS"
+ },
+ {
+  "id": 2,
+  "slug": "voltx",
+  "name": "VOLTX"
+ },
+ {
+  "id": 3,
+  "slug": "tornadox7",
+  "name": "TornadoX7"
+ },
+ {
+  "id": 4,
+  "slug": "prodrive-ultra",
+  "name": "ProDrive Ultra"
+ },
+ {
+  "id": 5,
+  "slug": "elite-drive",
+  "name": "ELITE Drive"
+ },
+ {
+  "id": 6,
+  "slug": "corex-pro",
+  "name": "CoreX Pro"
+ },
+ {
+  "id": 7,
+  "slug": "xtreme",
+  "name": "Xtreme"
+ },
+ {
+  "id": 8,
+  "slug": "thunder-gx",
+  "name": "Thunder GX"
+ },
+ {
+  "id": 9,
+  "slug": "concord",
+  "name": "Concord"
+ }
+]

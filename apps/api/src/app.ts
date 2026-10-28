@@ -21,6 +21,7 @@ import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
 import { redactPersonalData } from './lib/redact.ts';
 import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
 import { snCheckRoute, snReportRoute, serialAdminRoute } from './routes/sncheck.ts';
+import { warrantyRoute, warrantyAdminRoute, warrantyFor } from './routes/warranty.ts';
 import { navigationRoute } from './routes/navigation.ts';
 import { entitiesRoute } from './routes/entities.ts';
 import { privacyRoute } from './routes/privacy.ts';
@@ -207,8 +208,9 @@ export function buildApp(db: DB) {
     // This public endpoint fronts Cloudflare, which stamps cf-connecting-ip;
     // bucket on it when present so proxied clients get per-IP buckets while
     // the spoofable header stays ignored everywhere else (T2.5 clientIp rule).
-    const cfIp = c.req.header('cf-connecting-ip');
-    const ip = cfIp || clientIp(c);
+    // clientIp() only (Z-28): a raw cf-connecting-ip header is client-forgeable
+    // whenever a request reaches the API without the edge rewriting it.
+    const ip = clientIp(c);
     const now = Date.now();
     if (now > bucketSweepAt) {
       bucketSweepAt = now + 60_000;
@@ -234,9 +236,10 @@ export function buildApp(db: DB) {
   // /rma/:number is number-only, so an unthrottled client could sweep the
   // TM-RMA-YYYY-NNNNNN keyspace and read the status/timeline/masked-customer
   // projection of every live RMA. Same bucket scheme as sn-check.) ----
-  app.use('/api/v1/rma/*', async (c, next) => {
-    const cfIp = c.req.header('cf-connecting-ip');
-    const ip = cfIp || clientIp(c);
+  // Same 10/min/IP bucket scheme for the warranty lookup/registration endpoints
+  // (serial + e-mail pairs must not be guessable at speed).
+  const perMinute = (prefix: string, limit: number, what: string) => async (c: Context, next: () => Promise<void>) => {
+    const ip = clientIp(c);
     const now = Date.now();
     if (now > bucketSweepAt) {
       bucketSweepAt = now + 60_000;
@@ -244,19 +247,22 @@ export function buildApp(db: DB) {
         if (v.resetAt < now) FORM_BUCKETS.delete(k);
       }
     }
-    const key = 'rma:' + ip;
+    const key = prefix + ip;
     const bucket = FORM_BUCKETS.get(key);
     if (!bucket || bucket.resetAt < now) {
       FORM_BUCKETS.set(key, { count: 1, resetAt: now + 60_000 });
       return next();
     }
     bucket.count += 1;
-    if (bucket.count > 10) {
+    if (bucket.count > limit) {
       c.header('Retry-After', String(Math.ceil((bucket.resetAt - now) / 1000)));
-      return c.json(problem(429, 'Too Many Requests', 'Limit is 10 RMA status checks per minute.'), 429, { 'Content-Type': 'application/problem+json' });
+      return c.json(problem(429, 'Too Many Requests', `Limit is ${limit} ${what} per minute.`), 429, { 'Content-Type': 'application/problem+json' });
     }
     return next();
-  });
+  };
+  app.use('/api/v1/rma/*', perMinute('rma:', 10, 'RMA status checks'));
+  app.use('/api/v1/forms/rma/*', perMinute('rma:', 10, 'RMA status checks')); // legacy alias shares the bucket (ZT-026)
+  app.use('/api/v1/warranty/*', perMinute('warranty:', 10, 'warranty requests'));
 
   // Reject non-JSON content types on /api/v1/auth/* POST routes (415) to eliminate lockout bypass
   app.post('/api/v1/auth/*', async (c, next) => {
@@ -341,27 +347,27 @@ export function buildApp(db: DB) {
     }
   });
 
-  // Task F2 / OBS-01: Deep health inspection with component diagnostics & latency
-  app.get('/api/v1/health/deep', async (c) => {
-    let isInternal = process.env.NODE_ENV === 'test';
+  // Operational endpoints (deep health, metrics) answer only the monitoring
+  // stack (x-internal-secret) or a signed-in staff member — never the public.
+  const opsAllowed = async (c: Context): Promise<boolean> => {
+    if (process.env.NODE_ENV === 'test') return true;
     const internalSecret = c.req.header('x-internal-secret');
     const internalExpected = process.env.REVALIDATE_SECRET || (process.env.NODE_ENV !== 'production' ? 'dev-revalidate-secret' : undefined);
-    if (!isInternal && internalSecret && internalExpected) {
+    if (internalSecret && internalExpected) {
       const provBuf = Buffer.from(internalSecret, 'utf8');
       const expBuf = Buffer.from(internalExpected, 'utf8');
-      if (provBuf.length === expBuf.length && timingSafeEqual(provBuf, expBuf)) {
-        isInternal = true;
-      }
+      if (provBuf.length === expBuf.length && timingSafeEqual(provBuf, expBuf)) return true;
     }
+    const sess = await sessionFromRequest(c.req.raw);
+    return Boolean(sess?.user && ['super_admin', 'admin', 'editor', 'author', 'viewer'].includes(sess.user.role));
+  };
 
-
-    if (!isInternal) {
-      const sess = await sessionFromRequest(c.req.raw);
-      if (!sess?.user || !['super_admin', 'admin', 'editor', 'author', 'viewer'].includes(sess.user.role)) {
-        return c.json(problem(401, 'Unauthorized', 'Viewer+ session required'), 401, {
-          'Content-Type': 'application/problem+json',
-        });
-      }
+  // Task F2 / OBS-01: Deep health inspection with component diagnostics & latency
+  app.get('/api/v1/health/deep', async (c) => {
+    if (!(await opsAllowed(c))) {
+      return c.json(problem(401, 'Unauthorized', 'Viewer+ session required'), 401, {
+        'Content-Type': 'application/problem+json',
+      });
     }
 
     const t0 = Date.now();
@@ -410,6 +416,10 @@ export function buildApp(db: DB) {
 
   // Task F2 / T7.2.3 / OBS-01: Metrics endpoint (Prometheus exposition format + JSON fallback)
   app.get('/api/v1/metrics', async (c) => {
+    // ZT-010: counters, DB state and uptime are reconnaissance data — not public.
+    if (!(await opsAllowed(c))) {
+      return c.json(problem(401, 'Unauthorized', 'Monitoring secret or staff session required'), 401, { 'Content-Type': 'application/problem+json' });
+    }
     let dbStatus = true;
     try {
       await db.execute(sql`select 1`);
@@ -645,7 +655,9 @@ export function buildApp(db: DB) {
   app.route('/api/v1', publicMediaRoute(db)); // P8 imagery bridge — public read-only product imagery
   app.route('/api/v1', partnerRoute(db, { requireRole, sessionFromRequest })); // P5 portal (member)
   app.route('/api/v1/admin', partnerAdminRoute(db, { requireRole, sessionFromRequest, auth })); // P5 portal (admin)
-  app.route('/api/v1', snCheckRoute(db)); // P5 public anti-counterfeit check
+  app.route('/api/v1', snCheckRoute(db, { warrantyFor: (s) => warrantyFor(db, s) })); // P5 public anti-counterfeit check (+ warranty status, UR-17.1.5)
+  app.route('/api/v1', warrantyRoute(db)); // BRD §F8.3 warranty registration & lookup
+  app.route('/api/v1/admin', warrantyAdminRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', snReportRoute(db, { requireRole, sessionFromRequest })); // P5 reporting
   // Phase 5.3: serial registry management — batch CSV ingest, search and the
   // >5-distinct-IPs/24h counterfeit anomaly scan. Ops alert recipient comes

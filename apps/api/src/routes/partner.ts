@@ -264,7 +264,7 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     if (!userId) {
       // A1 / A-INVITE: Self-signup is disabled in production. Staff member invitation
       // auto-provisions the user account with role='member' and mustChangePassword=true.
-      const tempPassword = 'TwinMOS-' + crypto.randomUUID().slice(0, 8) + '!' + crypto.randomUUID().slice(0, 8);
+      const tempPassword = crypto.randomUUID() + crypto.randomUUID(); // never shown or mailed
       if (deps.auth?.api?.createUser) {
         try {
           const res = await deps.auth.api.createUser({
@@ -296,20 +296,29 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
         userId = newUser.id;
         autoProvisioned = true;
       }
+      // Invited partners are created unverified. The verification link returns
+      // them to the public partner portal (same origin as Better Auth, so it is
+      // a trusted callback — the old http://localhost:5173 default was rejected
+      // with 403 and no partner could ever activate: ZT-013).
+      const site = (process.env.PUBLIC_SITE_URL || 'https://www.twinmos.com').replace(/\/+$/, '');
       try {
-        // Invited partners are created unverified. Send a real verification
-        // link through Better Auth so they can satisfy requireEmailVerification.
-        const callbackURL = `${process.env.ADMIN_PUBLIC_URL ?? 'http://localhost:5173'}/#/verify-email`;
-        await deps.auth?.api?.sendVerificationEmail?.({ body: { email: normalizedEmail, callbackURL } });
+        await deps.auth?.api?.sendVerificationEmail?.({ body: { email: normalizedEmail, callbackURL: `${site}/partners?verified=1` } });
       } catch (err) {
         console.warn('[partner] verification mail failed:', err);
+      }
+      // No credentials by e-mail (ZT-014): a single-use set-password link instead.
+      try {
+        const { adminBaseUrl } = await import('../mailer.ts');
+        await deps.auth?.api?.requestPasswordReset?.({ body: { email: normalizedEmail, redirectTo: adminBaseUrl() } });
+      } catch (err) {
+        console.warn('[partner] set-password link failed:', err);
       }
       try {
         const { sendMail } = await import('../mailer.ts');
         await sendMail({
           to: normalizedEmail,
           subject: 'TwinMOS Partner Portal Invitation',
-          text: `You have been added to the TwinMOS Partner Portal. Your temporary password is: ${tempPassword}\nA separate email contains your verification link — open it first, then sign in and set your new password immediately.`,
+          text: `You have been added to the TwinMOS Partner Portal.\n\n1. Open the verification link in the separate e-mail.\n2. Choose your password with the single-use link we also sent (valid for 1 hour).\n3. Sign in at ${site}/partners.`,
           meta: { kind: 'partner-invite', email: normalizedEmail },
         });
       } catch (err) {

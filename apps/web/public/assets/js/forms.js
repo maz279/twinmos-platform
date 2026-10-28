@@ -336,38 +336,28 @@
     });
   }, true); // capture: runs before the prototype's bubble-phase handlers
 
-  /* RMA tracker: synchronous interception (async stopImmediatePropagation is
-   * impossible) — if the API answers, render the real timeline; if not, re-click
-   * through to the prototype's demo handler unchanged. */
-  var trackBtn = document.getElementById('rmaTrackBtn');
-  if (trackBtn) {
-    trackBtn.addEventListener('click', function (e) {
-      if (trackBtn.getAttribute('data-tm-native') === '1') return; // fallback pass-through
-      var id = (document.getElementById('rmaId').value || '').trim().toUpperCase();
-      if (!id) return; // let the prototype validate the empty field
-      e.preventDefault();
-      e.stopImmediatePropagation(); // claim the click BEFORE the prototype handler
-      fetch(API + '/rma/' + encodeURIComponent(id)).then(function (res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      }).then(function (rma) {
-        var out = document.getElementById('rmaOut');
-        if (!out) return;
-        var html = '<div class="form-success show" style="text-align:left"><div class="tick">✓</div><h3>' + rma.number + ' — ' + String(rma.status).replace(/_/g, ' ') + '</h3>';
-        html += '<p>Requested for ' + (rma.maskedInfo && rma.maskedInfo.product ? String(rma.maskedInfo.product) : 'your product') + '</p><ol style="margin:8px 0 0;padding-left:18px;font-size:13.5px">';
-        (rma.timeline || []).forEach(function (ev) {
-          html += '<li>' + (ev.from === ev.to ? 'Case created — ' + String(ev.to).replace(/_/g, ' ') : String(ev.from).replace(/_/g, ' ') + ' → <b>' + String(ev.to).replace(/_/g, ' ') + '</b>') + (ev.note ? ' · ' + ev.note : '') + '</li>';
-        });
-        html += '</ol></div>';
-        out.innerHTML = html;
+  /* "Was this helpful?" (learn/news detail pages): votes are stored for real by
+   * POST /forms/content-feedback (ZT-034). RMA tracking lives in portal.js. */
+  Array.prototype.forEach.call(document.querySelectorAll('.btn-helpful[data-slug]'), function (b) {
+    b.addEventListener('click', function () {
+      var box = document.getElementById('feedbackActions');
+      var msg = document.getElementById('feedbackMsg');
+      var entity = /^\/news\//.test(location.pathname) ? 'news' : 'article';
+      Array.prototype.forEach.call(document.querySelectorAll('.btn-helpful'), function (x) { x.disabled = true; });
+      fetch(API + '/forms/content-feedback', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ entity: entity, slug: b.getAttribute('data-slug'), helpful: b.getAttribute('data-vote') === 'yes', locale: document.documentElement.lang || 'en' }),
+      }).then(function (r) {
+        if (msg) { msg.style.display = 'block'; msg.style.color = r.ok ? '#16a34a' : '#B3261E'; msg.textContent = r.ok ? 'Thank you for your feedback.' : 'Your feedback could not be recorded — please try again later.'; }
+        if (r.ok && box) box.style.display = 'none';
+        if (!r.ok) Array.prototype.forEach.call(document.querySelectorAll('.btn-helpful'), function (x) { x.disabled = false; });
       }).catch(function () {
-        // API unavailable → hand the click to the prototype's demo tracker
-        trackBtn.setAttribute('data-tm-native', '1');
-        trackBtn.click();
-        trackBtn.removeAttribute('data-tm-native');
+        if (msg) { msg.style.display = 'block'; msg.style.color = '#B3261E'; msg.textContent = 'Your feedback could not be recorded — please try again later.'; }
+        Array.prototype.forEach.call(document.querySelectorAll('.btn-helpful'), function (x) { x.disabled = false; });
       });
-    }, true);
-  }
+    });
+  });
 
   // Pre-render Turnstile widgets when a site key is configured (production).
   if (window.TURNSTILE_SITE_KEY) {

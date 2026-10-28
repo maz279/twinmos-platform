@@ -527,6 +527,14 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
     if (!legal.includes(parsed.data.to)) {
       return c.json(problem(422, 'Illegal transition', `'${existing.status}' can move to: ${legal.join(', ') || 'none'}.`), 422, { 'Content-Type': P });
     }
+    // Publishing re-checks the block contract: rows written before validation
+    // existed (or by tooling) must not go live unvalidated (ZT-039).
+    if ((parsed.data.to === 'published' || parsed.data.to === 'scheduled') && Array.isArray((existing as any).blocks) && (existing as any).blocks.length) {
+      const v = validateBlocks((existing as any).blocks);
+      if (!v.success) {
+        return c.json(problem(422, 'Validation Failed', 'Fix the invalid blocks before publishing.', Object.entries(v.errors).map(([i, e]) => ({ path: ['blocks', Number(i)], message: (e as string[]).join('; ') }))), 422, { 'Content-Type': P });
+      }
+    }
     if (parsed.data.to === 'scheduled' && !parsed.data.publishAt) {
       return c.json(problem(422, 'Validation Failed', 'scheduled requires publishAt (ISO datetime).'), 422, { 'Content-Type': P });
     }

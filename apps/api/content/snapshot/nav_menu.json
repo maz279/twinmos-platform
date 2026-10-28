@@ -1,0 +1,26 @@
+[
+ {
+  "id": 34,
+  "code": "header",
+  "title": "Header Mega Menu",
+  "locale": "en",
+  "created_at": "2026-10-26T15:22:47.028Z",
+  "updated_at": "2026-10-26T15:22:47.028Z"
+ },
+ {
+  "id": 35,
+  "code": "drawer",
+  "title": "Mobile Drawer Menu",
+  "locale": "en",
+  "created_at": "2026-10-26T15:22:47.542Z",
+  "updated_at": "2026-10-26T15:22:47.542Z"
+ },
+ {
+  "id": 36,
+  "code": "footer",
+  "title": "Footer Menu",
+  "locale": "en",
+  "created_at": "2026-10-26T15:22:47.720Z",
+  "updated_at": "2026-10-26T15:22:47.720Z"
+ }
+]

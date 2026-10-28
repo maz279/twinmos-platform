@@ -1,0 +1,1170 @@
+[
+ {
+  "id": 34,
+  "name": "United Arab Emirates",
+  "country": "United Arab Emirates",
+  "region": "me",
+  "status": "authorized",
+  "cities": [
+   "Dubai"
+  ],
+  "contact": {},
+  "note": "MEA/CIS headquarters since 2001 — free-zone logistics reach the GCC, Africa and South Asia within 48–72 hours.",
+  "created_at": "2026-10-26T15:22:34.231Z",
+  "iso_country": "AE",
+  "tagline": "Regional HQ — Dubai (DAFZA)",
+  "cta_config": {
+   "status": "hub",
+   "actions": [
+    {
+     "href": "contact",
+     "label": "Contact the hub",
+     "primary": true
+    },
+    {
+     "href": "mailto:sales@twinmos.com?subject=United%20Arab%20Emirates%20sales%20inquiry",
+     "label": "Email sales",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 1,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 35,
+  "name": "Saudi Arabia",
+  "country": "Saudi Arabia",
+  "region": "me",
+  "status": "authorized",
+  "cities": [
+   "Riyadh",
+   "Jeddah",
+   "Dammam"
+  ],
+  "contact": {},
+  "note": "Kingdom-wide coverage via the authorized regional distributor, spanning retail, SI and Vision 2030 government programs.",
+  "created_at": "2026-10-26T15:22:34.262Z",
+  "iso_country": "SA",
+  "tagline": "Nationwide authorized distribution",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Saudi%20Arabia",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 2,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 36,
+  "name": "Qatar",
+  "country": "Qatar",
+  "region": "me",
+  "status": "authorized",
+  "cities": [
+   "Doha"
+  ],
+  "contact": {},
+  "note": "Full portfolio with bilingual support and GCC technical-regulation compliance.",
+  "created_at": "2026-10-26T15:22:34.264Z",
+  "iso_country": "QA",
+  "tagline": "Established authorized distributor",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Qatar",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 3,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 37,
+  "name": "Kuwait",
+  "country": "Kuwait",
+  "region": "me",
+  "status": "authorized",
+  "cities": [
+   "Kuwait City"
+  ],
+  "contact": {},
+  "note": "Served from the Dubai hub while local retail and system-integrator coverage grows.",
+  "created_at": "2026-10-26T15:22:34.266Z",
+  "iso_country": "KW",
+  "tagline": "Retail & SI coverage expanding",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Kuwait",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 4,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 38,
+  "name": "Bahrain",
+  "country": "Bahrain",
+  "region": "me",
+  "status": "authorized",
+  "cities": [
+   "Manama"
+  ],
+  "contact": {},
+  "note": "Served from the Dubai hub while local retail and system-integrator coverage grows.",
+  "created_at": "2026-10-26T15:22:34.267Z",
+  "iso_country": "BH",
+  "tagline": "Retail & SI coverage expanding",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Bahrain",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 5,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 39,
+  "name": "Oman",
+  "country": "Oman",
+  "region": "me",
+  "status": "authorized",
+  "cities": [
+   "Muscat"
+  ],
+  "contact": {},
+  "note": "Served from the Dubai hub while local retail and system-integrator coverage grows.",
+  "created_at": "2026-10-26T15:22:34.273Z",
+  "iso_country": "OM",
+  "tagline": "Retail & SI coverage expanding",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Oman",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 6,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 40,
+  "name": "Egypt",
+  "country": "Egypt",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Cairo",
+   "Alexandria"
+  ],
+  "contact": {},
+  "note": "Robust authorized network supplying retail, e-commerce, system integrators and government channels.",
+  "created_at": "2026-10-26T15:22:34.274Z",
+  "iso_country": "EG",
+  "tagline": "Multi-distributor network",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Egypt",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 7,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 41,
+  "name": "Morocco",
+  "country": "Morocco",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Casablanca",
+   "Rabat",
+   "Marrakech"
+  ],
+  "contact": {},
+  "note": "Coverage across major cities — the gateway to Francophone Africa.",
+  "created_at": "2026-10-26T15:22:34.294Z",
+  "iso_country": "MA",
+  "tagline": "Authorized partner network",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Morocco",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 8,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 42,
+  "name": "Algeria",
+  "country": "Algeria",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Algiers",
+   "Oran"
+  ],
+  "contact": {},
+  "note": "Authorized distribution with consumer, SI and government reach.",
+  "created_at": "2026-10-26T15:22:34.298Z",
+  "iso_country": "DZ",
+  "tagline": "Diversified distributor network",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Algeria",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 9,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 43,
+  "name": "Libya",
+  "country": "Libya",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Tripoli",
+   "Benghazi"
+  ],
+  "contact": {},
+  "note": "Authorized distributors provide local coverage with bilingual product labeling.",
+  "created_at": "2026-10-26T15:22:34.300Z",
+  "iso_country": "LY",
+  "tagline": "Authorized local coverage",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Libya",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 10,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 44,
+  "name": "Nigeria",
+  "country": "Nigeria",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Lagos",
+   "Abuja",
+   "Port Harcourt"
+  ],
+  "contact": {},
+  "note": "West Africa hub — authorized distributors based in Lagos with nationwide reach.",
+  "created_at": "2026-10-26T15:22:34.307Z",
+  "iso_country": "NG",
+  "tagline": "Multi-distributor network",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Nigeria",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 11,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 45,
+  "name": "Ghana",
+  "country": "Ghana",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Accra",
+   "Kumasi"
+  ],
+  "contact": {},
+  "note": "Accra-based authorized distribution with regional coverage.",
+  "created_at": "2026-10-26T15:22:34.327Z",
+  "iso_country": "GH",
+  "tagline": "Authorized distributors",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Ghana",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 12,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 46,
+  "name": "Senegal",
+  "country": "Senegal",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Dakar"
+  ],
+  "contact": {},
+  "note": "UEMOA gateway — verified local partners are being appointed; ask sales for the current channel.",
+  "created_at": "2026-10-26T15:22:34.329Z",
+  "iso_country": "SN",
+  "tagline": "Partners being appointed",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "partners",
+     "label": "Become a distributor",
+     "primary": true
+    },
+    {
+     "href": "mailto:sales@twinmos.com?subject=Senegal%20distributor%20inquiry",
+     "label": "Contact sales",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 13,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 47,
+  "name": "Cameroon",
+  "country": "Cameroon",
+  "region": "af",
+  "status": "authorized",
+  "cities": [],
+  "contact": {},
+  "note": "Central Africa — CEMAC regional coverage through authorized distributors.",
+  "created_at": "2026-10-26T15:22:34.331Z",
+  "iso_country": "CM",
+  "tagline": "Authorized distributors",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Cameroon",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 14,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 48,
+  "name": "Kenya",
+  "country": "Kenya",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Nairobi",
+   "Mombasa"
+  ],
+  "contact": {},
+  "note": "East Africa's technology hub — distribution partners with regional reach.",
+  "created_at": "2026-10-26T15:22:34.332Z",
+  "iso_country": "KE",
+  "tagline": "Distribution partners",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Kenya",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 15,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 49,
+  "name": "Ethiopia",
+  "country": "Ethiopia",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Addis Ababa"
+  ],
+  "contact": {},
+  "note": "Authorized distribution serving government, education and enterprise buyers.",
+  "created_at": "2026-10-26T15:22:34.334Z",
+  "iso_country": "ET",
+  "tagline": "Authorized distributor network",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Ethiopia",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 16,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 50,
+  "name": "Rwanda",
+  "country": "Rwanda",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Kigali"
+  ],
+  "contact": {},
+  "note": "EAC market — distribution partners are being verified; contact regional sales.",
+  "created_at": "2026-10-26T15:22:34.357Z",
+  "iso_country": "RW",
+  "tagline": "Partners being verified",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "partners",
+     "label": "Become a distributor",
+     "primary": true
+    },
+    {
+     "href": "mailto:sales@twinmos.com?subject=Rwanda%20distributor%20inquiry",
+     "label": "Contact sales",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 17,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 51,
+  "name": "South Africa",
+  "country": "South Africa",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Johannesburg",
+   "Cape Town",
+   "Durban"
+  ],
+  "contact": {},
+  "note": "Southern Africa hub — the continent's most developed IT channel, SANS/ICASA compliant.",
+  "created_at": "2026-10-26T15:22:34.362Z",
+  "iso_country": "ZA",
+  "tagline": "Nationwide distributor network",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20South%20Africa",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 18,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 52,
+  "name": "Angola",
+  "country": "Angola",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Luanda"
+  ],
+  "contact": {},
+  "note": "Coverage from Luanda with Portuguese and English support.",
+  "created_at": "2026-10-26T15:22:34.364Z",
+  "iso_country": "AO",
+  "tagline": "Authorized regional distributor",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Angola",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 19,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 53,
+  "name": "Namibia",
+  "country": "Namibia",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Windhoek"
+  ],
+  "contact": {},
+  "note": "Local coverage with SACU market access.",
+  "created_at": "2026-10-26T15:22:34.365Z",
+  "iso_country": "NA",
+  "tagline": "Authorized distributors",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Namibia",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 20,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 54,
+  "name": "Botswana & Lesotho",
+  "country": "Botswana & Lesotho",
+  "region": "af",
+  "status": "authorized",
+  "cities": [
+   "Gaborone",
+   "Maseru"
+  ],
+  "contact": {},
+  "note": "Served via South Africa and Namibia hub partners; local presence in progress.",
+  "created_at": "2026-10-26T15:22:34.367Z",
+  "iso_country": "BW",
+  "tagline": "Regional-hub coverage",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Botswana%20%26%20Lesotho",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 21,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 55,
+  "name": "Taiwan",
+  "country": "Taiwan",
+  "region": "as",
+  "status": "authorized",
+  "cities": [
+   "Taipei"
+  ],
+  "contact": {},
+  "note": "Founding office since 1998 — R&D, BSMI certification and 100% pre-delivery testing.",
+  "created_at": "2026-10-26T15:22:34.371Z",
+  "iso_country": "TW",
+  "tagline": "Founding HQ · R&D center",
+  "cta_config": {
+   "status": "hub",
+   "actions": [
+    {
+     "href": "contact",
+     "label": "Contact the hub",
+     "primary": true
+    },
+    {
+     "href": "mailto:sales@twinmos.com?subject=Taiwan%20sales%20inquiry",
+     "label": "Email sales",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 22,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 56,
+  "name": "India",
+  "country": "India",
+  "region": "as",
+  "status": "authorized",
+  "cities": [],
+  "contact": {},
+  "note": "Strategic P0 market — nationwide authorized distribution coordinated from the Dubai office; BIS compliance planned for Phase 2.",
+  "created_at": "2026-10-26T15:22:34.373Z",
+  "iso_country": "IN",
+  "tagline": "Authorized distribution network",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20India",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 23,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 57,
+  "name": "Pakistan",
+  "country": "Pakistan",
+  "region": "as",
+  "status": "authorized",
+  "cities": [
+   "Karachi",
+   "Lahore",
+   "Islamabad"
+  ],
+  "contact": {},
+  "note": "Phase 2 growth market — nationwide ICT distributors sought; regional sales run from Dubai.",
+  "created_at": "2026-10-26T15:22:34.374Z",
+  "iso_country": "PK",
+  "tagline": "Network being established",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Pakistan",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 24,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 58,
+  "name": "Hong Kong",
+  "country": "Hong Kong",
+  "region": "as",
+  "status": "authorized",
+  "cities": [
+   "Hong Kong"
+  ],
+  "contact": {},
+  "note": "Free-port logistics advantage and Greater Bay Area market access.",
+  "created_at": "2026-10-26T15:22:34.377Z",
+  "iso_country": "HK",
+  "tagline": "Established local distributor",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Hong%20Kong",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 25,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 59,
+  "name": "Singapore",
+  "country": "Singapore",
+  "region": "as",
+  "status": "authorized",
+  "cities": [
+   "Singapore"
+  ],
+  "contact": {},
+  "note": "Authorized local distributors anchoring ASEAN coverage.",
+  "created_at": "2026-10-26T15:22:34.379Z",
+  "iso_country": "SG",
+  "tagline": "SEA distribution hub",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Singapore",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 26,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 60,
+  "name": "Malaysia",
+  "country": "Malaysia",
+  "region": "as",
+  "status": "authorized",
+  "cities": [
+   "Kuala Lumpur"
+  ],
+  "contact": {},
+  "note": "Established distributor coverage alongside the Singapore hub.",
+  "created_at": "2026-10-26T15:22:34.381Z",
+  "iso_country": "MY",
+  "tagline": "SEA distribution hub",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Malaysia",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 27,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 61,
+  "name": "Southeast Asia (ASEAN)",
+  "country": "Southeast Asia (ASEAN)",
+  "region": "as",
+  "status": "authorized",
+  "cities": [
+   "Thailand",
+   "Indonesia",
+   "Philippines",
+   "Vietnam"
+  ],
+  "contact": {},
+  "note": "Growth markets served from the Singapore and Malaysia hubs via regional e-commerce and retail channels.",
+  "created_at": "2026-10-26T15:22:34.382Z",
+  "iso_country": null,
+  "tagline": "Expanding across ASEAN",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Southeast%20Asia%20%28ASEAN%29",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 28,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 62,
+  "name": "China",
+  "country": "China",
+  "region": "as",
+  "status": "authorized",
+  "cities": [
+   "Dongguan"
+  ],
+  "contact": {},
+  "note": "TwinMOS manufacturing facility — Greater China market and global supply.",
+  "created_at": "2026-10-26T15:22:34.384Z",
+  "iso_country": "CN",
+  "tagline": "Manufacturing facility",
+  "cta_config": {
+   "status": "hub",
+   "actions": [
+    {
+     "href": "contact",
+     "label": "Contact the hub",
+     "primary": true
+    },
+    {
+     "href": "mailto:sales@twinmos.com?subject=China%20sales%20inquiry",
+     "label": "Email sales",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 29,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 63,
+  "name": "Germany",
+  "country": "Germany",
+  "region": "eu",
+  "status": "authorized",
+  "cities": [
+   "Cologne"
+  ],
+  "contact": {},
+  "note": "DACH coverage from the Cologne office through authorized local distributors.",
+  "created_at": "2026-10-26T15:22:34.389Z",
+  "iso_country": "DE",
+  "tagline": "European office + local distributors",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Germany",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 30,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 64,
+  "name": "Netherlands",
+  "country": "Netherlands",
+  "region": "eu",
+  "status": "authorized",
+  "cities": [],
+  "contact": {},
+  "note": "Benelux coverage — CE, REACH and GDPR compliant EU distribution.",
+  "created_at": "2026-10-26T15:22:34.390Z",
+  "iso_country": "NL",
+  "tagline": "Authorized local distributors",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Netherlands",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 31,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 65,
+  "name": "United Kingdom",
+  "country": "United Kingdom",
+  "region": "eu",
+  "status": "authorized",
+  "cities": [],
+  "contact": {},
+  "note": "UKCA-compliant products served through European distributor partners.",
+  "created_at": "2026-10-26T15:22:34.392Z",
+  "iso_country": "GB",
+  "tagline": "European partner network",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20United%20Kingdom",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 32,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 66,
+  "name": "Russia & CIS",
+  "country": "Russia & CIS",
+  "region": "cis",
+  "status": "authorized",
+  "cities": [
+   "Moscow",
+   "St. Petersburg"
+  ],
+  "contact": {},
+  "note": "Products carry EAC certification for the whole EAEU — national distribution is being appointed.",
+  "created_at": "2026-10-26T15:22:34.394Z",
+  "iso_country": "RU",
+  "tagline": "EAC-certified market",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Russia%20%26%20CIS",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 33,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 67,
+  "name": "Kazakhstan",
+  "country": "Kazakhstan",
+  "region": "cis",
+  "status": "authorized",
+  "cities": [
+   "Almaty",
+   "Astana"
+  ],
+  "contact": {},
+  "note": "EAEU member market served under EAC certification; a regional distributor is being sought.",
+  "created_at": "2026-10-26T15:22:34.395Z",
+  "iso_country": "KZ",
+  "tagline": "Regional distributor sought",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "partners",
+     "label": "Become a distributor",
+     "primary": true
+    },
+    {
+     "href": "mailto:sales@twinmos.com?subject=Kazakhstan%20distributor%20inquiry",
+     "label": "Contact sales",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 34,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ },
+ {
+  "id": 68,
+  "name": "United States & Canada",
+  "country": "United States & Canada",
+  "region": "am",
+  "status": "authorized",
+  "cities": [
+   "San Jose"
+  ],
+  "contact": {},
+  "note": "American office plus selective channel partnerships and the Newegg storefront.",
+  "created_at": "2026-10-26T15:22:34.397Z",
+  "iso_country": "US",
+  "tagline": "Selective distribution",
+  "cta_config": {
+   "status": "active",
+   "actions": [
+    {
+     "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20United%20States%20%26%20Canada",
+     "label": "Connect with the distributor",
+     "primary": true
+    },
+    {
+     "href": "partners",
+     "label": "Become a partner",
+     "primary": false
+    }
+   ]
+  },
+  "sort": 35,
+  "source": "Global distributor dispatch ledgers (BD-02)",
+  "approver": null
+ }
+]

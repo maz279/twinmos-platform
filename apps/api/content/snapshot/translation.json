@@ -1,0 +1,82 @@
+[
+ {
+  "id": 1,
+  "locale": "ar",
+  "ns": "common",
+  "key": "hero.eyebrow",
+  "value": "علامة ذاكرة رائدة منذ 1998",
+  "updated_by": null,
+  "created_at": "2026-10-26T06:41:36.759Z",
+  "updated_at": "2026-10-26T06:41:36.759Z"
+ },
+ {
+  "id": 2,
+  "locale": "ar",
+  "ns": "common",
+  "key": "hero.title",
+  "value": "ذاكرة وتخزين مصممان ليدوم",
+  "updated_by": null,
+  "created_at": "2026-10-26T06:41:36.759Z",
+  "updated_at": "2026-10-26T06:41:36.759Z"
+ },
+ {
+  "id": 3,
+  "locale": "ar",
+  "ns": "common",
+  "key": "hero.lede",
+  "value": "وحدات DDR5 ومحركات أقراص PCIe Gen 5 وتخزين محمول للبنائين والمبدعين والشركات — في أكثر من 93 دولة.",
+  "updated_by": null,
+  "created_at": "2026-10-26T06:41:36.759Z",
+  "updated_at": "2026-10-26T06:41:36.759Z"
+ },
+ {
+  "id": 4,
+  "locale": "ar",
+  "ns": "common",
+  "key": "hero.ctaShop",
+  "value": "استكشف المنتجات",
+  "updated_by": null,
+  "created_at": "2026-10-26T06:41:36.759Z",
+  "updated_at": "2026-10-26T06:41:36.759Z"
+ },
+ {
+  "id": 5,
+  "locale": "ar",
+  "ns": "common",
+  "key": "hero.ctaBuy",
+  "value": "أين تشتري",
+  "updated_by": null,
+  "created_at": "2026-10-26T06:41:36.759Z",
+  "updated_at": "2026-10-26T06:41:36.759Z"
+ },
+ {
+  "id": 6,
+  "locale": "ar",
+  "ns": "common",
+  "key": "landing.localizedTitle",
+  "value": "جارٍ توطين هذه الصفحة",
+  "updated_by": null,
+  "created_at": "2026-10-26T06:41:36.759Z",
+  "updated_at": "2026-10-26T06:41:36.759Z"
+ },
+ {
+  "id": 7,
+  "locale": "ar",
+  "ns": "common",
+  "key": "landing.localizedBody",
+  "value": "يبقى كتالوج المنتجات والدعم ومركز المعرفة بالإنجليزية اليوم؛ يُطلق التوطين الكامل تدريجيًا من سير عمل الترجمة.",
+  "updated_by": null,
+  "created_at": "2026-10-26T06:41:36.759Z",
+  "updated_at": "2026-10-26T06:41:36.759Z"
+ },
+ {
+  "id": 8,
+  "locale": "ar",
+  "ns": "common",
+  "key": "landing.backToEn",
+  "value": "المتابعة بالإنجليزية",
+  "updated_by": null,
+  "created_at": "2026-10-26T06:41:36.759Z",
+  "updated_at": "2026-10-26T06:41:36.759Z"
+ }
+]

@@ -1,0 +1,32 @@
+[
+ {
+  "id": 1,
+  "name": "products",
+  "parent_id": null,
+  "created_at": "2026-10-26T11:04:24.113Z"
+ },
+ {
+  "id": 2,
+  "name": "banners",
+  "parent_id": null,
+  "created_at": "2026-10-26T11:04:24.113Z"
+ },
+ {
+  "id": 3,
+  "name": "news",
+  "parent_id": null,
+  "created_at": "2026-10-26T11:04:24.113Z"
+ },
+ {
+  "id": 4,
+  "name": "branding",
+  "parent_id": null,
+  "created_at": "2026-10-26T11:04:24.113Z"
+ },
+ {
+  "id": 5,
+  "name": "datasheets",
+  "parent_id": null,
+  "created_at": "2026-10-26T11:04:24.113Z"
+ }
+]

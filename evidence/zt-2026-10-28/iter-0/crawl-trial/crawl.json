@@ -1,0 +1,1569 @@
+{
+ "summary": {
+  "at": "2026-10-28T13:36:30.388Z",
+  "crawled": 40,
+  "statusOnly": 85,
+  "badStatus": [
+   {
+    "url": "https://www.twinmos.com/contact",
+    "status": -1,
+    "error": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/contact\", waiting until \"networkidle\"\n"
+   },
+   {
+    "url": "https://www.twinmos.com/quote",
+    "status": -1,
+    "error": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/quote\", waiting until \"networkidle\"\n"
+   },
+   {
+    "url": "https://www.twinmos.com/partners",
+    "status": -1,
+    "error": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/partners\", waiting until \"networkidle\"\n"
+   },
+   {
+    "url": "https://www.twinmos.com/rma",
+    "status": -1,
+    "error": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/rma\", waiting until \"networkidle\"\n"
+   },
+   {
+    "url": "https://www.twinmos.com/products/compare.html",
+    "status": 404
+   },
+   {
+    "url": "https://www.twinmos.com/products/quote.html",
+    "status": 404
+   },
+   {
+    "url": "https://www.twinmos.com/learn/compare.html",
+    "status": 404
+   },
+   {
+    "url": "https://www.twinmos.com/learn/quote.html",
+    "status": 404
+   }
+  ],
+  "pagesWithErrors": [
+   {
+    "url": "https://www.twinmos.com/",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop?cat=dram-gaming",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop?cat=dram-desktop",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop?cat=dram-notebook",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop?cat=ssd-nvme",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop?cat=ssd-sata",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop?cat=portable-ssd",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop?cat=portable-hdd",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop?cat=flash",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop?cat=microsd",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop?cat=psu",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/shop?cat=hub",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/compare",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/compatibility",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/gaming",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/learn/what-is-xmp",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/learn/what-is-amd-expo",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/contact",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/learn/best-ram-for-gaming",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/learn/directstorage-gen5-gaming",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/solutions",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/quote",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/partners",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/where-to-buy",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/support",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/rma",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/learn",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/learn-guides",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   },
+   {
+    "url": "https://www.twinmos.com/learn-explained",
+    "console": [
+     "An SSL certificate error occurred when fetching the script."
+    ],
+    "jsErrors": [],
+    "failed": []
+   }
+  ],
+  "linkIssues": [
+   {
+    "from": "https://www.twinmos.com/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+    "href": "compare.html",
+    "text": "0",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+    "href": "quote.html",
+    "text": "Get a quote",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+    "href": "compare.html",
+    "text": "Compare Now",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/what-is-xmp",
+    "href": "compare.html",
+    "text": "0",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/what-is-xmp",
+    "href": "quote.html",
+    "text": "Get a quote",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/what-is-xmp",
+    "href": "compare.html",
+    "text": "Compare Now",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/what-is-amd-expo",
+    "href": "compare.html",
+    "text": "0",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/what-is-amd-expo",
+    "href": "quote.html",
+    "text": "Get a quote",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/what-is-amd-expo",
+    "href": "compare.html",
+    "text": "Compare Now",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/best-ram-for-gaming",
+    "href": "compare.html",
+    "text": "0",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/best-ram-for-gaming",
+    "href": "quote.html",
+    "text": "Get a quote",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/best-ram-for-gaming",
+    "href": "compare.html",
+    "text": "Compare Now",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/directstorage-gen5-gaming",
+    "href": "compare.html",
+    "text": "0",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/directstorage-gen5-gaming",
+    "href": "quote.html",
+    "text": "Get a quote",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "https://www.twinmos.com/learn/directstorage-gen5-gaming",
+    "href": "compare.html",
+    "text": "Compare Now",
+    "issue": "relative link on nested page"
+   },
+   {
+    "from": "/rma",
+    "issue": "screenshot failed at 390px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/rma\", waiting un"
+   },
+   {
+    "from": "/contact",
+    "issue": "screenshot failed at 390px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/contact\", waitin"
+   },
+   {
+    "from": "/quote",
+    "issue": "screenshot failed at 390px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/quote\", waiting "
+   },
+   {
+    "from": "/careers",
+    "issue": "screenshot failed at 390px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/careers\", waitin"
+   },
+   {
+    "from": "/partners",
+    "issue": "screenshot failed at 390px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/partners\", waiti"
+   },
+   {
+    "from": "/rma",
+    "issue": "screenshot failed at 768px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/rma\", waiting un"
+   },
+   {
+    "from": "/contact",
+    "issue": "screenshot failed at 768px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/contact\", waitin"
+   },
+   {
+    "from": "/quote",
+    "issue": "screenshot failed at 768px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/quote\", waiting "
+   },
+   {
+    "from": "/careers",
+    "issue": "screenshot failed at 768px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/careers\", waitin"
+   },
+   {
+    "from": "/partners",
+    "issue": "screenshot failed at 768px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/partners\", waiti"
+   },
+   {
+    "from": "/rma",
+    "issue": "screenshot failed at 1440px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/rma\", waiting un"
+   },
+   {
+    "from": "/contact",
+    "issue": "screenshot failed at 1440px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/contact\", waitin"
+   },
+   {
+    "from": "/quote",
+    "issue": "screenshot failed at 1440px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/quote\", waiting "
+   },
+   {
+    "from": "/careers",
+    "issue": "screenshot failed at 1440px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/careers\", waitin"
+   },
+   {
+    "from": "/partners",
+    "issue": "screenshot failed at 1440px: TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/partners\", waiti"
+   }
+  ],
+  "linkIssueCount": 30,
+  "external": [
+   "https://instagram.com/twinmos.tech",
+   "https://twitter.com/intent/tweet?text=Best%20RAM%20for%20Gaming%3A%20Speed%2C%20Latency%2C%20and%20Capacity%20Guide&url=https%3A%2F%2Fwww.twinmos.com%2Flearn%2Fbest-ram-for-gaming",
+   "https://twitter.com/intent/tweet?text=Explaining%20DirectStorage%3A%20How%20Our%20Gen5%20SSD%20Will%20Change%20Your%20Gaming&url=https%3A%2F%2Fwww.twinmos.com%2Flearn%2Fdirectstorage-gen5-gaming",
+   "https://twitter.com/intent/tweet?text=What%20is%20AMD%20EXPO%3F%20Optimized%20Memory%20Profiles%20for%20Ryzen&url=https%3A%2F%2Fwww.twinmos.com%2Flearn%2Fwhat-is-amd-expo",
+   "https://twitter.com/intent/tweet?text=What%20is%20XMP%3F%20One-Click%20Memory%20Overclocking&url=https%3A%2F%2Fwww.twinmos.com%2Flearn%2Fwhat-is-xmp",
+   "https://wa.me/886970368077",
+   "https://www.facebook.com/twinmos.tech",
+   "https://www.linkedin.com/company/twinmos-technologies/",
+   "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.twinmos.com%2Flearn%2Fbest-ram-for-gaming",
+   "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.twinmos.com%2Flearn%2Fdirectstorage-gen5-gaming",
+   "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.twinmos.com%2Flearn%2Fwhat-is-amd-expo",
+   "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.twinmos.com%2Flearn%2Fwhat-is-xmp",
+   "https://www.pinterest.com/twinmos",
+   "https://www.youtube.com/c/TwinMOStech",
+   "https://x.com/twinmos"
+  ]
+ },
+ "pages": [
+  {
+   "url": "https://www.twinmos.com/",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/",
+   "title": "TwinMOS — Memory & Storage Solutions Since 1998"
+  },
+  {
+   "url": "https://www.twinmos.com/sitemap.xml?locale=en",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/sitemap.xml?locale=en",
+   "title": ""
+  },
+  {
+   "url": "https://www.twinmos.com/sitemap.xml?locale=ar",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/sitemap.xml?locale=ar",
+   "title": ""
+  },
+  {
+   "url": "https://www.twinmos.com/sitemap.xml?locale=hi",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/sitemap.xml?locale=hi",
+   "title": ""
+  },
+  {
+   "url": "https://www.twinmos.com/sitemap.xml?locale=ru",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/sitemap.xml?locale=ru",
+   "title": ""
+  },
+  {
+   "url": "https://www.twinmos.com/sitemap.xml?locale=zh-cn",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/sitemap.xml?locale=zh-cn",
+   "title": ""
+  },
+  {
+   "url": "https://www.twinmos.com/sitemap.xml?locale=fr",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/sitemap.xml?locale=fr",
+   "title": ""
+  },
+  {
+   "url": "https://www.twinmos.com/sitemap.xml?locale=es",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/sitemap.xml?locale=es",
+   "title": ""
+  },
+  {
+   "url": "https://www.twinmos.com/sitemap.xml?locale=pt",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/sitemap.xml?locale=pt",
+   "title": ""
+  },
+  {
+   "url": "https://www.twinmos.com/sitemap.xml?locale=de",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/sitemap.xml?locale=de",
+   "title": ""
+  },
+  {
+   "url": "https://www.twinmos.com/shop",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/shop?cat=dram-gaming",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop?cat=dram-gaming",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/shop?cat=dram-desktop",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop?cat=dram-desktop",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/shop?cat=dram-notebook",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop?cat=dram-notebook",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/shop?cat=ssd-nvme",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop?cat=ssd-nvme",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/shop?cat=ssd-sata",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop?cat=ssd-sata",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/shop?cat=portable-ssd",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop?cat=portable-ssd",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/shop?cat=portable-hdd",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop?cat=portable-hdd",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/shop?cat=flash",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop?cat=flash",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/shop?cat=microsd",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop?cat=microsd",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/shop?cat=psu",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop?cat=psu",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/shop?cat=hub",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/shop?cat=hub",
+   "title": "Shop All Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+   "title": "TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/compare",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/compare",
+   "title": "Compare Products — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/compatibility",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/compatibility",
+   "title": "Hardware Compatibility Finder — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/gaming",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/gaming",
+   "title": "VOLTX Gaming Hub — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/learn/what-is-xmp",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/learn/what-is-xmp",
+   "title": "What is XMP? One-Click Memory Overclocking | TwinMOS Knowledge Hub — TwinMOS Knowledge Hub"
+  },
+  {
+   "url": "https://www.twinmos.com/learn/what-is-amd-expo",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/learn/what-is-amd-expo",
+   "title": "What is AMD EXPO? Optimized Memory Profiles for Ryzen | TwinMOS Knowledge Hub — TwinMOS Knowledge Hub"
+  },
+  {
+   "url": "https://www.twinmos.com/contact",
+   "status": -1,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": null,
+   "error": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/contact\", waiting until \"networkidle\"\n"
+  },
+  {
+   "url": "https://www.twinmos.com/learn/best-ram-for-gaming",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/learn/best-ram-for-gaming",
+   "title": "Best RAM for Gaming: Speed, Latency, and Capacity Guide | TwinMOS Knowledge Hub — TwinMOS Knowledge Hub"
+  },
+  {
+   "url": "https://www.twinmos.com/learn/directstorage-gen5-gaming",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/learn/directstorage-gen5-gaming",
+   "title": "Explaining DirectStorage: How Our Gen5 SSD Will Change Your Gaming | TwinMOS Knowledge Hub — TwinMOS Knowledge Hub"
+  },
+  {
+   "url": "https://www.twinmos.com/solutions",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/solutions",
+   "title": "B2B & OEM Memory Solutions — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/quote",
+   "status": -1,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": null,
+   "error": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/quote\", waiting until \"networkidle\"\n"
+  },
+  {
+   "url": "https://www.twinmos.com/partners",
+   "status": -1,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": null,
+   "error": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/partners\", waiting until \"networkidle\"\n"
+  },
+  {
+   "url": "https://www.twinmos.com/where-to-buy",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/where-to-buy",
+   "title": "Where to Buy — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/support",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/support",
+   "title": "Support Center — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/rma",
+   "status": -1,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": null,
+   "error": "TimeoutError: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.twinmos.com/rma\", waiting until \"networkidle\"\n"
+  },
+  {
+   "url": "https://www.twinmos.com/learn",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/learn",
+   "title": "Knowledge Hub — Learn Memory & Storage — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/learn-guides",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/learn-guides",
+   "title": "Buying Guides — Memory & Storage — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/learn-explained",
+   "status": 200,
+   "console": [
+    "An SSL certificate error occurred when fetching the script."
+   ],
+   "jsErrors": [],
+   "failed": [],
+   "finalUrl": "https://www.twinmos.com/learn-explained",
+   "title": "Technology Explainers — Memory & Storage — TwinMOS"
+  },
+  {
+   "url": "https://www.twinmos.com/learn-benchmarks",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn-glossary",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn-blog",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/legal",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/about",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/technology",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/news",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/careers",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/compare.html",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/quote.html",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=voltx-ddr5-so-dimm-for-laptop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/compatibility.html",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/nvme-gen3-gen4-gen5-explained",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products/ddr3-1600mhz-so-dimm-for-notebook",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products/ddr4-2400mhz-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products/hyper-ssd-h2-ultra",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products/ddr3-1333mhz-so-dimm-for-notebook",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products/nvme-m2-2280-ssd",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products/ddr4-2133mhz-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products/ddr4-2666mhz-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products/3200mhz-ddr4-so-dimm-for-laptop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/why-is-my-ssd-slower-than-advertised",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/why-is-my-ram-running-at-2133mhz",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/what-to-do-if-ssd-is-not-recognized",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/what-to-do-if-portable-ssd-is-write-protected",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/how-to-verify-ddr5-on-die-ecc",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/how-to-update-ssd-firmware-safely",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/legal?tab=privacy",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/sitemap",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/legal.html",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=ddr3-1600mhz-so-dimm-for-notebook",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=ddr4-2400mhz-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=hyper-ssd-h2-ultra",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=ddr3-1333mhz-so-dimm-for-notebook",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=nvme-m2-2280-ssd",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=ddr4-2133mhz-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=ddr4-2666mhz-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=3200mhz-ddr4-so-dimm-for-laptop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=ddr3-1600mhz-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=2666mhz-ddr4-so-dimm-for-notebook",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=ddr3-1333mhz-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=m2-2280-ssd-sataiii",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=3200mhz-ddr4-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=portable-ssd-elitedrive-usb-3-0-type-c",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=microsdxc-class-10-v30-uhs-3",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=xpower-80-plus-bronze-550w",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=ddr4-concord-cl16-rgb-gaming-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=3-ports-usb-2-0-and-1-port-usb-3-0-hub-ezeehub23p",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=smartx-rgb-80-plus-bronze-power-supply-450w",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=tornadox6-ddr4-3200mhz-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=xpower-80-plus-bronze-450w",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=thunder-gx-ddr4-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=3-ports-usb-2-0-and-1-port-usb-3-0-hub-23l",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=smartx-rgb-80-plus-bronze-power-supply-550w",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=portable-hdd-prodrive-usb-3-0",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=xtreme-gen4x4-nvme-pro-m2-2280-ssd",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=4-port-usb3-0-hub-ezeehub-34l-m",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=voltx-rgb-ddr5-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=alphapro-nvme-m2-2280-new-ssd",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=tornadox7-pro-ddr4-3200mhz-cl16-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=portable-ssd-elite-drive-pro-usb-type-c",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=tornadox7-ddr4-3200mhz-cl22-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=corex-m2-pcie-gen-4-0-nvme-ssd",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=voltx-ddr5-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=x3-ultra-usb-3-2-flash-drive",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=m16-usb-3-2-flash-drive",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/product.html?id=portable-hdd-prodrive-ultra-usb-3-0",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products/compare.html",
+   "status": 404,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products/quote.html",
+   "status": 404,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/shop.html",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/compare?items=corex-pro-m2-pcie-gen-5-0-nvme-ssd,corex-m2-pcie-gen-4-0-nvme-ssd",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/compare?items=voltx-rgb-ddr5-u-dimm-for-desktop,voltx-ddr5-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/compare?items=voltx-ddr5-so-dimm-for-laptop,tornadox7-pro-ddr4-3200mhz-cl16-u-dimm-for-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products?cat=dram-notebook",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products?cat=ssd-nvme",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products?cat=dram-desktop",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products?cat=dram-gaming",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/products?cat=portable-ssd",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/compare.html",
+   "status": 404,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/quote.html",
+   "status": 404,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/boost-pc-performance-ram-or-ssd-first",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/computex-2025",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  },
+  {
+   "url": "https://www.twinmos.com/learn/corex-pro-gen5-launch",
+   "status": 200,
+   "console": [],
+   "jsErrors": [],
+   "failed": [],
+   "statusOnly": true
+  }
+ ]
+}

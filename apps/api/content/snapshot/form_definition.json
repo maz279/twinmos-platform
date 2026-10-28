@@ -1,0 +1,93 @@
+[
+ {
+  "id": 1,
+  "type": "contact",
+  "title": "General Contact & Inquiries",
+  "description": "Get in touch with the TwinMOS global customer and corporate communications team.",
+  "success_message": "Thank you for contacting TwinMOS. Our team will review your message and respond within 24 business hours.",
+  "routing_email": "contact@twinmos.com",
+  "privacy_notice": "Your details are processed strictly in accordance with our Global Privacy Policy.",
+  "is_active": true,
+  "created_at": "2026-10-26T15:57:16.564Z",
+  "updated_at": "2026-10-26T15:57:16.564Z",
+  "error_message": null
+ },
+ {
+  "id": 2,
+  "type": "rma",
+  "title": "Warranty Service & RMA Claim Request",
+  "description": "Submit a formal Return Merchandise Authorization claim for defective hardware inspection or replacement.",
+  "success_message": "Your RMA claim has been registered. You will receive an email confirmation with RMA tracking instructions.",
+  "routing_email": "rma@twinmos.com",
+  "privacy_notice": "RMA serial validation and service records are stored in compliance with our Global Warranty Policy.",
+  "is_active": true,
+  "created_at": "2026-10-26T15:57:16.728Z",
+  "updated_at": "2026-10-26T15:57:16.728Z",
+  "error_message": null
+ },
+ {
+  "id": 3,
+  "type": "b2b",
+  "title": "B2B & Enterprise Volume Purchasing",
+  "description": "Request commercial quotation, customized enterprise NAND builds, or volume memory allocation.",
+  "success_message": "Thank you for your inquiry. A regional TwinMOS account executive will reach out promptly.",
+  "routing_email": "b2b-sales@twinmos.com",
+  "privacy_notice": "Corporate inquiry records are managed confidentially under corporate commercial terms.",
+  "is_active": true,
+  "created_at": "2026-10-26T15:57:16.741Z",
+  "updated_at": "2026-10-26T15:57:16.741Z",
+  "error_message": null
+ },
+ {
+  "id": 4,
+  "type": "distributor",
+  "title": "Official Distributor Application",
+  "description": "Apply to become an authorized regional TwinMOS channel distributor and logistics partner.",
+  "success_message": "Your distributor application has been submitted to the Executive Channel Board for review.",
+  "routing_email": "distributors@twinmos.com",
+  "privacy_notice": "Distribution partnership vetting is subject to non-disclosure and commercial review.",
+  "is_active": true,
+  "created_at": "2026-10-26T15:57:16.746Z",
+  "updated_at": "2026-10-26T15:57:16.746Z",
+  "error_message": null
+ },
+ {
+  "id": 5,
+  "type": "partner",
+  "title": "Partner Portal Access Request",
+  "description": "Register for verified partner access to real-time inventory price lists, marketing collaterals, and firmware assets.",
+  "success_message": "Your portal access request is pending verification. Check your email for authentication instructions.",
+  "routing_email": "partner-admin@twinmos.com",
+  "privacy_notice": "Portal credentials require authentication and periodic password rotation.",
+  "is_active": true,
+  "created_at": "2026-10-26T15:57:16.751Z",
+  "updated_at": "2026-10-26T15:57:16.751Z",
+  "error_message": null
+ },
+ {
+  "id": 6,
+  "type": "press",
+  "title": "Press & Media Relations",
+  "description": "Inquiries from tech journalists, review publications, hardware benchmark outlets, and content creators.",
+  "success_message": "Thank you for reaching out. The TwinMOS PR team will respond with review samples or press kit assets.",
+  "routing_email": "press@twinmos.com",
+  "privacy_notice": "Editorial communications are handled in compliance with media embargo guidelines.",
+  "is_active": true,
+  "created_at": "2026-10-26T15:57:16.759Z",
+  "updated_at": "2026-10-26T15:57:16.759Z",
+  "error_message": null
+ },
+ {
+  "id": 7,
+  "type": "feedback",
+  "title": "Product Experience & Community Feedback",
+  "description": "Share your hardware feedback, feature suggestions, or compatibility observations directly with our R&D team.",
+  "success_message": "Thank you for your valuable feedback! Your insights directly guide future TwinMOS product engineering.",
+  "routing_email": "feedback@twinmos.com",
+  "privacy_notice": "Community submissions are anonymized and reviewed by engineering teams.",
+  "is_active": true,
+  "created_at": "2026-10-26T15:57:16.764Z",
+  "updated_at": "2026-10-26T15:57:16.764Z",
+  "error_message": null
+ }
+]

@@ -1305,7 +1305,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const sent = await sendCustomerConfirmation(
       to,
       `Re: TwinMOS RMA ${rma.number} — status ${rma.status.replace(/_/g, ' ')}`,
-      `${text}\n\n— TwinMOS service team\nRMA reference: ${rma.number} (track anytime: /rma.html with this number)`,
+      `${text}\n\n— TwinMOS service team\nRMA reference: ${rma.number} (track any time at ${(process.env.PUBLIC_SITE_URL || 'https://www.twinmos.com').replace(/\/+$/, '')}/rma with this number and your e-mail address)`,
       { kind: 'rma-staff-reply', rma: rma.number, by: guard.user.email },
     );
     // same-state event = timeline annotation (the panel renders from==to rows
@@ -1363,9 +1363,14 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       return c.json(problem(422, 'Illegal transition', `RMA ${rma.number} is '${rma.status}'; legal next states: ${legal.join(', ') || 'none'}.`), 422, { 'Content-Type': P });
     }
 
+    // Compare-and-set on the status we validated: two concurrent transitions
+    // can no longer both "succeed" from the same state.
     const updated = await db.update(rmaRequest)
       .set({ status: parsed.data.to, updatedAt: new Date() })
-      .where(eq(rmaRequest.id, id)).returning();
+      .where(and(eq(rmaRequest.id, id), eq(rmaRequest.status, rma.status))).returning();
+    if (!updated[0]) {
+      return c.json(problem(409, 'Conflict', `RMA ${rma.number} changed while you were editing — reload and try again.`), 409, { 'Content-Type': P });
+    }
     await db.insert(rmaEvent).values({ rmaId: id, fromStatus: rma.status, toStatus: parsed.data.to, actorId: guard.user.id, note: parsed.data.note ?? null });
     await auditRow(c, guard.user.id, 'rma.transition', 'rma_request', String(id), { from: rma.status, to: parsed.data.to, note: parsed.data.note ?? null });
 

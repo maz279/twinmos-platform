@@ -6,7 +6,12 @@ import { routeCache } from '../../lib/route-cache.ts';
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
-  const expectedSecret = process.env.REVALIDATE_SECRET || 'dev-revalidate-secret';
+  // No literal fallback in production: a missing secret must fail closed, not
+  // accept the publicly known dev value.
+  const expectedSecret = process.env.REVALIDATE_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'dev-revalidate-secret');
+  if (!expectedSecret) {
+    return new Response(JSON.stringify({ error: 'Revalidation is not configured' }), { status: 503, headers: { 'content-type': 'application/json' } });
+  }
   const headerSecret = request.headers.get('x-revalidate-secret');
 
   let body: any = {};

@@ -32,6 +32,8 @@ const logoUrl = brand.logoUrl || '/assets/img/logo.webp';
 // Supported locales for global multi-language navigation (LOC-02)
 const LOCALES = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'] as const;
 const activeLocale = (LOCALES as readonly string[]).includes(currentLocale.toLowerCase()) ? currentLocale : 'en';
+// Only locales activated in the CMS are offered (inactive ones redirect to English).
+const activeLocales: string[] = (Astro.props as any).locales ?? ['en'];
 void activeLocale;
 
 const normalize = (p: string) => p.replace(/^\//, '').replace(/\/$/, '') || 'index.html';
@@ -139,17 +141,13 @@ const megaClass = (columnCount: number) => {
     </nav>
 
     <div class="header-cta">
-      <select id="langSel" class="lang-sel" aria-label="Language">
-        <option value="en" selected={!currentLocale || currentLocale.toLowerCase() === 'en'}>EN</option>
-        <option value="ar" selected={currentLocale?.toLowerCase() === 'ar'}>AR (RTL)</option>
-        <option value="hi" selected={currentLocale?.toLowerCase() === 'hi'}>HI</option>
-        <option value="ru" selected={currentLocale?.toLowerCase() === 'ru'}>RU</option>
-        <option value="zh-cn" selected={currentLocale?.toLowerCase() === 'zh-cn'}>ZH-CN</option>
-        <option value="fr" selected={currentLocale?.toLowerCase() === 'fr'}>FR</option>
-        <option value="es" selected={currentLocale?.toLowerCase() === 'es'}>ES</option>
-        <option value="pt" selected={currentLocale?.toLowerCase() === 'pt'}>PT</option>
-        <option value="de" selected={currentLocale?.toLowerCase() === 'de'}>DE</option>
-      </select>
+      {activeLocales.length > 1 && (
+        <select id="langSel" class="lang-sel" aria-label="Language">
+          {activeLocales.map((code: string) => (
+            <option value={code} selected={activeLocale.toLowerCase() === code}>{code === 'ar' ? 'AR (RTL)' : code.toUpperCase()}</option>
+          ))}
+        </select>
+      )}
 
       <button class="icon-btn" id="searchBtn" aria-label="Search" type="button">
         <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -158,7 +156,7 @@ const megaClass = (columnCount: number) => {
         </svg>
       </button>
 
-      <a class="icon-btn" href="compare.html" aria-label="Compare tray">
+      <a class="icon-btn" href="/compare" aria-label="Compare tray">
         <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M2.5 5h11M13.5 5l-2.4-2.4M13.5 5l-2.4 2.4"></path>
           <path d="M13.5 11h-11M2.5 11l2.4-2.4M2.5 11l2.4 2.4"></path>
@@ -166,7 +164,7 @@ const megaClass = (columnCount: number) => {
         <span class="tray-count" data-tray-count style="display:none">0</span>
       </a>
 
-      <a class="btn btn-accent btn-sm" href="quote.html" style="margin-left:4px">Get a quote</a>
+      <a class="btn btn-accent btn-sm" href="/quote" style="margin-left:4px">Get a quote</a>
 
       <button class="icon-btn burger" id="burger" aria-label="Open menu" aria-expanded="false" type="button">
         <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

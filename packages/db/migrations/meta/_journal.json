@@ -225,6 +225,20 @@
       "when": 1791543100000,
       "tag": "0031_page_sort",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791543200000,
+      "tag": "0032_zero_trust_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1791543300000,
+      "tag": "0033_warranty_registration",
+      "breakpoints": true
     }
   ]
 }

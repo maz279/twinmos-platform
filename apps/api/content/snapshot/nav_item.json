@@ -1,0 +1,3091 @@
+[
+ {
+  "id": 232,
+  "menu_id": 34,
+  "parent_id": null,
+  "title": "Products",
+  "target_type": "url",
+  "target_url": "/shop",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "top_level"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 233,
+  "menu_id": 34,
+  "parent_id": 232,
+  "title": "Memories",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 234,
+  "menu_id": 34,
+  "parent_id": 233,
+  "title": "Gaming DRAM",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-gaming",
+  "target_id": "dram-gaming",
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 235,
+  "menu_id": 34,
+  "parent_id": 233,
+  "title": "Desktop DRAM",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-desktop",
+  "target_id": "dram-desktop",
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 236,
+  "menu_id": 34,
+  "parent_id": 233,
+  "title": "Notebook DRAM",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-notebook",
+  "target_id": "dram-notebook",
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 237,
+  "menu_id": 34,
+  "parent_id": 233,
+  "title": "All products →",
+  "target_type": "url",
+  "target_url": "/shop",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "link",
+   "emphasis": true
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 238,
+  "menu_id": 34,
+  "parent_id": 232,
+  "title": "Internal Storage",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 239,
+  "menu_id": 34,
+  "parent_id": 238,
+  "title": "NVMe SSD",
+  "target_type": "category",
+  "target_url": "/shop?cat=ssd-nvme",
+  "target_id": "ssd-nvme",
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 240,
+  "menu_id": 34,
+  "parent_id": 238,
+  "title": "SATA SSD",
+  "target_type": "category",
+  "target_url": "/shop?cat=ssd-sata",
+  "target_id": "ssd-sata",
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 241,
+  "menu_id": 34,
+  "parent_id": 238,
+  "title": "All products →",
+  "target_type": "url",
+  "target_url": "/shop",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link",
+   "emphasis": true
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 242,
+  "menu_id": 34,
+  "parent_id": 232,
+  "title": "Portable Storage",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 243,
+  "menu_id": 34,
+  "parent_id": 242,
+  "title": "Portable SSD",
+  "target_type": "category",
+  "target_url": "/shop?cat=portable-ssd",
+  "target_id": "portable-ssd",
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 244,
+  "menu_id": 34,
+  "parent_id": 242,
+  "title": "Portable HDD",
+  "target_type": "category",
+  "target_url": "/shop?cat=portable-hdd",
+  "target_id": "portable-hdd",
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 245,
+  "menu_id": 34,
+  "parent_id": 242,
+  "title": "All products →",
+  "target_type": "url",
+  "target_url": "/shop",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link",
+   "emphasis": true
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 246,
+  "menu_id": 34,
+  "parent_id": 232,
+  "title": "Flash & More",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 247,
+  "menu_id": 34,
+  "parent_id": 246,
+  "title": "USB Flash Drive",
+  "target_type": "category",
+  "target_url": "/shop?cat=flash",
+  "target_id": "flash",
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 248,
+  "menu_id": 34,
+  "parent_id": 246,
+  "title": "MicroSD Card",
+  "target_type": "category",
+  "target_url": "/shop?cat=microsd",
+  "target_id": "microsd",
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 249,
+  "menu_id": 34,
+  "parent_id": 246,
+  "title": "Power Supply",
+  "target_type": "category",
+  "target_url": "/shop?cat=psu",
+  "target_id": "psu",
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 250,
+  "menu_id": 34,
+  "parent_id": 246,
+  "title": "USB HUB",
+  "target_type": "category",
+  "target_url": "/shop?cat=hub",
+  "target_id": "hub",
+  "sort": 3,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 251,
+  "menu_id": 34,
+  "parent_id": 246,
+  "title": "All products →",
+  "target_type": "url",
+  "target_url": "/shop",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "link",
+   "emphasis": true
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 252,
+  "menu_id": 34,
+  "parent_id": 232,
+  "title": "View the flagship SSD",
+  "target_type": "product",
+  "target_url": "/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+  "target_id": "corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+  "sort": 4,
+  "metadata": {
+   "kind": "feature_panel",
+   "image": "assets/img/card/corex-pro.webp",
+   "heading": "CoreX Pro — PCIe Gen 5.0",
+   "imageAlt": "TwinMOS CoreX Pro PCIe Gen 5.0 NVMe SSD",
+   "description": "Up to 14,000 MB/s sequential read · 5-year warranty"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 253,
+  "menu_id": 34,
+  "parent_id": 232,
+  "title": "Browse the full catalog — {{products}} products →",
+  "target_type": "url",
+  "target_url": "/shop",
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "all_row",
+   "countKey": "products"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 254,
+  "menu_id": 34,
+  "parent_id": 232,
+  "title": "Compare products",
+  "target_type": "url",
+  "target_url": "/compare",
+  "target_id": null,
+  "sort": 6,
+  "metadata": {
+   "kind": "all_row"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 255,
+  "menu_id": 34,
+  "parent_id": 232,
+  "title": "Compatibility finder",
+  "target_type": "url",
+  "target_url": "/compatibility",
+  "target_id": null,
+  "sort": 7,
+  "metadata": {
+   "kind": "all_row"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 256,
+  "menu_id": 34,
+  "parent_id": null,
+  "title": "Gaming",
+  "target_type": "url",
+  "target_url": "/gaming",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "top_level"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 257,
+  "menu_id": 34,
+  "parent_id": 256,
+  "title": "Explore",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 258,
+  "menu_id": 34,
+  "parent_id": 257,
+  "title": "Gaming home — VOLTX",
+  "target_type": "url",
+  "target_url": "/gaming",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 259,
+  "menu_id": 34,
+  "parent_id": 257,
+  "title": "The arsenal & specs",
+  "target_type": "url",
+  "target_url": "/gaming#arsenal",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 260,
+  "menu_id": 34,
+  "parent_id": 257,
+  "title": "Gaming DRAM catalog",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-gaming",
+  "target_id": "dram-gaming",
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 261,
+  "menu_id": 34,
+  "parent_id": 257,
+  "title": "RGB sync ecosystems",
+  "target_type": "url",
+  "target_url": "/gaming#sync",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 262,
+  "menu_id": 34,
+  "parent_id": 256,
+  "title": "Tune & sync",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 263,
+  "menu_id": 34,
+  "parent_id": 262,
+  "title": "RGB effects lab",
+  "target_type": "url",
+  "target_url": "/gaming#rgb",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 264,
+  "menu_id": 34,
+  "parent_id": 262,
+  "title": "XMP 3.0 & EXPO tuning",
+  "target_type": "url",
+  "target_url": "/gaming#tuning",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 265,
+  "menu_id": 34,
+  "parent_id": 262,
+  "title": "What is XMP?",
+  "target_type": "article",
+  "target_url": "/learn/what-is-xmp",
+  "target_id": "what-is-xmp",
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 266,
+  "menu_id": 34,
+  "parent_id": 262,
+  "title": "What is AMD EXPO?",
+  "target_type": "article",
+  "target_url": "/learn/what-is-amd-expo",
+  "target_id": "what-is-amd-expo",
+  "sort": 3,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 267,
+  "menu_id": 34,
+  "parent_id": 256,
+  "title": "Community",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 268,
+  "menu_id": 34,
+  "parent_id": 267,
+  "title": "Rigs from the scene",
+  "target_type": "url",
+  "target_url": "/gaming#builds",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 269,
+  "menu_id": 34,
+  "parent_id": 267,
+  "title": "Wallpapers",
+  "target_type": "url",
+  "target_url": "/gaming#downloads",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 270,
+  "menu_id": 34,
+  "parent_id": 267,
+  "title": "From the VOLTX desk",
+  "target_type": "url",
+  "target_url": "/gaming#stories",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 271,
+  "menu_id": 34,
+  "parent_id": 267,
+  "title": "Submit your build",
+  "target_type": "url",
+  "target_url": "/contact",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 272,
+  "menu_id": 34,
+  "parent_id": 256,
+  "title": "Shop the VOLTX line",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-gaming",
+  "target_id": "dram-gaming",
+  "sort": 3,
+  "metadata": {
+   "kind": "feature_panel",
+   "image": "assets/img/card/rgb-ram.webp?v=219974299b",
+   "heading": "VOLTX DDR5 RGB",
+   "imageAlt": "TwinMOS VOLTX DDR5 RGB module",
+   "description": "Addressable RGB · XMP 3.0 / EXPO · lifetime warranty"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 273,
+  "menu_id": 34,
+  "parent_id": 256,
+  "title": "Enter the gaming hub →",
+  "target_type": "url",
+  "target_url": "/gaming",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "all_row"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 274,
+  "menu_id": 34,
+  "parent_id": 256,
+  "title": "Best RAM for gaming",
+  "target_type": "article",
+  "target_url": "/learn/best-ram-for-gaming",
+  "target_id": "best-ram-for-gaming",
+  "sort": 5,
+  "metadata": {
+   "kind": "all_row"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 275,
+  "menu_id": 34,
+  "parent_id": 256,
+  "title": "DirectStorage & Gen 5",
+  "target_type": "article",
+  "target_url": "/learn/directstorage-gen5-gaming",
+  "target_id": "directstorage-gen5-gaming",
+  "sort": 6,
+  "metadata": {
+   "kind": "all_row"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 276,
+  "menu_id": 34,
+  "parent_id": null,
+  "title": "Solutions",
+  "target_type": "url",
+  "target_url": "/solutions",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "top_level"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 277,
+  "menu_id": 34,
+  "parent_id": 276,
+  "title": "Business lines",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 278,
+  "menu_id": 34,
+  "parent_id": 277,
+  "title": "Solutions home",
+  "target_type": "url",
+  "target_url": "/solutions",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 279,
+  "menu_id": 34,
+  "parent_id": 277,
+  "title": "Regional distribution",
+  "target_type": "url",
+  "target_url": "/solutions#dist",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 280,
+  "menu_id": 34,
+  "parent_id": 277,
+  "title": "OEM manufacturing",
+  "target_type": "url",
+  "target_url": "/solutions#oem",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 281,
+  "menu_id": 34,
+  "parent_id": 277,
+  "title": "Fleet & workplace",
+  "target_type": "url",
+  "target_url": "/solutions#fleet",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 282,
+  "menu_id": 34,
+  "parent_id": 277,
+  "title": "Solutions by workload",
+  "target_type": "url",
+  "target_url": "/solutions#workloads",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 283,
+  "menu_id": 34,
+  "parent_id": 276,
+  "title": "Work with us",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 284,
+  "menu_id": 34,
+  "parent_id": 283,
+  "title": "Request a quote",
+  "target_type": "url",
+  "target_url": "/quote",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 285,
+  "menu_id": 34,
+  "parent_id": 283,
+  "title": "Become a distributor",
+  "target_type": "url",
+  "target_url": "/partners",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 286,
+  "menu_id": 34,
+  "parent_id": 283,
+  "title": "How we work — 4 steps",
+  "target_type": "url",
+  "target_url": "/solutions#process",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 287,
+  "menu_id": 34,
+  "parent_id": 283,
+  "title": "Where we operate",
+  "target_type": "url",
+  "target_url": "/solutions#footprint",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 288,
+  "menu_id": 34,
+  "parent_id": 283,
+  "title": "Contact an office",
+  "target_type": "url",
+  "target_url": "/contact",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 289,
+  "menu_id": 34,
+  "parent_id": 276,
+  "title": "Start an OEM quote",
+  "target_type": "url",
+  "target_url": "/quote",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "feature_panel",
+   "image": null,
+   "heading": "From requirement to rollout",
+   "imageAlt": "",
+   "description": "Taipei R&D and Dongguan manufacturing behind every custom-labeled module — JEDEC-compliant DDR3–DDR5, NVMe, SATA and flash lines."
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 290,
+  "menu_id": 34,
+  "parent_id": 276,
+  "title": "Explore B2B & OEM solutions →",
+  "target_type": "url",
+  "target_url": "/solutions",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "all_row"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 291,
+  "menu_id": 34,
+  "parent_id": null,
+  "title": "Where to Buy",
+  "target_type": "url",
+  "target_url": "/where-to-buy",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "top_level"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 292,
+  "menu_id": 34,
+  "parent_id": 291,
+  "title": "Shop online",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 293,
+  "menu_id": 34,
+  "parent_id": 292,
+  "title": "Where to Buy home",
+  "target_type": "url",
+  "target_url": "/where-to-buy",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 294,
+  "menu_id": 34,
+  "parent_id": 292,
+  "title": "Verified marketplaces",
+  "target_type": "url",
+  "target_url": "/where-to-buy#marketplaces",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 295,
+  "menu_id": 34,
+  "parent_id": 292,
+  "title": "Buy with confidence",
+  "target_type": "url",
+  "target_url": "/where-to-buy#trust",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 296,
+  "menu_id": 34,
+  "parent_id": 291,
+  "title": "Find a channel",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 297,
+  "menu_id": 34,
+  "parent_id": 296,
+  "title": "Distributor locator",
+  "target_type": "url",
+  "target_url": "/where-to-buy#locator",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 298,
+  "menu_id": 34,
+  "parent_id": 296,
+  "title": "TwinMOS offices & hubs",
+  "target_type": "url",
+  "target_url": "/where-to-buy#offices",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 299,
+  "menu_id": 34,
+  "parent_id": 296,
+  "title": "Become a distributor",
+  "target_type": "url",
+  "target_url": "/partners",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 300,
+  "menu_id": 34,
+  "parent_id": 296,
+  "title": "Volume & OEM supply",
+  "target_type": "url",
+  "target_url": "/quote",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 301,
+  "menu_id": 34,
+  "parent_id": 291,
+  "title": "Find your channel",
+  "target_type": "url",
+  "target_url": "/where-to-buy#locator",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "feature_panel",
+   "image": null,
+   "heading": "Authorized only",
+   "imageAlt": "",
+   "description": "Marketplace and distributor listings are re-verified quarterly — 93+ countries across 6 regions."
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 302,
+  "menu_id": 34,
+  "parent_id": null,
+  "title": "Support",
+  "target_type": "url",
+  "target_url": "/support",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "top_level"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 303,
+  "menu_id": 34,
+  "parent_id": 302,
+  "title": "Self-service",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 304,
+  "menu_id": 34,
+  "parent_id": 303,
+  "title": "Support Center",
+  "target_type": "url",
+  "target_url": "/support",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 305,
+  "menu_id": 34,
+  "parent_id": 303,
+  "title": "Warranty & RMA",
+  "target_type": "url",
+  "target_url": "/rma",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 306,
+  "menu_id": 34,
+  "parent_id": 303,
+  "title": "FAQ",
+  "target_type": "url",
+  "target_url": "/support#faq",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 307,
+  "menu_id": 34,
+  "parent_id": 303,
+  "title": "Firmware & manuals",
+  "target_type": "url",
+  "target_url": "/support#downloads",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 308,
+  "menu_id": 34,
+  "parent_id": 302,
+  "title": "Knowledge hub",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 309,
+  "menu_id": 34,
+  "parent_id": 308,
+  "title": "Learn home",
+  "target_type": "url",
+  "target_url": "/learn",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 310,
+  "menu_id": 34,
+  "parent_id": 308,
+  "title": "Buying guides",
+  "target_type": "url",
+  "target_url": "/learn-guides",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 311,
+  "menu_id": 34,
+  "parent_id": 308,
+  "title": "Technology explainers",
+  "target_type": "url",
+  "target_url": "/learn-explained",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 312,
+  "menu_id": 34,
+  "parent_id": 308,
+  "title": "Benchmarks",
+  "target_type": "url",
+  "target_url": "/learn-benchmarks",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 313,
+  "menu_id": 34,
+  "parent_id": 308,
+  "title": "Glossary A–Z",
+  "target_type": "url",
+  "target_url": "/learn-glossary",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 314,
+  "menu_id": 34,
+  "parent_id": 308,
+  "title": "Tech insights & blog",
+  "target_type": "url",
+  "target_url": "/learn-blog",
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 315,
+  "menu_id": 34,
+  "parent_id": 302,
+  "title": "Get help",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 316,
+  "menu_id": 34,
+  "parent_id": 315,
+  "title": "Contact support",
+  "target_type": "url",
+  "target_url": "/contact",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 317,
+  "menu_id": 34,
+  "parent_id": 315,
+  "title": "Compatibility finder",
+  "target_type": "url",
+  "target_url": "/compatibility",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 318,
+  "menu_id": 34,
+  "parent_id": 315,
+  "title": "Where to buy",
+  "target_type": "url",
+  "target_url": "/where-to-buy",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 319,
+  "menu_id": 34,
+  "parent_id": 315,
+  "title": "Warranty policy",
+  "target_type": "url",
+  "target_url": "/legal#warranty",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 320,
+  "menu_id": 34,
+  "parent_id": 302,
+  "title": "Open the Knowledge Hub",
+  "target_type": "url",
+  "target_url": "/learn",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "feature_panel",
+   "image": "assets/img/card/corex-pro.webp?v=219974299b",
+   "heading": "54 buying guides, technology explainers and benchmarks — written by the engineering team.",
+   "imageAlt": "",
+   "description": "54 buying guides, technology explainers and benchmarks — written by the engineering team."
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 321,
+  "menu_id": 34,
+  "parent_id": null,
+  "title": "Company",
+  "target_type": "url",
+  "target_url": "/about",
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "top_level"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 322,
+  "menu_id": 34,
+  "parent_id": 321,
+  "title": "Company",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 323,
+  "menu_id": 34,
+  "parent_id": 322,
+  "title": "About Us",
+  "target_type": "url",
+  "target_url": "/about",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 324,
+  "menu_id": 34,
+  "parent_id": 322,
+  "title": "Technology & R&D",
+  "target_type": "url",
+  "target_url": "/technology",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 325,
+  "menu_id": 34,
+  "parent_id": 322,
+  "title": "Quality Assurance",
+  "target_type": "url",
+  "target_url": "/about#quality",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 326,
+  "menu_id": 34,
+  "parent_id": 321,
+  "title": "People & news",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 327,
+  "menu_id": 34,
+  "parent_id": 326,
+  "title": "News & Events",
+  "target_type": "url",
+  "target_url": "/news",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 328,
+  "menu_id": 34,
+  "parent_id": 326,
+  "title": "Careers",
+  "target_type": "url",
+  "target_url": "/careers",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 329,
+  "menu_id": 34,
+  "parent_id": 326,
+  "title": "Partners",
+  "target_type": "url",
+  "target_url": "/partners",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 330,
+  "menu_id": 34,
+  "parent_id": 326,
+  "title": "Contact",
+  "target_type": "url",
+  "target_url": "/contact",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 331,
+  "menu_id": 34,
+  "parent_id": 321,
+  "title": "Meet TwinMOS",
+  "target_type": "url",
+  "target_url": "/about",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "feature_panel",
+   "image": null,
+   "heading": "Since 1998",
+   "imageAlt": "",
+   "description": "Taipei HQ & R&D, manufacturing in Dongguan — a memory brand trusted in 93+ countries."
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 332,
+  "menu_id": 35,
+  "parent_id": null,
+  "title": "Home",
+  "target_type": "url",
+  "target_url": "/",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 333,
+  "menu_id": 35,
+  "parent_id": null,
+  "title": "Products",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "drawer_group"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 334,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "All products",
+  "target_type": "url",
+  "target_url": "/shop",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 335,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "Gaming DRAM",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-gaming",
+  "target_id": "dram-gaming",
+  "sort": 1,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 336,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "Desktop DRAM",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-desktop",
+  "target_id": "dram-desktop",
+  "sort": 2,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 337,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "Notebook DRAM",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-notebook",
+  "target_id": "dram-notebook",
+  "sort": 3,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 338,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "NVMe SSD",
+  "target_type": "category",
+  "target_url": "/shop?cat=ssd-nvme",
+  "target_id": "ssd-nvme",
+  "sort": 4,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 339,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "SATA SSD",
+  "target_type": "category",
+  "target_url": "/shop?cat=ssd-sata",
+  "target_id": "ssd-sata",
+  "sort": 5,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 340,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "Portable SSD",
+  "target_type": "category",
+  "target_url": "/shop?cat=portable-ssd",
+  "target_id": "portable-ssd",
+  "sort": 6,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 341,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "Portable HDD",
+  "target_type": "category",
+  "target_url": "/shop?cat=portable-hdd",
+  "target_id": "portable-hdd",
+  "sort": 7,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 342,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "USB Flash Drive",
+  "target_type": "category",
+  "target_url": "/shop?cat=flash",
+  "target_id": "flash",
+  "sort": 8,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 343,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "MicroSD Card",
+  "target_type": "category",
+  "target_url": "/shop?cat=microsd",
+  "target_id": "microsd",
+  "sort": 9,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 344,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "Power Supply",
+  "target_type": "category",
+  "target_url": "/shop?cat=psu",
+  "target_id": "psu",
+  "sort": 10,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 345,
+  "menu_id": 35,
+  "parent_id": 333,
+  "title": "USB HUB",
+  "target_type": "category",
+  "target_url": "/shop?cat=hub",
+  "target_id": "hub",
+  "sort": 11,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 346,
+  "menu_id": 35,
+  "parent_id": null,
+  "title": "Gaming — VOLTX",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "drawer_group"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 347,
+  "menu_id": 35,
+  "parent_id": 346,
+  "title": "Gaming home",
+  "target_type": "url",
+  "target_url": "/gaming",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 348,
+  "menu_id": 35,
+  "parent_id": 346,
+  "title": "The arsenal & specs",
+  "target_type": "url",
+  "target_url": "/gaming#arsenal",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 349,
+  "menu_id": 35,
+  "parent_id": 346,
+  "title": "Gaming DRAM catalog",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-gaming",
+  "target_id": "dram-gaming",
+  "sort": 2,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 350,
+  "menu_id": 35,
+  "parent_id": 346,
+  "title": "RGB effects lab",
+  "target_type": "url",
+  "target_url": "/gaming#rgb",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 351,
+  "menu_id": 35,
+  "parent_id": 346,
+  "title": "XMP 3.0 & EXPO tuning",
+  "target_type": "url",
+  "target_url": "/gaming#tuning",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 352,
+  "menu_id": 35,
+  "parent_id": 346,
+  "title": "Rigs & wallpapers",
+  "target_type": "url",
+  "target_url": "/gaming#builds",
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 353,
+  "menu_id": 35,
+  "parent_id": 346,
+  "title": "From the VOLTX desk",
+  "target_type": "url",
+  "target_url": "/gaming#stories",
+  "target_id": null,
+  "sort": 6,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 354,
+  "menu_id": 35,
+  "parent_id": null,
+  "title": "Solutions",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "drawer_group"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 355,
+  "menu_id": 35,
+  "parent_id": 354,
+  "title": "Solutions home",
+  "target_type": "url",
+  "target_url": "/solutions",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 356,
+  "menu_id": 35,
+  "parent_id": 354,
+  "title": "Regional distribution",
+  "target_type": "url",
+  "target_url": "/solutions#dist",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 357,
+  "menu_id": 35,
+  "parent_id": 354,
+  "title": "OEM manufacturing",
+  "target_type": "url",
+  "target_url": "/solutions#oem",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 358,
+  "menu_id": 35,
+  "parent_id": 354,
+  "title": "Fleet & workplace",
+  "target_type": "url",
+  "target_url": "/solutions#fleet",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 359,
+  "menu_id": 35,
+  "parent_id": 354,
+  "title": "Request a quote",
+  "target_type": "url",
+  "target_url": "/quote",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 360,
+  "menu_id": 35,
+  "parent_id": 354,
+  "title": "Become a distributor",
+  "target_type": "url",
+  "target_url": "/partners",
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 361,
+  "menu_id": 35,
+  "parent_id": null,
+  "title": "Where to Buy",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "drawer_group"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 362,
+  "menu_id": 35,
+  "parent_id": 361,
+  "title": "Where to Buy home",
+  "target_type": "url",
+  "target_url": "/where-to-buy",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 363,
+  "menu_id": 35,
+  "parent_id": 361,
+  "title": "Online marketplaces",
+  "target_type": "url",
+  "target_url": "/where-to-buy#marketplaces",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 364,
+  "menu_id": 35,
+  "parent_id": 361,
+  "title": "Distributor locator",
+  "target_type": "url",
+  "target_url": "/where-to-buy#locator",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 365,
+  "menu_id": 35,
+  "parent_id": 361,
+  "title": "Offices & hubs",
+  "target_type": "url",
+  "target_url": "/where-to-buy#offices",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 366,
+  "menu_id": 35,
+  "parent_id": 361,
+  "title": "Become a distributor",
+  "target_type": "url",
+  "target_url": "/partners",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 367,
+  "menu_id": 35,
+  "parent_id": null,
+  "title": "Support",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "drawer_group"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 368,
+  "menu_id": 35,
+  "parent_id": 367,
+  "title": "Support Center",
+  "target_type": "url",
+  "target_url": "/support",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 369,
+  "menu_id": 35,
+  "parent_id": 367,
+  "title": "Warranty & RMA",
+  "target_type": "url",
+  "target_url": "/rma",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 370,
+  "menu_id": 35,
+  "parent_id": 367,
+  "title": "FAQ",
+  "target_type": "url",
+  "target_url": "/support#faq",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 371,
+  "menu_id": 35,
+  "parent_id": 367,
+  "title": "Downloads",
+  "target_type": "url",
+  "target_url": "/support#downloads",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 372,
+  "menu_id": 35,
+  "parent_id": 367,
+  "title": "Knowledge Hub",
+  "target_type": "url",
+  "target_url": "/learn",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 373,
+  "menu_id": 35,
+  "parent_id": 367,
+  "title": "Buying guides",
+  "target_type": "url",
+  "target_url": "/learn-guides",
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 374,
+  "menu_id": 35,
+  "parent_id": 367,
+  "title": "Technology explainers",
+  "target_type": "url",
+  "target_url": "/learn-explained",
+  "target_id": null,
+  "sort": 6,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 375,
+  "menu_id": 35,
+  "parent_id": 367,
+  "title": "Benchmarks",
+  "target_type": "url",
+  "target_url": "/learn-benchmarks",
+  "target_id": null,
+  "sort": 7,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 376,
+  "menu_id": 35,
+  "parent_id": 367,
+  "title": "Glossary A–Z",
+  "target_type": "url",
+  "target_url": "/learn-glossary",
+  "target_id": null,
+  "sort": 8,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 377,
+  "menu_id": 35,
+  "parent_id": 367,
+  "title": "Tech insights & blog",
+  "target_type": "url",
+  "target_url": "/learn-blog",
+  "target_id": null,
+  "sort": 9,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 378,
+  "menu_id": 35,
+  "parent_id": null,
+  "title": "Company",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 6,
+  "metadata": {
+   "kind": "drawer_group"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 379,
+  "menu_id": 35,
+  "parent_id": 378,
+  "title": "About Us",
+  "target_type": "url",
+  "target_url": "/about",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 380,
+  "menu_id": 35,
+  "parent_id": 378,
+  "title": "Quality Assurance",
+  "target_type": "url",
+  "target_url": "/about#quality",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 381,
+  "menu_id": 35,
+  "parent_id": 378,
+  "title": "Technology & R&D",
+  "target_type": "url",
+  "target_url": "/technology",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 382,
+  "menu_id": 35,
+  "parent_id": 378,
+  "title": "News & Events",
+  "target_type": "url",
+  "target_url": "/news",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 383,
+  "menu_id": 35,
+  "parent_id": 378,
+  "title": "Careers",
+  "target_type": "url",
+  "target_url": "/careers",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 384,
+  "menu_id": 35,
+  "parent_id": 378,
+  "title": "Partners",
+  "target_type": "url",
+  "target_url": "/partners",
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 385,
+  "menu_id": 35,
+  "parent_id": 378,
+  "title": "Contact",
+  "target_type": "url",
+  "target_url": "/contact",
+  "target_id": null,
+  "sort": 6,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 386,
+  "menu_id": 35,
+  "parent_id": null,
+  "title": "Compare tray 0",
+  "target_type": "url",
+  "target_url": "/compare",
+  "target_id": null,
+  "sort": 7,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 387,
+  "menu_id": 35,
+  "parent_id": null,
+  "title": "Get a quote",
+  "target_type": "url",
+  "target_url": "/quote",
+  "target_id": null,
+  "sort": 8,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 388,
+  "menu_id": 36,
+  "parent_id": null,
+  "title": "Social",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "social"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 389,
+  "menu_id": 36,
+  "parent_id": 388,
+  "title": "f",
+  "target_type": "url",
+  "target_url": "https://www.facebook.com/twinmos.tech",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 390,
+  "menu_id": 36,
+  "parent_id": 388,
+  "title": "◎",
+  "target_type": "url",
+  "target_url": "https://instagram.com/twinmos.tech",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 391,
+  "menu_id": 36,
+  "parent_id": 388,
+  "title": "in",
+  "target_type": "url",
+  "target_url": "https://www.linkedin.com/company/twinmos-technologies/",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 392,
+  "menu_id": 36,
+  "parent_id": 388,
+  "title": "𝕏",
+  "target_type": "url",
+  "target_url": "https://x.com/twinmos",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 393,
+  "menu_id": 36,
+  "parent_id": 388,
+  "title": "▶",
+  "target_type": "url",
+  "target_url": "https://www.youtube.com/c/TwinMOStech",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 394,
+  "menu_id": 36,
+  "parent_id": 388,
+  "title": "P",
+  "target_type": "url",
+  "target_url": "https://www.pinterest.com/twinmos",
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 395,
+  "menu_id": 36,
+  "parent_id": null,
+  "title": "Products",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 396,
+  "menu_id": 36,
+  "parent_id": 395,
+  "title": "Gaming DRAM",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-gaming",
+  "target_id": "dram-gaming",
+  "sort": 0,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 397,
+  "menu_id": 36,
+  "parent_id": 395,
+  "title": "Desktop DRAM",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-desktop",
+  "target_id": "dram-desktop",
+  "sort": 1,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 398,
+  "menu_id": 36,
+  "parent_id": 395,
+  "title": "Notebook DRAM",
+  "target_type": "category",
+  "target_url": "/shop?cat=dram-notebook",
+  "target_id": "dram-notebook",
+  "sort": 2,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 399,
+  "menu_id": 36,
+  "parent_id": 395,
+  "title": "NVMe SSD",
+  "target_type": "category",
+  "target_url": "/shop?cat=ssd-nvme",
+  "target_id": "ssd-nvme",
+  "sort": 3,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 400,
+  "menu_id": 36,
+  "parent_id": 395,
+  "title": "SATA SSD",
+  "target_type": "category",
+  "target_url": "/shop?cat=ssd-sata",
+  "target_id": "ssd-sata",
+  "sort": 4,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 401,
+  "menu_id": 36,
+  "parent_id": 395,
+  "title": "Portable SSD",
+  "target_type": "category",
+  "target_url": "/shop?cat=portable-ssd",
+  "target_id": "portable-ssd",
+  "sort": 5,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 402,
+  "menu_id": 36,
+  "parent_id": 395,
+  "title": "Portable HDD",
+  "target_type": "category",
+  "target_url": "/shop?cat=portable-hdd",
+  "target_id": "portable-hdd",
+  "sort": 6,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 403,
+  "menu_id": 36,
+  "parent_id": 395,
+  "title": "USB Flash Drive",
+  "target_type": "category",
+  "target_url": "/shop?cat=flash",
+  "target_id": "flash",
+  "sort": 7,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 404,
+  "menu_id": 36,
+  "parent_id": 395,
+  "title": "MicroSD Card",
+  "target_type": "category",
+  "target_url": "/shop?cat=microsd",
+  "target_id": "microsd",
+  "sort": 8,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 405,
+  "menu_id": 36,
+  "parent_id": 395,
+  "title": "Power Supply",
+  "target_type": "category",
+  "target_url": "/shop?cat=psu",
+  "target_id": "psu",
+  "sort": 9,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 406,
+  "menu_id": 36,
+  "parent_id": 395,
+  "title": "USB HUB",
+  "target_type": "category",
+  "target_url": "/shop?cat=hub",
+  "target_id": "hub",
+  "sort": 10,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 407,
+  "menu_id": 36,
+  "parent_id": null,
+  "title": "Company",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 408,
+  "menu_id": 36,
+  "parent_id": 407,
+  "title": "About Us",
+  "target_type": "url",
+  "target_url": "/about",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 409,
+  "menu_id": 36,
+  "parent_id": 407,
+  "title": "Quality Assurance",
+  "target_type": "url",
+  "target_url": "/about#quality",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 410,
+  "menu_id": 36,
+  "parent_id": 407,
+  "title": "Technology & R&D",
+  "target_type": "url",
+  "target_url": "/technology",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 411,
+  "menu_id": 36,
+  "parent_id": 407,
+  "title": "News & Events",
+  "target_type": "url",
+  "target_url": "/news",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 412,
+  "menu_id": 36,
+  "parent_id": 407,
+  "title": "Careers",
+  "target_type": "url",
+  "target_url": "/careers",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 413,
+  "menu_id": 36,
+  "parent_id": 407,
+  "title": "Partners",
+  "target_type": "url",
+  "target_url": "/partners",
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 414,
+  "menu_id": 36,
+  "parent_id": 407,
+  "title": "Contact",
+  "target_type": "url",
+  "target_url": "/contact",
+  "target_id": null,
+  "sort": 6,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 415,
+  "menu_id": 36,
+  "parent_id": null,
+  "title": "Support",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "column"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 416,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "Support Center",
+  "target_type": "url",
+  "target_url": "/support",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 417,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "Warranty & RMA",
+  "target_type": "url",
+  "target_url": "/rma",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 418,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "Knowledge Hub",
+  "target_type": "url",
+  "target_url": "/learn",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 419,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "Buying guides",
+  "target_type": "url",
+  "target_url": "/learn-guides",
+  "target_id": null,
+  "sort": 3,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 420,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "Technology explainers",
+  "target_type": "url",
+  "target_url": "/learn-explained",
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 421,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "Glossary A–Z",
+  "target_type": "url",
+  "target_url": "/learn-glossary",
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 422,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "FAQ",
+  "target_type": "url",
+  "target_url": "/support#faq",
+  "target_id": null,
+  "sort": 6,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 423,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "Warranty Policy",
+  "target_type": "url",
+  "target_url": "/legal#warranty",
+  "target_id": null,
+  "sort": 7,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 424,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "Terms of Use",
+  "target_type": "url",
+  "target_url": "/legal#terms",
+  "target_id": null,
+  "sort": 8,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 425,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "Privacy Policy",
+  "target_type": "url",
+  "target_url": "/legal#privacy",
+  "target_id": null,
+  "sort": 9,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 426,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "EOL Product List",
+  "target_type": "url",
+  "target_url": "/legal#eol",
+  "target_id": null,
+  "sort": 10,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 427,
+  "menu_id": 36,
+  "parent_id": null,
+  "title": "Contact",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 4,
+  "metadata": {
+   "kind": "contact"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 428,
+  "menu_id": 36,
+  "parent_id": 427,
+  "title": "Request a quote",
+  "target_type": "url",
+  "target_url": "/quote",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 429,
+  "menu_id": 36,
+  "parent_id": null,
+  "title": "Legal",
+  "target_type": "url",
+  "target_url": null,
+  "target_id": null,
+  "sort": 5,
+  "metadata": {
+   "kind": "legal_bar"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 430,
+  "menu_id": 36,
+  "parent_id": 429,
+  "title": "Terms",
+  "target_type": "url",
+  "target_url": "/legal#terms",
+  "target_id": null,
+  "sort": 0,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 431,
+  "menu_id": 36,
+  "parent_id": 429,
+  "title": "Privacy",
+  "target_type": "url",
+  "target_url": "/legal#privacy",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 432,
+  "menu_id": 36,
+  "parent_id": 429,
+  "title": "Sitemap",
+  "target_type": "url",
+  "target_url": "/sitemap",
+  "target_id": null,
+  "sort": 2,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 433,
+  "menu_id": 34,
+  "parent_id": 303,
+  "title": "Warranty registration",
+  "target_type": "url",
+  "target_url": "/support/warranty",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 434,
+  "menu_id": 35,
+  "parent_id": 367,
+  "title": "Warranty registration",
+  "target_type": "url",
+  "target_url": "/support/warranty",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "drawer_link"
+  },
+  "icon": null,
+  "badge": null
+ },
+ {
+  "id": 435,
+  "menu_id": 36,
+  "parent_id": 415,
+  "title": "Warranty registration",
+  "target_type": "url",
+  "target_url": "/support/warranty",
+  "target_id": null,
+  "sort": 1,
+  "metadata": {
+   "kind": "footer_link"
+  },
+  "icon": null,
+  "badge": null
+ }
+]

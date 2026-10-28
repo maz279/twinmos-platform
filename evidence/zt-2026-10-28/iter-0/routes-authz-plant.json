@@ -1,0 +1,29 @@
+{
+  "name": "routes-authz",
+  "at": "2026-10-28T13:06:24.910Z",
+  "total": 4,
+  "failed": 2,
+  "items": [
+    {
+      "id": "session:viewer",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "id": "session:partner",
+      "ok": false,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/products",
+      "ok": false,
+      "status": 401,
+      "note": "anonymous got 401"
+    },
+    {
+      "id": "partner GET /api/v1/admin/products",
+      "ok": true,
+      "status": 401
+    }
+  ]
+}

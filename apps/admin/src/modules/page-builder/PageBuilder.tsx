@@ -4,11 +4,13 @@
 // up/down/duplicate/delete actions), and see the page in the live preview
 // modal (desktop/tablet/mobile). No raw JSON typing anywhere.
 import React, { useState } from 'react';
-import { BLOCK_DEFS, blockDef } from './blocks';
+import { BLOCK_DEFS, blockDef, inferFields } from './blocks';
 import type { FieldDef, PageBlock } from './blocks';
 import { MediaPicker } from '../../media-picker';
 import { API } from '../../api';
 import { btn, btnGhost, input } from '../../ui';
+
+const NL = String.fromCharCode(10); // one list entry per line in 'lines' editors
 
 const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
 
@@ -117,9 +119,9 @@ export default function PageBuilder({ blocks, onChange }: {
                   <IconBtn title={expanded ? 'Collapse' : 'Settings'} ariaLabel={expanded ? 'Collapse block settings' : 'Expand block settings'}>{expanded ? '▾' : '▸'}</IconBtn>
                 </span>
               </div>
-              {expanded && def && (
+              {expanded && (
                 <div style={{ padding: '10px 12px', display: 'grid', gap: 10 }}>
-                  {def.fields.map((f) => (
+                  {(def ? def.fields : inferFields(block as Record<string, unknown>)).map((f) => (
                     <FieldRow key={f.key} field={f} value={(block as Record<string, unknown>)[f.key]} basePath={[f.key]}
                       onMediaPick={(path) => setPickMedia({ path: [i, ...path] })}
                       onChange={(path, v) => setField(i, path, v)} />
@@ -220,6 +222,17 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
         <select id={inputId} aria-label={field.label} style={{ ...input, width: '100%' }} value={String(value ?? '')} onChange={(e) => onChange(basePath, e.target.value)}>
           {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
+      </div>
+    );
+  }
+  if (field.k === 'lines') {
+    const lines = Array.isArray(value) ? (value as unknown[]).map(String) : [];
+    return (
+      <div>
+        {label}
+        <textarea id={inputId} aria-label={field.label} style={{ ...input, width: '100%', minHeight: 70, fontFamily: 'inherit' }}
+          value={lines.join(NL)} onChange={(e) => onChange(basePath, e.target.value.split(NL))}
+          onBlur={(e) => onChange(basePath, e.target.value.split(NL).map((l) => l.trim()).filter(Boolean))} />
       </div>
     );
   }

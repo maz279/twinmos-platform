@@ -1,0 +1,6 @@
+health 200 application/json  | {"status":"ok","service":"twinmos-api","version":"0.3.0","db":"connected"}
+home 200 text/html  | <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="
+no-client-cert 400 text/html  | <html> <head><title>400 No required SSL certificate was sent</title></head> <body> <center><h1>400 Bad Request</h1></center> <center>No required SSL certifi
+metrics 200 text/plain; version=0.0.4; charset=utf-8  | # HELP twinmos_http_requests_total Total HTTP requests handled by the API. # TYPE twinmos_http_requests_total counter twinmos_http_requests_total 40 # HELP twi
+admin 403 text/html  | <html> <head><title>403 Forbidden</title></head> <body> <center><h1>403 Forbidden</h1></center> <hr><center>nginx</center> </body> </html> 
+products 200 application/json  | {"data":[],"meta":{"total":0,"cacheTags":["products"]}}

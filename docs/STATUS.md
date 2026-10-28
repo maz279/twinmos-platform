@@ -1,3 +1,13 @@
+> ## ⚠ Superseded on 2026-10-28 by the zero-trust production audit
+>
+> The verdicts below ("DONE 100%" for MS1.1–MS7.6, VC-F cleared, unanimous GO, hypercare exit) are **not the verified state**. They rest on records that have been withdrawn because they describe events that have not happened (go/no-go is scheduled for 26 Mar 2027) or on checks that could not fail. See:
+>
+> - **docs/reports/ZERO_TRUST_AUDIT_2026-10-28.md** — findings ZT-001…, fixes, evidence, verdict
+> - **docs/reports/withdrawn/2026-10-28/README.md** — what was withdrawn and why
+> - **evidence/zt-2026-10-28/** — the artefacts of every check run in that audit
+>
+> Phase 07 (MS7.1–MS7.6) is **NOT DONE**: no staging/production environment, no real monitoring, no UAT by named testers, no CI run on any commit since 12 Oct 2026.
+
 # TwinMOS Platform — Implementation Status (Re-audited 22 Oct 2026)
 
 > **Single status record. Update only by task ID and check ID, with an artefact link.**

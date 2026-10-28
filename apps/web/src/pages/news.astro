@@ -20,71 +20,9 @@ const selectedCat = Astro.url.searchParams.get('cat') || Astro.url.searchParams.
 
 let rawNews = await getDeliveryNews(locale);
 
-// Curated default news and event items from website-content/10-news-events
-if (!rawNews || rawNews.length === 0) {
-  rawNews = [
-    {
-      id: 1,
-      slug: '2025-05-computex-2025-twinmos-showcase',
-      title: 'COMPUTEX 2025: TwinMOS Showcase',
-      tag: 'Events',
-      category: 'events',
-      eventDate: '2025-05-20T09:00:00Z',
-      deck: 'TwinMOS exhibited at COMPUTEX 2025 in Taipei, showcasing next-generation memory and storage innovations including CoreX Pro Gen5 NVMe SSD and VOLTX RGB DDR5 DRAM at booth I1431.',
-      readingTime: 5,
-    },
-    {
-      id: 2,
-      slug: '2025-10-gitex-global-2025-twinmos',
-      title: 'GITEX GLOBAL 2025: TwinMOS Showcase',
-      tag: 'Events',
-      category: 'events',
-      eventDate: '2025-10-13T09:00:00Z',
-      deck: 'TwinMOS highlighted high-performance solid-state storage, enterprise DRAM, and channel programs at GITEX GLOBAL 2025 at Dubai World Trade Centre.',
-      readingTime: 4,
-    },
-    {
-      id: 3,
-      slug: '2025-q3-corex-pro-gen5-launch',
-      title: 'TwinMOS Launches Flagship CoreX Pro Gen5 NVMe SSD',
-      tag: 'Product News',
-      category: 'product-news',
-      eventDate: '2025-08-15T09:00:00Z',
-      deck: 'Delivering up to 14,000 MB/s sequential read performance on PCIe Gen 5.0 x4 interface with graphene thermal cooling.',
-      readingTime: 4,
-    },
-    {
-      id: 4,
-      slug: '2025-q4-voltx-rgb-ddr5-6000-launch',
-      title: 'TwinMOS Unveils VOLTX RGB DDR5-6000 Gaming Memory',
-      tag: 'Product News',
-      category: 'product-news',
-      eventDate: '2025-11-10T09:00:00Z',
-      deck: 'High-speed 6000MT/s desktop memory with CL36 latency, AMD EXPO, Intel XMP 3.0 support, and addressable dynamic RGB lighting sync.',
-      readingTime: 3,
-    },
-    {
-      id: 5,
-      slug: '2026-q2-anti-counterfeit-program',
-      title: 'TwinMOS Strengthens Global Anti-Counterfeit Verification',
-      tag: 'Corporate',
-      category: 'corporate',
-      eventDate: '2026-04-12T09:00:00Z',
-      deck: 'Enhanced multi-factor security labels, cloud registry serial verification, and customer protection across 90+ export markets.',
-      readingTime: 3,
-    },
-    {
-      id: 6,
-      slug: '2026-q2-website-relaunch',
-      title: 'TwinMOS Launches Next-Generation Global Corporate Platform',
-      tag: 'Corporate',
-      category: 'corporate',
-      eventDate: '2026-05-01T09:00:00Z',
-      deck: 'New modern digital platform featuring real-time product finder, side-by-side spec comparison, knowledge hub, and multi-region distributor locator.',
-      readingTime: 4,
-    },
-  ] as any[];
-}
+// News comes only from the CMS (news_post). The old hard-coded fallback posts
+// included announcements of events that had not happened (ZT-038).
+rawNews = Array.isArray(rawNews) ? rawNews : [];
 
 // Category filter tabs
 const categories = [

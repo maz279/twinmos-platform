@@ -1,0 +1,132 @@
+[
+ {
+  "id": 1,
+  "key": "CAS Latency",
+  "normalized_key": "cas latency",
+  "category_id": null,
+  "data_type": "string",
+  "unit": null,
+  "description": "Normalized spec key (variants such as \"cas latency\" map to \"CAS Latency\")",
+  "created_at": "2026-10-26T15:22:34.948Z"
+ },
+ {
+  "id": 2,
+  "key": "CAS Latency",
+  "normalized_key": "cas latency",
+  "category_id": null,
+  "data_type": "string",
+  "unit": null,
+  "description": "Normalized spec key (variants such as \"latency cas\" map to \"CAS Latency\")",
+  "created_at": "2026-10-26T15:22:34.963Z"
+ },
+ {
+  "id": 3,
+  "key": "Latency",
+  "normalized_key": "latency",
+  "category_id": null,
+  "data_type": "string",
+  "unit": "CL",
+  "description": "Normalized spec key (variants such as \"latency\" map to \"Latency\")",
+  "created_at": "2026-10-26T15:22:34.964Z"
+ },
+ {
+  "id": 4,
+  "key": "Speed",
+  "normalized_key": "speed",
+  "category_id": null,
+  "data_type": "string",
+  "unit": "MT/s",
+  "description": "Normalized spec key (variants such as \"speed\" map to \"Speed\")",
+  "created_at": "2026-10-26T15:22:34.965Z"
+ },
+ {
+  "id": 5,
+  "key": "Capacity",
+  "normalized_key": "capacity",
+  "category_id": null,
+  "data_type": "string",
+  "unit": null,
+  "description": "Normalized spec key (variants such as \"capacity\" map to \"Capacity\")",
+  "created_at": "2026-10-26T15:22:34.966Z"
+ },
+ {
+  "id": 6,
+  "key": "Voltage",
+  "normalized_key": "voltage",
+  "category_id": null,
+  "data_type": "string",
+  "unit": "V",
+  "description": "Normalized spec key (variants such as \"voltage\" map to \"Voltage\")",
+  "created_at": "2026-10-26T15:22:34.967Z"
+ },
+ {
+  "id": 7,
+  "key": "Form Factor",
+  "normalized_key": "form factor",
+  "category_id": null,
+  "data_type": "string",
+  "unit": null,
+  "description": "Normalized spec key (variants such as \"form factor\" map to \"Form Factor\")",
+  "created_at": "2026-10-26T15:22:34.970Z"
+ },
+ {
+  "id": 8,
+  "key": "Interface",
+  "normalized_key": "interface",
+  "category_id": null,
+  "data_type": "string",
+  "unit": null,
+  "description": "Normalized spec key (variants such as \"interface\" map to \"Interface\")",
+  "created_at": "2026-10-26T15:22:34.972Z"
+ },
+ {
+  "id": 9,
+  "key": "Warranty",
+  "normalized_key": "warranty",
+  "category_id": null,
+  "data_type": "string",
+  "unit": null,
+  "description": "Normalized spec key (variants such as \"warranty\" map to \"Warranty\")",
+  "created_at": "2026-10-26T15:22:34.973Z"
+ },
+ {
+  "id": 10,
+  "key": "RPM",
+  "normalized_key": "rpm",
+  "category_id": null,
+  "data_type": "string",
+  "unit": "RPM",
+  "description": "Normalized spec key (variants such as \"rpm\" map to \"RPM\")",
+  "created_at": "2026-10-26T15:22:34.975Z"
+ },
+ {
+  "id": 11,
+  "key": "Weight",
+  "normalized_key": "weight",
+  "category_id": null,
+  "data_type": "string",
+  "unit": "g",
+  "description": "Normalized spec key (variants such as \"weight\" map to \"Weight\")",
+  "created_at": "2026-10-26T15:22:34.976Z"
+ },
+ {
+  "id": 12,
+  "key": "Dimensions",
+  "normalized_key": "dimensions",
+  "category_id": null,
+  "data_type": "string",
+  "unit": "mm",
+  "description": "Normalized spec key (variants such as \"dimensions\" map to \"Dimensions\")",
+  "created_at": "2026-10-26T15:22:34.977Z"
+ },
+ {
+  "id": 13,
+  "key": "Compatible OS",
+  "normalized_key": "compatible os",
+  "category_id": null,
+  "data_type": "string",
+  "unit": null,
+  "description": "Normalized spec key (variants such as \"compatible-os\" map to \"Compatible OS\")",
+  "created_at": "2026-10-26T15:22:34.978Z"
+ }
+]

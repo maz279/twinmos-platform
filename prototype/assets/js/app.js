@@ -435,16 +435,16 @@ var TM = window.TM || {};
     return '' +
       '<article class="card pcard" data-id="' + esc(p.id) + '">' +
       '  <div class="pcard-img">' + (badges ? '<div class="badge"><span>' + esc(p.badge) + '</span></div>' : '') +
-      '    <a href="product.html?id=' + encodeURIComponent(p.id) + '" aria-label="' + esc(p.name) + '"><img src="' + esc(ic) + '" alt="' + esc(p.name) + '" loading="lazy"></a>' +
+      '    <a href="/product?id=' + encodeURIComponent(p.id) + '" aria-label="' + esc(p.name) + '"><img src="' + esc(ic) + '" alt="' + esc(p.name) + '" loading="lazy"></a>' +
       '    <button class="qv-btn" data-qv="' + esc(p.id) + '" aria-label="Quick view ' + esc(p.name) + '">Quick view</button>' +
       '  </div>' +
       '  <div class="pcard-body">' +
       '    <span class="pcard-cat">' + esc(p.catLabel) + (p.brand && p.brand !== 'TwinMOS' ? ' · ' + esc(p.brand) : '') + '</span>' +
-      '    <a class="pcard-name" href="product.html?id=' + encodeURIComponent(p.id) + '">' + esc(p.name) + '</a>' +
+      '    <a class="pcard-name" href="/product?id=' + encodeURIComponent(p.id) + '">' + esc(p.name) + '</a>' +
       '    <span class="pcard-meta">' + esc(p.shortSpec || '') + '</span>' +
       warrantyChip(p) +
       '    <div class="pcard-foot">' +
-      '      <a class="btn btn-ghost btn-sm" href="product.html?id=' + encodeURIComponent(p.id) + '">View details</a>' +
+      '      <a class="btn btn-ghost btn-sm" href="/product?id=' + encodeURIComponent(p.id) + '">View details</a>' +
       '      <div class="pcard-actions"><button class="cmp-btn" data-id="' + esc(p.id) + '" title="Add to compare" aria-label="Add ' + esc(p.name) + ' to compare">⇄</button></div>' +
       '    </div>' +
       '  </div>' +
@@ -494,8 +494,8 @@ var TM = window.TM || {};
       '    <p class="form-note" style="margin:6px 0 12px">' + esc(p.shortSpec || '') + (p.warranty ? ' · ' + esc(wtyText(p.warranty)) : '') + '</p>' +
       (specKeys.length ? '<table class="spec-table"><tbody>' + specKeys.map(function (k) { return '<tr><th scope="row">' + esc(k) + '</th><td>' + esc(p.specs[k]) + '</td></tr>'; }).join('') + '</tbody></table>' : '') +
       '    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
-      '      <a class="btn btn-primary btn-sm" href="product.html?id=' + encodeURIComponent(p.id) + '">Full details</a>' +
-      '      <a class="btn btn-ghost btn-sm" href="where-to-buy.html">Where to buy</a>' +
+      '      <a class="btn btn-primary btn-sm" href="/product?id=' + encodeURIComponent(p.id) + '">Full details</a>' +
+      '      <a class="btn btn-ghost btn-sm" href="/where-to-buy">Where to buy</a>' +
       '      <button class="btn btn-ghost btn-sm cmp-btn" data-id="' + esc(p.id) + '">⇄ Compare</button>' +
       '    </div>' +
       '  </div>' +
@@ -632,7 +632,7 @@ var TM = window.TM || {};
     var id = param('id');
     var p = TM.products.filter(function (x) { return x.id === id; })[0];
     if (!p) {
-      root.innerHTML = '<div class="empty-state"><h3>Product not found</h3><p>The product “' + esc(id) + '” does not exist in the catalog.</p><a class="btn btn-primary" href="shop.html">Browse all products</a></div>';
+      root.innerHTML = '<div class="empty-state"><h3>Product not found</h3><p>The product “' + esc(id) + '” does not exist in the catalog.</p><a class="btn btn-primary" href="/shop">Browse all products</a></div>';
       return;
     }
     document.title = p.name + ' — TwinMOS';
@@ -682,15 +682,15 @@ var TM = window.TM || {};
         ? '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px"><span style="font-size:26px;font-weight:800;color:var(--ink)">' + esc(p.currency || 'USD') + ' ' + esc(p.priceUsd.toFixed(2)) + '</span><span class="form-note">MSRP — where to buy shows local pricing</span></div>'
         : '') +
       '    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px">' +
-      '      <a class="btn btn-primary btn-lg" href="where-to-buy.html">Where to buy</a>' +
-      '      <a class="btn btn-ghost btn-lg" href="quote.html?product=' + encodeURIComponent(p.id) + '">Request a quote</a>' +
+      '      <a class="btn btn-primary btn-lg" href="/where-to-buy">Where to buy</a>' +
+      '      <a class="btn btn-ghost btn-lg" href="/quote?product=' + encodeURIComponent(p.id) + '">Request a quote</a>' +
       '      <button class="btn btn-ghost btn-lg cmp-btn" data-id="' + esc(p.id) + '">⇄ Compare</button>' +
       '    </div>' +
       shareRow(p) +
-      '    <div class="note-box" style="margin-bottom:24px"><b>OEM / volume orders —</b> ' + brandI(14) + ' manufactures and supplies under its own brand and as an OEM provider. <a href="solutions.html">Explore solutions</a> or <a href="quote.html?product=' + encodeURIComponent(p.id) + '">request a quotation</a>.</div>' +
+      '    <div class="note-box" style="margin-bottom:24px"><b>OEM / volume orders —</b> ' + brandI(14) + ' manufactures and supplies under its own brand and as an OEM provider. <a href="/solutions">Explore solutions</a> or <a href="/quote?product=' + encodeURIComponent(p.id) + '">request a quotation</a>.</div>' +
       variantHtml +
       '    <h3 class="h3" style="margin-top:30px">Specifications</h3>' +
-      (specRows ? '<div style="overflow-x:auto"><table class="spec-table"><tbody>' + specRows + '</tbody></table></div>' : '<p class="form-note">Detailed specifications for this SKU are being finalized — <a href="contact.html">contact us</a> for the datasheet.</p>') +
+      (specRows ? '<div style="overflow-x:auto"><table class="spec-table"><tbody>' + specRows + '</tbody></table></div>' : '<p class="form-note">Detailed specifications for this SKU are being finalized — <a href="/contact">contact us</a> for the datasheet.</p>') +
       (desc ? '<details style="margin-top:22px" class="acc"><summary>About this product</summary><div class="acc-body">' + esc(desc).replace(/\n+/g, '</p><p style="font-size:14.5px">') + '</div></details>' : '') +
       '  </div>' +
       '</div>';
@@ -741,9 +741,9 @@ var TM = window.TM || {};
       if (gArts.length) {
         gWrap.innerHTML = '<div class="learn-band" style="margin-top:clamp(18px,2.4vw,28px)"><b style="flex:none">Learn before you buy</b>' +
           gArts.map(function (g) {
-            return '<a href="article.html?id=' + encodeURIComponent(g.id) + '">' + esc(g.title) + '</a>';
+            return '<a href="/article?id=' + encodeURIComponent(g.id) + '">' + esc(g.title) + '</a>';
           }).join('') +
-          '<a href="learn.html" style="color:var(--accent-deep);font-weight:750">Knowledge hub →</a></div>';
+          '<a href="/learn" style="color:var(--accent-deep);font-weight:750">Knowledge hub →</a></div>';
       }
     }
   }
@@ -755,7 +755,7 @@ var TM = window.TM || {};
     var arr = cmpGet();
     var list = TM.products.filter(function (p) { return arr.indexOf(p.id) >= 0; });
     if (!list.length) {
-      mount.innerHTML = '<div class="empty-state"><h3>Nothing to compare yet</h3><p>Add up to 4 products from the <a href="shop.html">catalog</a> using the ⇄ button on any product card.</p><a class="btn btn-primary" href="shop.html">Browse products</a></div>';
+      mount.innerHTML = '<div class="empty-state"><h3>Nothing to compare yet</h3><p>Add up to 4 products from the <a href="/shop">catalog</a> using the ⇄ button on any product card.</p><a class="btn btn-primary" href="/shop">Browse products</a></div>';
       return;
     }
     var keys = ['catLabel', 'shortSpec', 'interface', 'gen', 'cap', 'warranty'];
@@ -772,7 +772,7 @@ var TM = window.TM || {};
     mount.innerHTML =
       '<div class="cmp-table-wrap"><table class="cmp"><thead><tr><th>Product</th>' +
       list.map(function (p) {
-        return '<th class="cmp-prod-head"><img src="' + esc(p.imgC || p.img) + '" alt=""><a href="product.html?id=' + encodeURIComponent(p.id) + '">' + esc(p.name) + '</a><br><button class="cmp-btn on" data-id="' + esc(p.id) + '" title="Remove">✕</button></th>';
+        return '<th class="cmp-prod-head"><img src="' + esc(p.imgC || p.img) + '" alt=""><a href="/product?id=' + encodeURIComponent(p.id) + '">' + esc(p.name) + '</a><br><button class="cmp-btn on" data-id="' + esc(p.id) + '" title="Remove">✕</button></th>';
       }).join('') +
       '</tr></thead><tbody>' +
       keys.map(function (k) { return row(k, null, false); }).join('') +
@@ -891,13 +891,13 @@ var TM = window.TM || {};
             '<div class="grid g3">' + portables.map(function (p) { return productCard(p); }).join('') + '</div>'
           : '') +
         (!mems.length && !ssds.length && !portables.length
-          ? '<div class="empty-state"><p>No catalog match for this platform in the database \u2014 <a href="contact.html">ask support</a> and we will confirm compatibility.</p></div>'
+          ? '<div class="empty-state"><p>No catalog match for this platform in the database \u2014 <a href="/contact">ask support</a> and we will confirm compatibility.</p></div>'
           : '') +
         '<div class="card card-pad" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:20px;background:var(--bg-tint)">' +
         '<div><b>Can\u2019t find your device?</b><p class="form-note" style="margin:2px 0 0">Our support team verifies compatibility manually \u2014 send the exact model and we\u2019ll confirm the right upgrade.</p></div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-ghost btn-sm" href="contact.html">Ask support</a>' +
-        '<a class="btn btn-ghost btn-sm" href="where-to-buy.html">Where to buy</a></div></div>' +
-        '<p class="form-note" style="margin-top:14px">Compatibility guidance \u2014 \u201cSpec-compatible\u201d never means incompatible. Always confirm against your device manual \u2014 see <a href="article.html?id=how-to-check-motherboard-ram-compatibility">How to check your motherboard and RAM compatibility</a>.</p>';
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-ghost btn-sm" href="/contact">Ask support</a>' +
+        '<a class="btn btn-ghost btn-sm" href="/where-to-buy">Where to buy</a></div></div>' +
+        '<p class="form-note" style="margin-top:14px">Compatibility guidance \u2014 \u201cSpec-compatible\u201d never means incompatible. Always confirm against your device manual \u2014 see <a href="/article?id=how-to-check-motherboard-ram-compatibility">How to check your motherboard and RAM compatibility</a>.</p>';
 
       // reason chips under memory cards
       $$('#compatOut [data-reason]').forEach(function (card) {
@@ -929,44 +929,6 @@ var TM = window.TM || {};
   }
 
   /* ---------- RMA ---------- */
-  // P1.3 (audit finding U-3): the trackers were deterministic string-hash demos
-  // that invented a status for ANY number while a chip claimed "Live in
-  // production". Both page widgets now read the real, PII-masked case record
-  // from the API (GET /api/v1/rma/:number) — 7 canonical states, truthful
-  // "not found" handling, no fabricated data.
-  var RMA_STAGES = [
-    ['submitted', 'Received & registered'],
-    ['under_review', 'Diagnosis & testing'],
-    ['approved', 'Approved — awaiting unit'],
-    ['in_repair', 'Repair / replacement'],
-    ['shipped', 'Replacement shipped'],
-    ['delivered', 'Delivered'],
-    ['closed', 'Closed']
-  ];
-  function rmaStageIndex(status) {
-    for (var i = 0; i < RMA_STAGES.length; i++) if (RMA_STAGES[i][0] === status) return i;
-    return 0;
-  }
-  function rmaWhen(iso) {
-    try {
-      var d = new Date(iso);
-      return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-    } catch (e) { return ''; }
-  }
-  function rmaFetchCase(id, render, fail) {
-    var api = String(window.TWINMOS_API || '/api/v1').replace(/\/+$/, '');
-    fetch(api + '/rma/' + encodeURIComponent(id))
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-      .then(render)
-      .catch(fail);
-  }
-  function rmaTrackFail(out, id, status) {
-    if (status === 404) {
-      out.innerHTML = '<div class="empty-state"><h3>Case not found</h3><p>No RMA exists with number <b>' + esc(id) + '</b>. Check the number in your confirmation email, or contact support with your proof of purchase.</p></div>';
-    } else {
-      out.innerHTML = '<div class="empty-state"><h3>Status unavailable</h3><p>The service centre could not be reached — please retry in a moment.</p></div>';
-    }
-  }
   function initRMA() {
     // "Start an RMA" form: wire it through the shared form pipeline even when
     // the page predates its data-tm-form attribute (audit fix 2026-09-25).
@@ -975,46 +937,9 @@ var TM = window.TM || {};
       rf.setAttribute('data-tm-form', '');
       rf.setAttribute('data-success', 'RMA request received — your RMA number and shipping instructions arrive by email within one business day.');
     }
-    var track = $('#rmaTrackBtn');
-    if (track) {
-      track.addEventListener('click', function () {
-        var id = ($('#rmaId').value || '').trim().toUpperCase();
-        var out = $('#rmaOut');
-        if (!/^TM-RMA-\d{4}-\d{3,8}$/.test(id)) {
-          out.innerHTML = '<div class="empty-state"><h3>Enter a valid RMA number</h3><p>Format: <span class="kbd">TM-RMA-2026-0142</span> — the full number from your confirmation email.</p></div>';
-          return;
-        }
-        out.innerHTML = '<p class="form-note" style="margin-top:14px">Checking live case status…</p>';
-        rmaFetchCase(id, function (d) {
-          var idx = rmaStageIndex(d.status);
-          var last = (d.timeline && d.timeline.length) ? d.timeline[d.timeline.length - 1] : null;
-          out.innerHTML =
-            '<div class="card card-pad" style="margin-top:18px">' +
-            '<h3 class="h3" style="margin-bottom:4px">RMA ' + esc(d.number || id) + '</h3>' +
-            '<p class="form-note">' + esc((d.maskedInfo && d.maskedInfo.product) || 'Registered product') +
-            (last && last.at ? ' · Updated ' + esc(rmaWhen(last.at)) : '') + '</p>' +
-            '<div class="rma-track">' + RMA_STAGES.map(function (s, i) {
-              return '<div class="rma-stage ' + (i < idx ? 'done' : i === idx ? 'now' : '') + '">' + s[1] + '</div>';
-            }).join('') + '</div>' +
-            (idx >= 5 ? '<span class="chip ok">Completed</span>' : '<span class="chip warn">Currently: ' + esc(RMA_STAGES[idx][1]) + '</span>') +
-            ' <span class="form-note">Live status from the TwinMOS service centre</span></div>';
-        }, function (status) { rmaTrackFail(out, id, status); });
-      });
-    }
-    var form = $('#rmaForm');
-    if (form) {
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (!validate(form)) return;
-        var demo = 'TM-RMA-2026-0' + (1000 + Math.floor(Math.random() * 8999));
-        var box = form.parentElement;
-        form.style.display = 'none';
-        var ok = document.createElement('div');
-        ok.className = 'form-success show';
-        ok.innerHTML = '<div class="tick">✓</div><h3>Request registered</h3><p>Your demo RMA number is <b class="kbd">' + demo + '</b>.<br>In production this is emailed to you and the tracker above goes live immediately.</p>';
-        box.appendChild(ok);
-      });
-    }
+    // Tracking and submission are handled by the live API layer (portal.js /
+    // forms.js). The prototype's demo tracker and the Math.random "demo RMA
+    // number" were removed in the zero-trust audit: they showed fake results.
   }
 
   /* ---------- forms (contact / quote / newsletter) ---------- */
@@ -1033,30 +958,9 @@ var TM = window.TM || {};
     return ok;
   }
   function initForms() {
-    $$('form[data-tm-form]').forEach(function (form) {
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (!validate(form)) return;
-        var box = form.closest('[data-form-box]') || form.parentElement;
-        form.style.display = 'none';
-        var ok = document.createElement('div');
-        ok.className = 'form-success show';
-        var msg = form.getAttribute('data-success') || ('Thank you — the ' + brandI(14) + ' team will reply within one business day.');
-        ok.innerHTML = '<div class="tick">✓</div><h3>Submitted</h3><p>' + msg + '</p>';
-        box.appendChild(ok);
-        toast('Submitted successfully', 'ok');
-      });
-    });
-    var nl = $('#nlForm');
-    if (nl) {
-      nl.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var em = $('#nlEmail').value.trim();
-        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { toast('Enter a valid email address', 'err'); return; }
-        nl.innerHTML = '<span class="chip ok">✓ Subscribed — welcome aboard</span>';
-        toast('Subscribed to the TwinMOS newsletter', 'ok');
-      });
-    }
+    // Submissions go to the real API (forms.js, capture phase). The prototype's
+    // fake "Submitted" / "Subscribed" success handlers were removed (ZT audit):
+    // a failed or unrecognised submission must never look successful.
     var pre = param('product');
     if (pre && $('#qProduct')) {
       // P2.5 (audit U-8): hydrate the select from the LIVE catalog first —
@@ -1105,15 +1009,15 @@ var TM = window.TM || {};
     html += '<section><h2 class="h3">Media & articles <span class="chip">' + arts.length + '</span></h2><div class="grid g3" style="margin-top:14px">';
     html += arts.length ? arts.map(function (a) {
       var aDesc = a.desc || a.excerpt || '';
-      return '<a class="card card-pad article-card" href="article.html?id=' + encodeURIComponent(a.id) + '"><span class="chip" style="align-self:flex-start">' + esc(a.cat || a.category || '') + '</span><b style="display:block;color:var(--ink);margin:8px 0 6px;font-size:15.5px">' + esc(a.title || '') + '</b><span class="form-note">' + esc(aDesc.slice(0, 110)) + '…</span></a>';
+      return '<a class="card card-pad article-card" href="/article?id=' + encodeURIComponent(a.id) + '"><span class="chip" style="align-self:flex-start">' + esc(a.cat || a.category || '') + '</span><b style="display:block;color:var(--ink);margin:8px 0 6px;font-size:15.5px">' + esc(a.title || '') + '</b><span class="form-note">' + esc(aDesc.slice(0, 110)) + '…</span></a>';
     }).join('') : '<p class="form-note">No article matches.</p>';
     html += '</div></section>';
     if (terms.length) {
       html += '<section><h2 class="h3">Glossary terms <span class="chip">' + terms.length + '</span></h2>' +
-        '<p class="form-note">From the <a href="learn-glossary.html">A–Z glossary</a> — jump straight to the definition.</p>' +
+        '<p class="form-note">From the <a href="/learn-glossary">A–Z glossary</a> — jump straight to the definition.</p>' +
         '<div class="grid g3" style="margin-top:14px">' + terms.map(function (t) {
           var tDesc = t.d || t.definition || '';
-          return '<a class="card card-pad" href="learn-glossary.html#gL' + encodeURIComponent(t.l || '') + '">' +
+          return '<a class="card card-pad" href="/learn-glossary#gL' + encodeURIComponent(t.l || '') + '">' +
             '<span class="chip">' + esc(t.l || '') + '</span>' +
             '<b style="display:block;color:var(--ink);margin:8px 0 6px;font-size:15.5px">' + esc(t.t || '') + '</b>' +
             '<span class="form-note">' + esc(tDesc.slice(0, 110)) + '…</span></a>';
@@ -1125,18 +1029,18 @@ var TM = window.TM || {};
   }
 
   /* ---------- article page (knowledge-hub aware: TOC, reading time, prev/next, related) ---------- */
-  var HUB_BY_CAT = { Guide: ['learn-guides.html', 'Buying guides'], Explainer: ['learn-explained.html', 'Technology explainers'],
-                     Benchmark: ['learn-benchmarks.html', 'Benchmarks'], Blog: ['learn-blog.html', 'Tech insights'] };
+  var HUB_BY_CAT = { Guide: ['/learn-guides', 'Buying guides'], Explainer: ['/learn-explained', 'Technology explainers'],
+                     Benchmark: ['/learn-benchmarks', 'Benchmarks'], Blog: ['/learn-blog', 'Tech insights'] };
 
   function initArticle() {
     var root = $('#artRoot');
     if (!root || !TM.articles) return;
     // the glossary is a dedicated A-Z page now — redirect legacy article links
-    if (param('id') === 'glossary') { location.replace('learn-glossary.html'); return; }
+    if (param('id') === 'glossary') { location.replace('/learn-glossary'); return; }
     var id = param('id');
     var a = TM.articles.filter(function (x) { return x.id === id; })[0];
     if (!a) {
-      root.innerHTML = '<div class="empty-state"><h3>Article not found</h3><p>That piece isn\u2019t in the library — browse everything from ' + brandI(15) + ' instead.</p><a class="btn btn-primary" href="learn.html">Open the Knowledge hub</a></div>';
+      root.innerHTML = '<div class="empty-state"><h3>Article not found</h3><p>That piece isn\u2019t in the library — browse everything from ' + brandI(15) + ' instead.</p><a class="btn btn-primary" href="/learn">Open the Knowledge hub</a></div>';
       return;
     }
     document.title = a.title + ' — TwinMOS';
@@ -1177,8 +1081,8 @@ var TM = window.TM || {};
     var backChip = hub
       ? '<a class="chip" href="' + hub[0] + '" style="text-decoration:none">↑ ' + hub[1] + '</a>'
       : (a.cat === 'KB'
-          ? '<a class="chip" href="support.html" style="text-decoration:none">↑ Support center</a>'
-          : '<a class="chip" href="news.html" style="text-decoration:none">↑ Newsroom</a>');
+          ? '<a class="chip" href="/support" style="text-decoration:none">↑ Support center</a>'
+          : '<a class="chip" href="/news" style="text-decoration:none">↑ Newsroom</a>');
     var metaChips = '<span class="chip">' + esc(a.date) + '</span>' +
       (a.mins ? '<span class="chip">' + esc(a.mins) + ' min read</span>' : '') +
       (a.tag ? '<span class="chip">' + esc(a.tag) + '</span>' : '') +
@@ -1192,8 +1096,8 @@ var TM = window.TM || {};
       var prev = idx > 0 ? seq[idx - 1] : null;
       var next = idx >= 0 && idx < seq.length - 1 ? seq[idx + 1] : null;
       pn = '<div class="art-pn">' +
-        (prev ? '<a href="article.html?id=' + encodeURIComponent(prev.id) + '"><span>← Previous</span><b>' + esc(prev.title) + '</b></a>' : '') +
-        (next ? '<a href="article.html?id=' + encodeURIComponent(next.id) + '" style="text-align:right"><span>Next →</span><b>' + esc(next.title) + '</b></a>' : '') +
+        (prev ? '<a href="/article?id=' + encodeURIComponent(prev.id) + '"><span>← Previous</span><b>' + esc(prev.title) + '</b></a>' : '') +
+        (next ? '<a href="/article?id=' + encodeURIComponent(next.id) + '" style="text-align:right"><span>Next →</span><b>' + esc(next.title) + '</b></a>' : '') +
         '</div>';
     }
 
@@ -1210,7 +1114,7 @@ var TM = window.TM || {};
     var relChips = relIds.length
       ? '<div class="art-rel-chips">' + relIds.slice(0, 6).map(function (rid) {
           var r = TM.articles.filter(function (x) { return x.id === rid; })[0];
-          return r ? '<a href="article.html?id=' + encodeURIComponent(r.id) + '">' + esc(r.title) + '</a>' : '';
+          return r ? '<a href="/article?id=' + encodeURIComponent(r.id) + '">' + esc(r.title) + '</a>' : '';
         }).join('') + '</div>'
       : '';
 
@@ -1228,7 +1132,7 @@ var TM = window.TM || {};
       if (picks.length) {
         prodsHtml = '<div class="section-head" style="margin-top:clamp(26px,3vw,40px)"><div><span class="eyebrow">Shop the topic</span>' +
           '<h2 class="h2">' + (a.cat === 'Benchmark' ? 'Products tested' : 'Featured for this topic') + '</h2></div>' +
-          '<a class="link-arrow" href="shop.html">All products</a></div><div class="grid g4" id="artProds">' +
+          '<a class="link-arrow" href="/shop">All products</a></div><div class="grid g4" id="artProds">' +
           picks.map(productCard).join('') + '</div>';
       }
     }
@@ -1279,7 +1183,7 @@ var TM = window.TM || {};
       }).slice(0, 3);
       if (!others.length) others = TM.articles.filter(function (x) { return x.id !== id && x.cat !== 'KB'; }).slice(0, 3);
       rel.innerHTML = others.map(function (o) {
-        return '<a class="card card-pad" href="article.html?id=' + encodeURIComponent(o.id) + '"><span class="chip">' + esc(o.cat) + '</span><b style="display:block;color:var(--ink);margin:8px 0 4px">' + esc(o.title) + '</b><span class="form-note">' + esc(o.date) + '</span></a>';
+        return '<a class="card card-pad" href="/article?id=' + encodeURIComponent(o.id) + '"><span class="chip">' + esc(o.cat) + '</span><b style="display:block;color:var(--ink);margin:8px 0 4px">' + esc(o.title) + '</b><span class="form-note">' + esc(o.date) + '</span></a>';
       }).join('');
     }
     var prodGrid = $('#artProds');
@@ -1498,8 +1402,8 @@ var TM = window.TM || {};
           '  <div class="ua-rec-specs">' + esc(activeGoalObj.desc) + '</div>' +
           '</div>' +
           '<div class="ua-rec-actions">' +
-          '  <a class="btn btn-accent btn-sm" href="product.html?id=' + encodeURIComponent(p.id) + '">View Product Details →</a>' +
-          '  <a class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)" href="compatibility.html">Check Compatibility</a>' +
+          '  <a class="btn btn-accent btn-sm" href="/product?id=' + encodeURIComponent(p.id) + '">View Product Details →</a>' +
+          '  <a class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)" href="/compatibility">Check Compatibility</a>' +
           '</div>';
       }
 
@@ -1790,39 +1694,9 @@ var TM = window.TM || {};
     if (supForm) supForm.addEventListener('submit', function (e) {
       e.preventDefault();
       var q = ($('#supSearchInput').value || '').trim();
-      if (q) location.href = 'search.html?q=' + encodeURIComponent(q);
+      if (q) location.href = '/search?q=' + encodeURIComponent(q);
     });
-    var rmaForm = $('#rmaTrackForm');
-    if (rmaForm) rmaForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var v = ($('#rmaTrackInput').value || '').trim().toUpperCase();
-      var out = $('#rmaTrackOut');
-      // accept both confirmation formats: RMA-2026-123456 and TM-RMA-2026-0142
-      if (!/^(TM-)?RMA-\d{4}-\d{3,8}$/.test(v)) {
-        out.innerHTML = '<p class="form-note" style="color:#B3261E;margin:0">Enter the full format from your email — e.g. RMA-2026-123456 or TM-RMA-2026-0142.</p>';
-        return;
-      }
-      // P1.3: live case record from the API — no invented states (was sum % 5)
-      out.innerHTML = '<p class="form-note" style="margin:8px 0 0">Checking live case status…</p>';
-      rmaFetchCase(v, function (d) {
-        var idx = rmaStageIndex(d.status);
-        var labels = RMA_STAGES.map(function (s) { return s[1]; });
-        var last = (d.timeline && d.timeline.length) ? d.timeline[d.timeline.length - 1] : null;
-        out.innerHTML =
-          '<div class="rma-status"><b>' + esc(d.number || v) + '</b><span class="chip ' + (idx >= 5 ? 'ok' : '') + '">' + esc(labels[idx]) + '</span></div>' +
-          '<div class="rma-timeline">' + labels.map(function (s, i) {
-            return '<span class="rt-step' + (i <= idx ? ' on' : '') + (i === idx ? ' now' : '') + '">' + s + '</span>';
-          }).join('<i>→</i>') + '</div>' +
-          '<p class="form-note" style="margin:8px 0 0">Live status from the TwinMOS service centre' +
-          (last && last.at ? ' · updated ' + esc(rmaWhen(last.at)) : '') + '.</p>';
-      }, function (status) {
-        if (status === 404) {
-          out.innerHTML = '<p class="form-note" style="color:#B3261E;margin:8px 0 0">No RMA case exists with that number — check your confirmation email, or contact support with your proof of purchase.</p>';
-        } else {
-          out.innerHTML = '<p class="form-note" style="color:#B3261E;margin:8px 0 0">The service centre could not be reached — please retry in a moment.</p>';
-        }
-      });
-    });
+    // RMA tracking lives in portal.js (single handler, number + e-mail).
     // F14.1 — news category filter chips
     var nch = $('#newsChips');
     if (nch) {

@@ -1,0 +1,85 @@
+[
+ {
+  "key": "site.brand",
+  "value": {
+   "name": "TwinMOS Technologies",
+   "logoUrl": "/assets/img/logo.webp",
+   "tagline": "Legendary Memory Brand",
+   "faviconUrl": "/favicon.ico",
+   "foundingYear": 1998
+  },
+  "updated_at": "2026-10-26T06:41:36.717Z"
+ },
+ {
+  "key": "site.contact",
+  "value": {
+   "email": "sales@twinmos.com",
+   "phone": "+886 970-368-077",
+   "address": "5F.-5, No. 29, Sec. 1, Minsheng E. Rd., Zhongshan Dist., Taipei City 104619, Taiwan",
+   "country": "Taiwan",
+   "salesEmail": "sales@twinmos.com",
+   "supportEmail": "support@twinmos.com"
+  },
+  "updated_at": "2026-10-26T06:41:36.723Z"
+ },
+ {
+  "key": "site.social",
+  "value": {
+   "x": "https://x.com/twinmos",
+   "youtube": "https://www.youtube.com/c/TwinMOStech",
+   "facebook": "https://www.facebook.com/twinmos.tech",
+   "linkedin": "https://www.linkedin.com/company/twinmos-technologies/",
+   "instagram": "https://instagram.com/twinmos.tech",
+   "pinterest": "https://www.pinterest.com/twinmos"
+  },
+  "updated_at": "2026-10-26T06:41:36.725Z"
+ },
+ {
+  "key": "site.cookie",
+  "value": {
+   "title": "Cookie Preferences",
+   "policyUrl": "/legal.html#cookies",
+   "description": "We use essential cookies to ensure site security and proper functionality.",
+   "essentialOnlyDefault": true
+  },
+  "updated_at": "2026-10-26T06:41:36.726Z"
+ },
+ {
+  "key": "site.whatsapp",
+  "value": {
+   "waUrl": "https://wa.me/886970368077",
+   "phoneNumber": "886970368077",
+   "defaultMessage": ""
+  },
+  "updated_at": "2026-10-26T06:41:36.727Z"
+ },
+ {
+  "key": "seo.defaults",
+  "value": {
+   "defaultTitle": "TwinMOS Technologies — Legendary Memory & Storage",
+   "defaultRobots": "index, follow",
+   "titleTemplate": "%s | TwinMOS Technologies",
+   "defaultOgImage": "/assets/img/og-cover.png",
+   "defaultDescription": "Memory modules, SSDs, portable storage and accessories for customers worldwide."
+  },
+  "updated_at": "2026-10-26T06:41:36.729Z"
+ },
+ {
+  "key": "integrations",
+  "value": {
+   "analyticsEnabled": false,
+   "turnstileSiteKey": "",
+   "googleAnalyticsId": ""
+  },
+  "updated_at": "2026-10-26T06:41:36.730Z"
+ },
+ {
+  "key": "site.figures",
+  "value": {
+   "foundingYear": 1998,
+   "productCount": 39,
+   "countriesCount": "93+"
+  },
+  "updated_at": "2026-10-28T11:35:40.301Z"
+ }
+]

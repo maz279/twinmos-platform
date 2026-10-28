@@ -2,13 +2,14 @@
 // P2: routing email per type (mailer.ts), RMA intake creates a real RMA case
 // (number + creation event + customer confirmation), Idempotency-Key honored.
 import { Hono } from 'hono';
-import { eq } from 'drizzle-orm';
-import { createHmac } from 'node:crypto';
+import { and, asc, eq, isNull } from 'drizzle-orm';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import {
   formSubmissionSchema, rmaIntakeSchema, problem,
-  submissionRefPrefix, submissionAutoPriority, submissionSlaHours,
+  submissionRefPrefix, submissionAutoPriority, submissionSlaHours, warrantyStatusOf,
 } from '@twinmos/shared';
-import { formSubmission, jobApplication, rmaEvent, rmaRequest, newsletterSubscriber } from '@twinmos/db';
+import { activeRegistration } from './warranty.ts';
+import { formSubmission, jobApplication, rmaEvent, rmaRequest, newsletterSubscriber, contentFeedback, article, newsPost } from '@twinmos/db';
 import { sendFormRouting, sendCustomerConfirmation } from '../mailer.ts';
 import { alertManager } from '../services/alerts.ts';
 import { IdempotencyStore } from '../idem.ts';
@@ -23,9 +24,34 @@ function clean(value: unknown, max = 200): string {
 /** Idempotency for POST /forms (TTL + bounded; Redis in prod per docs/02). */
 const IDEMPOTENT = new IdempotencyStore();
 
+/** Pragmatic address check shared by the public forms (one @, a dot in the domain, no spaces). */
+export const EMAIL_RE = /^[^\s@]{1,64}@[^\s@.]+(\.[^\s@.]+)+$/;
+
+const NEWSLETTER_CONFIRM_TTL_MS = 7 * 24 * 3600_000;
+
+/** Public site origin for links in e-mails and redirects. */
+function siteBaseUrl(): string {
+  return (process.env.PUBLIC_SITE_URL || process.env.ORIGIN || 'https://www.twinmos.com').replace(/\/+$/, '');
+}
+
+/** Links clicked in a mail client land in a browser: send them to a real page, not raw JSON. */
+function wantsHtml(c: { req: { header: (n: string) => string | undefined } }): boolean {
+  const accept = c.req.header('accept') ?? '';
+  return accept.includes('text/html') && !accept.includes('application/json');
+}
+
+/** HMAC key for form tokens: a deployment secret, never a literal in source
+ *  (boot-config guarantees BETTER_AUTH_SECRET in production). */
+function formTokenSecret(): string {
+  const s = process.env.FORM_TOKEN_SECRET || process.env.BETTER_AUTH_SECRET || process.env.BETTER_AUTH_SECRETS?.split(',')[0];
+  if (s) return s;
+  if (process.env.NODE_ENV === 'production') throw new Error('FORM_TOKEN_SECRET/BETTER_AUTH_SECRET missing');
+  return 'dev-only-form-token-secret';
+}
+
 /** Form anti-spam token signed with 30-minute validity (T5.5.1). */
 export function createFormToken(issuedAt: number = Date.now()): string {
-  const secret = process.env.SESSION_SECRET || 'twinmos-form-token-secret-2026';
+  const secret = formTokenSecret();
   const payload = `${issuedAt}:${crypto.randomUUID().slice(0, 8)}`;
   const hmac = createHmac('sha256', secret).update(payload).digest('hex').slice(0, 16);
   return Buffer.from(`${payload}:${hmac}`).toString('base64url');
@@ -40,9 +66,10 @@ export function verifyFormToken(token: string): { valid: boolean; expired: boole
     const issuedAt = Number(issuedAtStr);
     if (!issuedAt || isNaN(issuedAt)) return { valid: false, expired: false, ageMs: 0 };
 
-    const secret = process.env.SESSION_SECRET || 'twinmos-form-token-secret-2026';
-    const expectedSig = createHmac('sha256', secret).update(`${issuedAt}:${nonce}`).digest('hex').slice(0, 16);
-    if (sig !== expectedSig) return { valid: false, expired: false, ageMs: 0 };
+    const expectedSig = createHmac('sha256', formTokenSecret()).update(`${issuedAt}:${nonce}`).digest('hex').slice(0, 16);
+    if (sig.length !== expectedSig.length || !timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+      return { valid: false, expired: false, ageMs: 0 };
+    }
 
     const ageMs = Date.now() - issuedAt;
     const MAX_AGE_MS = 30 * 60 * 1000; // 30 minutes per T5.5.1
@@ -106,40 +133,44 @@ export function formsRoute(db: DB) {
       if (!ok) return c.json(problem(403, 'Captcha Failed'), 403, { 'Content-Type': 'application/problem+json' });
     }
 
-    if (!email || !email.includes('@') || email.length > 255) {
+    if (email.length > 254 || !EMAIL_RE.test(email)) {
       return c.json(problem(422, 'Invalid email address'), 422, { 'Content-Type': 'application/problem+json' });
     }
 
-    const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    // ZT-033: the confirmation token is one-time and expires; the unsubscribe
+    // token is a different secret, so an unsubscribe link can never confirm.
+    const newToken = () => crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    const token = newToken();
+    const tokenExpiresAt = new Date(Date.now() + NEWSLETTER_CONFIRM_TTL_MS);
     const ip = c.req.header('cf-connecting-ip') ?? null;
 
     const existing = await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.email, email)).limit(1);
+    let unsubscribeToken = existing[0]?.unsubscribeToken ?? newToken();
     if (existing[0]) {
       if (existing[0].status === 'active') {
         return c.json({ ok: true, requiresConfirmation: false, status: 'active', message: 'You are already subscribed to the TwinMOS newsletter.' });
       }
+      if (!existing[0].unsubscribeToken || existing[0].unsubscribeToken === existing[0].token) unsubscribeToken = newToken();
       await db.update(newsletterSubscriber)
-        .set({ token, status: 'pending', source, ip, updatedAt: new Date() })
+        .set({ token, tokenExpiresAt, unsubscribeToken, status: 'pending', source, ip, updatedAt: new Date() })
         .where(eq(newsletterSubscriber.id, existing[0].id));
     } else {
       await db.insert(newsletterSubscriber).values({
-        email, token, status: 'pending', source, ip,
+        email, token, tokenExpiresAt, unsubscribeToken, status: 'pending', source, ip,
       });
     }
 
     // Send confirmation link with absolute URL and List-Unsubscribe headers
-    const siteUrl = process.env.PUBLIC_SITE_URL || process.env.ORIGIN || 'https://www.twinmos.com';
-    const baseUrl = siteUrl.replace(/\/+$/, '');
+    const baseUrl = siteBaseUrl();
     const confirmUrl = `${baseUrl}/api/v1/forms/newsletter/confirm?token=${token}`;
-    const unsubUrl = `${baseUrl}/api/v1/forms/newsletter/unsubscribe?token=${token}`;
+    const unsubUrl = `${baseUrl}/api/v1/forms/newsletter/unsubscribe?token=${unsubscribeToken}`;
 
     await sendCustomerConfirmation(
       email,
       'Confirm your TwinMOS newsletter subscription',
-      `Please confirm your subscription to the TwinMOS newsletter by clicking the link below:\n\n${confirmUrl}\n\nTo unsubscribe or cancel this request at any time:\n${unsubUrl}\n\nIf you did not request this, you can ignore this message.`,
+      `Please confirm your subscription to the TwinMOS newsletter by clicking the link below (valid for 7 days):\n\n${confirmUrl}\n\nTo unsubscribe or cancel this request at any time:\n${unsubUrl}\n\nIf you did not request this, you can ignore this message.`,
       {
         kind: 'newsletter-opt-in',
-        token,
         headers: {
           'List-Unsubscribe': `<${unsubUrl}>`,
           'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
@@ -181,14 +212,18 @@ export function formsRoute(db: DB) {
     }
 
     const sub = await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.token, token)).limit(1);
-    if (!sub[0]) {
+    const expired = sub[0]?.tokenExpiresAt && sub[0].tokenExpiresAt.getTime() < Date.now();
+    if (!sub[0] || expired) {
+      if (wantsHtml(c)) return c.redirect(`${siteBaseUrl()}/newsletter?status=invalid`, 303);
       return c.json(problem(404, 'Invalid or expired confirmation token'), 404, { 'Content-Type': 'application/problem+json' });
     }
 
+    // one-time: the confirmation token is consumed; only the unsubscribe token lives on
     await db.update(newsletterSubscriber)
-      .set({ status: 'active', confirmedAt: new Date(), updatedAt: new Date() })
+      .set({ status: 'active', confirmedAt: new Date(), token: null, tokenExpiresAt: null, updatedAt: new Date() })
       .where(eq(newsletterSubscriber.id, sub[0].id));
 
+    if (wantsHtml(c)) return c.redirect(`${siteBaseUrl()}/newsletter?status=confirmed`, 303);
     return c.json({
       ok: true,
       confirmed: true,
@@ -207,18 +242,19 @@ export function formsRoute(db: DB) {
       return c.json(problem(400, 'Unsubscribe token required'), 400, { 'Content-Type': 'application/problem+json' });
     }
     const cleanToken = token.trim();
-    const sub = await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.token, cleanToken)).limit(1);
+    const sub = await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.unsubscribeToken, cleanToken)).limit(1);
     if (!sub[0]) {
+      if (c.req.method === 'GET' && wantsHtml(c)) return c.redirect(`${siteBaseUrl()}/newsletter?status=invalid`, 303);
       return c.json(problem(404, 'Invalid or expired unsubscribe token'), 404, { 'Content-Type': 'application/problem+json' });
     }
 
     await db.update(newsletterSubscriber)
-      .set({ status: 'unsubscribed', unsubscribedAt: new Date(), updatedAt: new Date() })
+      .set({ status: 'unsubscribed', unsubscribedAt: new Date(), token: null, tokenExpiresAt: null, updatedAt: new Date() })
       .where(eq(newsletterSubscriber.id, sub[0].id));
 
-    const siteUrl = process.env.PUBLIC_SITE_URL || process.env.ORIGIN || 'https://www.twinmos.com';
-    const unsubUrl = `${siteUrl.replace(/\/+$/, '')}/api/v1/forms/newsletter/unsubscribe?token=${cleanToken}`;
+    const unsubUrl = `${siteBaseUrl()}/api/v1/forms/newsletter/unsubscribe?token=${cleanToken}`;
 
+    if (c.req.method === 'GET' && wantsHtml(c)) return c.redirect(`${siteBaseUrl()}/newsletter?status=unsubscribed`, 303);
     return c.json({
       ok: true,
       unsubscribed: true,
@@ -233,15 +269,40 @@ export function formsRoute(db: DB) {
   r.post('/forms/newsletter/unsubscribe', handleUnsubscribe);
   r.get('/forms/newsletter/unsubscribe', handleUnsubscribe);
 
+  // "Was this helpful?" votes (ZT-034). Registered before /forms/:type so it is
+  // not taken for a form type; inherits the 5/min/IP forms limiter (app.ts).
+  // Stores only entity + slug + locale + vote — no IP, no user agent.
+  r.post('/forms/content-feedback', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const entity = body.entity === 'news' ? 'news' : body.entity === 'article' ? 'article' : null;
+    const slug = typeof body.slug === 'string' ? body.slug.trim() : '';
+    if (!entity || !/^[a-z0-9-]{1,200}$/.test(slug) || typeof body.helpful !== 'boolean') {
+      return c.json(problem(422, 'Validation Failed', 'entity (article|news), slug and helpful (boolean) are required.'), 422, { 'Content-Type': 'application/problem+json' });
+    }
+    const locale = typeof body.locale === 'string' && /^[a-z]{2}(-[a-z]{2})?$/.test(body.locale) ? body.locale : 'en';
+    const table = entity === 'news' ? newsPost : article;
+    const found = await db.select({ id: table.id }).from(table)
+      .where(and(eq(table.slug, slug), eq(table.status, 'published'), isNull(table.deletedAt))).limit(1);
+    if (!found[0]) return c.json(problem(404, 'Not found'), 404, { 'Content-Type': 'application/problem+json' });
+    await db.insert(contentFeedback).values({ entity, slug, locale, helpful: body.helpful });
+    return c.json({ ok: true, recorded: true }, 201);
+  });
+
   r.post('/forms/:type', async (c) => {
-    // Idempotency-Key replay (TTL-bounded window; Redis in prod per docs/02)
-    const idemKey = c.req.header('Idempotency-Key');
+    const rawBody = await c.req.json().catch(() => ({}));
+    // Idempotency-Key replay (TTL-bounded window; Redis in prod per docs/02).
+    // The cache key binds the client's key to the exact request (type + body),
+    // so a key observed or guessed elsewhere can never return another visitor's
+    // submission reference (ZT-029) — it only dedupes true retries.
+    const idemHeader = c.req.header('Idempotency-Key');
+    const idemKey = idemHeader
+      ? `${idemHeader}:${createHash('sha256').update(c.req.param('type') + '\n' + JSON.stringify(rawBody)).digest('hex')}`
+      : null;
     if (idemKey) {
       const cached = IDEMPOTENT.get(idemKey) as { status: number; body: unknown } | undefined;
       if (cached) return c.json(cached.body, cached.status as 201);
     }
 
-    const rawBody = await c.req.json().catch(() => ({}));
     const honeypot = rawBody.website || rawBody.hp;
     const fillTimeMs = Number(rawBody.fillTimeMs || 0);
     const formToken = rawBody.formToken || rawBody.token;
@@ -260,8 +321,13 @@ export function formsRoute(db: DB) {
       return c.json(problem(400, 'Suspicious submission speed'), 400, { 'Content-Type': 'application/problem+json' });
     }
 
-    // Spam guard: token expiring after 30 minutes (T5.5.1)
-    if (formToken) {
+    // Spam guard: signed token expiring after 30 minutes (T5.5.1). Mandatory —
+    // an optional guard is no guard (ZT-028). Every site form carries one
+    // (BlockDispatcher hidden input + forms.js fetch of /forms/token).
+    if (!formToken) {
+      return c.json(problem(400, 'Form token required', 'Please refresh the page and try again.'), 400, { 'Content-Type': 'application/problem+json' });
+    }
+    {
       const parsedToken = verifyFormToken(formToken);
       if (parsedToken.expired) {
         return c.json(problem(400, 'Form session expired. Please refresh the page and try again.'), 400, { 'Content-Type': 'application/problem+json' });
@@ -319,6 +385,25 @@ export function formsRoute(db: DB) {
         return c.json(problem(422, 'Validation Failed', 'RMA requests need product and issue details (10+ chars).', intake.error.issues), 422, { 'Content-Type': 'application/problem+json' });
       }
       const d = intake.data;
+      // BR-6.2 (ZT-027): no RMA for unregistered or out-of-warranty products.
+      // The warranty tier is derived from the registration, never taken from
+      // the client (it used to store whatever the form posted).
+      const site = siteBaseUrl();
+      const serialNo = String(d.serial ?? '').trim().toUpperCase();
+      if (!serialNo) {
+        return c.json({ ...problem(422, 'Serial number required', 'Enter the serial number printed on the product label.'), code: 'SERIAL_REQUIRED' }, 422, { 'Content-Type': 'application/problem+json' });
+      }
+      const registration = await activeRegistration(db, serialNo);
+      if (!registration || registration.email !== d.email.trim().toLowerCase()) {
+        return c.json({ ...problem(422, 'Please register your product first', `RMA requests need a warranty registration for this serial under your e-mail address. Register at ${site}/support/warranty, then submit the RMA.`), code: 'NOT_REGISTERED' }, 422, { 'Content-Type': 'application/problem+json' });
+      }
+      const wStatus = warrantyStatusOf(registration);
+      if (wStatus === 'expired') {
+        return c.json({ ...problem(422, 'Warranty expired', `The warranty for ${serialNo} ended on ${new Date(registration.warrantyExpiresAt!).toISOString().slice(0, 10)}. Contact TwinMOS support for out-of-warranty service options.`), code: 'WARRANTY_EXPIRED' }, 422, { 'Content-Type': 'application/problem+json' });
+      }
+      d.warrantyTier = (registration.warrantyTerm ?? 'undetermined').slice(0, 20);
+      d.sku = d.sku ?? registration.sku ?? undefined;
+      d.serial = serialNo;
       rmaNumber = await nextRmaNumber(db);
       const created = await db.insert(rmaRequest).values({
         number: rmaNumber,
@@ -335,7 +420,7 @@ export function formsRoute(db: DB) {
       await sendCustomerConfirmation(
         d.email,
         `TwinMOS RMA ${rmaNumber} — request received`,
-        `We received your RMA request for ${d.product}.\n\nYour RMA number: ${rmaNumber}\nKeep this number to track the request on twinmos.com/rma.html.\n\nOur support team reviews requests within one business day and replies with shipping instructions.`,
+        `We received your RMA request for ${d.product}.\n\nYour RMA number: ${rmaNumber}\nTrack it any time at ${siteBaseUrl()}/rma with this number and this e-mail address.\n\nOur support team reviews requests within one business day and replies with shipping instructions.`,
         { number: rmaNumber },
       );
     }
@@ -382,29 +467,42 @@ export function formsRoute(db: DB) {
     if (idemKey) IDEMPOTENT.set(idemKey, { status: 201, body });    return c.json(body, 201);
   });
 
-  const rmaGetHandler = async (c: any) => {
-    const number = clean(c.req.param('number'), 24).toUpperCase();
-    if (!/^(TM-)?RMA-\d{4}-\d{3,8}$/.test(number)) {
-      return c.json(problem(400, 'Invalid RMA number format'), 400, { 'Content-Type': 'application/problem+json' });
+  // Public RMA tracking (zero-trust audit ZT-025/026). Ownership proof is the RMA
+  // number PLUS the e-mail the case was opened with, sent in a POST body so
+  // neither lands in URLs or access logs. A wrong pair answers exactly like an
+  // unknown number (no oracle). The timeline is the public projection only:
+  // status steps and dates — staff replies and internal notes never leave the
+  // console. Rate-limited with the rest of /api/v1/rma/* (app.ts).
+  r.post('/rma/track', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const number = clean(body.number, 24).toUpperCase();
+    const email = String(body.email ?? '').trim().toLowerCase();
+    if (!/^(TM-)?RMA-\d{4}-\d{6}$/.test(number) || !EMAIL_RE.test(email)) {
+      return c.json(problem(400, 'Invalid request', 'Enter the RMA number from your confirmation e-mail and the e-mail address you used.'), 400, { 'Content-Type': 'application/problem+json' });
     }
     const canonical = number.startsWith('TM-') ? number : 'TM-' + number;
-    const found = await db.select({ id: rmaRequest.id, number: rmaRequest.number, status: rmaRequest.status, createdAt: rmaRequest.createdAt, customer: rmaRequest.customer, productSku: rmaRequest.productSku, issue: rmaRequest.issue })
+    const found = await db.select({ id: rmaRequest.id, number: rmaRequest.number, status: rmaRequest.status, createdAt: rmaRequest.createdAt, customer: rmaRequest.customer, productSku: rmaRequest.productSku })
       .from(rmaRequest).where(eq(rmaRequest.number, canonical)).limit(1);
     const rma = found[0];
-    if (!rma) return c.json(problem(404, 'RMA not found'), 404, { 'Content-Type': 'application/problem+json' });
-    const events = await db.select({ from: rmaEvent.fromStatus, to: rmaEvent.toStatus, note: rmaEvent.note, at: rmaEvent.at })
-      .from(rmaEvent).where(eq(rmaEvent.rmaId, rma.id));
-    // Public projection: masked customer info only.
-    const customer = (rma.customer ?? {}) as Record<string, unknown>;
-    const maskedInfo = {
-      name: maskName(String(customer.name ?? '')),
-      product: customer.product ?? rma.productSku ?? '',
-    };
-    return c.json({ number: rma.number, status: rma.status, createdAt: rma.createdAt, maskedInfo, timeline: events });
-  };
-
-  r.get('/rma/:number', rmaGetHandler);
-  r.get('/forms/rma/:number', rmaGetHandler);
+    const customer = (rma?.customer ?? {}) as Record<string, unknown>;
+    if (!rma || String(customer.email ?? '').trim().toLowerCase() !== email) {
+      return c.json(problem(404, 'RMA not found', 'No case matches that RMA number and e-mail address.'), 404, { 'Content-Type': 'application/problem+json' });
+    }
+    const events = await db.select({ from: rmaEvent.fromStatus, to: rmaEvent.toStatus, at: rmaEvent.at })
+      .from(rmaEvent).where(eq(rmaEvent.rmaId, rma.id)).orderBy(asc(rmaEvent.at), asc(rmaEvent.id));
+    // Creation event (submitted→submitted) plus real status changes; same-state
+    // rows are staff annotations/replies and stay private.
+    const timeline = events.filter((e, i) => i === 0 || e.from !== e.to);
+    return c.json({
+      number: rma.number, status: rma.status, createdAt: rma.createdAt,
+      maskedInfo: { name: maskName(String(customer.name ?? '')), product: customer.product ?? rma.productSku ?? '' },
+      timeline,
+    }, 200, { 'Cache-Control': 'no-store' });
+  });
+  // The old number-only GET lookups exposed case data to anyone holding a number.
+  const gone = (c: any) => c.json(problem(410, 'Gone', 'Use POST /api/v1/rma/track with the RMA number and your e-mail address.'), 410, { 'Content-Type': 'application/problem+json' });
+  r.get('/rma/:number', gone);
+  r.get('/forms/rma/:number', gone);
 
   return r;
 }
@@ -415,7 +513,7 @@ function maskName(name: string): string {
   return parts.map((p, i) => (i === 0 ? p : p[0] + '.')).join(' ');
 }
 
-async function verifyTurnstile(token: string, ip: string | undefined): Promise<boolean> {
+export async function verifyTurnstile(token: string, ip: string | undefined): Promise<boolean> {
   try {
     const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',

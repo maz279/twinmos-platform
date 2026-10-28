@@ -10,8 +10,9 @@ data/*.pgdata*
 coverage/
 .turbo/
 .mimosa/
-data/
-!tooling/data/
+# root-level dev data only — an unanchored 'data/' once hid apps/web/src/data
+# from git and broke every clean-clone build (zero-trust audit ZT-001)
+/data/
 apps/web/public/__audit/
 apps/web/_p1/
 _p1/
@@ -22,3 +23,7 @@ workspace/
 apps/api/data/
 
 deploy/compose/.env
+
+# zero-trust audit: screenshot sets are reviewed locally; curated copies are committed
+evidence/zt-2026-10-28/**/shots*/
+evidence/zt-2026-10-28/**/crawl*/shots/

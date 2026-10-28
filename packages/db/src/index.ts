@@ -31,6 +31,11 @@ export function createPgliteDb(dataDir?: string): DB {
 
 export function createDb(databaseUrl?: string, options?: { forcePglite?: boolean }): DB {
   if (options?.forcePglite || process.env.FORCE_PGLITE === '1') {
+    // The production guard must come first: FORCE_PGLITE used to bypass it and
+    // run production on an embedded single-file database (ZT audit).
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('FORCE_PGLITE is not allowed when NODE_ENV=production (PGlite is dev/test only)');
+    }
     return createPgliteDb();
   }
   const url = databaseUrl ?? process.env.DATABASE_URL;

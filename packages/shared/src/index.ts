@@ -357,6 +357,63 @@ export const rmaIntakeSchema = z.object({
 });
 export type RmaIntake = z.infer<typeof rmaIntakeSchema>;
 
+// ---- Warranty registration & lookup (BRD §F8.3, URD UR-6.x, BR-6.2) ----
+const serialField = z.string().trim().min(4).max(60).regex(/^[A-Za-z0-9._-]+$/, 'letters, digits, dot, dash, underscore')
+  .transform((s) => s.toUpperCase());
+const isoDay = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD');
+export const warrantyRegisterSchema = z.object({
+  serial: serialField,
+  email: z.string().trim().toLowerCase().email().max(254),
+  name: contactField,
+  country: z.string().trim().max(80).optional(),
+  purchaseDate: isoDay,
+  retailer: z.string().trim().max(120).optional(),
+  consent: z.literal(true),
+  turnstileToken: z.string().max(4096).optional(),
+  formToken: z.string().max(512).optional(),
+});
+export const warrantyLookupSchema = z.object({
+  serial: serialField,
+  email: z.string().trim().toLowerCase().email().max(254),
+});
+export const WARRANTY_STATUSES = ['active', 'expiring_soon', 'expired', 'lifetime', 'undetermined', 'not_registered'] as const;
+export type WarrantyStatusName = (typeof WARRANTY_STATUSES)[number];
+/** Days before expiry at which "Expiring soon" is shown (URD UR-6.1.7). */
+export const WARRANTY_EXPIRING_SOON_DAYS = 60;
+
+/** Parse a product's published warranty string ("5 Years", "Lifetime",
+ *  "Product lifetime warranty", "18 months"). null = cannot be determined. */
+export function parseWarrantyTerm(term: string | null | undefined): { kind: 'lifetime' } | { kind: 'months'; months: number } | null {
+  const t = String(term ?? '').trim().toLowerCase();
+  if (!t) return null;
+  if (/lifetime/.test(t)) return { kind: 'lifetime' };
+  const y = /(\d{1,2})\s*-?\s*(year|yr)/.exec(t);
+  if (y) return { kind: 'months', months: Number(y[1]) * 12 };
+  const m = /(\d{1,3})\s*-?\s*month/.exec(t);
+  if (m) return { kind: 'months', months: Number(m[1]) };
+  return null;
+}
+
+/** Expiry instant for a purchase day under a parsed term (null = no expiry / unknown). */
+export function warrantyExpiry(purchaseDate: string, term: ReturnType<typeof parseWarrantyTerm>): Date | null {
+  if (!term || term.kind === 'lifetime') return null;
+  const d = new Date(`${purchaseDate}T23:59:59Z`);
+  d.setUTCMonth(d.getUTCMonth() + term.months);
+  return d;
+}
+
+export function warrantyStatusOf(reg: { warrantyTerm: string | null; warrantyExpiresAt: Date | string | null } | null, now = new Date()): WarrantyStatusName {
+  if (!reg) return 'not_registered';
+  const term = parseWarrantyTerm(reg.warrantyTerm);
+  if (!term) return 'undetermined';
+  if (term.kind === 'lifetime') return 'lifetime';
+  const exp = reg.warrantyExpiresAt ? new Date(reg.warrantyExpiresAt) : null;
+  if (!exp) return 'undetermined';
+  if (exp.getTime() < now.getTime()) return 'expired';
+  if (exp.getTime() - now.getTime() < WARRANTY_EXPIRING_SOON_DAYS * 86400_000) return 'expiring_soon';
+  return 'active';
+}
+
 // ---- P2: admin mutations ----
 export const submissionUpdateSchema = z.object({
   status: z.enum(SUBMISSION_STATUS).optional(),

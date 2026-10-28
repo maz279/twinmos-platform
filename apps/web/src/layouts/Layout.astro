@@ -7,7 +7,7 @@ import Breadcrumb from '../components/chrome/Breadcrumb.astro';
 import Footer from '../components/chrome/Footer.astro';
 import CookieBanner from '../components/chrome/CookieBanner.astro';
 import CompareTray from '../components/chrome/CompareTray.astro';
-import { getDeliverySettings, getDeliveryNavMenu } from '../lib/delivery';
+import { getDeliverySettings, getDeliveryNavMenu, getDeliveryActiveLocales } from '../lib/delivery';
 import { SETTINGS_GROUP_DEFAULTS, resolveComputedFigures } from '@twinmos/shared';
 
 interface BreadcrumbItem {
@@ -74,11 +74,12 @@ const localeUrl = (code: string) => {
   );
 };
 
-const [settings, headerMenu, drawerMenu, footerMenu] = await Promise.all([
+const [settings, headerMenu, drawerMenu, footerMenu, activeLocales] = await Promise.all([
   getDeliverySettings(),
   getDeliveryNavMenu('header', locale),
   getDeliveryNavMenu('drawer', locale),
   getDeliveryNavMenu('footer', locale),
+  getDeliveryActiveLocales().catch(() => ['en']),
 ]);
 const brand = { ...SETTINGS_GROUP_DEFAULTS['site.brand'], ...(settings['site.brand'] || {}) };
 const contact = { ...SETTINGS_GROUP_DEFAULTS['site.contact'], ...(settings['site.contact'] || {}) };
@@ -86,6 +87,11 @@ const social = { ...SETTINGS_GROUP_DEFAULTS['site.social'], ...(settings['site.s
 const figures = resolveComputedFigures({ ...SETTINGS_GROUP_DEFAULTS['site.figures'], ...(settings['site.figures'] || {}) });
 const seo = { ...SETTINGS_GROUP_DEFAULTS['seo.defaults'], ...(settings['seo.defaults'] || {}) };
 const integrations = { ...SETTINGS_GROUP_DEFAULTS['integrations'], ...(settings['integrations'] || {}) };
+// CMS key wins when an editor set a real one; otherwise the deployment key, read at
+// request time (SSR) so the image needs no rebuild per environment.
+const TURNSTILE_PLACEHOLDER = '0x4AAAAAAAx';
+const cmsTurnstileKey = integrations.turnstileSiteKey && integrations.turnstileSiteKey !== TURNSTILE_PLACEHOLDER ? integrations.turnstileSiteKey : '';
+const turnstileSiteKey = cmsTurnstileKey || process.env.PUBLIC_TURNSTILE_SITE_KEY || import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || '';
 const cookieSettings = { ...SETTINGS_GROUP_DEFAULTS['site.cookie'], ...(settings['site.cookie'] || {}) };
 const whatsapp = { ...SETTINGS_GROUP_DEFAULTS['site.whatsapp'], ...(settings['site.whatsapp'] || {}) };
 
@@ -210,7 +216,7 @@ const OG_TYPE = isHomepage ? 'website' : (path.startsWith('/learn/') ? 'article'
     <link rel="stylesheet" href="/assets/css/a11y-overrides.css" />
     {locale === 'ar' && <link rel="stylesheet" href="/assets/css/rtl.css" />}
     <meta name="twinmos-api" content={import.meta.env.PUBLIC_API_URL ?? ''} />
-    <meta name="turnstile-site-key" content={integrations.turnstileSiteKey || import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || ''} />
+    <meta name="turnstile-site-key" content={turnstileSiteKey} />
     <meta
       name="twinmos-analytics"
       content={integrations.analyticsEnabled && integrations.googleAnalyticsId ? integrations.googleAnalyticsId : ''}
@@ -231,7 +237,7 @@ const OG_TYPE = isHomepage ? 'website' : (path.startsWith('/learn/') ? 'article'
     {renderChrome && (
       <>
         <a class="skip-link" href="#main">Skip to main content</a>
-        <Header activePath={path} currentLocale={locale} brand={brand} figures={figures} menu={headerMenu} />
+        <Header activePath={path} currentLocale={locale} brand={brand} figures={figures} menu={headerMenu} locales={activeLocales} />
         <Drawer currentLocale={locale} brand={brand} menu={drawerMenu} />
         <SearchOverlay />
         {breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}

@@ -1,7 +1,7 @@
 // TwinMOS platform schema — Postgres dialect (Drizzle).
 // SECURITY: application code uses the Drizzle query builder only; every value is
 // parameter-bound. Never assemble SQL from strings (repo lint + review enforce).
-import { pgTable, pgEnum, text, varchar, integer, boolean, timestamp, jsonb, serial, numeric, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { pgTable, pgEnum, text, varchar, integer, boolean, timestamp, jsonb, serial, numeric, uniqueIndex, index, date } from 'drizzle-orm/pg-core';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 export const roleEnum = pgEnum('role', ['super_admin', 'admin', 'editor', 'author', 'viewer', 'member']);
@@ -338,6 +338,26 @@ export const partnerAsset = pgTable('partner_asset', {
 }, (t) => [index('partner_asset_category_idx').on(t.category, t.orgId)]);
 
 /** Anti-counterfeit verification log (public SN-check writes here). */
+/** 0033: customer warranty registration (BRD §F8.3, BR-6.2). One ACTIVE row per
+ *  serial (partial unique index in the migration). warrantyTerm is copied from
+ *  the product at registration; warrantyExpiresAt null = lifetime/undetermined. */
+export const productRegistration = pgTable('product_registration', {
+  id: serial('id').primaryKey(),
+  serial: varchar('serial', { length: 60 }).notNull().references(() => serialRegistry.serial, { onDelete: 'restrict' }),
+  sku: varchar('sku', { length: 40 }),
+  email: text('email').notNull(),
+  name: text('name').notNull(),
+  country: varchar('country', { length: 80 }),
+  purchaseDate: date('purchase_date', { mode: 'string' }).notNull(),
+  retailer: varchar('retailer', { length: 120 }),
+  warrantyTerm: varchar('warranty_term', { length: 80 }),
+  warrantyExpiresAt: timestamp('warranty_expires_at', { withTimezone: true }),
+  status: varchar('status', { length: 20 }).notNull().default('active'), // active | void
+  voidReason: text('void_reason'),
+  createdAt: ts(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index('product_registration_email_idx').on(t.email)]);
+
 export const snCheck = pgTable('sn_check', {
   id: serial('id').primaryKey(),
   serial: varchar('serial', { length: 60 }).notNull(), sku: varchar('sku', { length: 40 }),
@@ -562,7 +582,10 @@ export const newsletterSubscriber = pgTable('newsletter_subscriber', {
   id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),
   status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | active | unsubscribed
-  token: varchar('token', { length: 64 }),
+  token: varchar('token', { length: 64 }), // one-time confirmation token (cleared on confirm)
+  // 0032 (ZT-033): separate unsubscribe token + confirmation expiry
+  unsubscribeToken: varchar('unsubscribe_token', { length: 64 }),
+  tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }),
   source: varchar('source', { length: 100 }).default('site_footer'),
   confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
   unsubscribedAt: timestamp('unsubscribed_at', { withTimezone: true }),
@@ -572,7 +595,18 @@ export const newsletterSubscriber = pgTable('newsletter_subscriber', {
 }, (t) => [
   index('newsletter_sub_status_idx').on(t.status),
   index('newsletter_sub_token_idx').on(t.token),
+  index('newsletter_sub_unsub_token_idx').on(t.unsubscribeToken),
 ]);
+
+/** 0032 (ZT-034): "Was this helpful?" votes on articles/news — no PII stored. */
+export const contentFeedback = pgTable('content_feedback', {
+  id: serial('id').primaryKey(),
+  entity: varchar('entity', { length: 20 }).notNull(), // article | news
+  slug: varchar('slug', { length: 200 }).notNull(),
+  locale: varchar('locale', { length: 10 }).notNull().default('en'),
+  helpful: boolean('helpful').notNull(),
+  createdAt: ts(),
+}, (t) => [index('content_feedback_entity_slug_idx').on(t.entity, t.slug)]);
 
 export const searchQueryLog = pgTable('search_query_log', {
   id: serial('id').primaryKey(),

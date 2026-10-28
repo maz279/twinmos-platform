@@ -39,7 +39,18 @@ import {
   type SettingsGroupKey,
 } from '@twinmos/shared';
 
+/** ILIKE '%term%' with the visitor's % _ \ escaped (ZT-031): user input is a
+ *  literal substring, never a pattern (brand=% used to return the whole table). */
+export function contains(term: string): string {
+  return `%${String(term).replace(/[\\%_]/g, (m) => '\\' + m)}%`;
+}
+
+/** Search input bounds (ZT-032): a 2,800-char query took 8.5 s of ILIKE scans. */
+const SEARCH_MAX_CHARS = 100;
+const SEARCH_MAX_TOKENS = 6;
+
 // Safe public setting keys allowlist (T3.1.1 / Z-12 / MS4.2 T4.2.1)
+
 export const PUBLIC_SETTING_KEYS = new Set([
   'site_name',
   'site_description',
@@ -346,12 +357,12 @@ export async function findPublishedProducts(db: DB, filters: ProductQueryFilters
   }
 
   if (filters.q) {
-    const cleanQ = filters.q.trim();
+    const cleanQ = filters.q.trim().slice(0, SEARCH_MAX_CHARS);
     conditions.push(
       or(
-        ilike(product.name, `%${cleanQ}%`),
-        ilike(product.description, `%${cleanQ}%`),
-        ilike(product.shortSpec, `%${cleanQ}%`)
+        ilike(product.name, contains(cleanQ)),
+        ilike(product.description, contains(cleanQ)),
+        ilike(product.shortSpec, contains(cleanQ))
       )!
     );
   }
@@ -822,8 +833,8 @@ export async function findGlossaryTerms(
   if (search) {
     filters.push(
       or(
-        ilike(glossaryTerm.term, `%${search}%`),
-        ilike(glossaryTerm.definition, `%${search}%`)
+        ilike(glossaryTerm.term, contains(search)),
+        ilike(glossaryTerm.definition, contains(search))
       )!
     );
   }
@@ -991,7 +1002,7 @@ export async function findSafePublicSettings(db: DB) {
   if (map['integrations'] && typeof map['integrations'] === 'object') {
     const integ = map['integrations'] as any;
     map['integrations'] = {
-      turnstileSiteKey: String(integ.turnstileSiteKey || '0x4AAAAAAAx'),
+      turnstileSiteKey: String(integ.turnstileSiteKey || ''),
       analyticsEnabled: Boolean(integ.analyticsEnabled),
       googleAnalyticsId: String(integ.googleAnalyticsId || ''),
     };
@@ -1147,7 +1158,7 @@ export async function findPublishedSitemapEntries(db: DB, targetLocale?: string)
 // --- 13. Search & Search Suggestions Queries ---
 
 export async function findSearchSuggestions(db: DB, q: string) {
-  const cleanQ = q.toLowerCase();
+  const cleanQ = q.toLowerCase().slice(0, SEARCH_MAX_CHARS);
   const now = new Date();
 
   const [prods, arts, terms] = await Promise.all([
@@ -1159,7 +1170,7 @@ export async function findSearchSuggestions(db: DB, q: string) {
           eq(product.status, 'published'),
           isNull(product.deletedAt),
           or(isNull(product.launchDate), lte(product.launchDate, now))!,
-          ilike(product.name, `%${cleanQ}%`)
+          ilike(product.name, contains(cleanQ))
         )
       )
       .limit(5),
@@ -1171,14 +1182,14 @@ export async function findSearchSuggestions(db: DB, q: string) {
           eq(article.status, 'published'),
           isNull(article.deletedAt),
           or(isNull(article.publishAt), lte(article.publishAt, now))!,
-          ilike(article.title, `%${cleanQ}%`)
+          ilike(article.title, contains(cleanQ))
         )
       )
       .limit(5),
     db
       .select({ term: glossaryTerm.term })
       .from(glossaryTerm)
-      .where(ilike(glossaryTerm.term, `%${cleanQ}%`))
+      .where(ilike(glossaryTerm.term, contains(cleanQ)))
       .limit(5),
   ]);
 
@@ -1222,8 +1233,8 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
     return { query: '', total: 0, page: pageNum, limit, facets: {}, results: [] };
   }
 
-  const cleanQ = q.toLowerCase();
-  const queryTokens = cleanQ.split(/\s+/).filter(Boolean);
+  const cleanQ = q.toLowerCase().slice(0, SEARCH_MAX_CHARS);
+  const queryTokens = [...new Set(cleanQ.split(/\s+/).filter(Boolean))].slice(0, SEARCH_MAX_TOKENS);
   const now = new Date();
 
   // 1. Products search (SQL-level querying, Defect Z-22 resolved)
@@ -1237,9 +1248,9 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
     for (const tok of queryTokens) {
       prodConditions.push(
         or(
-          ilike(product.name, `%${tok}%`),
-          ilike(product.description, `%${tok}%`),
-          ilike(product.shortSpec, `%${tok}%`)
+          ilike(product.name, contains(tok)),
+          ilike(product.description, contains(tok)),
+          ilike(product.shortSpec, contains(tok))
         )!
       );
     }
@@ -1282,9 +1293,9 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
     for (const tok of queryTokens) {
       artConditions.push(
         or(
-          ilike(article.title, `%${tok}%`),
-          ilike(article.deck, `%${tok}%`),
-          ilike(article.body, `%${tok}%`)
+          ilike(article.title, contains(tok)),
+          ilike(article.deck, contains(tok)),
+          ilike(article.body, contains(tok))
         )!
       );
     }
@@ -1325,8 +1336,8 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
     for (const tok of queryTokens) {
       glossConditions.push(
         or(
-          ilike(glossaryTerm.term, `%${tok}%`),
-          ilike(glossaryTerm.definition, `%${tok}%`)
+          ilike(glossaryTerm.term, contains(tok)),
+          ilike(glossaryTerm.definition, contains(tok))
         )!
       );
     }
@@ -1361,8 +1372,8 @@ export async function searchPublishedContent(db: DB, options: SearchOptions) {
     for (const tok of queryTokens) {
       pageConditions.push(
         or(
-          ilike(page.title, `%${tok}%`),
-          ilike(page.seoDescription, `%${tok}%`)
+          ilike(page.title, contains(tok)),
+          ilike(page.seoDescription, contains(tok))
         )!
       );
     }
@@ -1442,10 +1453,10 @@ export async function findCompatibilityRules(
 ) {
   const conditions: SQL[] = [];
   if (params.brand) {
-    conditions.push(ilike(compatibilityRule.deviceBrand, `%${params.brand}%`));
+    conditions.push(ilike(compatibilityRule.deviceBrand, contains(params.brand)));
   }
   if (params.model) {
-    conditions.push(ilike(compatibilityRule.deviceModel, `%${params.model}%`));
+    conditions.push(ilike(compatibilityRule.deviceModel, contains(params.model)));
   }
   if (params.deviceType) {
     conditions.push(eq(compatibilityRule.deviceType, params.deviceType));
@@ -1464,7 +1475,7 @@ export async function findDistributors(db: DB, filters: { region?: string; statu
   const targetStatus = filters.status || 'authorized';
   const conditions: SQL[] = [eq(distributor.status, targetStatus)];
   if (filters.region) conditions.push(eq(distributor.region, filters.region));
-  if (filters.country) conditions.push(ilike(distributor.country, `%${filters.country}%`));
+  if (filters.country) conditions.push(ilike(distributor.country, contains(filters.country)));
 
   return await db
     .select()
@@ -1475,7 +1486,7 @@ export async function findDistributors(db: DB, filters: { region?: string; statu
 
 export async function findMarketplaces(db: DB, country?: string) {
   const conditions: SQL[] = [];
-  if (country) conditions.push(ilike(marketplaceListing.country, `%${country}%`));
+  if (country) conditions.push(ilike(marketplaceListing.country, contains(country)));
 
   return await db
     .select()

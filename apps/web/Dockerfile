@@ -8,6 +8,9 @@ COPY apps/web/package.json ./apps/web/
 RUN npm ci
 
 COPY apps/web/ ./apps/web/
+# app.js is a build artefact of the in-repo prototype (gitignored under
+# public/); the image must vendor it itself or a clean-clone build ships none.
+COPY prototype/assets/js/app.js ./apps/web/public/assets/js/app.js
 COPY tsconfig.base.json ./
 WORKDIR /app/apps/web
 ENV NODE_ENV=production

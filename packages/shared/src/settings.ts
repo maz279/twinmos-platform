@@ -70,7 +70,10 @@ export type SeoDefaultsSettings = z.infer<typeof seoDefaultsSchema>;
 
 // 8. integrations: Turnstile site key and analytics switch
 export const integrationsSchema = z.object({
-  turnstileSiteKey: z.string().trim().min(1).default('0x4AAAAAAAx'),
+  // Empty = use the deployment's PUBLIC_TURNSTILE_SITE_KEY. (The old default
+  // '0x4AAAAAAAx' was a placeholder that silently disabled the widget, so every
+  // production form failed with "Captcha token required".)
+  turnstileSiteKey: z.string().trim().default(''),
   analyticsEnabled: z.boolean().default(false),
   googleAnalyticsId: z.string().trim().optional().default(''),
 });

@@ -130,36 +130,39 @@ export async function sendRmaStatusMail(to: string, number: string, from: string
   return sendMail({
     to,
     subject: `TwinMOS RMA ${number} — status updated to ${toStatus.replace('_', ' ')}`,
-    text: `Your RMA request ${number} moved from ${from.replace('_', ' ')} to ${toStatus.replace('_', ' ')}.${note ? `\n\nNote from our team: ${note}` : ''}\n\nTrack your request any time: https://www.twinmos.com/rma.html`,
+    text: `Your RMA request ${number} moved from ${from.replace(/_/g, ' ')} to ${toStatus.replace(/_/g, ' ')}.${note ? `\n\nNote from our team: ${note}` : ''}\n\nTrack your request any time at ${(process.env.PUBLIC_SITE_URL || 'https://www.twinmos.com').replace(/\/+$/, '')}/rma with your RMA number and e-mail address.`,
     meta: { kind: 'rma-status', number, from, toStatus },
   });
 }
 
 /** Staff invitation email containing login link and temporary credentials. */
+/** Public URL of the admin console. It is served by the same origin as the site
+ *  (nginx /admin/); the old default pointed at a non-existent admin.twinmos.com. */
+export function adminBaseUrl(): string {
+  return (process.env.ADMIN_PUBLIC_URL
+    || `${(process.env.PUBLIC_SITE_URL || 'https://www.twinmos.com').replace(/\/+$/, '')}/admin/`);
+}
+
+/** Staff invitation. Credentials are never mailed (ZT-014): when the inviter
+ *  did not set a password, the invitee gets a separate single-use set-password
+ *  link (Better Auth reset flow) and chooses their own. */
 export async function sendStaffInviteMail(
   to: string,
   name: string,
   role: string,
-  temporaryPassword?: string,
+  setPasswordLinkSent = false,
 ): Promise<boolean> {
-  const adminUrl = process.env.ADMIN_URL ?? 'https://admin.twinmos.com';
+  const adminUrl = adminBaseUrl();
   const text = [
     `Hello ${name},`,
     '',
     `You have been invited to join the TwinMOS Administration Portal with the role: ${role}.`,
     '',
-    ...(temporaryPassword
-      ? [
-          'Your temporary login credentials are provided below:',
-          `- Portal: ${adminUrl}`,
-          `- Email: ${to}`,
-          `- Temporary Password: ${temporaryPassword}`,
-          '',
-          'For security, you must sign in and change your password immediately or enroll in Two-Factor Authentication (TOTP).',
-        ]
-      : [
-          `Access the portal at: ${adminUrl}`,
-        ]),
+    `Portal: ${adminUrl}`,
+    ...(setPasswordLinkSent
+      ? ['A separate e-mail contains a single-use link to choose your password (valid for 1 hour).']
+      : ['Sign in with the password your administrator gave you.']),
+    'Verify your e-mail address with the link we sent, then enrol two-factor authentication at first sign-in.',
     '',
     'Regards,',
     'TwinMOS Security & Operations Team',

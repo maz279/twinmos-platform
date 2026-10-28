@@ -51,29 +51,29 @@ if (!targetPassword) {
 
 // 1) first admin user — created through Better Auth so the password hash format is correct
 // SEED-01 / AUTH-BOOT: super_admin created verified so staff sign-in is immediately unblocked
+if (targetPassword.length < 12) {
+  console.error('[seed] SEED_ADMIN_PASSWORD must be at least 12 characters.');
+  process.exit(1);
+}
 const existing = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
-const signUpPassword = targetPassword.length >= 10 ? targetPassword : 'DevOnly-ChangeMe-2026!';
 
 if (existing.length === 0) {
-  await auth.api.signUpEmail({ body: { email, password: signUpPassword, name: 'Platform Admin' } });
-  await db.update(user).set({ role: 'super_admin', emailVerified: true, twoFactorEnabled: false }).where(eq(user.email, email));
-  if (targetPassword !== signUpPassword) {
-    const [u] = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
-    if (u) {
-      const hash = await hashPassword(targetPassword);
-      await db.update(account)
-        .set({ password: hash, updatedAt: new Date() })
-        .where(and(eq(account.userId, u.id), eq(account.providerId, 'credential')));
-    }
-  }
-  console.log('[seed] admin user created: ' + email + ' (super_admin, verified)');
+  await auth.api.signUpEmail({ body: { email, password: targetPassword, name: 'Platform Admin' } });
+  await db.update(user).set({ role: 'super_admin', emailVerified: true }).where(eq(user.email, email));
+  console.log('[seed] admin user created: ' + email + ' (super_admin, verified; MFA enrolment is enforced at first console use)');
 } else {
-  await db.update(user).set({ role: 'super_admin', emailVerified: true, twoFactorEnabled: false }).where(eq(user.email, email));
-  const hash = await hashPassword(targetPassword);
-  await db.update(account)
-    .set({ password: hash, updatedAt: new Date() })
-    .where(and(eq(account.userId, existing[0].id), eq(account.providerId, 'credential')));
-  console.log('[seed] admin user already present: ' + email + ' (ensured super_admin, verified, password updated)');
+  // Re-runs happen on every deploy (compose bootstrap job). They must never
+  // weaken an existing account: the old code reset the password AND switched
+  // MFA off on each run (ZT-024). Password reset is an explicit recovery step.
+  if (process.env.SEED_RESET_ADMIN_PASSWORD === '1') {
+    const hash = await hashPassword(targetPassword);
+    await db.update(account)
+      .set({ password: hash, updatedAt: new Date() })
+      .where(and(eq(account.userId, existing[0].id), eq(account.providerId, 'credential')));
+    console.log('[seed] admin password reset on explicit request (SEED_RESET_ADMIN_PASSWORD=1); MFA unchanged');
+  } else {
+    console.log('[seed] admin user already present: ' + email + ' (left unchanged)');
+  }
 }
 
 // 2) reference locale rows (idempotent, Phase 4 activates more)

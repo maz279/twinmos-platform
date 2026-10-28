@@ -117,7 +117,9 @@
       .catch(function () { /* assets fetch failed */ });
   }
 
-  // ---------- RMA Status Tracker (#rmaTrackForm -> GET /api/v1/forms/rma/:number) ----------
+  // ---------- RMA Status Tracker (#rmaTrackForm -> POST /api/v1/rma/track {number, email}) ----------
+  // The only tracker on the site: proof of ownership is the RMA number PLUS the
+  // e-mail used for the request, sent in the body (never in the URL).
   function wireRmaTracker() {
     var rmaForm = document.getElementById('rmaTrackForm');
     if (!rmaForm) return;
@@ -129,15 +131,19 @@
       if (!input || !out) return;
 
       var num = (input.value || '').trim();
-      if (!num) {
-        out.innerHTML = '<p class="form-note" style="color:#B3261E">Please enter an RMA number from your confirmation email.</p>';
+      var emailEl = document.getElementById('rmaTrackEmail');
+      var email = emailEl ? (emailEl.value || '').trim() : '';
+      if (!num || !email) {
+        out.innerHTML = '<p class="form-note" style="color:#B3261E">Enter the RMA number from your confirmation e-mail and the e-mail address you used.</p>';
         return;
       }
 
       out.innerHTML = '<p class="form-note" style="color:#2563EB">Checking live RMA service status…</p>';
 
-      fetch(API + '/forms/rma/' + encodeURIComponent(num), {
-        headers: { 'Accept': 'application/json' },
+      fetch(API + '/rma/track', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'content-type': 'application/json' },
+        body: JSON.stringify({ number: num, email: email }),
       }).then(function (r) {
         if (r.status === 404) throw new Error('NOT_FOUND');
         if (r.status === 400) throw new Error('INVALID_FORMAT');
@@ -146,10 +152,10 @@
       }).then(function (d) {
         var statusColor = '#2563EB';
         var statusLabel = d.status.replace(/_/g, ' ').toUpperCase();
-        if (d.status === 'received' || d.status === 'under_review') statusColor = '#2563EB';
-        else if (d.status === 'in_repair') statusColor = '#D97706';
-        else if (d.status === 'replaced' || d.status === 'shipped') statusColor = '#16A34A';
-        else if (d.status === 'rejected') statusColor = '#DC2626';
+        // RMA_STATUS: submitted → under_review → approved → in_repair → shipped → delivered (closed at any step)
+        if (d.status === 'in_repair' || d.status === 'approved') statusColor = '#D97706';
+        else if (d.status === 'shipped' || d.status === 'delivered') statusColor = '#16A34A';
+        else if (d.status === 'closed') statusColor = '#475569';
 
         var timelineHtml = '';
         if (d.timeline && d.timeline.length > 0) {
@@ -184,13 +190,13 @@
           out.innerHTML =
             '<div class="card card-pad" style="border-color:#FCA5A5;background:#FEF2F2;color:#991B1B;padding:12px 14px;border-radius:6px;text-align:left">' +
             '<strong style="display:block;margin-bottom:2px">RMA Not Found</strong>' +
-            '<span style="font-size:13px">No RMA record exists matching <strong>' + esc(num) + '</strong>. Please verify the code in your confirmation email.</span>' +
+            '<span style="font-size:13px">No RMA matches <strong>' + esc(num) + '</strong> and that e-mail address. Check both against your confirmation e-mail.</span>' +
             '</div>';
         } else if (err.message === 'INVALID_FORMAT') {
           out.innerHTML =
             '<div class="card card-pad" style="border-color:#FCA5A5;background:#FEF2F2;color:#991B1B;padding:12px 14px;border-radius:6px;text-align:left">' +
             '<strong style="display:block;margin-bottom:2px">Invalid RMA Format</strong>' +
-            '<span style="font-size:13px">Please enter an RMA number formatted like <code>RMA-2026-123456</code> or <code>TM-RMA-2026-0001</code>.</span>' +
+            '<span style="font-size:13px">Please enter an RMA number formatted like <code>TM-RMA-2026-123456</code> and a valid e-mail address.</span>' +
             '</div>';
         } else {
           out.innerHTML =
@@ -218,80 +224,38 @@
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       }).then(function (d) {
-        var ok = d.result === 'valid';
+        // URD UR-17: VERIFIED GENUINE / NOT FOUND / SUSPECTED COUNTERFEIT
+        var kind = d.result === 'valid' ? 'ok' : d.result === 'suspicious' ? 'suspect' : 'unknown';
+        var title = kind === 'ok' ? 'Verified genuine' : kind === 'suspect' ? 'Suspected counterfeit' : 'Serial not found';
+        var tone = kind === 'ok' ? ['#86EFAC', '#F0FDF4', '#16A34A', '#166534'] : ['#FCA5A5', '#FEF2F2', '#DC2626', '#991B1B'];
+        var W = { active: 'Warranty active', expiring_soon: 'Warranty expiring soon', expired: 'Warranty expired', lifetime: 'Lifetime warranty', undetermined: 'Warranty registered — term confirmed by support', not_registered: 'Not registered for warranty' };
+        var warranty = d.warranty ? '<p class="form-note" style="margin:6px 0 0">' + esc(W[d.warranty.status] || d.warranty.status) +
+          (d.warranty.expiresAt ? ' · until ' + esc(String(d.warranty.expiresAt).slice(0, 10)) : '') +
+          (d.warranty.status === 'not_registered' ? ' — <a href="/support/warranty">register now</a>' : '') + '</p>' : '';
         outEl.innerHTML =
-          '<div class="form-success' + (ok ? ' show' : '') + '" style="' + (ok ? 'border-color:#86EFAC;background:#F0FDF4' : 'border-color:#FCA5A5;background:#FEF2F2') + ';text-align:left;padding:14px;border-radius:8px;border-width:1px;border-style:solid">' +
+          '<div style="border:1px solid ' + tone[0] + ';background:' + tone[1] + ';text-align:left;padding:14px;border-radius:8px">' +
           '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
-          '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:9999px;background:' + (ok ? '#16A34A' : '#DC2626') + ';color:#FFFFFF;font-weight:700;font-size:14px">' + (ok ? '✓' : '!') + '</span>' +
-          '<strong style="font-size:15px;color:' + (ok ? '#166534' : '#991B1B') + '">' + esc(serial) + ' — ' + (ok ? 'Verified Genuine' : 'Not Verified / Caution') + '</strong>' +
+          '<span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:9999px;background:' + tone[2] + ';color:#FFFFFF;font-weight:700;font-size:14px">' + (kind === 'ok' ? '✓' : '!') + '</span>' +
+          '<strong style="font-size:15px;color:' + tone[3] + '">' + esc(d.serial || serial) + ' — ' + title + '</strong>' +
           '</div>' +
           (d.sku ? '<p class="form-note" style="margin:2px 0 6px">SKU: <strong>' + esc(d.sku) + '</strong>' + (d.manufacturedAt ? ' · Manufactured ' + esc(String(d.manufacturedAt).slice(0, 10)) : '') + '</p>' : '') +
           '<p style="font-size:13.5px;color:#334155;margin:0;line-height:1.5">' + esc(d.advice) + '</p>' +
-          (!ok ? '<div style="margin-top:8px"><a href="/contact" style="color:#DC2626;font-size:13px;font-weight:600;text-decoration:underline">Report suspicious hardware to brand protection →</a></div>' : '') +
+          warranty +
+          (kind !== 'ok' ? '<div style="margin-top:8px"><a href="/contact" style="color:#DC2626;font-size:13px;font-weight:600;text-decoration:underline">Report suspicious hardware to brand protection →</a></div>' : '') +
           '</div>';
       }).catch(function () {
         outEl.innerHTML = '<p class="form-note" style="color:#B3261E">Verification is unavailable right now — please retry.</p>';
       });
     }
 
-    // Direct DOM binding if elements exist
-    var snBtn = document.getElementById('snBtn');
+    var snForm = document.getElementById('snForm');
     var snInput = document.getElementById('snInput');
-    if (snBtn && snInput) {
-      var directOut = document.getElementById('snOut') || snBtn.parentElement;
-      snBtn.addEventListener('click', function () {
-        executeSnCheck((snInput.value || '').trim(), directOut);
+    if (snForm && snInput) {
+      var out = document.getElementById('snOut') || snForm.parentElement;
+      snForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        executeSnCheck((snInput.value || '').trim(), out);
       });
-      snInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          executeSnCheck((snInput.value || '').trim(), directOut);
-        }
-      });
-    }
-
-    // Expandable widget on /support or /rma if not already present
-    var isSupportOrRma = /\/(support|rma)(\.html)?$/.test(location.pathname);
-    if (isSupportOrRma && !snBtn) {
-      var main = document.getElementById('main');
-      if (!main) return;
-      var chip = document.createElement('div');
-      chip.className = 'card card-pad';
-      chip.style.cssText = 'text-align:start;margin-top:24px;cursor:pointer;user-select:none;border:1px solid #CBD5E1;border-radius:8px';
-      chip.innerHTML =
-        '<span class="eyebrow" style="color:#2563EB;font-weight:700;font-size:12px;text-transform:uppercase">Anti-counterfeit</span> ' +
-        '<b style="display:block;margin-top:6px;font-size:16px;color:#0F172A">Verify a product serial number</b>' +
-        '<p class="form-note" style="margin:4px 0 0;color:#64748B">Check a TwinMOS serial against our registry before you buy — click to verify.</p>';
-      var expanded = false;
-      chip.addEventListener('click', function () {
-        if (expanded) return;
-        expanded = true;
-        chip.style.cursor = 'default';
-        chip.innerHTML =
-          '<span class="eyebrow" style="color:#2563EB;font-weight:700;font-size:12px;text-transform:uppercase">Anti-counterfeit</span>' +
-          '<h3 class="h3" style="margin:8px 0 6px;color:#0F172A">Verify a serial number</h3>' +
-          '<p class="form-note" style="color:#64748B;margin-bottom:12px">Check a TwinMOS product serial against our registry before you buy.</p>' +
-          '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-          '<input class="input" id="snInputDynamic" placeholder="e.g. TMS-VERIFIED-001 or TM-DEMO-0001" style="flex:1;min-width:220px;height:40px;border-radius:6px;border:1px solid #CBD5E1;padding:0 12px" aria-label="Serial number">' +
-          '<button class="btn btn-accent" id="snBtnDynamic" style="background:#2563EB;color:#FFF;border:none;padding:8px 18px;border-radius:6px;font-weight:600;cursor:pointer">Verify</button></div>' +
-          '<div id="snOutDynamic" style="margin-top:14px"></div>';
-
-        var dynBtn = document.getElementById('snBtnDynamic');
-        var dynInput = document.getElementById('snInputDynamic');
-        var dynOut = document.getElementById('snOutDynamic');
-
-        dynBtn.addEventListener('click', function () {
-          executeSnCheck((dynInput.value || '').trim(), dynOut);
-        });
-        dynInput.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            executeSnCheck((dynInput.value || '').trim(), dynOut);
-          }
-        });
-        dynInput.focus();
-      });
-      main.appendChild(chip);
     }
   }
 

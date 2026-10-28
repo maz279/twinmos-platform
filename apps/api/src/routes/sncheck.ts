@@ -2,16 +2,21 @@
 // lookup, verification log, verifiedCount increment) + admin reporting.
 import { Hono } from 'hono';
 import { and, count, desc, eq, gte, isNotNull, lte, sql } from 'drizzle-orm';
-import { snCheckSchema, problem } from '@twinmos/shared';
+import { snCheckSchema, problem, type WarrantyStatusName } from '@twinmos/shared';
 import { serialRegistry, snCheck } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 
 type Guard = (req: Request) => Promise<AuthSession | null>;
 const P = 'application/problem+json';
-const RESULT = { VALID: 'valid', UNVERIFIED: 'unverified' } as const;
+const RESULT = { VALID: 'valid', UNVERIFIED: 'unverified', SUSPICIOUS: 'suspicious' } as const;
+/** Same rule as the admin anomaly scan (§5.3): a registry serial queried from
+ *  more than 5 distinct IPs or countries in 24h is a leaked/cloned label. */
+export const SERIAL_ANOMALY_THRESHOLD = 5;
 
-export function snCheckRoute(db: DB) {
+export type WarrantyStatus = { status: WarrantyStatusName; expiresAt: string | null };
+
+export function snCheckRoute(db: DB, deps?: { warrantyFor?: (serial: string) => Promise<WarrantyStatus> }) {
   const r = new Hono();
 
   r.post('/sn-check', async (c) => {
@@ -21,12 +26,27 @@ export function snCheckRoute(db: DB) {
 
     const hit = await db.select().from(serialRegistry).where(eq(serialRegistry.serial, serial)).limit(1);
     const row = hit[0];
-    const result = row ? RESULT.VALID : RESULT.UNVERIFIED;
+    const ip = c.req.header('x-real-ip') ?? c.req.header('cf-connecting-ip') ?? null;
+    const country = (c.req.header('cf-ipcountry') ?? '').slice(0, 8).toUpperCase() || null;
+
+    // URD UR-17: three outcomes — VERIFIED GENUINE / NOT FOUND / SUSPECTED
+    // COUNTERFEIT. A registry hit whose distribution pattern matches a cloned
+    // label must not be told "genuine" (ZT-030).
+    let result: (typeof RESULT)[keyof typeof RESULT] = row ? RESULT.VALID : RESULT.UNVERIFIED;
+    if (row) {
+      const since = new Date(Date.now() - 24 * 3600_000);
+      const [a] = await db.select({
+        ips: sql<number>`count(distinct ${snCheck.ip})`,
+        countries: sql<number>`count(distinct ${snCheck.country})`,
+      }).from(snCheck).where(and(eq(snCheck.serial, serial), gte(snCheck.checkedAt, since)));
+      const newIp = ip ? Number((await db.select({ n: count() }).from(snCheck).where(and(eq(snCheck.serial, serial), gte(snCheck.checkedAt, since), eq(snCheck.ip, ip))))[0]?.n ?? 0) === 0 : false;
+      const ips = Number(a?.ips ?? 0) + (newIp ? 1 : 0);
+      if (ips > SERIAL_ANOMALY_THRESHOLD || Number(a?.countries ?? 0) > SERIAL_ANOMALY_THRESHOLD) result = RESULT.SUSPICIOUS;
+    }
 
     await db.insert(snCheck).values({
       serial, sku: row?.sku ?? null, result,
-      ip: c.req.header('cf-connecting-ip') ?? null, ua: c.req.header('user-agent') ?? null,
-      country: (c.req.header('cf-ipcountry') ?? '').slice(0, 8).toUpperCase() || null,
+      ip, ua: c.req.header('user-agent') ?? null, country,
     });
     if (row) {
       await db.update(serialRegistry)
@@ -34,13 +54,17 @@ export function snCheckRoute(db: DB) {
         .where(eq(serialRegistry.serial, serial));
     }
 
+    const warranty = row && deps?.warrantyFor ? await deps.warrantyFor(serial) : undefined;
     return c.json({
       serial,
       result,
       ...(row ? { sku: row.sku, manufacturedAt: row.manufacturedAt } : {}),
+      ...(warranty ? { warranty } : {}),
       advice: result === RESULT.VALID
         ? 'Serial verified against the TwinMOS registry — genuine article.'
-        : 'This serial is not in the TwinMOS registry. If you already own the product, contact support with proof of purchase; if buying, treat unverified serials with caution.',
+        : result === RESULT.SUSPICIOUS
+          ? 'This serial exists in the TwinMOS registry but is being checked from many different locations — a pattern of copied labels. Treat the product as suspected counterfeit and report it to TwinMOS support.'
+          : 'This serial is not in the TwinMOS registry. If you already own the product, contact support with proof of purchase; if buying, treat unverified serials with caution.',
     }, 200, { 'Cache-Control': 'no-store' });
   });
 
@@ -127,7 +151,7 @@ export function serialAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard;
     const limit = Math.min(Number(c.req.query('limit') ?? 100) || 100, 200);
     const offset = Math.max(Number(c.req.query('offset') ?? 0) || 0, 0);
     const filter = and(
-      q ? sql`upper(${serialRegistry.serial}) like ${'%' + q + '%'} or upper(coalesce(${serialRegistry.sku}, '')) like ${'%' + q + '%'}` : undefined,
+      q ? sql`(upper(${serialRegistry.serial}) like ${'%' + q + '%'} or upper(coalesce(${serialRegistry.sku}, '')) like ${'%' + q + '%'})` : undefined, // parenthesised: AND binds tighter than OR
       batch ? eq(serialRegistry.batch, batch) : undefined,
     );
     const rows = await db.select().from(serialRegistry)
@@ -173,7 +197,7 @@ export function serialAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard;
     const q = (c.req.query('q') ?? '').trim().toUpperCase();
     const batch = (c.req.query('batch') ?? '').trim();
     const filter = and(
-      q ? sql`upper(${serialRegistry.serial}) like ${'%' + q + '%'} or upper(coalesce(${serialRegistry.sku}, '')) like ${'%' + q + '%'}` : undefined,
+      q ? sql`(upper(${serialRegistry.serial}) like ${'%' + q + '%'} or upper(coalesce(${serialRegistry.sku}, '')) like ${'%' + q + '%'})` : undefined, // parenthesised: AND binds tighter than OR
       batch ? eq(serialRegistry.batch, batch) : undefined,
     );
     const rows = await db.select().from(serialRegistry).where(filter ?? undefined)

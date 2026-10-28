@@ -100,6 +100,16 @@ export function bootConfigErrors(env: Record<string, string | undefined> = proce
     errs.push('ENFORCE_MFA must not be disabled (0) in production');
   }
 
+  // Zero-trust audit 2026-10-28
+  if (env.FORCE_PGLITE === '1') {
+    errs.push('FORCE_PGLITE must not be set in production (embedded PGlite is dev/test only)');
+  }
+  // Links in staff/partner e-mails are built from these; a missing value used to
+  // fall back to http://localhost:5173, which Better Auth rejects (ZT-013).
+  for (const k of ['PUBLIC_SITE_URL', 'ADMIN_PUBLIC_URL'] as const) {
+    if (env[k] && !env[k]!.startsWith('https://')) errs.push(`${k} must start with https:// in production`);
+  }
+
   return errs;
 }
 

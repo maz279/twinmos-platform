@@ -1,0 +1,39 @@
+PASS FORM-01 captcha required
+PASS FORM-02 contact accepted
+PASS FORM-03 customer auto-reply sent
+FAIL FORM-04 form token mandatory — submission accepted without the anti-spam form token
+PASS FORM-05 consent mandatory
+FAIL FORM-06 idempotency key not replayable across bodies — a different submitter received the first submitter's reference
+PASS RMA-01 intake creates case
+FAIL RMA-02 BR-6.2 unregistered/out-of-warranty serial refused — RMA accepted for a serial that is not in the factory registry and has no warranty registration
+PASS RMA-03 confirmation mail with number
+PASS RMA-04 case visible to staff
+FAIL RMA-05 client-supplied warrantyTier not trusted
+PASS RMA-06 staff reply sent
+PASS RMA-07 legal transition
+PASS RMA-08 illegal transition refused
+FAIL RMA-09 public tracking needs proof of ownership — anyone holding only the RMA number reads the case
+FAIL RMA-10 public tracking leaks no PII/staff notes
+PASS RMA-11 owner can track with number + email
+FAIL RMA-12 /forms/rma alias rate-limited — 14 lookups/min accepted on the alias path
+PASS SN-01 registry CSV import
+PASS SN-02 registered serial verified genuine
+PASS SN-03 unknown serial not verified
+FAIL SN-04 verified result carries warranty status (URD UR-17.1.5)
+PASS COMPAT-01 finder returns rules
+FAIL COMPAT-02 LIKE wildcards escaped — "%" returns the whole table
+PASS COMPAT-03 brand filter works
+FAIL DIR-00 staff can create pending distributor
+PASS DIR-01 public cannot list non-authorized distributors
+FAIL SEARCH-01 oversized query bounded
+PASS SEARCH-02 search finds CoreX
+PASS NL-01 subscribe pending
+FAIL NL-02 separate confirm/unsubscribe tokens — the unsubscribe link token also confirms the subscription
+PASS NL-03 confirm link works
+FAIL NL-04 confirm link lands on a page, not raw JSON
+FAIL NL-05 malformed email rejected
+PASS ART-01 article rating not faked
+FAIL OPS-01 /metrics not public
+PASS OPS-02 /health/deep not public
+PASS PREV-01 author cannot mint preview tokens for pages they do not own
+tools-api: 38 checks, 15 failed

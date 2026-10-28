@@ -1,0 +1,27 @@
+# Zero-trust audit lab overlay: base compose + prod hardening + lab PKI and a mail mock.
+# Usage (from repo root):
+#   docker compose -p twinmos-lab --env-file tooling/audit-zt/lab/lab.vars \
+#     -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.prod.yml \
+#     -f tooling/audit-zt/lab/docker-compose.lab.yml up -d --build
+services:
+  mailmock:
+    image: mirror.gcr.io/library/node:24-alpine
+    volumes: [ "../../tooling/audit-zt/lab/mailmock.mjs:/mailmock.mjs:ro", "labmail:/mail" ]
+    command: [ "node", "/mailmock.mjs" ]
+    networks: [ twinmos_internal ]
+    ports: [ "127.0.0.1:18025:3000" ]
+  edge:
+    ports: !override
+      - "127.0.0.1:18080:80"
+      - "127.0.0.1:18443:443"
+    # Same per-file cert mounts as the prod overlay (EDGE_TLS_CERT/KEY from lab.vars),
+    # plus the lab CA standing in for Cloudflare's origin-pull CA.
+    volumes:
+      - ../../tooling/audit-zt/lab/.certs/ca.pem:/etc/nginx/certs/cloudflare-origin-pull-ca.pem:ro
+  api:
+    environment:
+      - RESEND_BASE_URL=http://mailmock:3000
+  postgres:
+    ports: [ "127.0.0.1:15432:5432" ]
+volumes:
+  labmail:

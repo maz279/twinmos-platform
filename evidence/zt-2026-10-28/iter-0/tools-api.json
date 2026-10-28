@@ -1,0 +1,216 @@
+{
+  "name": "tools-api",
+  "at": "2026-10-28T13:22:03.593Z",
+  "total": 38,
+  "failed": 15,
+  "items": [
+    {
+      "id": "FORM-01 captcha required",
+      "ok": true,
+      "status": 400
+    },
+    {
+      "id": "FORM-02 contact accepted",
+      "ok": true,
+      "status": 201,
+      "ref": "CT-2026-7cdedfbb"
+    },
+    {
+      "id": "FORM-03 customer auto-reply sent",
+      "ok": true,
+      "n": 1
+    },
+    {
+      "id": "FORM-04 form token mandatory",
+      "ok": false,
+      "status": 201,
+      "note": "submission accepted without the anti-spam form token"
+    },
+    {
+      "id": "FORM-05 consent mandatory",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "FORM-06 idempotency key not replayable across bodies",
+      "ok": false,
+      "a": "CT-2026-da2ac3aa",
+      "b": "CT-2026-da2ac3aa",
+      "note": "a different submitter received the first submitter's reference"
+    },
+    {
+      "id": "RMA-01 intake creates case",
+      "ok": true,
+      "status": 201,
+      "rmaNumber": "TM-RMA-2026-004059"
+    },
+    {
+      "id": "RMA-02 BR-6.2 unregistered/out-of-warranty serial refused",
+      "ok": false,
+      "status": 201,
+      "note": "RMA accepted for a serial that is not in the factory registry and has no warranty registration"
+    },
+    {
+      "id": "RMA-03 confirmation mail with number",
+      "ok": true
+    },
+    {
+      "id": "RMA-04 case visible to staff",
+      "ok": true
+    },
+    {
+      "id": "RMA-05 client-supplied warrantyTier not trusted",
+      "ok": false,
+      "warrantyTier": "premium-lifetime"
+    },
+    {
+      "id": "RMA-06 staff reply sent",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "id": "RMA-07 legal transition",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "id": "RMA-08 illegal transition refused",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "RMA-09 public tracking needs proof of ownership",
+      "ok": false,
+      "status": 200,
+      "note": "anyone holding only the RMA number reads the case"
+    },
+    {
+      "id": "RMA-10 public tracking leaks no PII/staff notes",
+      "ok": false,
+      "leaks": [
+        "zt-rma-mvs55spd@example.org",
+        "Internal note",
+        "Technician:"
+      ]
+    },
+    {
+      "id": "RMA-11 owner can track with number + email",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "id": "RMA-12 /forms/rma alias rate-limited",
+      "ok": false,
+      "note": "14 lookups/min accepted on the alias path"
+    },
+    {
+      "id": "SN-01 registry CSV import",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "id": "SN-02 registered serial verified genuine",
+      "ok": true,
+      "result": "valid"
+    },
+    {
+      "id": "SN-03 unknown serial not verified",
+      "ok": true,
+      "result": "unverified"
+    },
+    {
+      "id": "SN-04 verified result carries warranty status (URD UR-17.1.5)",
+      "ok": false,
+      "keys": [
+        "serial",
+        "result",
+        "sku",
+        "manufacturedAt",
+        "advice"
+      ]
+    },
+    {
+      "id": "COMPAT-01 finder returns rules",
+      "ok": true,
+      "n": 35
+    },
+    {
+      "id": "COMPAT-02 LIKE wildcards escaped",
+      "ok": false,
+      "n": 35,
+      "note": "\"%\" returns the whole table"
+    },
+    {
+      "id": "COMPAT-03 brand filter works",
+      "ok": true,
+      "n": 8
+    },
+    {
+      "id": "DIR-00 staff can create pending distributor",
+      "ok": false,
+      "status": 422
+    },
+    {
+      "id": "DIR-01 public cannot list non-authorized distributors",
+      "ok": true
+    },
+    {
+      "id": "SEARCH-01 oversized query bounded",
+      "ok": false,
+      "status": 200,
+      "ms": 8552
+    },
+    {
+      "id": "SEARCH-02 search finds CoreX",
+      "ok": true
+    },
+    {
+      "id": "NL-01 subscribe pending",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "id": "NL-02 separate confirm/unsubscribe tokens",
+      "ok": false,
+      "note": "the unsubscribe link token also confirms the subscription"
+    },
+    {
+      "id": "NL-03 confirm link works",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "id": "NL-04 confirm link lands on a page, not raw JSON",
+      "ok": false,
+      "ct": "application/json",
+      "sample": "{\"ok\":true,\"confirmed\":true,\"status\":\"active\",\"message\":\"Thank you! Your TwinMOS"
+    },
+    {
+      "id": "NL-05 malformed email rejected",
+      "ok": false,
+      "status": 201
+    },
+    {
+      "id": "ART-01 article rating not faked",
+      "ok": true,
+      "body": {
+        "_raw": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+      }
+    },
+    {
+      "id": "OPS-01 /metrics not public",
+      "ok": false,
+      "status": 200
+    },
+    {
+      "id": "OPS-02 /health/deep not public",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "PREV-01 author cannot mint preview tokens for pages they do not own",
+      "ok": true,
+      "status": 403
+    }
+  ]
+}

@@ -5,7 +5,7 @@
 import Layout from '../../layouts/Layout.astro';
 import BlockDispatcher from '../../components/blocks/BlockDispatcher.astro';
 import { LOCALES, localeDir, SETTINGS_GROUP_DEFAULTS, resolveComputedFigures } from '@twinmos/shared';
-import { getDeliverySettings, getDeliveryPage } from '../../lib/delivery';
+import { getDeliverySettings, getDeliveryPage, getDeliveryActiveLocales } from '../../lib/delivery';
 
 export const prerender = false;
 
@@ -16,6 +16,11 @@ if (locale === 'en') {
 const isKnownLocale = LOCALES.includes(locale as any);
 if (!isKnownLocale) {
   return Astro.rewrite('/404');
+}
+// Locale activation gate (T4.7.5): a locale whose translations are not complete
+// and activated in the CMS is not served — its visitors get the English home.
+if (!(await getDeliveryActiveLocales()).includes(locale!)) {
+  return Astro.redirect('/', 302);
 }
 
 const dir = localeDir(locale!);

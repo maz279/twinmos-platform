@@ -367,8 +367,7 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const [createdInfo, setCreatedInfo] = useState<{ email: string; role: string; tempPass?: string } | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [createdInfo] = useState<{ email: string; role: string } | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -382,12 +381,12 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
       };
       if (password.trim()) payload.password = password.trim();
 
-      const res = await apiSend<{ user: UserAccount; temporaryPassword?: string }>('POST', '/admin/users/invite', payload);
-      if (res.temporaryPassword) {
-        setCreatedInfo({ email: res.user.email, role: res.user.role, tempPass: res.temporaryPassword });
-      } else {
-        onSuccess(`Staff account invited successfully for ${res.user.email} (${res.user.role}).`);
-      }
+      // Credentials are never returned to the console (ZT-014): without a chosen
+      // password the invitee receives a single-use set-password link by e-mail.
+      const res = await apiSend<{ user: UserAccount; setPasswordLinkSent?: boolean; emailSent?: boolean }>('POST', '/admin/users/invite', payload);
+      onSuccess(res.setPasswordLinkSent
+        ? `Invitation sent to ${res.user.email} (${res.user.role}) with a single-use link to set their password.`
+        : `Staff account invited successfully for ${res.user.email} (${res.user.role}).`);
     } catch (err) {
       setError(err);
     } finally {
@@ -413,39 +412,6 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
                 Email: <b>{createdInfo.email}</b><br />
                 Role: <b>{createdInfo.role}</b>
               </p>
-              {createdInfo.tempPass && (
-                <div style={{ marginTop: 12 }}>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#065F46' }}>Generated Temporary Password:</label>
-                  <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                    <input
-                      readOnly
-                      value={createdInfo.tempPass}
-                      style={{ ...input, fontFamily: 'monospace', fontWeight: 700, flex: 1, background: '#fff' }}
-                    />
-                    <button
-                      type="button"
-                      style={{ ...btn, minWidth: 80 }}
-                      onClick={() => {
-                        if (navigator.clipboard?.writeText) {
-                          navigator.clipboard.writeText(createdInfo.tempPass || '').then(() => {
-                            setCopied(true);
-                            setTimeout(() => setCopied(false), 2000);
-                          }).catch(() => {
-                            alert('Password: ' + createdInfo.tempPass);
-                          });
-                        } else {
-                          alert('Password: ' + createdInfo.tempPass);
-                        }
-                      }}
-                    >
-                      {copied ? 'Copied! ✓' : 'Copy'}
-                    </button>
-                  </div>
-                  <span style={{ fontSize: 11, color: '#047857', display: 'block', marginTop: 4 }}>
-                    An invitation email containing login instructions has been dispatched. You may also copy the temporary password directly:
-                  </span>
-                </div>
-              )}
             </div>
             <button style={{ ...btn, width: '100%' }} onClick={() => onSuccess(`Staff account created for ${createdInfo.email}.`)}>
               Done

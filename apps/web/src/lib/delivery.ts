@@ -184,6 +184,12 @@ export async function getDeliverySettings() {
   return res?.data ?? {};
 }
 
+/** Active locale codes (English is always active). */
+export async function getDeliveryActiveLocales(): Promise<string[]> {
+  const res = await fetchDelivery('/locales');
+  return Array.isArray(res?.data) ? res.data.map((l: { code: string }) => l.code) : ['en'];
+}
+
 export async function getDeliveryNavMenu(code: string, locale = 'en') {
   const res = await fetchDelivery(`/navigation/${encodeURIComponent(code)}?locale=${encodeURIComponent(locale)}`);
   return res?.data ?? null;

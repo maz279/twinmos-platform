@@ -52,6 +52,22 @@ export function lintReportContent(content, filename = 'inline-test', referenceDa
     });
   }
 
+  // 3b. Zero-trust audit 2026-10-28: invented sign-off personas used in the
+  // withdrawn launch records — a real sign-off names a real person in a real role.
+  const personaRegex = /\b(Victoria Sterling|Tariq Al-Mansoor|Tariq Al-Hashimi|Marcus Brody|Elena Rostova|David Vance|P\. Lead|S\. Auditor|Antigravity Quality Gate)\b/g;
+  while ((match = personaRegex.exec(content)) !== null) {
+    errors.push({ type: 'INVENTED_SIGNOFF', file: filename, match: match[0], message: `Invented persona used as a sign-off or approver: "${match[0]}"` });
+  }
+  // 3c. A local file:/// path is not a CI artefact.
+  if (/file:\/\/\//i.test(content)) {
+    errors.push({ type: 'LOCAL_ARTEFACT', file: filename, message: 'file:/// links are local paths, not CI artefacts' });
+  }
+  // 3d. Launch events cannot be reported before they are scheduled (roadmap v3.1:
+  // go/no-go 2027-03-26, go-live week of 2027-03-29, hypercare exit by 2027-04-09).
+  if (/\b(go[- ]?live (completed|achieved|executed)|hypercare exit (report|criteria)[^\n]*(fulfilled|met|satisfied)|unanimous go)\b/i.test(content) && nowUtc < Date.UTC(2027, 2, 26)) {
+    errors.push({ type: 'PREMATURE_EVENT', file: filename, message: 'Reports a go-live / hypercare outcome before the scheduled go/no-go (2027-03-26)' });
+  }
+
   // 4. Check for unevidenced "100%" or "All pass" declarations without artifact link
   const lines = content.split('\n');
   lines.forEach((line, idx) => {
@@ -77,7 +93,10 @@ export function lintReportContent(content, filename = 'inline-test', referenceDa
 
 export function runReportLint(targetDir = reportsDir, referenceDateStr = null) {
   console.log(`[report-lint] Scanning active reports in ${targetDir}...`);
-  const files = readdirSync(targetDir);
+  // docs/evidence holds the same kind of claims and is linted too (withdrawn/ subfolders are skipped)
+  const evidenceDir = resolve(repoRoot, 'docs', 'evidence');
+  let files = readdirSync(targetDir);
+  if (targetDir === reportsDir) { try { files = files.concat(readdirSync(evidenceDir).map((f) => join('..', 'evidence', f))); } catch { /* no evidence dir */ } }
   const allErrors = [];
   const allWarnings = [];
 
@@ -121,8 +140,9 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import
     warnings.forEach((w) => console.warn(`  - [WARN] ${w.file}:${w.line}: ${w.message}`));
   }
 
-  if (errors.length > 0) {
-    console.error(`[report-lint] FAILED with ${errors.length} error(s):`);
+  // warnings fail too: an ungrounded claim is not evidence (zero-trust audit 2026-10-28)
+  if (errors.length > 0 || warnings.length > 0) {
+    console.error(`[report-lint] FAILED with ${errors.length} error(s), ${warnings.length} warning(s):`);
     errors.forEach((e) => console.error(`  - [FAIL] ${e.file}: ${e.message}`));
     process.exit(1);
   }

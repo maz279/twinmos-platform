@@ -27,3 +27,15 @@ npm-debug.log*
 playwright-report/
 test-results/
 tooling/verify/evidence/
+
+# Build context hygiene: none of these are inputs to any image (the context was ~700 MB)
+evidence/
+docs/
+deliverables/
+deploy/baselines/
+deploy/sbom/
+e2e/
+tooling/
+prototype/
+!prototype/assets/js/app.js
+apps/web/public/admin/

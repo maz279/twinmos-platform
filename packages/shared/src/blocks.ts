@@ -565,6 +565,45 @@ export function migrateBlock(raw: Record<string, unknown>): Record<string, unkno
   return migrated;
 }
 
+// Section blocks: the page vocabulary the public renderer draws from the
+// approved prototype (one per prototype section). Their content shapes are
+// shared across families; unknown extra keys are kept (renderer-specific).
+export const SECTION_BLOCK_TYPES = [
+  'page-hero', 'error-hero', 'hero-slider', 'stats-tiles', 'stats-band-copy', 'stats-demo', 'card-grid', 'icon-card-grid',
+  'section-tiles', 'bento-grid', 'cta-banner', 'cta-inline-card', 'cta-row', 'cta-split', 'rich-text+factfile', 'text-columns',
+  'tabbed-faq', 'faq-accordion', 'spec-table', 'product-rail', 'marketplace-cards', 'downloads-gallery', 'testimonials',
+  'trust-badges', 'badge-strip', 'kpi-meters+steps', 'anchor-nav', 'link-chips', 'link-list', 'filter-chips', 'category-tiles',
+  'office-cards', 'article-cards', 'article-index', 'article-feed', 'featured-articles', 'learning-paths', 'promo-card',
+  'glossary-letter', 'empty-state', 'tabbed-rich-text', 'json-ld', 'breadcrumb', 'distributor-locator',
+  'widget:article-reader', 'widget:pdp', 'widget:pdp-guides', 'widget:compare', 'widget:compat-finder', 'widget:upgrade-advisor',
+  'widget:speed-visualizer', 'widget:rgb-lab', 'widget:rma-tracker+serial', 'widget:product-listing', 'widget:category-chips',
+  'widget:search-results', 'widget:glossary-filter', 'widget:locator-controls',
+] as const;
+const link = z.object({ label: z.string(), url: z.string() }).passthrough();
+const sectionBlockSchema = z.object({
+  type: z.enum(SECTION_BLOCK_TYPES),
+  id: z.string().optional(),
+  heading: z.string().max(300).optional(),
+  title: z.string().max(300).optional(),
+  eyebrow: z.string().max(200).optional(),
+  lede: z.string().max(2000).optional(),
+  body: z.string().max(20000).optional(),
+  subtitle: z.string().max(2000).optional(),
+  message: z.string().max(4000).optional(),
+  items: z.array(z.record(z.string(), z.unknown())).max(200).optional(),
+  stats: z.array(z.object({ value: z.string(), label: z.string() }).passthrough()).max(24).optional(),
+  ctas: z.array(link).max(8).optional(),
+  chips: z.array(z.union([z.string(), link])).max(60).optional(),
+}).passthrough();
+
+/** No javascript:/data:/vbscript: URL may be stored anywhere in a block. */
+function unsafeUrlPaths(v: unknown, path: string[] = []): string[] {
+  if (typeof v === 'string') return /^\s*(javascript|vbscript|data):/i.test(v) ? [path.join('.') || 'root'] : [];
+  if (Array.isArray(v)) return v.flatMap((x, i) => unsafeUrlPaths(x, [...path, String(i)]));
+  if (v && typeof v === 'object') return Object.entries(v).flatMap(([k, x]) => unsafeUrlPaths(x, [...path, k]));
+  return [];
+}
+
 /**
  * Validates a block payload, throwing or returning detailed error.
  */
@@ -575,6 +614,14 @@ export function validateBlock(raw: unknown): { success: true; data: Block } | { 
   const item = raw as Record<string, unknown>;
   if (typeof item.type !== 'string' || !item.type.trim()) {
     return { success: false, errors: ['type: Block type is required and must be a non-empty string'] };
+  }
+  const bad = unsafeUrlPaths(item);
+  if (bad.length) return { success: false, errors: bad.map((p) => `${p}: script/data URLs are not allowed`) };
+  if ((SECTION_BLOCK_TYPES as readonly string[]).includes(item.type)) {
+    const r = sectionBlockSchema.safeParse(item);
+    return r.success
+      ? { success: true, data: r.data as unknown as Block }
+      : { success: false, errors: r.error.issues.map((i) => `${i.path.join('.') || 'root'}: ${i.message}`) };
   }
   if (!BLOCK_TYPES.includes(item.type as any)) {
     return {

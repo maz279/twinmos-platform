@@ -58,37 +58,7 @@ if (!isCategoryPage) {
 
   product = productRes.product;
 
-  // Special fixture fallback for legacy test suites (e.g. microsdxc warranty probe)
-  if (!product && slug === 'microsdxc-class-10-v30-uhs-3') {
-    product = {
-      id: 999,
-      slug: 'microsdxc-class-10-v30-uhs-3',
-      name: 'TwinMOS MicroSDXC Class 10 V30 UHS-3',
-      sku: 'MSD-V30-128G',
-      brand: { name: 'TwinMOS' },
-      category: { name: 'Memory Cards' },
-      warranty: 'Lifetime Warranty',
-      priceUsd: null,
-      specs: { Speed: 'V30 Class 10' },
-      shortDescription: 'High-speed MicroSDXC card with Lifetime Warranty',
-      badges: [],
-    } as any;
-  } else if (!product && slug === 'corex-pro-m2-pcie-gen-5-0-nvme-ssd') {
-    product = {
-      id: 998,
-      slug: 'corex-pro-m2-pcie-gen-5-0-nvme-ssd',
-      name: 'TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD',
-      sku: 'NVCXP1TBG52280',
-      brand: { name: 'CoreX Pro' },
-      category: { name: 'NVMe SSD' },
-      warranty: '5 Years',
-      priceUsd: null,
-      specs: { Interface: 'PCIe Gen 5.0 x4', Speed: 'Up to 14,000 MB/s' },
-      shortDescription: 'TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD with Graphene heatsink.',
-      badges: ['Gen5'],
-    } as any;
-  }
-
+  // No fixture fallback products: unpublishing in the CMS must take the page down (ZT-043).
   if (!product) {
     Astro.response.status = 404;
     Astro.response.statusText = 'Not Found';

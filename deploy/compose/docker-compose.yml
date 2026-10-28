@@ -26,9 +26,13 @@ services:
       - API_URL=http://api:8787
       - DELIVERY_API_URL=http://api:8787/api/v1/delivery
       - REVALIDATE_SECRET=${REVALIDATE_SECRET}
+      # read per request by Layout.astro (public key, rendered into the page)
+      - PUBLIC_TURNSTILE_SITE_KEY=${PUBLIC_TURNSTILE_SITE_KEY}
     depends_on:
       api:
         condition: service_healthy
+      content:
+        condition: service_completed_successfully
     networks:
       - twinmos_internal
     expose:
@@ -73,6 +77,23 @@ services:
     networks:
       - twinmos_internal
     command: ["node", "--experimental-strip-types", "scripts/seed.ts", "--bootstrap"]
+    restart: "no"
+
+  # Reviewed CMS content snapshot (apps/api/content/snapshot, CORRECTIONS.md).
+  # --if-empty: never touches a database that already has catalogue content.
+  content:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    networks:
+      - twinmos_internal
+    command: ["node", "--experimental-strip-types", "--no-warnings", "scripts/load-content.ts", "--if-empty"]
     restart: "no"
 
   api:
