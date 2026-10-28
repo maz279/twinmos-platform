@@ -422,9 +422,18 @@ export const policyTabsBlockSchema = z.object({
 });
 
 // 24. Form Block
+export const FORM_BLOCK_TYPES = [
+  'contact', 'quote', 'rma', 'distributor-application', 'partner-inquiry',
+  'press-request', 'job-application', 'general-application', 'support-ticket',
+  'callback-request', 'feedback', 'report-counterfeit', 'newsletter', 'event-rsvp', 'build-submission',
+  'partner-portal',
+] as const;
 export const formBlockSchema = z.object({
   type: z.literal('form'),
-  formType: z.enum(['contact', 'support', 'rma', 'partner', 'careers', 'newsletter', 'custom']).default('contact'),
+  // must be a type POST /api/v1/forms/:type accepts (FORM_TYPES) — the old list
+  // offered support/partner/careers/custom, which the API rejects with 422 —
+  // plus 'partner-portal' (the partner sign-in form on /partners).
+  formType: z.enum(FORM_BLOCK_TYPES).default('contact'),
   title: z.string().optional(),
   description: z.string().optional(),
   submitButtonText: z.string().default('Submit'),
@@ -596,9 +605,20 @@ const sectionBlockSchema = z.object({
   chips: z.array(z.union([z.string(), link])).max(60).optional(),
 }).passthrough();
 
-/** No javascript:/data:/vbscript: URL may be stored anywhere in a block. */
+/** URL fields must be relative or http(s)/mailto/tel; no string anywhere may
+ *  smuggle a script scheme. Browsers ignore C0 controls and whitespace inside a
+ *  scheme ("java\tscript:"), so they are stripped before testing (ZT-049). */
+const URL_KEY = /(^|_)(url|href|link|src|image|targetUrl)$/i;
+const SAFE_SCHEME = /^(https?:|mailto:|tel:|\/|#|\?|\.)/i;
 function unsafeUrlPaths(v: unknown, path: string[] = []): string[] {
-  if (typeof v === 'string') return /^\s*(javascript|vbscript|data):/i.test(v) ? [path.join('.') || 'root'] : [];
+  if (typeof v === 'string') {
+    // eslint-disable-next-line no-control-regex
+    const squeezed = v.replace(/[\u0000- \u007f]+/g, '');
+    const key = path[path.length - 1] ?? '';
+    if (/^(javascript|vbscript|data):/i.test(squeezed)) return [path.join('.') || 'root'];
+    if (URL_KEY.test(key) && squeezed && /^[a-z][a-z0-9+.-]*:/i.test(squeezed) && !SAFE_SCHEME.test(squeezed)) return [path.join('.') || 'root'];
+    return [];
+  }
   if (Array.isArray(v)) return v.flatMap((x, i) => unsafeUrlPaths(x, [...path, String(i)]));
   if (v && typeof v === 'object') return Object.entries(v).flatMap(([k, x]) => unsafeUrlPaths(x, [...path, k]));
   return [];

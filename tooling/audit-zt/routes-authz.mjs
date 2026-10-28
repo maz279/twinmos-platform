@@ -2,7 +2,8 @@
 //  1. anonymous: every /admin/* and /partner/* route must answer 401/403 (never 2xx,
 //     never a 4xx/5xx that reveals it ran logic before auth);
 //  2. viewer session: no mutating /admin/* route may answer 2xx;
-//  3. partner member session: no /admin/* route may answer 2xx.
+//  3. partner member session: no /admin/* route may answer 2xx (except the
+//     caller's own /admin/users/me/* password-rotation endpoints).
 // Input: routes.jsonl (from lib/dump-routes.ts). Output: JSON report.
 // --plant: flips the expectation for one admin route to prove the check can fail.
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -51,7 +52,9 @@ for (const r of plant ? targets.slice(0, 1) : targets) {
     const v = await hit(r, sessions.viewer);
     rep.check(`viewer ${r.method} ${r.path}`, v.status < 200 || v.status >= 300, { status: v.status, note: v.status < 300 ? 'viewer mutated' : undefined });
   }
-  if (sessions.partner && r.path.startsWith('/api/v1/admin')) {
+  // /admin/users/me/* is the signed-in account's own password-rotation state
+  // (users.ts: reads/updates only the caller's row) — open to every session.
+  if (sessions.partner && r.path.startsWith('/api/v1/admin') && !r.path.includes('/users/me/')) {
     const p = await hit(r, sessions.partner);
     rep.check(`partner ${r.method} ${r.path}`, p.status === 401 || p.status === 403, { status: p.status, note: p.status === 401 || p.status === 403 ? undefined : `partner got ${p.status}` });
   }

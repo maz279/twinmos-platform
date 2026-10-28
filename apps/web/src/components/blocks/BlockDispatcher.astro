@@ -1136,17 +1136,17 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                   <div class="card card-pad rma-track">
                     <h3 class="h3" style="display:flex;align-items:center;gap:8px">Track your RMA <span class="chip ok">Live service status</span></h3>
                     <p class="form-note" style="margin-top:4px">Enter the RMA number from your confirmation e-mail (e.g. TM-RMA-2026-123456) and the e-mail address you used.</p>
-                    <form id="rmaTrackForm" style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+                    <form id="rmaTrackForm" method="post" style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
                       <input class="input" id="rmaTrackInput" name="number" placeholder="TM-RMA-2026-123456" aria-label="RMA number" autocomplete="off" required style="flex:1;min-width:180px" />
                       <input class="input" id="rmaTrackEmail" name="email" type="email" placeholder="you@example.com" aria-label="E-mail address used for the RMA" autocomplete="email" required style="flex:1;min-width:180px" />
                       <button class="btn btn-primary" type="submit">Track</button>
                     </form>
-                    <div id="rmaTrackOut" style="margin-top:14px"></div>
+                    <div id="rmaTrackOut" style="margin-top:14px" aria-live="polite"></div>
                   </div>
                   <div class="card card-pad" id="sn-check" style="background:var(--bg-tint)">
                     <h3 class="h3" style="display:flex;align-items:center;gap:8px">Serial check <span class="chip ok">Live registry</span></h3>
                     <p class="form-note" style="margin-top:4px">Verify a product is genuine TwinMOS hardware. The serial is printed on the module label and the retail packaging.</p>
-                    <form id="snForm" style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap" novalidate>
+                    <form id="snForm" method="post" style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap" novalidate>
                       <input class="input" id="snInput" name="serial" placeholder="Serial number" aria-label="Serial number" autocomplete="off" required style="flex:1;min-width:200px" />
                       <button class="btn btn-primary" id="snBtn" type="submit">Verify</button>
                     </form>
@@ -1660,6 +1660,27 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
 
         case 'form': {
           const formType = raw.formType || (isQuotePage ? 'quote' : 'contact');
+          if (formType === 'partner-portal') {
+            // Partner portal sign-in (portal.js: Better Auth session → /partner/me
+            // → gated assets). Not a lead form, so no form token / Turnstile.
+            return (
+              <section class="block-form" data-block-id={blockId} id={raw.sectionId || undefined} style="padding:32px 0">
+                <div class="wrap">
+                  <div class="card card-pad" style="max-width:520px">
+                    <h2 class="h3">{raw.title || 'Partner sign-in'}</h2>
+                    <form id="partnerSignIn" method="post" novalidate>
+                      <div class="form-grid">
+                        <div class="fg full"><label for="partnerEmail">Partner email <span class="req">*</span></label><input class="input" id="partnerEmail" type="email" autocomplete="email" required /></div>
+                        <div class="fg full"><label for="partnerPassword">Password <span class="req">*</span></label><input class="input" id="partnerPassword" type="password" autocomplete="current-password" required /></div>
+                      </div>
+                      <button class="btn btn-primary" type="submit" style="margin-top:12px">{raw.submitButtonText || 'Sign in'}</button>
+                      <p class="form-note" style="margin-top:10px">Accounts are created by TwinMOS for approved partners. <a href="/admin/">Forgot your password?</a></p>
+                    </form>
+                  </div>
+                </div>
+              </section>
+            );
+          }
           // axe autocomplete-valid: only WCAG/HTML autofill field tokens
           // ('phone' is not one — the tel token covers type=tel inputs).
           const AUTOCOMPLETE_TOKENS = new Set(['name','email','organization','tel','country-name','street-address','postal-code']);
@@ -1789,15 +1810,17 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                 <div class="wrap">
                   {raw.title && <h2 class="h2">{raw.title}</h2>}
                   {raw.description && <p class="lede">{raw.description}</p>}
-                  <div class="tabs-header" role="tablist" aria-label={raw.title || 'Policy Tabs'}>
+                  {/* Same markup as the policy tabs below, so the site's [data-tab]
+                      handler (app.js) switches them; panels hide by class only (ZT-054). */}
+                  <div class="tabs" role="tablist" aria-label={raw.title || 'Tabs'}>
                     {raw.tabs.map((tab: any, tIdx: number) => (
-                      <button role="tab" class={`tab-btn ${tIdx === 0 ? 'active' : ''}`} id={`tab-${blockId}-${tIdx}`} aria-selected={tIdx === 0 ? 'true' : 'false'}>
+                      <button class={`tab ${tIdx === 0 ? 'on' : ''}`} data-tab={`tab-${blockId}-${tIdx}`} role="tab" type="button" aria-selected={tIdx === 0 ? 'true' : 'false'}>
                         {tab.label || tab.title}
                       </button>
                     ))}
                   </div>
                   {raw.tabs.map((tab: any, tIdx: number) => (
-                    <div role="tabpanel" class={`tab-content ${tIdx === 0 ? 'active' : ''}`} style={tIdx === 0 ? 'margin-top:20px' : 'display:none;margin-top:20px'}>
+                    <div class={`tabpane ${tIdx === 0 ? 'on' : ''}`} id={`tab-${blockId}-${tIdx}`} role="tabpanel" style="margin-top:20px">
                       {tab.content && <div set:html={sanitizeRichText(tab.content)} />}
                       {tab.body && <p style="color:var(--body);line-height:1.6">{tab.body}</p>}
                     </div>
@@ -1809,7 +1832,11 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
 
           // If publishedPolicies exists, dynamically bind tabs to live policies
           if (publishedPolicies.length > 0) {
-            const defaultActiveSlug = raw.defaultSlug || publishedPolicies[0].slug;
+            // ?tab=privacy|warranty|terms|cookies (footer, consent and warranty links) picks the tab
+            const TAB_ALIASES: Record<string, string> = { privacy: 'privacy-policy', cookies: 'privacy-policy', warranty: 'warranty-policy', terms: 'terms-of-service' };
+            const tabParam = (Astro.url.searchParams.get('tab') || '').toLowerCase();
+            const wanted = TAB_ALIASES[tabParam] || tabParam;
+            const defaultActiveSlug = (wanted && publishedPolicies.some((p: any) => p.slug === wanted) ? wanted : '') || raw.defaultSlug || publishedPolicies[0].slug;
             const activeIndex = Math.max(0, publishedPolicies.findIndex((p: any) => p.slug === defaultActiveSlug));
 
             return (
@@ -1838,7 +1865,7 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                         class={`tabpane ${pIdx === activeIndex ? 'on' : ''}`}
                         id={`legal-${pol.slug}`}
                         role="tabpanel"
-                        style={pIdx === activeIndex ? '' : 'display:none'}
+
                       >
                         <div class="card card-pad article-body">
                           {raw.showLastUpdated !== false && (
@@ -1954,9 +1981,11 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
           );
 
         case 'json-ld':
-          // Structured data authored in the CMS (e.g. FAQPage). JSON is
-          // serialised by us, with "<" escaped so it can never close the tag.
+          // Structured data authored in the CMS. JSON is serialised by us, with
+          // "<" escaped so it can never close the tag. FAQ schema types are
+          // excluded site-wide (roadmap Z-24).
           if (!raw.jsonld || typeof raw.jsonld !== 'object') return null;
+          if (/faq/i.test(String(raw.jsonld['@type'] ?? ''))) return null;
           return <script type="application/ld+json" set:html={JSON.stringify(raw.jsonld).replace(/</g, '\\u003c')} />;
 
         case 'breadcrumb':

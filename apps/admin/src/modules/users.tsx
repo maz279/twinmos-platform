@@ -7,6 +7,7 @@ import React, { useMemo, useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
 import { btn, btnGhost, card, Empty, Err, input, MUTED, Table, td, useAsync, usePanelScroll } from '../ui';
 import type { ModProps } from '../nav';
+import { useDialogA11y } from '../dialog-a11y';
 
 type UserRole = 'super_admin' | 'admin' | 'editor' | 'author' | 'viewer';
 
@@ -368,6 +369,7 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [createdInfo] = useState<{ email: string; role: string } | null>(null);
+  const dialogRef = useDialogA11y({ isOpen: true, onClose });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -384,9 +386,15 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
       // Credentials are never returned to the console (ZT-014): without a chosen
       // password the invitee receives a single-use set-password link by e-mail.
       const res = await apiSend<{ user: UserAccount; setPasswordLinkSent?: boolean; emailSent?: boolean }>('POST', '/admin/users/invite', payload);
+      // Without a chosen password the invitee can only get in through the e-mailed
+      // link: if that mail failed, say so instead of reporting success.
+      if (!payload.password && !res.setPasswordLinkSent) {
+        setError(new Error(`Account created for ${res.user.email}, but the set-password e-mail could not be sent. Use "Forgot password" on the sign-in page for this address, or check the mail service.`));
+        return;
+      }
       onSuccess(res.setPasswordLinkSent
         ? `Invitation sent to ${res.user.email} (${res.user.role}) with a single-use link to set their password.`
-        : `Staff account invited successfully for ${res.user.email} (${res.user.role}).`);
+        : `Staff account invited for ${res.user.email} (${res.user.role}).${res.emailSent === false ? ' The invitation e-mail could not be sent.' : ''}`);
     } catch (err) {
       setError(err);
     } finally {
@@ -396,10 +404,10 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-      <div style={{ ...card, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="invite-title" style={{ ...card, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h2 style={{ margin: 0, fontSize: 18 }}>Invite Staff Member</h2>
-          <button onClick={onClose} style={{ border: 0, background: 'transparent', fontSize: 18, cursor: 'pointer' }}>✕</button>
+          <h2 id="invite-title" style={{ margin: 0, fontSize: 18 }}>Invite Staff Member</h2>
+          <button type="button" onClick={onClose} aria-label="Close" style={{ border: 0, background: 'transparent', fontSize: 18, cursor: 'pointer' }}>✕</button>
         </div>
 
         {error ? <div style={{ marginBottom: 12 }}><Err error={error} /></div> : null}
@@ -491,6 +499,7 @@ function BanModal({ user, onClose, onSuccess }: { user: UserAccount; onClose: ()
   const [duration, setDuration] = useState('0');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const dialogRef = useDialogA11y({ isOpen: true, onClose });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -512,8 +521,8 @@ function BanModal({ user, onClose, onSuccess }: { user: UserAccount; onClose: ()
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-      <div style={{ ...card, width: '100%', maxWidth: 440 }}>
-        <h2 style={{ margin: '0 0 8px', fontSize: 18, color: '#9C3230' }}>Suspend Account</h2>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="ban-title" style={{ ...card, width: '100%', maxWidth: 440 }}>
+        <h2 id="ban-title" style={{ margin: '0 0 8px', fontSize: 18, color: '#9C3230' }}>Suspend Account</h2>
         <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748B' }}>
           Suspending <b>{user.name || user.email}</b> will immediately terminate all active sessions and block sign-in until reactivated.
         </p>

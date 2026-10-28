@@ -10,7 +10,7 @@
 // S-15: CORS origin restriction & ACAC hygiene
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -210,6 +210,22 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     });
     expect(errsNoMfa.some((e: string) => e.includes('ENFORCE_MFA'))).toBe(true);
 
+    // 4b. Test integrations copied from a lab/staging env (ZT-080)
+    const good = {
+      NODE_ENV: 'production', DATABASE_URL: 'postgres://db/twinmos', BETTER_AUTH_SECRET: 'a-very-long-secret-key-123456789',
+      BETTER_AUTH_URL: 'https://www.twinmos.com', TURNSTILE_SECRET_KEY: '0x4AAAAAA', RESEND_API_KEY: 're_1234567890',
+      MAIL_FROM: 'TwinMOS <no-reply@twinmos.com>', FORMS_TO: 'leads@twinmos.com',
+      PREVIEW_SIGNING_KEY: 'a-very-long-signing-key-1234567890', REVALIDATE_SECRET: 'a-very-long-revalidate-secret-12345',
+      INTERNAL_WEB_URL: 'http://web:4321',
+    };
+    expect(bootConfigErrors(good)).toEqual([]);
+    const testKey = bootConfigErrors({ ...good, TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA' });
+    expect(testKey.some((e: string) => e.includes('Cloudflare test key'))).toBe(true);
+    expect(bootConfigErrors({ ...good, RESEND_BASE_URL: 'http://mailmock:3000' }).some((e: string) => e.includes('RESEND_BASE_URL'))).toBe(true);
+    expect(bootConfigErrors({ ...good, BETTER_AUTH_URL: 'https://localhost' }).some((e: string) => e.includes('public site address'))).toBe(true);
+    // the zero-trust lab acknowledges its test integrations explicitly
+    expect(bootConfigErrors({ ...good, TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA', RESEND_BASE_URL: 'http://mailmock:3000', TWINMOS_LAB_TEST_INTEGRATIONS: 'acknowledged-not-for-production' })).toEqual([]);
+
     // 5. turnstileBypassEnabled never true in production
     expect(turnstileBypassEnabled({ NODE_ENV: 'production', API_ALLOW_NO_TURNSTILE: '1' })).toBe(false);
     expect(turnstileBypassEnabled({ NODE_ENV: 'development', API_ALLOW_NO_TURNSTILE: '1' })).toBe(true);
@@ -397,8 +413,24 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     });
     expect(inviteRes.status).toBe(201);
     const inviteData = await inviteRes.json();
-    expect(inviteData.temporaryPassword).toBeDefined();
+    expect(inviteData.temporaryPassword).toBeUndefined(); // ZT-014: no credential in the response
+    expect(inviteData.setPasswordLinkSent).toBe(true);
     expect(inviteData.user.emailVerified).toBe(false);
+
+    // 2b. The invitee chooses a password through the single-use link in the mail
+    const outbox = process.env.MAIL_OUTBOX_DIR!;
+    const resetText = readdirSync(outbox).filter((f) => f.endsWith('.json')).sort()
+      .map((f) => JSON.parse(readFileSync(join(outbox, f), 'utf8')))
+      .filter((m: any) => m.to === staffEmail && /Password Reset/.test(m.subject ?? '')).pop()?.text ?? '';
+    const resetToken = /reset-password\/([A-Za-z0-9_-]+)/.exec(resetText)?.[1];
+    expect(resetToken).toBeTruthy();
+    const staffPw = 'Staff-' + crypto.randomUUID();
+    const resetRes = await app.request('/api/v1/auth/reset-password', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ token: resetToken, newPassword: staffPw }),
+    });
+    expect(resetRes.status).toBe(200);
 
     // 3. Attempting to sign in with unverified account while requireEmailVerification is active fails with 403
     const prevReq = process.env.REQUIRE_EMAIL_VERIFICATION;
@@ -407,7 +439,7 @@ describe('Security Regression Pack (S-01…S-16)', () => {
       const unverifiedRes = await app.request('/api/v1/auth/sign-in/email', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: staffEmail, password: inviteData.temporaryPassword }),
+        body: JSON.stringify({ email: staffEmail, password: staffPw }),
       });
       expect(unverifiedRes.status).toBe(403);
       expect((await unverifiedRes.json()).code).toBe('EMAIL_NOT_VERIFIED');
@@ -420,7 +452,7 @@ describe('Security Regression Pack (S-01…S-16)', () => {
     const verifiedSignIn = await app.request('/api/v1/auth/sign-in/email', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: staffEmail, password: inviteData.temporaryPassword }),
+      body: JSON.stringify({ email: staffEmail, password: staffPw }),
     });
     expect(verifiedSignIn.status).toBe(200);
   });

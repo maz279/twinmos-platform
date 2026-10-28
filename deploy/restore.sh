@@ -1,81 +1,75 @@
 #!/usr/bin/env bash
-# TwinMOS restore + DR drill (P7) — RTO 4h / RPO 15min (WAL).
-# Usage: restore.sh <backup-dir> [--drill] OR restore.sh [--drill] <backup-dir>
-#   --drill restores into a THROWAWAY database and extracts to a throwaway temp directory,
-#   leaving production untouched (never touches /var/lib/twinmos). Run quarterly (docs/runbooks/DR.md).
-# Closes audit findings Z-23 and Z-41.
+# TwinMOS restore + DR drill for the docker compose deployment (P7).
+# Usage: deploy/restore.sh [--drill] <backup-dir>
+#   --drill  restores the dump into a THROWAWAY database inside the running
+#            postgres service and unpacks the files into a temp directory, checks
+#            them, then drops both. Production data is never touched.
+#   (none)   PRODUCTION restore: asks for the stamp, stops api+web, restores the
+#            database in one transaction and replaces the uploaded files.
+# TWINMOS_COMPOSE overrides the compose command prefix (see backup.sh).
 set -euo pipefail
 
+cd "$(dirname "$0")/.."
+read -r -a C <<< "${TWINMOS_COMPOSE:-docker compose -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.prod.yml}"
 DRILL=false
 SRC=""
-
 for arg in "$@"; do
-  if [ "$arg" = "--drill" ]; then
-    DRILL=true
-  elif [ -z "$SRC" ]; then
-    SRC="$arg"
-  fi
+  if [ "$arg" = "--drill" ]; then DRILL=true; elif [ -z "$SRC" ]; then SRC="$arg"; fi
+done
+[ -n "$SRC" ] || { echo "Usage: restore.sh [--drill] <backup-dir>" >&2; exit 1; }
+for f in db.dump globals.sql files.tgz SHA256SUMS; do
+  [ -f "$SRC/$f" ] || { echo "missing $SRC/$f" >&2; exit 1; }
 done
 
-if [ -z "$SRC" ]; then
-  echo "Usage: restore.sh <backup-dir> [--drill] OR restore.sh [--drill] <backup-dir>" >&2
-  exit 1
-fi
-
-[ -f "$SRC/db.dump" ] || { echo "no db.dump in $SRC" >&2; exit 1; }
-
 # integrity first
-( cd "$SRC" && sha256sum -c db.dump.sha256 )
-if [ -f "$SRC/globals.sql.sha256" ]; then
-  ( cd "$SRC" && sha256sum -c globals.sql.sha256 )
-fi
-if [ -f "$SRC/files.tgz.sha256" ]; then
-  ( cd "$SRC" && sha256sum -c files.tgz.sha256 )
-fi
+( cd "$SRC" && sha256sum -c SHA256SUMS )
+
+pgq() { "${C[@]}" exec -T postgres sh -c "psql -v ON_ERROR_STOP=1 -U \"\$POSTGRES_USER\" -d $1 -tA -c \"$2\""; }
+counts() {
+  for t in '"user"' product article page audit_log rma_request product_registration media_asset; do
+    echo "  $t=$(pgq "$1" "SELECT count(*) FROM $t")"
+  done
+}
 
 if [ "$DRILL" = true ]; then
-  TARGET="${DRILL_DATABASE_URL:?DRILL_DATABASE_URL must point at a throwaway database}"
-  LABEL="DRILL"
-else
-  read -r -p "RESTORE TO PRODUCTION from $SRC? Type the stamp to confirm: " CONFIRM
-  [ "$CONFIRM" = "$(basename "$SRC")" ] || { echo "aborted"; exit 1; }
-  TARGET="${DATABASE_URL:?DATABASE_URL required}"
-  LABEL="PRODUCTION"
-  sudo systemctl stop twinmos-api
+  DB="twinmos_drill_$(date -u +%Y%m%d%H%M%S)"
+  echo "[DRILL] restoring into throwaway database $DB"
+  "${C[@]}" exec -T postgres sh -c "createdb -U \"\$POSTGRES_USER\" $DB"
+  trap '"${C[@]}" exec -T postgres sh -c "dropdb -U \"\$POSTGRES_USER\" --if-exists '"$DB"'" >/dev/null || true' EXIT
+  "${C[@]}" exec -T postgres sh -c "pg_restore -U \"\$POSTGRES_USER\" -d $DB --no-owner --no-privileges --exit-on-error --single-transaction" < "$SRC/db.dump"
+  echo "[DRILL] restored row counts:"
+  counts "$DB"
+  TMP="$(mktemp -d)"
+  tar xzf "$SRC/files.tgz" -C "$TMP"
+  echo "[DRILL] files restored: $(find "$TMP" -type f | wc -l) (media: $(find "$TMP/media" -type f 2>/dev/null | wc -l), partner-files: $(find "$TMP/partner-files" -type f 2>/dev/null | wc -l))"
+  rm -rf "$TMP"
+  echo "[DRILL] complete — production untouched. Record the result in docs/runbooks/DR.md."
+  exit 0
 fi
 
-echo "[$LABEL] dropping + recreating schema in target…"
-psql "$TARGET" -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
-pg_restore --no-owner --no-privileges "$SRC/db.dump" -d "$TARGET"
+read -r -p "RESTORE TO PRODUCTION from $SRC? Type the stamp to confirm: " CONFIRM
+[ "$CONFIRM" = "$(basename "$SRC")" ] || { echo "aborted"; exit 1; }
 
-if [ -f "$SRC/globals.sql" ]; then
-  echo "[$LABEL] restoring global roles and permissions catalog…"
-  psql "$TARGET" -f "$SRC/globals.sql" || true
-fi
+echo "[PRODUCTION] stopping api + web"
+"${C[@]}" stop api web
+restart() { "${C[@]}" start api web; }
+trap restart EXIT
 
-# T7.1.1 / Z-41: --drill must NEVER write production paths (/var/lib/twinmos)
-if [ "$LABEL" = "DRILL" ]; then
-  DRILL_FILES_DIR="${DRILL_UPLOADS_DIR:-$(mktemp -d /tmp/twinmos-drill-uploads.XXXXXX)}"
-  echo "[$LABEL] extracting uploaded files into throwaway directory: $DRILL_FILES_DIR (safe non-production path)…"
-  tar xzf "$SRC/files.tgz" -C "$DRILL_FILES_DIR"
-  if [ -d "$DRILL_FILES_DIR/media" ] || [ -d "$DRILL_FILES_DIR/partner-files" ]; then
-    echo "[$LABEL] uploaded media and files integrity verified in throwaway directory."
+echo "[PRODUCTION] restoring database (one transaction: all or nothing)"
+"${C[@]}" exec -T postgres sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner --no-privileges --exit-on-error --single-transaction' < "$SRC/db.dump"
+
+echo "[PRODUCTION] replacing uploaded files"
+"${C[@]}" run --rm --no-deps -T --entrypoint sh api -c 'find /app/apps/api/data -mindepth 1 -delete && tar xzf - -C /app/apps/api/data' < "$SRC/files.tgz"
+
+echo "[PRODUCTION] restored row counts:"
+counts '"$POSTGRES_DB"'
+trap - EXIT
+restart
+for i in $(seq 1 30); do
+  if "${C[@]}" exec -T api node -e "fetch('http://127.0.0.1:8787/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
+    echo "[PRODUCTION] api healthy"; exit 0
   fi
-  rm -rf "$DRILL_FILES_DIR"
-else
-  echo "[$LABEL] restoring uploaded files into production: /var/lib/twinmos…"
-  tar xzf "$SRC/files.tgz" -C /var/lib/twinmos
-fi
-
-echo "[$LABEL] verification queries:"
-psql "$TARGET" -t -c "SELECT 'users=' || count(*) FROM \"user\";"
-psql "$TARGET" -t -c "SELECT 'products=' || count(*) FROM product;"
-psql "$TARGET" -t -c "SELECT 'articles=' || count(*) FROM article;"
-psql "$TARGET" -t -c "SELECT 'audit_rows=' || count(*) FROM audit_log;"
-
-if [ "$LABEL" = "PRODUCTION" ]; then
-  sudo systemctl start twinmos-api
-  curl -fsS http://127.0.0.1:8787/api/v1/health && echo " ← health OK"
-else
-  echo "DRILL complete — production untouched (0 writes to /var/lib/twinmos). Record results in docs/runbooks/DR.md."
-fi
+  sleep 2
+done
+echo "[PRODUCTION] api did not become healthy — check '${C[*]} logs api'" >&2
+exit 1

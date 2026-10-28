@@ -38,7 +38,7 @@
   "key": "site.cookie",
   "value": {
    "title": "Cookie Preferences",
-   "policyUrl": "/legal.html#cookies",
+   "policyUrl": "/legal?tab=privacy",
    "description": "We use essential cookies to ensure site security and proper functionality.",
    "essentialOnlyDefault": true
   },

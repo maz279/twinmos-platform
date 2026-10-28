@@ -5,8 +5,10 @@ import { dirname, resolve } from 'node:path';
 const CODEBASE_ROOT = resolve(process.cwd(), '../..');
 const CLASSIFICATION_PATH = resolve(CODEBASE_ROOT, 'tooling', 'data', 'legacy_url_classification.json');
 const NGINX_MAP_PATH = resolve(CODEBASE_ROOT, 'deploy', 'nginx', 'twinmos-redirects.map');
-const WP_PATHS_FILE = resolve(CODEBASE_ROOT, '../audit/Audit_report/audit_finding_Implementation/evidence/seo_migration/legacy_live_paths_2023plus.txt');
-const CRAWL_URLS_FILE = resolve(CODEBASE_ROOT, '../audit/Audit_report/audit_finding_Implementation/evidence/seo_migration/live_crawl_urls_2026-09-23.txt');
+// Inputs copied into the repo (2026-10-28): they lived outside it, so a clean
+// clone could never run this suite.
+const WP_PATHS_FILE = resolve(CODEBASE_ROOT, 'tooling', 'data', 'seo_migration', 'legacy_live_paths_2023plus.txt');
+const CRAWL_URLS_FILE = resolve(CODEBASE_ROOT, 'tooling', 'data', 'seo_migration', 'live_crawl_urls_2026-09-23.txt');
 
 interface ClassificationItem {
   from: string;

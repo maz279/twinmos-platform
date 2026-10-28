@@ -159,6 +159,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const a = await authed(c);
     if (a instanceof Response) return a;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rows = await db.select().from(product).where(eq(product.id, id)).limit(1);
     if (!rows[0]) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
     return c.json(rows[0]);
@@ -212,6 +213,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rawJson = await c.req.json().catch(() => ({}));
     if (rawJson.status !== undefined) {
       return c.json(problem(422, 'Status transition required', 'Status cannot be updated directly via PATCH. Use POST /admin/products/:id/transition instead.'), 422, { 'Content-Type': P });
@@ -276,6 +278,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const body = await c.req.json().catch(() => ({}));
     const to = String(body.to ?? '');
     const row = (await db.select().from(product).where(eq(product.id, id)).limit(1))[0];
@@ -310,6 +313,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const a = await authed(c);
     if (a instanceof Response) return a;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rows = await db.select().from(productVariant).where(eq(productVariant.productId, id)).orderBy(asc(productVariant.id));
     return c.json({ items: rows });
   });
@@ -332,6 +336,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const exists = (await db.select({ id: product.id }).from(product).where(eq(product.id, id)).limit(1))[0];
     if (!exists) return c.json(problem(404, 'Product not found'), 404, { 'Content-Type': P });
     const parsed = variantCreateSchema.safeParse(await c.req.json().catch(() => ({})));
@@ -352,6 +357,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const varId = Number(c.req.param('varId'));
     const rawJson = await c.req.json().catch(() => ({}));
     const parsed = variantUpdateSchema.safeParse(rawJson);
@@ -385,6 +391,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const varId = Number(c.req.param('varId'));
     const rows = await db.delete(productVariant).where(and(eq(productVariant.id, varId), eq(productVariant.productId, id))).returning();
     if (!rows[0]) return c.json(problem(404, 'Variant not found'), 404, { 'Content-Type': P });
@@ -425,6 +432,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rawJson = await c.req.json().catch(() => ({}));
     const parsed = compatibilityUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
@@ -441,6 +449,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rows = await db.delete(compatibilityRule).where(eq(compatibilityRule.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Compatibility rule not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'compatibility.delete', 'compatibility_rule', String(id), rows[0].deviceBrand + ' ' + rows[0].deviceModel);
@@ -1089,6 +1098,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rows = await db.select({ sub: formSubmission, assigneeEmail: user.email })
       .from(formSubmission).leftJoin(user, eq(formSubmission.assigneeId, user.id))
       .where(eq(formSubmission.id, id)).limit(1);
@@ -1105,6 +1115,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rawJson = await c.req.json().catch(() => ({}));
     const parsed = submissionUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
@@ -1139,6 +1150,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const parsed = formNoteCreateSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
     const lead = await db.select({ id: formSubmission.id }).from(formSubmission).where(eq(formSubmission.id, id)).limit(1);
@@ -1158,6 +1170,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const body = await c.req.json().catch(() => ({}));
     const text = String((body as any).text ?? '').trim();
     if (!text || text.length > 8000) {
@@ -1233,6 +1246,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rows = await db.select().from(rmaRequest).where(eq(rmaRequest.id, id)).limit(1);
     if (!rows[0]) return c.json(problem(404, 'RMA not found'), 404, { 'Content-Type': P });
     const events = await db.select().from(rmaEvent).where(eq(rmaEvent.rmaId, id)).orderBy(rmaEvent.id);
@@ -1250,6 +1264,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const a = await authed(c, 'editor');
     if (a instanceof Response) return a;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rows = await db.select().from(rmaRequest).where(eq(rmaRequest.id, id)).limit(1);
     const rma = rows[0];
     if (!rma) return c.json(problem(404, 'RMA not found'), 404, { 'Content-Type': P });
@@ -1290,6 +1305,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const body = await c.req.json().catch(() => ({}));
     const text = String((body as any).text ?? '').trim();
     if (!text || text.length > 8000) {
@@ -1324,6 +1340,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const body = await c.req.json().catch(() => ({}));
     const assigneeId = (body as any).assigneeId === null || (body as any).assigneeId === undefined
       ? null : String((body as any).assigneeId);
@@ -1342,6 +1359,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
 
     // Idempotency cache key is scoped to this RMA row so one client's key can
     // never be replayed against a different RMA's transition.
@@ -1461,6 +1479,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rawJson = await c.req.json().catch(() => ({}));
     const parsed = jobPostingUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
@@ -1484,6 +1503,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rows = await db.update(jobPosting).set({ deletedAt: new Date() })
       .where(and(eq(jobPosting.id, id), isNull(jobPosting.deletedAt))).returning();
     if (!rows[0]) return c.json(problem(404, 'Job posting not found'), 404, { 'Content-Type': P });
@@ -1522,6 +1542,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rawJson = await c.req.json().catch(() => ({}));
     const parsed = jobApplicationUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
@@ -1541,6 +1562,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const body = await c.req.json().catch(() => ({}));
     const text = String((body as any).text ?? '').trim();
     if (!text || text.length > 8000) {
@@ -1593,6 +1615,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rawJson = await c.req.json().catch(() => ({}));
     const parsed = specDictionaryUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
@@ -1606,6 +1629,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rows = await db.delete(specDictionary).where(eq(specDictionary.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Entry not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'spec_dictionary.delete', 'spec_dictionary', String(id), { key: rows[0].key });
@@ -1638,6 +1662,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rawJson = await c.req.json().catch(() => ({}));
     const parsed = specTemplateUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
@@ -1651,6 +1676,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const rows = await db.delete(specTemplate).where(eq(specTemplate.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Template not found'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'spec_template.delete', 'spec_template', String(id), { name: rows[0].name });

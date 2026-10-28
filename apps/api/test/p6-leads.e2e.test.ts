@@ -22,6 +22,7 @@ const MIGRATIONS = join(dirname(dirname(process.cwd())), 'packages', 'db', 'migr
 const { createDb, user, formSubmission, formNote }: any = await import('@twinmos/db');
 const { migrate } = await import('drizzle-orm/pglite/migrator');
 const { buildApp } = await import('../src/app.ts');
+const { formToken, registerSerial }: any = await import('./support/fixtures.ts');
 const { eq } = await import('drizzle-orm');
 
 const db = createDb();
@@ -78,7 +79,7 @@ describe('P6 lead intake (ADR-009)', () => {
   it('quote submit → QT- reference, high priority, SLA due ≈ +24h, ticketed auto-reply', async () => {
     const res = await app.request('/api/v1/forms/quote', {
       method: 'POST', headers: { ...json, ...ip(1) },
-      body: JSON.stringify({
+      body: JSON.stringify({ formToken: formToken(),
         type: 'quote', email: 'buyer@acme.example', name: 'Sarah Chen',
         payload: { company: 'ACME Systems', country: 'Germany', product: 'VOLTX DDR5 32GB kit', quantity: '250', message: 'Q1 build cycle quote requested.' },
         consent: true,
@@ -105,7 +106,7 @@ describe('P6 lead intake (ADR-009)', () => {
   it('contact submit → CT- reference, normal priority, auto-reply too', async () => {
     const res = await app.request('/api/v1/forms/contact', {
       method: 'POST', headers: { ...json, ...ip(2) },
-      body: JSON.stringify({ type: 'contact', email: 'hi@visitor.example', payload: { message: 'General question about warranty terms.' }, consent: true }),
+      body: JSON.stringify({ formToken: formToken(), type: 'contact', email: 'hi@visitor.example', payload: { message: 'General question about warranty terms.' }, consent: true }),
     });
     const body = await res.json();
     expect(body.reference).toMatch(/^CT-\d{4}-[0-9a-f]{8}$/);
@@ -155,7 +156,7 @@ describe('P6 lead intake (ADR-009)', () => {
   it('spam flow: new → spam → back to new', async () => {
     const res = await app.request('/api/v1/forms/feedback', {
       method: 'POST', headers: { ...json, ...ip(3) },
-      body: JSON.stringify({ type: 'feedback', email: 'x@y.example', payload: { message: 'site feedback here' }, consent: true }),
+      body: JSON.stringify({ formToken: formToken(), type: 'feedback', email: 'x@y.example', payload: { message: 'site feedback here' }, consent: true }),
     });
     const { reference } = await res.json();
     const id = (await db.select().from(formSubmission)).find((r: any) => r.refCode === reference).id;
@@ -237,7 +238,7 @@ describe('P6 lead intake (ADR-009)', () => {
   it('audit-2: CSV formula-injection is neutralised (= + - @ leads get an apostrophe prefix)', async () => {
     const res = await app.request('/api/v1/forms/feedback', {
       method: 'POST', headers: { ...json, ...ip(4) },
-      body: JSON.stringify({
+      body: JSON.stringify({ formToken: formToken(),
         type: 'feedback', email: 'csv-injection@example.com',
         payload: {
           company: '=HYPERLINK("http://evil.example","click")',

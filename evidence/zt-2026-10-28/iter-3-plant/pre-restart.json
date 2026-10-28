@@ -1,0 +1,15 @@
+{
+  "name": "media-persist",
+  "at": "2026-10-28T16:32:49.105Z",
+  "total": 1,
+  "failed": 0,
+  "items": [
+    {
+      "id": "MEDIA-01 uploaded image still served, byte-identical, after an api restart",
+      "ok": true,
+      "upload": 201,
+      "status": 200,
+      "same": true
+    }
+  ]
+}

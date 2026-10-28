@@ -21,6 +21,12 @@ export const RICH_TEXT_FORBID_TAGS = [
  * Sanitizes an untrusted HTML or rich text string against a strict allow-list.
  * Explicitly strips <script>, <form>, <input>, <style>, <iframe>, and event handlers.
  */
+/** JSON for an inline <script type="application/ld+json">: escapes "<" so a
+ *  CMS value containing "</script>" can never close the tag (ZT-056). */
+export function jsonForScript(json: string): string {
+  return json.replace(/</g, '\\u003c');
+}
+
 export function sanitizeRichText(html: string): string {
   if (!html || typeof html !== 'string') return '';
   return DOMPurify.sanitize(html, {

@@ -73,12 +73,15 @@ Set `TRUST_PROXY=1` in `/etc/twinmos/api.env` so the API reads the single canoni
 
 ## 5. Backups
 
+Run from the repo checkout that runs the stack (the scripts use `docker compose exec`;
+override the compose command with `TWINMOS_COMPOSE` if your project name/overlays differ):
+
 ```bash
-sudo cp deploy/backup.sh /opt/twinmos/ && sudo chmod 700 /opt/twinmos/backup.sh
-# cron root: 15 2 * * * BACKUP_ROOT=/var/backups/twinmos DATABASE_URL=... /opt/twinmos/backup.sh
+# cron root: 15 2 * * * cd /opt/twinmos && BACKUP_ENCRYPTION_KEY=... B2_BUCKET=... deploy/backup.sh >> /var/log/twinmos-backup.log 2>&1
 ```
 
-Restore/DR: `deploy/restore.sh` (production restore asks for the stamp; `--drill` restores to a throwaway DB — see docs/runbooks/DR.md).
+Off-site sync refuses to run without `BACKUP_ENCRYPTION_KEY`; only `offsite/*.enc` leave the host.
+Restore/DR: `deploy/restore.sh [--drill] <backup-dir>` (production restore asks for the stamp; `--drill` restores into a throwaway database — see docs/runbooks/DR.md).
 
 ## 6. Cutover checklist
 

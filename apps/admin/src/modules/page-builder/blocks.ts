@@ -2,7 +2,7 @@
 // Tasks C4a..C4e, C12, T4.1.3, T4.1.5 (ADR D-4).
 // Each type declares a field schema; PageBuilder renders editors generically from these definitions
 // and preview renders the visual twin. Blocks persist into page.blocks (jsonb) as plain objects.
-import { BLOCK_TYPES } from '@twinmos/shared';
+import { BLOCK_TYPES, FORM_BLOCK_TYPES } from '@twinmos/shared';
 import type { BlockType } from '@twinmos/shared';
 
 /** Recursive editor-field descriptor (schema-driven forms, no per-block code). */
@@ -478,7 +478,7 @@ export const BLOCK_DEFS: BlockDef[] = [
   {
     type: 'form', label: 'Form embed', icon: '📝', desc: 'Interactive form widget mapped to form definition schema.',
     fields: [
-      sel('formType', 'Form type', ['contact', 'support', 'rma', 'partner', 'careers', 'newsletter', 'custom']),
+      sel('formType', 'Form type', FORM_BLOCK_TYPES),
       text('title', 'Headline override (optional)'),
       area('description', 'Intro copy (optional)'),
     ],
@@ -571,13 +571,25 @@ const human = (k: string) => k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c
 function scalarField(key: string, sample: unknown): FieldDef | null {
   if (typeof sample === 'number') return { k: 'number', key, label: human(key) };
   if (typeof sample === 'string') return LONG.test(key) || sample.length > 80 ? { k: 'textarea', key, label: human(key) } : { k: 'text', key, label: human(key) };
-  if (Array.isArray(sample) && sample.every((x) => typeof x === 'string')) return { k: 'lines', key, label: `${human(key)} (one per line)` };
+  if (Array.isArray(sample) && sample.length > 0 && sample.every((x) => typeof x === 'string')) return { k: 'lines', key, label: `${human(key)} (one per line)` };
   return null;
 }
+// Item shapes for list keys the renderer knows, so an EMPTY list still gets the
+// right editor (an empty array used to become a free-text list → 422 on save).
+const KNOWN_ITEMS: Record<string, string[]> = {
+  stats: ['value', 'label', 'sub'], items: ['title', 'description', 'badge', 'link', 'linkLabel'], ctas: ['label', 'url'],
+  chips: ['label', 'url'], milestones: ['year', 'title', 'description'], steps: ['title', 'description'],
+  links: ['label', 'targetId'], slides: ['title', 'kicker', 'lede', 'image', 'alt'], articles: ['slug', 'title', 'excerpt', 'tag'],
+};
 export function inferFields(block: Record<string, unknown>): FieldDef[] {
   const out: FieldDef[] = [];
   for (const [key, val] of Object.entries(block)) {
     if (SKIP.has(key)) continue;
+    if (Array.isArray(val) && val.length === 0) {
+      const shape = KNOWN_ITEMS[key];
+      if (shape) out.push({ k: 'list', key, label: human(key), itemLabel: human(key).replace(/s$/, ''), defaultItem: Object.fromEntries(shape.map((k) => [k, ''])), itemFields: shape.map((k) => ({ k: 'text', key: k, label: human(k) }) as FieldDef) });
+      continue;
+    }
     const scalar = scalarField(key, val);
     if (scalar) { out.push(scalar); continue; }
     if (Array.isArray(val) && val.length && val.every((x) => x && typeof x === 'object' && !Array.isArray(x))) {

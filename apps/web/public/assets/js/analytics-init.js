@@ -36,7 +36,9 @@
       window.dataLayer.push(arguments);
     };
     window.gtag('js', new Date());
-    window.gtag('config', gaId, { anonymize_ip: true });
+    // page_location without the query: /newsletter?unsubscribe= and
+    // /support/warranty?confirm= carry personal tokens (ZT-073)
+    window.gtag('config', gaId, { anonymize_ip: true, page_location: location.origin + location.pathname });
   }
 
   load();

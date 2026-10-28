@@ -61,15 +61,16 @@ describe('MS6.5 · SEO Metadata and Structured Data (Gate SEO-01)', () => {
       const content = readFileSync(LAYOUT_ASTRO, 'utf8');
       expect(content).toContain('const isHomepage = path === \'/\' || path === \'\';');
       expect(content).toContain('{isHomepage && (');
-      expect(content).toContain('set:html={ORG_LD}');
-      expect(content).toContain('set:html={SITE_LD}');
+      // serialised through jsonForScript so a CMS value cannot close the tag (ZT-056)
+      expect(content).toContain('set:html={jsonForScript(ORG_LD)}');
+      expect(content).toContain('set:html={jsonForScript(SITE_LD)}');
     });
 
     it('BreadcrumbList is generated for internal pages with breadcrumbs', () => {
       const content = readFileSync(LAYOUT_ASTRO, 'utf8');
       expect(content).toContain('const BREADCRUMB_LD = breadcrumbs && breadcrumbs.length > 0');
       expect(content).toContain('\'@type\': \'BreadcrumbList\'');
-      expect(content).toContain('{BREADCRUMB_LD && <script type="application/ld+json" set:html={BREADCRUMB_LD} />}');
+      expect(content).toContain('{BREADCRUMB_LD && <script type="application/ld+json" set:html={jsonForScript(BREADCRUMB_LD)} />}');
     });
 
     it('Zero FAQPage schema in the entire web application', () => {

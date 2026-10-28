@@ -22,6 +22,7 @@ const { createDb, rmaRequest, rmaEvent, serialRegistry, snCheck }: any = await i
 const { migrate } = await import('drizzle-orm/pglite/migrator');
 const { buildApp }: any = await import('../src/app.ts');
 const { eq } = await import('drizzle-orm');
+const { formToken, registerSerial }: any = await import('./support/fixtures.ts');
 
 const db = createDb();
 await db.$client.exec('CREATE SCHEMA IF NOT EXISTS drizzle');
@@ -54,24 +55,31 @@ beforeAll(async () => {
   expect(cookie).toBeTruthy();
   adminId = (await db.select({ id: schema.user.id }).from(schema.user).limit(1))[0].id;
 
-  // three cases through the real public RMA intake (type rma)
+  // registered serials (BR-6.2: no RMA without an in-warranty registration)
+  await registerSerial(db, 'TMS-VERIFIED-001', 'a@verified.example', { sku: 'VLT-DDR5-16G' });
+  await registerSerial(db, 'TMS-LEAKED-002', 'c@suspicious.example', { sku: 'VLT-SSD-1TB' });
+  await db.update(serialRegistry).set({ batch: 'B2601' }).where(eq(serialRegistry.serial, 'TMS-VERIFIED-001'));
+  await db.update(serialRegistry).set({ batch: 'B2602' }).where(eq(serialRegistry.serial, 'TMS-LEAKED-002'));
+
+  // two cases through the real public RMA intake (type rma)
   const mk = async (email: string, payload: Record<string, unknown>) => {
     const r = await app.request('/api/v1/forms/rma', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email, consent: true, payload }),
+      body: JSON.stringify({ email, consent: true, formToken: formToken(), payload }),
     });
     expect(r.status).toBe(201);
-    return (await r.json()).id as number;
+    const { rmaNumber } = await r.json();
+    return (await db.select({ id: rmaRequest.id }).from(rmaRequest).where(eq(rmaRequest.number, rmaNumber)))[0].id as number;
   };
   verifiedId = await mk('a@verified.example', { name: 'Vera Verified', product: 'VLT-DDR5-16G', serial: 'TMS-VERIFIED-001', issue: 'Module fails XMP profile' });
-  unknownId = await mk('b@unknown.example', { name: 'Uma Unknown', product: 'VLT-DDR5-32G', serial: 'FAKE-SN-999', issue: 'Not detected' });
   suspiciousId = await mk('c@suspicious.example', { name: 'Sam Suspicious', product: 'VLT-SSD-1TB', serial: 'TMS-LEAKED-002', issue: 'Dead on arrival' });
+  // A serial outside the registry can no longer come through the public intake;
+  // the console still meets such cases (pre-BR-6.2 history, staff-entered).
+  unknownId = (await db.insert(rmaRequest).values({
+    number: 'TM-RMA-2026-000999', serial: 'FAKE-SN-999', issue: 'Not detected',
+    customer: { name: 'Uma Unknown', email: 'b@unknown.example', product: 'VLT-DDR5-32G' },
+  }).returning({ id: rmaRequest.id }))[0].id;
 
-  // registry rows: one clean serial, one serial that will show leaked distribution
-  await db.insert(serialRegistry).values([
-    { serial: 'TMS-VERIFIED-001', sku: 'VLT-DDR5-16G', batch: 'B2601' },
-    { serial: 'TMS-LEAKED-002', sku: 'VLT-SSD-1TB', batch: 'B2602' },
-  ]);
   // 7 distinct IPs verified the leaked serial in the last 24h → suspicious
   for (let i = 1; i <= 7; i++) {
     await db.insert(snCheck).values({ serial: 'TMS-LEAKED-002', sku: 'VLT-SSD-1TB', result: 'valid', ip: `203.0.113.${i}`, country: 'XX' });

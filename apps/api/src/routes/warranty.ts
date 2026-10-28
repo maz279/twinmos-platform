@@ -9,13 +9,12 @@ import {
   problem, warrantyRegisterSchema, warrantyLookupSchema, parseWarrantyTerm, warrantyExpiry, warrantyStatusOf,
   type WarrantyStatusName,
 } from '@twinmos/shared';
-import { auditLog, product, productRegistration, serialRegistry, snCheck } from '@twinmos/db';
+import { auditLog, product, productRegistration, serialRegistry } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 import { turnstileBypassEnabled } from '../boot-config.ts';
 import { verifyFormToken, verifyTurnstile } from './forms.ts';
-import { SERIAL_ANOMALY_THRESHOLD } from './sncheck.ts';
-import { sendCustomerConfirmation } from '../mailer.ts';
+import { routeRecipient, sendCustomerConfirmation, sendMail } from '../mailer.ts';
 
 const P = 'application/problem+json';
 type Guard = (req: Request) => Promise<AuthSession | null>;
@@ -27,22 +26,6 @@ export async function activeRegistration(db: DB, serial: string): Promise<Active
   const rows = await db.select().from(productRegistration)
     .where(and(eq(productRegistration.serial, serial.toUpperCase()), eq(productRegistration.status, 'active'))).limit(1);
   return rows[0] ?? null;
-}
-
-/** Public, PII-free warranty status for a serial (SN-check enrichment, UR-17.1.5). */
-export async function warrantyFor(db: DB, serial: string): Promise<{ status: WarrantyStatusName; expiresAt: string | null }> {
-  const reg = await activeRegistration(db, serial);
-  return { status: warrantyStatusOf(reg), expiresAt: reg?.warrantyExpiresAt ? new Date(reg.warrantyExpiresAt).toISOString() : null };
-}
-
-/** Is this serial currently showing the cloned-label pattern (same rule as SN-check)? */
-async function serialLooksCloned(db: DB, serial: string): Promise<boolean> {
-  const since = new Date(Date.now() - 24 * 3600_000);
-  const [a] = await db.select({
-    ips: sql<number>`count(distinct ${snCheck.ip})`,
-    countries: sql<number>`count(distinct ${snCheck.country})`,
-  }).from(snCheck).where(and(eq(snCheck.serial, serial), sql`${snCheck.checkedAt} >= ${since}`));
-  return Number(a?.ips ?? 0) > SERIAL_ANOMALY_THRESHOLD || Number(a?.countries ?? 0) > SERIAL_ANOMALY_THRESHOLD;
 }
 
 function publicView(reg: ActiveRegistration, productName: string | null) {
@@ -61,6 +44,17 @@ function publicView(reg: ActiveRegistration, productName: string | null) {
 export function warrantyRoute(db: DB) {
   const r = new Hono();
 
+  // Registration is a two-step, e-mail-verified flow (ZT-045/046/047):
+  //  1. POST /warranty/register validates and stores a PENDING row, then mails a
+  //     single-use confirmation link. Answer AND mail are identical whether or
+  //     not the serial is already registered (the requester picks the mailbox,
+  //     so a different mail would be an oracle — ZT-065).
+  //  2. POST /warranty/confirm {token} activates it (a link scanner opening the
+  //     mail cannot: the link lands on a page with a confirm button). A serial
+  //     already active under another address answers 409 and alerts support,
+  //     who resolve the claim on proof of purchase (serials are printed on retail
+  //     packaging, so first-to-confirm is not proof of ownership — ZT-066).
+  // Pending rows never block anyone; the partial unique index covers 'active'.
   r.post('/warranty/register', async (c) => {
     const parsed = warrantyRegisterSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
@@ -78,11 +72,10 @@ export function warrantyRoute(db: DB) {
     if (!reg) {
       return c.json({ ...problem(422, 'Serial not recognised', 'This serial number is not in the TwinMOS factory registry. Check the label, or contact support with your proof of purchase.'), code: 'SERIAL_UNKNOWN' }, 422, { 'Content-Type': P });
     }
-    if (await serialLooksCloned(db, d.serial)) {
-      return c.json({ ...problem(422, 'Registration needs review', 'This serial cannot be registered online. Please contact TwinMOS support with your proof of purchase.'), code: 'SERIAL_SUSPICIOUS' }, 422, { 'Content-Type': P });
-    }
 
-    const today = new Date().toISOString().slice(0, 10);
+    // "today" in the furthest-ahead time zone (UTC+14): a buyer in Taipei
+    // registering a same-day purchase before 08:00 is not "in the future".
+    const today = new Date(Date.now() + 14 * 3600_000).toISOString().slice(0, 10);
     const mfg = reg.manufacturedAt ? new Date(reg.manufacturedAt).toISOString().slice(0, 10) : null;
     if (d.purchaseDate > today || d.purchaseDate < '1998-01-01' || (mfg && d.purchaseDate < mfg)) {
       return c.json(problem(422, 'Invalid purchase date', mfg
@@ -93,29 +86,62 @@ export function warrantyRoute(db: DB) {
     const prod = reg.sku ? (await db.select({ name: product.name, warranty: product.warranty }).from(product).where(eq(product.sku, reg.sku)).limit(1))[0] : undefined;
     const term = prod?.warranty ?? null;
     const expiresAt = warrantyExpiry(d.purchaseDate, parseWarrantyTerm(term));
+    const site = (process.env.PUBLIC_SITE_URL || 'https://www.twinmos.com').replace(/\/+$/, '');
+    const accepted = () => c.json({ status: 'pending_confirmation', message: 'Check your inbox: open the confirmation link we sent to finish the registration.' }, 202, { 'Cache-Control': 'no-store' });
 
+    const confirmToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    await db.insert(productRegistration).values({
+      serial: d.serial, sku: reg.sku ?? null, email: d.email, name: d.name, country: d.country ?? null,
+      purchaseDate: d.purchaseDate, retailer: d.retailer ?? null, warrantyTerm: term, warrantyExpiresAt: expiresAt,
+      status: 'pending', confirmToken, confirmExpiresAt: new Date(Date.now() + 48 * 3600_000), purchaseDateSource: 'self-declared',
+    });
+    await sendCustomerConfirmation(
+      d.email,
+      `Confirm your TwinMOS warranty registration — ${d.serial}`,
+      `Please confirm the warranty registration for your TwinMOS product (link valid for 48 hours):\n\n${site}/support/warranty?confirm=${confirmToken}\n\nProduct: ${prod?.name ?? reg.sku ?? 'TwinMOS product'}\nSerial: ${d.serial}\nPurchase date (as declared): ${d.purchaseDate}\nWarranty: ${term ?? 'to be confirmed by TwinMOS support'}${expiresAt ? `\nCovered until: ${expiresAt.toISOString().slice(0, 10)}` : ''}\n\nKeep your proof of purchase: TwinMOS support may ask for it when you open an RMA.\nIf you did not request this, ignore this e-mail.`,
+      { kind: 'warranty-registration-confirm' },
+    );
+    return accepted();
+  });
+
+  r.post('/warranty/confirm', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const token = typeof body.token === 'string' ? body.token.trim() : '';
+    if (!/^[a-f0-9]{64}$/.test(token)) return c.json(problem(400, 'Invalid confirmation link'), 400, { 'Content-Type': P });
+    const pending = (await db.select().from(productRegistration)
+      .where(and(eq(productRegistration.confirmToken, token), eq(productRegistration.status, 'pending'))).limit(1))[0];
+    if (!pending || !pending.confirmExpiresAt || pending.confirmExpiresAt.getTime() < Date.now()) {
+      return c.json(problem(404, 'Link expired or already used', 'Register the product again to receive a new confirmation link.'), 404, { 'Content-Type': P });
+    }
     let row: ActiveRegistration;
     try {
-      [row] = await db.insert(productRegistration).values({
-        serial: d.serial, sku: reg.sku ?? null, email: d.email, name: d.name, country: d.country ?? null,
-        purchaseDate: d.purchaseDate, retailer: d.retailer ?? null, warrantyTerm: term, warrantyExpiresAt: expiresAt,
-      }).returning();
+      [row] = await db.update(productRegistration)
+        .set({ status: 'active', confirmToken: null, confirmExpiresAt: null, updatedAt: new Date() })
+        .where(and(eq(productRegistration.id, pending.id), eq(productRegistration.status, 'pending'))).returning();
     } catch (e) {
       if (String((e as { cause?: { code?: string } })?.cause?.code ?? (e as { code?: string })?.code) === '23505') {
-        return c.json({ ...problem(409, 'Already registered', 'This serial is already registered. If you are the owner, contact TwinMOS support with your proof of purchase.'), code: 'ALREADY_REGISTERED' }, 409, { 'Content-Type': P });
+        const holder = await activeRegistration(db, pending.serial);
+        const to = routeRecipient('warranty-dispute');
+        if (to) {
+          await sendMail({
+            to,
+            subject: `Warranty registration dispute — ${pending.serial}`,
+            text: `A second, e-mail-verified claimant tried to register serial ${pending.serial}.
+
+Active registration: #${holder?.id ?? '?'} (${holder?.email ?? 'unknown'}, purchase ${holder?.purchaseDate ?? '?'})
+Claimant: pending #${pending.id} (${pending.email}, purchase ${pending.purchaseDate}, retailer ${pending.retailer ?? 'n/a'})
+
+Ask both for proof of purchase; void the wrong registration in the admin console (SN-check → Warranty registrations).`,
+            replyTo: pending.email,
+          });
+        }
+        return c.json({ ...problem(409, 'Already registered', 'This serial is already registered to another owner. TwinMOS support has been notified and will contact you about your proof of purchase.'), code: 'ALREADY_REGISTERED' }, 409, { 'Content-Type': P });
       }
       throw e;
     }
-
-    const view = publicView(row, prod?.name ?? null);
-    const site = (process.env.PUBLIC_SITE_URL || 'https://www.twinmos.com').replace(/\/+$/, '');
-    await sendCustomerConfirmation(
-      d.email,
-      `TwinMOS warranty registration — ${d.serial}`,
-      `Thank you for registering your TwinMOS product.\n\nProduct: ${prod?.name ?? reg.sku ?? 'TwinMOS product'}\nSerial: ${d.serial}\nPurchase date: ${d.purchaseDate}\nWarranty: ${term ?? 'to be confirmed by TwinMOS support'}${expiresAt ? `\nCovered until: ${expiresAt.toISOString().slice(0, 10)}` : ''}\n\nCheck your warranty status any time at ${site}/support/warranty with this serial and e-mail address.`,
-      { kind: 'warranty-registration', serial: d.serial },
-    );
-    return c.json(view, 201, { 'Cache-Control': 'no-store' });
+    if (!row) return c.json(problem(404, 'Link expired or already used'), 404, { 'Content-Type': P });
+    const prod = row.sku ? (await db.select({ name: product.name }).from(product).where(eq(product.sku, row.sku)).limit(1))[0] : undefined;
+    return c.json(publicView(row, prod?.name ?? null), 200, { 'Cache-Control': 'no-store' });
   });
 
   r.post('/warranty/lookup', async (c) => {
@@ -133,7 +159,7 @@ export function warrantyRoute(db: DB) {
   return r;
 }
 
-/** Staff view: registrations list (viewer+) and void (editor+, audited). */
+/** Staff view: registrations list and void (editor+, void audited). */
 export function warrantyAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
   const r = new Hono();
   const guard = async (c: any, role: 'viewer' | 'editor') => {
@@ -144,7 +170,7 @@ export function warrantyAdminRoute(db: DB, deps: { requireRole: (r: any) => Guar
   };
 
   r.get('/warranty-registrations', async (c) => {
-    const s = await guard(c, 'viewer');
+    const s = await guard(c, 'editor'); // registrant PII: editor+ like the RMA board (ZT-050)
     if (s instanceof Response) return s;
     const q = (c.req.query('q') ?? '').trim();
     const limit = Math.min(Number(c.req.query('limit') ?? 50) || 50, 200);
@@ -154,13 +180,18 @@ export function warrantyAdminRoute(db: DB, deps: { requireRole: (r: any) => Guar
       : undefined;
     const rows = await db.select().from(productRegistration).where(where).orderBy(desc(productRegistration.id)).limit(limit).offset(offset);
     const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(productRegistration).where(where);
-    return c.json({ items: rows.map((x) => ({ ...x, warrantyStatus: x.status === 'void' ? 'void' : warrantyStatusOf(x) })), total: Number(n) });
+    // the confirmation token is the registrant's credential, never shown to staff (ZT-067)
+    return c.json({
+      items: rows.map(({ confirmToken: _t, ...x }) => ({ ...x, warrantyStatus: x.status === 'active' ? warrantyStatusOf(x) : x.status })),
+      total: Number(n),
+    });
   });
 
   r.post('/warranty-registrations/:id/void', async (c) => {
     const s = await guard(c, 'editor');
     if (s instanceof Response) return s;
     const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) return c.json(problem(400, 'Invalid id'), 400, { 'Content-Type': P });
     const body = await c.req.json().catch(() => ({}));
     const reason = String((body as { reason?: unknown }).reason ?? '').trim();
     if (!reason || reason.length > 500) return c.json(problem(422, 'Validation Failed', 'A reason (max 500 chars) is required.'), 422, { 'Content-Type': P });

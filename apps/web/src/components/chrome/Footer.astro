@@ -49,7 +49,7 @@ const legalLinks = legalGroup?.children ?? [];
           {brand.tagline || 'Legendary memory brand'} since {foundingYear}. Memory modules, SSDs, portable storage and accessories for customers in {countries} countries.
         </p>
 
-        <form id="nlForm" class="newsletter" data-tm-form style="max-width:320px">
+        <form id="nlForm" class="newsletter" method="post" data-tm-form style="max-width:320px">
           <input id="nlEmail" name="email" type="email" placeholder="Email for product news" aria-label="Email for newsletter" required />
           <button class="btn btn-accent btn-sm" type="submit">Join</button>
         </form>

@@ -56,7 +56,6 @@ services:
       - ALL
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m
-      - /app/apps/api/data:rw,noexec,nosuid,size=128m
     deploy:
       resources:
         limits:

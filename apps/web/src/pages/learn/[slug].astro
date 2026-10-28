@@ -5,6 +5,7 @@ import Layout from '../../layouts/Layout.astro';
 import BlockDispatcher from '../../components/blocks/BlockDispatcher.astro';
 import ResponsiveImage from '../../components/common/ResponsiveImage.astro';
 import { getDeliveryArticle, getDeliveryArticles, getDeliveryPage } from '../../lib/delivery';
+import { sanitizeRichText } from '@twinmos/shared';
 
 const { slug } = Astro.params;
 
@@ -193,7 +194,7 @@ const ARTICLE_LD = article
             ))}
           </div>
         ) : articleContent ? (
-          <div class="article-body prose" style="line-height: 1.75; font-size: 1.05rem; color: #1e293b;" set:html={articleContent} />
+          <div class="article-body prose" style="line-height: 1.75; font-size: 1.05rem; color: #1e293b;" set:html={sanitizeRichText(String(articleContent ?? ''))} />
         ) : null}
 
         {/* Social Share Box */}

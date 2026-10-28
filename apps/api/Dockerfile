@@ -33,6 +33,9 @@ COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node packages/ ./packages/
 COPY --chown=node:node apps/api/ ./apps/api/
 COPY --chown=node:node package.json ./
+# Uploaded media + partner files live here on a named volume (compose api_files).
+# Created owned by node so a fresh volume inherits the right owner (ZT-077).
+RUN mkdir -p /app/apps/api/data/media /app/apps/api/data/partner-files && chown -R node:node /app/apps/api/data
 
 USER node
 

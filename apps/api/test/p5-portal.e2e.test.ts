@@ -12,6 +12,7 @@ process.env.MAIL_OUTBOX_DIR = join(TMP, 'outbox');
 process.env.FORMS_TO = 'support@twinmos.dev';
 process.env.API_ALLOW_NO_TURNSTILE = '1';
 process.env.NODE_ENV = 'test';
+process.env.TRUST_PROXY = '1'; // the edge stamps x-real-ip; clientIp() reads it only behind the proxy
 process.env.PARTNER_FILES_DIR = join(TMP, 'partner-files');
 
 const { createDb, user, partnerOrg, partnerMember, partnerAsset, serialRegistry, snCheck }: any = await import('@twinmos/db');
@@ -53,9 +54,9 @@ afterAll(async () => {
   rmSync(TMP, { recursive: true, force: true });
 });
 
-// The public sn-check rate limiter buckets on cf-connecting-ip (the header
-// Cloudflare stamps); x-forwarded-for is deliberately untrusted (T2.5).
-const ip = (n: number) => ({ 'cf-connecting-ip': `10.9.0.${n}` });
+// The public sn-check rate limiter and the anomaly signal both use clientIp():
+// x-real-ip set by the edge (TRUST_PROXY=1); raw client headers are untrusted (T2.5).
+const ip = (n: number) => ({ 'x-real-ip': `10.9.0.${n}` });
 
 describe('partner portal', () => {
   let orgId = 0;

@@ -1523,7 +1523,9 @@
     },
     "heading": "Take the first step",
     "title": "Take the first step",
-    "eyebrow": "Apply"
+    "eyebrow": "Apply",
+    "formType": "job-application",
+    "submitButtonText": "Submit application"
    },
    {
     "id": "careers-block-26",
@@ -1537,205 +1539,7 @@
     },
     "heading": "",
     "title": "",
-    "eyebrow": "",
-    "jsonld": {
-     "@context": "https://schema.org",
-     "@type": "FAQPage",
-     "mainEntity": [
-      {
-       "@type": "Question",
-       "name": "How do I apply for a job at TwinMOS?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "You can apply through our online Job Application Form. Submit your resume, cover letter, and any supporting documents. Please include the job title you are applying for in your cover letter or application subject line. For technical and creative roles, we strongly encourage you to include links to your portfolio, GitHub profile, or relevant work samples."
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "What should I include in my application?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "A complete application typically includes: — Resume / CV — Current, well-formatted, and tailored to the role — Cover Letter — Explaining your interest in TwinMOS and why you are a great fit for the specific role — Portfolio / Work Samples — Links to GitHub, Behance, personal websites, or published work (for technical and creative roles) — Certifications — Relevant professional or technical certifications — Academic Transcripts — For internship and graduate program applicants"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Can I apply for multiple positions?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes. You may apply for multiple roles that match your skills and interests. We recommend tailoring your cover letter for each position to highlight the most relevant experience. Please submit a separate application for each role."
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Do you accept unsolicited applications?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes. You may submit a general application through our Job Application Form even if no specific role is currently open. Select \"General Application\" as the position type and specify your preferred department and location. We review general applications when relevant positions become available."
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "I submitted my application. What happens next?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "1) Application Review (1–2 weeks) — Our HR team reviews your application 2) Screening (1 week) — Shortlisted candidates are contacted for an initial phone or video screening 3) Interviews (1–2 weeks) — Successful candidates proceed to technical/functional and final interviews 4) Offer (1 week) — Selected candidates receive a formal offer 5) Onboarding — Welcome to TwinMOS! Total timeline: typically 2–4 weeks, though this may vary by role and location. ---"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "What is the recruitment process?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Our typical process includes: 1) Application Review — HR and the hiring manager review your resume and cover letter 2) Phone or Video Screening — A 20–30 minute conversation with HR to discuss your background, motivations, and fit 3) Technical or Skills Assessment — For engineering and technical roles, this may include a coding test, design exercise, or case study. For marketing and creative roles, a portfolio review may be requested 4) Final Interview — A conversation with department leadership to assess cultural fit, strategic thinking, and long-term potential 5) Offer and Background Verification — Reference checks and employment verification before the final offer"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "How should I prepare for a TwinMOS interview?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "— Research TwinMOS — Familiarize yourself with our products (DDR5, PCIe Gen 5 SSDs), markets, and recent news (e.g., COMPUTEX 2025) — Know the Role — Review the job description thoroughly and prepare examples of how your experience aligns — Prepare Questions — Come with thoughtful questions about the team, projects, and growth opportunities — Technical Roles — Be ready to discuss your technical projects, problem-solving approach, and familiarity with relevant tools — Be Yourself — We value authenticity and want to understand what drives you"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Will I receive feedback if I am not selected?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Due to the volume of applications we receive, we are unable to provide personalized feedback to every applicant. However, shortlisted candidates who complete interviews will receive feedback upon request."
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Can I reapply if I was not selected previously?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes. We encourage candidates to reapply for future openings, especially if they have gained additional experience or skills since their last application. There is no waiting period for reapplication. ---"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Do you offer remote or hybrid work?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Some roles offer flexible, remote, or hybrid arrangements depending on the function, seniority, and location. Roles in engineering (software/firmware), digital marketing, content creation, and technical writing are more likely to offer remote options. Hardware engineering, lab-based quality assurance, and certain operations roles typically require on-site presence. Specific work arrangements are discussed during the recruitment process."
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Which locations are currently hiring?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "We have active recruitment across our global offices: — Dubai, UAE — Headquarters roles in sales, marketing, operations, finance, and HR — Taipei, Taiwan — R&D, hardware engineering, firmware, and quality assurance — Cologne, Germany — European sales, partner management, and regulatory affairs — San Jose, USA — North American sales, enterprise business development, and technical marketing"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Do you sponsor work visas?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Visa sponsorship is evaluated on a case-by-case basis depending on the role, location, and candidate qualifications. This is discussed during the offer stage. We are more likely to sponsor visas for senior technical roles and positions where local talent is scarce."
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Do you offer relocation assistance?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Relocation assistance is available for select roles, particularly senior positions and specialized technical roles. Assistance may include visa sponsorship, moving expenses, temporary housing, and settling-in support. Details are provided during the offer process. ---"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "What is the salary range for [specific role]?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Salaries at TwinMOS are competitive and aligned with regional market benchmarks, role responsibilities, and your experience level. Specific salary ranges are shared during the offer stage. We encourage you to include your salary expectations in your application."
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "What benefits does TwinMOS offer?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "TwinMOS offers a comprehensive benefits package that varies by location. Common benefits include: — Competitive base salary and performance bonuses — Health insurance and wellness programs — Professional development and training — Flexible work arrangements (where applicable) — Employee product purchase discounts — Conference and trade show attendance — Retirement and savings plans (where applicable) For detailed information, visit our Benefits & Compensation page."
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Are internships paid?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes, all TwinMOS internships offer competitive stipends aligned with local market standards. Specific compensation details are shared during the offer process. ---"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Who is eligible for the internship program?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Our internship program is open to: — Current university students (undergraduate and graduate) — Recent graduates (within 12 months of graduation) — Candidates with demonstrated interest in technology, hardware, or semiconductors"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "How long are internships?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Internships typically span 8–16 weeks, with flexible start dates to accommodate academic calendars. Primary intakes are in January, May, and September."
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Is there a possibility of full-time employment after the internship?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Absolutely. Many of our full-time team members began their TwinMOS journey as interns. Conversion to full-time roles is based on performance, business needs, and mutual interest. We view our internship program as a primary pipeline for future talent."
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "What is the graduate program?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Our graduate program is a structured 12–24 month program designed for recent graduates. Participants gain broad exposure to the business through rotational assignments or deep specialization, with dedicated mentorship and a pathway to full-time employment. ---"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "How is my personal data protected?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "TwinMOS handles applicant data in accordance with our Job Applicant Privacy Notice. We collect and use your data solely for recruitment purposes. Key protections include: — Data retained for up to 24 months after the recruitment process concludes — No sale of applicant data to third parties — Secure storage with encryption and access controls — Your right to access, correct, or delete your data"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Who has access to my application?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Your application is accessible to HR personnel, hiring managers, and relevant department leaders involved in the recruitment process. We do not share your data with third parties for marketing purposes. ---"
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Is TwinMOS an equal opportunity employer?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes. TwinMOS is an equal opportunity employer. We celebrate diversity and are committed to creating an inclusive environment for all employees. We do not discriminate on the basis of race, color, religion, gender, sexual orientation, national origin, age, disability, or any other protected characteristic."
-       }
-      },
-      {
-       "@type": "Question",
-       "name": "Does TwinMOS have diversity initiatives?",
-       "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes. We are committed to building a workforce that reflects the global markets we serve. Our initiatives include equal opportunity hiring, inclusive team practices, cultural celebration events, and zero-tolerance policies for discrimination or harassment. ---"
-       }
-      }
-     ]
-    }
+    "eyebrow": ""
    },
    {
     "id": "careers-block-27",
@@ -2333,9 +2137,11 @@
      "items": 5,
      "order": 2
     },
-    "heading": "",
-    "title": "",
-    "eyebrow": ""
+    "heading": "Send a message",
+    "title": "Send a message",
+    "eyebrow": "",
+    "formType": "contact",
+    "submitButtonText": "Send message"
    },
    {
     "id": "contact-block-3",
@@ -6264,9 +6070,11 @@
      "items": 2,
      "order": 6
     },
-    "heading": "",
-    "title": "",
-    "eyebrow": ""
+    "heading": "Partner sign-in",
+    "title": "Partner sign-in",
+    "eyebrow": "",
+    "formType": "partner-portal",
+    "submitButtonText": "Sign in"
    }
   ],
   "status": "published",
@@ -6423,7 +6231,9 @@
     },
     "heading": "",
     "title": "",
-    "eyebrow": ""
+    "eyebrow": "",
+    "formType": "quote",
+    "submitButtonText": "Submit quote request"
    }
   ],
   "status": "published",
@@ -6515,9 +6325,11 @@
      "items": 5,
      "order": 3
     },
-    "heading": "",
-    "title": "",
-    "eyebrow": ""
+    "heading": "Start an RMA",
+    "title": "Start an RMA",
+    "eyebrow": "",
+    "formType": "rma",
+    "submitButtonText": "Submit RMA request"
    }
   ],
   "status": "published",

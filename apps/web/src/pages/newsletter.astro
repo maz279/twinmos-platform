@@ -1,27 +1,37 @@
 ---
-// /newsletter — landing page for the links in newsletter e-mails (the API
-// redirects here after confirm/unsubscribe instead of showing raw JSON, ZT-033).
+// /newsletter — where the links in newsletter e-mails land. Confirming or
+// unsubscribing takes a click (POST from /assets/js/newsletter.js), so mail
+// link scanners that fetch every URL cannot change anyone's subscription
+// (ZT-033/048).
 import Layout from '../layouts/Layout.astro';
 
-const status = Astro.url.searchParams.get('status');
-const MESSAGES: Record<string, { title: string; body: string }> = {
-  confirmed: { title: 'Subscription confirmed', body: 'Thank you — you will receive TwinMOS product news. Every e-mail carries a one-click unsubscribe link.' },
-  unsubscribed: { title: 'You have been unsubscribed', body: 'You will no longer receive the TwinMOS newsletter. You can subscribe again from the footer of any page.' },
-  invalid: { title: 'This link is no longer valid', body: 'Confirmation links expire after 7 days and can be used once. Subscribe again from the footer of any page to get a new link.' },
-};
-const msg = MESSAGES[status ?? ''] ?? { title: 'TwinMOS newsletter', body: 'Subscribe from the footer of any page to receive product news.' };
+const confirmToken = Astro.url.searchParams.get('confirm') ?? '';
+const unsubscribeToken = Astro.url.searchParams.get('unsubscribe') ?? '';
+const mode = confirmToken ? 'confirm' : unsubscribeToken ? 'unsubscribe' : 'info';
+const COPY = {
+  confirm: { title: 'Confirm your subscription', body: 'Click the button to start receiving TwinMOS product news. Every e-mail carries a one-click unsubscribe link.', button: 'Confirm subscription' },
+  unsubscribe: { title: 'Unsubscribe from the newsletter', body: 'Click the button to stop receiving the TwinMOS newsletter.', button: 'Unsubscribe' },
+  info: { title: 'TwinMOS newsletter', body: 'Subscribe from the footer of any page to receive product news.', button: '' },
+} as const;
+const msg = COPY[mode];
 Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('Referrer-Policy', 'no-referrer'); // the token is in this URL
 ---
 
-<Layout title={`${msg.title} — TwinMOS`} desc="TwinMOS newsletter subscription status." noindex={true}>
+<Layout title={`${msg.title} — TwinMOS`} desc="TwinMOS newsletter subscription." noindex={true}>
   <main id="main">
     <div class="page-hero">
       <div class="wrap">
         <span class="eyebrow">Newsletter</span>
-        <h1 class="h1">{msg.title}</h1>
-        <p class="lede">{msg.body}</p>
-        <p style="margin-top:18px"><a class="btn btn-primary" href="/">Back to the home page</a></p>
+        <h1 class="h1" id="nlTitle">{msg.title}</h1>
+        <p class="lede" id="nlBody">{msg.body}</p>
+        {msg.button && (
+          <button class="btn btn-primary" id="nlAction" type="button" style="margin-top:18px"
+            data-action={mode} data-token={mode === 'confirm' ? confirmToken : unsubscribeToken}>{msg.button}</button>
+        )}
+        <p style="margin-top:18px"><a class="btn btn-ghost" href="/">Back to the home page</a></p>
       </div>
     </div>
   </main>
+  <script is:inline src="/assets/js/newsletter.js" defer></script>
 </Layout>

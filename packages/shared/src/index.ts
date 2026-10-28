@@ -360,7 +360,9 @@ export type RmaIntake = z.infer<typeof rmaIntakeSchema>;
 // ---- Warranty registration & lookup (BRD §F8.3, URD UR-6.x, BR-6.2) ----
 const serialField = z.string().trim().min(4).max(60).regex(/^[A-Za-z0-9._-]+$/, 'letters, digits, dot, dash, underscore')
   .transform((s) => s.toUpperCase());
-const isoDay = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD');
+// a real calendar day (2025-02-30 / 2025-13-01 are rejected, not turned into 500s)
+const isoDay = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD')
+  .refine((s) => { const d = new Date(`${s}T00:00:00Z`); return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s; }, 'not a valid calendar date');
 export const warrantyRegisterSchema = z.object({
   serial: serialField,
   email: z.string().trim().toLowerCase().email().max(254),
@@ -387,19 +389,24 @@ export function parseWarrantyTerm(term: string | null | undefined): { kind: 'lif
   const t = String(term ?? '').trim().toLowerCase();
   if (!t) return null;
   if (/lifetime/.test(t)) return { kind: 'lifetime' };
-  const y = /(\d{1,2})\s*-?\s*(year|yr)/.exec(t);
+  // whole numbers only: "1.5 Years" must not read as 5 years
+  const y = /(?<![\d.])(\d{1,2})\s*-?\s*(year|yr)/.exec(t);
   if (y) return { kind: 'months', months: Number(y[1]) * 12 };
-  const m = /(\d{1,3})\s*-?\s*month/.exec(t);
+  const m = /(?<![\d.])(\d{1,3})\s*-?\s*month/.exec(t);
   if (m) return { kind: 'months', months: Number(m[1]) };
   return null;
 }
 
-/** Expiry instant for a purchase day under a parsed term (null = no expiry / unknown). */
+/** Expiry instant for a purchase day under a parsed term (null = no expiry / unknown).
+ *  Month arithmetic clamps to the month's last day (2024-02-29 + 12 months = 2025-02-28). */
 export function warrantyExpiry(purchaseDate: string, term: ReturnType<typeof parseWarrantyTerm>): Date | null {
   if (!term || term.kind === 'lifetime') return null;
-  const d = new Date(`${purchaseDate}T23:59:59Z`);
-  d.setUTCMonth(d.getUTCMonth() + term.months);
-  return d;
+  const [y, mo, d] = purchaseDate.split('-').map(Number);
+  const target = (mo - 1) + term.months;
+  const ty = y + Math.floor(target / 12);
+  const tm = ((target % 12) + 12) % 12;
+  const last = new Date(Date.UTC(ty, tm + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(ty, tm, Math.min(d, last), 23, 59, 59));
 }
 
 export function warrantyStatusOf(reg: { warrantyTerm: string | null; warrantyExpiresAt: Date | string | null } | null, now = new Date()): WarrantyStatusName {

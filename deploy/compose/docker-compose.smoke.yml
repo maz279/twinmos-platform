@@ -1,0 +1,7 @@
+# CI release-smoke overlay (.github/workflows/deploy.yml): the throwaway runner
+# uses Cloudflare's test captcha keys and no real mail provider, which the API
+# boot guard refuses unless acknowledged. Never use this overlay for a real host.
+services:
+  api:
+    environment:
+      - TWINMOS_LAB_TEST_INTEGRATIONS=acknowledged-not-for-production

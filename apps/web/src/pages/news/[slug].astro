@@ -5,6 +5,7 @@ import Layout from '../../layouts/Layout.astro';
 import BlockDispatcher from '../../components/blocks/BlockDispatcher.astro';
 import ResponsiveImage from '../../components/common/ResponsiveImage.astro';
 import { getDeliveryNewsPost, getDeliveryNews, getDeliveryPage } from '../../lib/delivery';
+import { jsonForScript, sanitizeRichText } from '@twinmos/shared';
 
 const { slug } = Astro.params;
 
@@ -95,7 +96,7 @@ const NEWS_LD = newsItem
 ---
 
 <Layout title={title} desc={desc} breadcrumbs={breadcrumbs} noindex={!newsItem} ogImage={heroImg}>
-  {NEWS_LD && <script type="application/ld+json" set:html={NEWS_LD} />}
+  {NEWS_LD && <script type="application/ld+json" set:html={jsonForScript(NEWS_LD)} />}
 
   <main id="main">
     {newsItem ? (
@@ -153,7 +154,7 @@ const NEWS_LD = newsItem
         )}
 
         {/* News Article Body */}
-        <div class="news-body prose" style="line-height: 1.8; font-size: 1.05rem; color: #1e293b;" set:html={newsItem.body} />
+        <div class="news-body prose" style="line-height: 1.8; font-size: 1.05rem; color: #1e293b;" set:html={sanitizeRichText(String(newsItem.body ?? ''))} />
 
         {/* Social Share Box */}
         <section class="news-share" aria-label="Share update" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 40px 0 24px; padding: 16px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">

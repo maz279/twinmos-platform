@@ -27,3 +27,7 @@ deploy/compose/.env
 # zero-trust audit: screenshot sets are reviewed locally; curated copies are committed
 evidence/zt-2026-10-28/**/shots*/
 evidence/zt-2026-10-28/**/crawl*/shots/
+
+# zero-trust audit: DR drill backups hold lab DB dumps
+evidence/zt-2026-10-28/*/backup/
+evidence/zt-2026-10-28/*/media-persist.state

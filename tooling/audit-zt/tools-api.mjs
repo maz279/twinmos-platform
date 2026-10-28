@@ -57,25 +57,50 @@ const freshToken = async () => (await json(await edge('/api/v1/forms/token'))).t
   const imp = await edge('/api/v1/admin/serials/import', { method: 'POST', body: { csv, dryRun: false } }, { jar: admin });
   rep.check('SN-01 registry CSV import', imp.status === 200, { status: imp.status });
   const reg = async (serial, email, purchaseDate) => edge('/api/v1/warranty/register', { method: 'POST', body: { serial, email, name: 'Zed Trust', country: 'Singapore', purchaseDate, consent: true, formToken: await freshToken(), turnstileToken: TS } });
+  const confirmFor = async (email) => {
+    await pause(700);
+    const m = (await mailsTo(email)).filter((x) => /Confirm your TwinMOS warranty registration/.test(x.subject ?? '')).pop();
+    const token = m && /confirm=([a-f0-9]{64})/.exec(m.text)?.[1];
+    if (!token) return { status: 0 };
+    const r = await edge('/api/v1/warranty/confirm', { method: 'POST', body: { token } });
+    return { status: r.status, body: await json(r) };
+  };
+  // a squatter registers first but cannot confirm (no access to the owner's mailbox)
+  const squat = await reg(serials[0], `squatter-${uniq}@example.org`, '2026-02-01'); // after the 2025-11-02 manufacture date
+  rep.check('WTY-00 registration answers 202 pending (no oracle)', squat.status === 202, { status: squat.status });
   const w1 = await reg(serials[0], custEmail, '2026-01-15');
-  const w1b = await json(w1);
-  rep.check('WTY-01 register a registry serial', w1.status === 201 && w1b.status === 'active' && String(w1b.expiresAt).startsWith('2031-01-15'), { status: w1.status, body: w1b });
+  const conf = await confirmFor(custEmail);
+  rep.check('WTY-01 owner confirms by e-mail link → active (squatter pending does not block)', w1.status === 202 && conf.status === 200 && conf.body.status === 'active' && String(conf.body.expiresAt).startsWith('2031-01-15'), { status: conf.status, body: conf.body });
+  const reuse = await edge('/api/v1/warranty/confirm', { method: 'POST', body: { token: '0'.repeat(64) } });
+  await reuse.arrayBuffer();
+  rep.check('WTY-01b forged/used confirmation token refused', reuse.status === 404, { status: reuse.status });
+  // A second claimant gets the SAME answer and the SAME mail (the requester picks
+  // the mailbox, so a different mail would be an oracle); the conflict surfaces
+  // only after they prove the mailbox, as a 409 plus an alert to support.
   const dup = await reg(serials[0], `other-${uniq}@example.org`, '2026-01-15');
-  rep.check('WTY-02 second registration of the same serial refused', dup.status === 409, { status: dup.status });
+  const dupConf = await confirmFor(`other-${uniq}@example.org`);
+  await pause(700);
+  const dupMails = await mailsTo(`other-${uniq}@example.org`);
+  const sameMail = dupMails.length > 0 && dupMails.every((m) => /Confirm your TwinMOS warranty registration/.test(m.subject ?? '') && !/already registered/i.test(m.text ?? ''));
+  const disputeAlert = (await mailsTo('support@twinmos.com')).some((m) => /Warranty registration dispute/.test(m.subject ?? '') && (m.text ?? '').includes(serials[0]));
+  rep.check('WTY-02 second claimant: same 202 and same mail; confirm → 409 + dispute alert to support', dup.status === 202 && sameMail && dupConf.status === 409 && disputeAlert, { status: dup.status, sameMail, confirm: dupConf.status, disputeAlert });
+  await pause(61_000); // /warranty/* limiter: 10 requests/min/IP (6 used above; 7 more below)
   const fut = await reg(serials[1], custEmail, '2099-01-01');
   rep.check('WTY-03 future purchase date refused', fut.status === 422, { status: fut.status });
+  const bogus = await reg(serials[1], custEmail, '2025-02-30');
+  rep.check('WTY-03b impossible calendar date refused (422, not 500)', bogus.status === 422, { status: bogus.status });
   const unk = await reg(`ZTNOPE${uniq}`.toUpperCase(), custEmail, '2026-01-15');
   rep.check('WTY-04 serial outside the factory registry refused', unk.status === 422, { status: unk.status });
   const old = await reg(serials[2], custEmail, '2019-04-01');
-  const oldBody = await json(old);
-  rep.check('WTY-05 old purchase registers as expired', old.status === 201 && oldBody.status === 'expired', { status: old.status, body: oldBody });
+  const oldConf = await confirmFor(custEmail);
+  rep.check('WTY-05 old purchase registers as expired', old.status === 202 && oldConf.body?.status === 'expired', { status: oldConf.status, body: oldConf.body });
   const mine = await json(await edge('/api/v1/warranty/lookup', { method: 'POST', body: { serial: serials[0], email: custEmail } }));
   rep.check('WTY-06 owner lookup shows status', mine.status === 'active' && Boolean(mine.product), { body: mine });
   const theirs = await json(await edge('/api/v1/warranty/lookup', { method: 'POST', body: { serial: serials[0], email: `x-${uniq}@example.org` } }));
   rep.check('WTY-07 non-owner lookup reveals nothing', theirs.status === 'not_registered' && !theirs.purchaseDate, { body: theirs });
   const sn = await json(await post('/api/v1/sn-check', { serial: serials[0] }));
   rep.check('SN-02 registered serial verified genuine', sn.result === 'valid' && sn.sku === 'COREX-M2-PCIE-GEN-4-0-NVME-SSD', { result: sn.result });
-  rep.check('SN-04 verified result carries warranty status (URD UR-17.1.5)', sn.warranty?.status === 'active' && !JSON.stringify(sn).includes(custEmail), { warranty: sn.warranty });
+  rep.check('SN-04 public SN check reveals no registration/warranty data (UR-17.1.5 via owner lookup)', !('warranty' in sn) && sn.warrantyLookup === '/support/warranty' && !JSON.stringify(sn).includes(custEmail), { keys: Object.keys(sn) });
   const bad = await json(await post('/api/v1/sn-check', { serial: `ZTFAKE${uniq}`.toUpperCase() }));
   rep.check('SN-03 unknown serial not verified', bad.result === 'unverified', { result: bad.result });
 }
@@ -93,6 +118,9 @@ let rmaNumber = null;
   const b = await json(r);
   rmaNumber = b.rmaNumber;
   rep.check('RMA-01 intake creates case for a registered, in-warranty serial', r.status === 201 && /^TM-RMA-\d{4}-\d{6}$/.test(rmaNumber ?? ''), { status: r.status, body: b });
+  const again = await intake(serials[0], custEmail);
+  await again.arrayBuffer();
+  rep.check('RMA-01b only one open RMA per serial', again.status === 409, { status: again.status });
   await pause(800);
   rep.check('RMA-03 confirmation mail with number', (await mailsTo(custEmail)).some((m) => (m.text ?? '').includes(rmaNumber)), {});
 }
@@ -155,35 +183,39 @@ if (rmaNumber) {
 {
   const email = `zt-nl-${uniq}@example.org`;
   await pause(61_000);
-  const s = await post('/api/v1/forms/newsletter', { email, turnstileToken: TS, fillTimeMs: 3000 });
+  const sub = async (e) => post('/api/v1/forms/newsletter', { email: e, turnstileToken: TS, fillTimeMs: 3000, formToken: await freshToken() });
+  const noTok = await post('/api/v1/forms/newsletter', { email, turnstileToken: TS, fillTimeMs: 3000 });
+  rep.check('NL-00 form token required', noTok.status === 400, { status: noTok.status });
+  const s = await sub(email);
   rep.check('NL-01 subscribe pending', s.status === 201, { status: s.status });
   await pause(800);
   const m = (await mailsTo(email)).find((x) => /confirm/i.test(x.subject ?? ''));
-  const confirmUrl = m && /https?:\/\/\S+confirm\?token=\S+/.exec(m.text)?.[0];
-  const unsubUrl = m && /https?:\/\/\S+unsubscribe\?token=\S+/.exec(m.text)?.[0];
-  const tokenOf = (u) => u && new URL(u).searchParams.get('token');
-  rep.check('NL-02 separate confirm/unsubscribe tokens', confirmUrl && unsubUrl && tokenOf(confirmUrl) !== tokenOf(unsubUrl), { note: tokenOf(confirmUrl) === tokenOf(unsubUrl) ? 'the unsubscribe link token also confirms the subscription' : undefined });
-  if (unsubUrl) {
-    // the unsubscribe token must not be usable as a confirmation token
-    const u = new URL(unsubUrl);
-    const x = await edge(`/api/v1/forms/newsletter/confirm?token=${u.searchParams.get('token')}`, { headers: { accept: 'application/json' } });
-    await x.arrayBuffer();
-    rep.check('NL-02b unsubscribe token cannot confirm', x.status === 404, { status: x.status });
-  }
-  if (confirmUrl) {
-    const u = new URL(confirmUrl);
-    // a mail client opens the link in a browser
-    const c = await edge(u.pathname + u.search, { headers: { accept: 'text/html,application/xhtml+xml' } });
-    await c.arrayBuffer();
-    rep.check('NL-03 confirm link works', c.status === 303 && /\/newsletter\?status=confirmed$/.test(c.headers.get('location') ?? ''), { status: c.status, location: c.headers.get('location') });
-    const landing = await edge('/newsletter?status=confirmed');
-    rep.check('NL-04 confirm link lands on a real page', landing.status === 200 && (await landing.text()).includes('Subscription confirmed'), { status: landing.status });
-    const again = await edge(u.pathname + u.search, { headers: { accept: 'application/json' } });
-    await again.arrayBuffer();
-    rep.check('NL-06 confirmation token is one-time', again.status === 404, { status: again.status });
-  }
-  const badEmail = await post('/api/v1/forms/newsletter', { email: 'a@', turnstileToken: TS, fillTimeMs: 3000 });
-  rep.check('NL-05 malformed email rejected', badEmail.status === 422, { status: badEmail.status });
+  const confirmTok = m && /newsletter\?confirm=([a-f0-9]{64})/.exec(m.text)?.[1];
+  const unsubTok = m && /newsletter\?unsubscribe=([a-f0-9]{64})/.exec(m.text)?.[1];
+  rep.check('NL-02 separate confirm/unsubscribe tokens; links open the site page', Boolean(confirmTok && unsubTok && confirmTok !== unsubTok), {});
+  // a mail link scanner fetching the old-style API GET must not change state
+  const scan = await edge(`/api/v1/forms/newsletter/confirm?token=${confirmTok}`);
+  await scan.arrayBuffer();
+  rep.check('NL-03 GET on the confirm URL does not confirm (redirects to the page)', scan.status === 303 && /\/newsletter\?confirm=/.test(scan.headers.get('location') ?? ''), { status: scan.status });
+  const page = await edge(`/newsletter?confirm=${confirmTok}`);
+  rep.check('NL-04 landing page offers an explicit confirm button', page.status === 200 && (await page.text()).includes('id="nlAction"'), { status: page.status });
+  const viaUnsub = await edge('/api/v1/forms/newsletter/confirm', { method: 'POST', body: { token: unsubTok } });
+  await viaUnsub.arrayBuffer();
+  rep.check('NL-02b unsubscribe token cannot confirm', viaUnsub.status === 404, { status: viaUnsub.status });
+  const ok = await edge('/api/v1/forms/newsletter/confirm', { method: 'POST', body: { token: confirmTok } });
+  await ok.arrayBuffer();
+  rep.check('NL-05 explicit POST confirms', ok.status === 200, { status: ok.status });
+  const again = await edge('/api/v1/forms/newsletter/confirm', { method: 'POST', body: { token: confirmTok } });
+  await again.arrayBuffer();
+  rep.check('NL-06 confirmation token is one-time', again.status === 404, { status: again.status });
+  const dupe = await sub(email);
+  const dupeBody = await json(dupe);
+  rep.check('NL-07 already-subscribed address gets the same answer (no oracle)', dupe.status === 201 && dupeBody.status === 'pending', { status: dupe.status });
+  const badEmail = await post('/api/v1/forms/newsletter', { email: 'a@', turnstileToken: TS, fillTimeMs: 3000, formToken: await freshToken() });
+  rep.check('NL-08 malformed email rejected', badEmail.status === 422, { status: badEmail.status });
+  let limited = false;
+  for (let i = 0; i < 7; i++) { const u = await edge(`/api/v1/forms/newsletter/unsubscribe?token=${'f'.repeat(64)}`, { method: 'POST' }); await u.arrayBuffer(); if (u.status === 429) limited = true; }
+  rep.check('NL-09 one-click unsubscribe never throttled by the forms limiter', !limited, {});
 }
 await pause(61_000);
 
@@ -191,9 +223,11 @@ await pause(61_000);
 {
   const arts = await json(await edge('/api/v1/delivery/search?q=compatibility'));
   const slug = JSON.stringify(arts).match(/"slug":"([a-z0-9-]+)"/g)?.map((x) => x.slice(8, -1)).find(Boolean) ?? 'how-to-check-your-motherboard-and-ram-compatibility';
-  const vote = await post('/api/v1/forms/content-feedback', { entity: 'article', slug, helpful: true });
+  const noTokVote = await post('/api/v1/forms/content-feedback', { entity: 'article', slug, helpful: true });
+  rep.check('ART-00 vote needs a form token', noTokVote.status === 400, { status: noTokVote.status });
+  const vote = await post('/api/v1/forms/content-feedback', { entity: 'article', slug, helpful: true, formToken: await freshToken() });
   rep.check('ART-01 "Was this helpful?" vote is stored', vote.status === 201, { status: vote.status, slug });
-  const junk = await post('/api/v1/forms/content-feedback', { entity: 'article', slug: 'no-such-article-zt', helpful: true });
+  const junk = await post('/api/v1/forms/content-feedback', { entity: 'article', slug: 'no-such-article-zt', helpful: true, formToken: await freshToken() });
   rep.check('ART-02 vote for unknown content refused', junk.status === 404, { status: junk.status });
   const metrics = await edge('/api/v1/metrics');
   await metrics.arrayBuffer();

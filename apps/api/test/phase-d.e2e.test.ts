@@ -14,6 +14,7 @@ const { createDb, page, product, article, brand, category, glossaryTerm, newslet
 const { migrate } = await import('drizzle-orm/pglite/migrator');
 const { buildApp }: any = await import('../src/app.ts');
 const { eq } = await import('drizzle-orm');
+const { formToken }: any = await import('./support/fixtures.ts');
 
 describe('Phase D Public Site Rebuild & Backend Delivery Tests (VC-D/E)', () => {
   let app: any;
@@ -156,14 +157,21 @@ describe('Phase D Public Site Rebuild & Backend Delivery Tests (VC-D/E)', () => 
   });
 
   describe('Task D6: Forms Server Rendering & Newsletter Double Opt-in (FORMS-01)', () => {
-    let confirmToken: string = '';
+    const email = `subscriber-${Date.now()}@twinmos.dev`;
+    let confirmToken = '';
+    let unsubscribeToken = '';
 
-    it('creates subscriber in pending state with confirmation token', async () => {
-      const email = `subscriber-${Date.now()}@twinmos.dev`;
+    it('creates subscriber in pending state with separate confirm and unsubscribe tokens', async () => {
+      const noToken = await app.request('/api/v1/forms/newsletter', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'footer_subscribe' }),
+      });
+      expect(noToken.status).toBe(400); // signed form token is mandatory (ZT-028)
+
       const res = await app.request('/api/v1/forms/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source: 'footer_subscribe' }),
+        body: JSON.stringify({ email, source: 'footer_subscribe', formToken: formToken() }),
       });
 
       expect(res.status).toBe(201);
@@ -175,29 +183,50 @@ describe('Phase D Public Site Rebuild & Backend Delivery Tests (VC-D/E)', () => 
       expect(sub).toBeDefined();
       expect(sub.status).toBe('pending');
       expect(sub.token).toBeTruthy();
+      expect(sub.tokenExpiresAt).toBeTruthy(); // confirmation links expire
+      expect(sub.unsubscribeToken).toBeTruthy();
+      expect(sub.unsubscribeToken).not.toBe(sub.token);
       confirmToken = sub.token;
+      unsubscribeToken = sub.unsubscribeToken;
     });
 
-    it('confirms subscriber on token verification', async () => {
+    it('a GET on the e-mailed link only opens the page (link scanners cannot confirm)', async () => {
       const res = await app.request(`/api/v1/forms/newsletter/confirm?token=${confirmToken}`);
+      expect(res.status).toBe(303);
+      expect(res.headers.get('location')).toContain(`/newsletter?confirm=${confirmToken}`);
+      const sub = (await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.email, email)))[0];
+      expect(sub.status).toBe('pending');
+    });
+
+    it('confirms subscriber on POST and consumes the one-time token', async () => {
+      const res = await app.request('/api/v1/forms/newsletter/confirm', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: confirmToken }),
+      });
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body.ok).toBe(true);
       expect(body.confirmed).toBe(true);
 
-      const sub = (await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.token, confirmToken)))[0];
+      const sub = (await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.email, email)))[0];
       expect(sub.status).toBe('active');
       expect(sub.confirmedAt).toBeTruthy();
+      expect(sub.token).toBeNull();
+      const replay = await app.request('/api/v1/forms/newsletter/confirm', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: confirmToken }),
+      });
+      expect(replay.status).toBe(404);
     });
 
-    it('allows one-click unsubscribe via token', async () => {
-      const res = await app.request(`/api/v1/forms/newsletter/unsubscribe?token=${confirmToken}`);
+    it('allows one-click (RFC 8058 POST) unsubscribe with the unsubscribe token', async () => {
+      const wrong = await app.request(`/api/v1/forms/newsletter/unsubscribe?token=${confirmToken}`, { method: 'POST' });
+      expect(wrong.status).toBe(404); // the confirmation token is not an unsubscribe credential
+      const res = await app.request(`/api/v1/forms/newsletter/unsubscribe?token=${unsubscribeToken}`, { method: 'POST' });
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body.ok).toBe(true);
       expect(body.unsubscribed).toBe(true);
 
-      const sub = (await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.token, confirmToken)))[0];
+      const sub = (await db.select().from(newsletterSubscriber).where(eq(newsletterSubscriber.email, email)))[0];
       expect(sub.status).toBe('unsubscribed');
       expect(sub.unsubscribedAt).toBeTruthy();
     });

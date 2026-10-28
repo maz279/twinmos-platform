@@ -1,9 +1,9 @@
 // P5 anti-counterfeit — public SN-check endpoint (rate-limited, registry
 // lookup, verification log, verifiedCount increment) + admin reporting.
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { and, count, desc, eq, gte, isNotNull, lte, sql } from 'drizzle-orm';
-import { snCheckSchema, problem, type WarrantyStatusName } from '@twinmos/shared';
-import { serialRegistry, snCheck } from '@twinmos/db';
+import { snCheckSchema, problem } from '@twinmos/shared';
+import { productRegistration, serialRegistry, snCheck } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 
@@ -14,9 +14,10 @@ const RESULT = { VALID: 'valid', UNVERIFIED: 'unverified', SUSPICIOUS: 'suspicio
  *  more than 5 distinct IPs or countries in 24h is a leaked/cloned label. */
 export const SERIAL_ANOMALY_THRESHOLD = 5;
 
-export type WarrantyStatus = { status: WarrantyStatusName; expiresAt: string | null };
-
-export function snCheckRoute(db: DB, deps?: { warrantyFor?: (serial: string) => Promise<WarrantyStatus> }) {
+/** `ipOf` is app.ts clientIp(): the same trusted address the rate limiter
+ *  buckets on. Raw x-real-ip / cf-connecting-ip request headers are client-
+ *  forgeable and would let anyone skew the anomaly signal (ZT-060). */
+export function snCheckRoute(db: DB, ipOf: (c: Context) => string) {
   const r = new Hono();
 
   r.post('/sn-check', async (c) => {
@@ -26,7 +27,7 @@ export function snCheckRoute(db: DB, deps?: { warrantyFor?: (serial: string) => 
 
     const hit = await db.select().from(serialRegistry).where(eq(serialRegistry.serial, serial)).limit(1);
     const row = hit[0];
-    const ip = c.req.header('x-real-ip') ?? c.req.header('cf-connecting-ip') ?? null;
+    const ip = ipOf(c);
     const country = (c.req.header('cf-ipcountry') ?? '').slice(0, 8).toUpperCase() || null;
 
     // URD UR-17: three outcomes — VERIFIED GENUINE / NOT FOUND / SUSPECTED
@@ -40,8 +41,11 @@ export function snCheckRoute(db: DB, deps?: { warrantyFor?: (serial: string) => 
         countries: sql<number>`count(distinct ${snCheck.country})`,
       }).from(snCheck).where(and(eq(snCheck.serial, serial), gte(snCheck.checkedAt, since)));
       const newIp = ip ? Number((await db.select({ n: count() }).from(snCheck).where(and(eq(snCheck.serial, serial), gte(snCheck.checkedAt, since), eq(snCheck.ip, ip))))[0]?.n ?? 0) === 0 : false;
+      const newCountry = country ? Number((await db.select({ n: count() }).from(snCheck).where(and(eq(snCheck.serial, serial), gte(snCheck.checkedAt, since), eq(snCheck.country, country))))[0]?.n ?? 0) === 0 : false;
+      // count this request too, exactly as the admin scan will after the insert (ZT-074)
       const ips = Number(a?.ips ?? 0) + (newIp ? 1 : 0);
-      if (ips > SERIAL_ANOMALY_THRESHOLD || Number(a?.countries ?? 0) > SERIAL_ANOMALY_THRESHOLD) result = RESULT.SUSPICIOUS;
+      const countries = Number(a?.countries ?? 0) + (newCountry ? 1 : 0);
+      if (ips > SERIAL_ANOMALY_THRESHOLD || countries > SERIAL_ANOMALY_THRESHOLD) result = RESULT.SUSPICIOUS;
     }
 
     await db.insert(snCheck).values({
@@ -54,12 +58,14 @@ export function snCheckRoute(db: DB, deps?: { warrantyFor?: (serial: string) => 
         .where(eq(serialRegistry.serial, serial));
     }
 
-    const warranty = row && deps?.warrantyFor ? await deps.warrantyFor(serial) : undefined;
     return c.json({
       serial,
       result,
       ...(row ? { sku: row.sku, manufacturedAt: row.manufacturedAt } : {}),
-      ...(warranty ? { warranty } : {}),
+      // No warranty status here: it would reveal whether — and, via the expiry,
+      // when — a serial was registered (ZT-045). Owners check it with serial +
+      // e-mail at /support/warranty (URD UR-17.1.5 "optionally").
+      ...(row ? { warrantyLookup: '/support/warranty' } : {}),
       advice: result === RESULT.VALID
         ? 'Serial verified against the TwinMOS registry — genuine article.'
         : result === RESULT.SUSPICIOUS
@@ -333,7 +339,21 @@ export function serialAdminRoute(db: DB, deps: { requireRole: (r: any) => Guard;
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const serial = (c.req.param('serial') ?? '').trim().toUpperCase();
-    const rows = await db.delete(serialRegistry).where(eq(serialRegistry.serial, serial)).returning();
+    let rows: Array<typeof serialRegistry.$inferSelect>;
+    try {
+      // Unconfirmed (pending) claims go with the serial; they are no customer
+      // record yet and would otherwise pin any serial forever (ZT-075).
+      rows = await db.transaction(async (tx) => {
+        await tx.delete(productRegistration).where(and(eq(productRegistration.serial, serial), eq(productRegistration.status, 'pending')));
+        return tx.delete(serialRegistry).where(eq(serialRegistry.serial, serial)).returning();
+      });
+    } catch (e) {
+      // an active or voided warranty registration references this serial (FK restrict)
+      if (String((e as { cause?: { code?: string } })?.cause?.code ?? (e as { code?: string })?.code) === '23503') {
+        return c.json(problem(409, 'Serial has warranty registrations', 'A customer registration (active or voided) references this serial. Serials with registration history are kept for the service record and cannot be deleted.'), 409, { 'Content-Type': P });
+      }
+      throw e;
+    }
     if (!rows[0]) return c.json(problem(404, 'Serial not found in registry'), 404, { 'Content-Type': P });
     await auditRow(c, guard.user.id, 'serial.delete', serial, { sku: rows[0].sku, batch: rows[0].batch });
     return c.json({ deleted: true, serial });

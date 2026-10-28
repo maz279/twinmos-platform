@@ -1,7 +1,7 @@
 // Zero-trust audit harness — HTTP client that talks to the lab EDGE exactly like
 // Cloudflare would: TLS to www.twinmos.com with an origin-pull client certificate.
 // Every probe goes through nginx (deploy/nginx/twinmos.conf), never to the API port.
-import { Agent, fetch as ufetch } from 'undici';
+import { Agent, FormData as UFormData, fetch as ufetch } from 'undici';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,7 +34,7 @@ function agent(withClientCert = true) {
 export async function edge(path, init = {}, { clientCert = true, jar } = {}) {
   const headers = new Headers(init.headers ?? {});
   if (jar?.cookie) headers.set('cookie', jar.cookie);
-  if (init.body && typeof init.body === 'object' && !(init.body instanceof Uint8Array) && !(init.body instanceof FormData)) {
+  if (init.body && typeof init.body === 'object' && !(init.body instanceof Uint8Array) && !(init.body instanceof FormData) && !(init.body instanceof UFormData)) {
     headers.set('content-type', 'application/json');
     init = { ...init, body: JSON.stringify(init.body) };
   }

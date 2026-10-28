@@ -117,6 +117,12 @@ services:
       - MAIL_FROM=${MAIL_FROM}
       - FORMS_TO=${FORMS_TO}
       - ALLOWED_ORIGIN=${ALLOWED_ORIGIN:-https://www.twinmos.com}
+      # uploaded CMS media and partner assets: persistent volume, never the
+      # container FS or tmpfs (ZT-077 — they used to vanish on every restart)
+      - MEDIA_DIR=/app/apps/api/data/media
+      - PARTNER_FILES_DIR=/app/apps/api/data/partner-files
+    volumes:
+      - api_files:/app/apps/api/data
     depends_on:
       postgres:
         condition: service_healthy
@@ -157,4 +163,5 @@ networks:
 
 volumes:
   pgdata:
+  api_files:
 

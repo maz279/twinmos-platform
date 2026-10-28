@@ -13,15 +13,13 @@
   function esc(s) { var d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML; }
 
   // ---------- partner portal (partners or partners.html) ----------
-  var portalForm = document.querySelector('form[data-tm-form]');
+  var portalForm = document.getElementById('partnerSignIn');
   var isPartners = /\/partners(\.html)?$/.test(location.pathname);
   if (isPartnersForm(portalForm)) {
     wirePortal(portalForm);
   }
   function isPartnersForm(form) {
-    return !!(form && isPartners &&
-      (form.getAttribute('data-success') || '').indexOf('Demo sign-in') !== -1 &&
-      form.querySelector('input[type="password"]'));
+    return !!(form && isPartners && form.querySelector('input[type="password"]'));
   }
 
   function wirePortal(form) {
@@ -70,8 +68,12 @@
   }
 
   function bootPortalIfMember() {
-    fetch(API + '/partner/me', { credentials: 'include' })
+    // ask for the session first (200 + null when signed out), so anonymous
+    // visitors do not trigger a 401 on /partner/me on every page view
+    fetch(API + '/auth/get-session', { credentials: 'include' })
       .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (s) { return s && s.user ? fetch(API + '/partner/me', { credentials: 'include' }) : null; })
+      .then(function (r) { return r && r.ok ? r.json() : null; })
       .then(function (me) { if (me) return renderPortal(me); })
       .catch(function () { /* not signed in or not a member */ });
   }
@@ -228,10 +230,8 @@
         var kind = d.result === 'valid' ? 'ok' : d.result === 'suspicious' ? 'suspect' : 'unknown';
         var title = kind === 'ok' ? 'Verified genuine' : kind === 'suspect' ? 'Suspected counterfeit' : 'Serial not found';
         var tone = kind === 'ok' ? ['#86EFAC', '#F0FDF4', '#16A34A', '#166534'] : ['#FCA5A5', '#FEF2F2', '#DC2626', '#991B1B'];
-        var W = { active: 'Warranty active', expiring_soon: 'Warranty expiring soon', expired: 'Warranty expired', lifetime: 'Lifetime warranty', undetermined: 'Warranty registered — term confirmed by support', not_registered: 'Not registered for warranty' };
-        var warranty = d.warranty ? '<p class="form-note" style="margin:6px 0 0">' + esc(W[d.warranty.status] || d.warranty.status) +
-          (d.warranty.expiresAt ? ' · until ' + esc(String(d.warranty.expiresAt).slice(0, 10)) : '') +
-          (d.warranty.status === 'not_registered' ? ' — <a href="/support/warranty">register now</a>' : '') + '</p>' : '';
+        // warranty status is shown only to the owner (serial + e-mail), never here
+        var warranty = d.warrantyLookup ? '<p class="form-note" style="margin:6px 0 0"><a href="/support/warranty">Check or register this product’s warranty →</a></p>' : '';
         outEl.innerHTML =
           '<div style="border:1px solid ' + tone[0] + ';background:' + tone[1] + ';text-align:left;padding:14px;border-radius:8px">' +
           '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +

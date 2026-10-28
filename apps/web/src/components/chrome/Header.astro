@@ -16,6 +16,8 @@ interface Props {
   brand?: { name?: string; logoUrl?: string };
   figures?: { foundingYear?: number; countriesCount?: string; productCount?: number };
   menu?: { items?: NavItem[] } | null;
+  /** locale codes activated in the CMS (English always) */
+  locales?: string[];
 }
 
 const {
@@ -33,7 +35,7 @@ const logoUrl = brand.logoUrl || '/assets/img/logo.webp';
 const LOCALES = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'] as const;
 const activeLocale = (LOCALES as readonly string[]).includes(currentLocale.toLowerCase()) ? currentLocale : 'en';
 // Only locales activated in the CMS are offered (inactive ones redirect to English).
-const activeLocales: string[] = (Astro.props as any).locales ?? ['en'];
+const activeLocales: string[] = Astro.props.locales ?? ['en'];
 void activeLocale;
 
 const normalize = (p: string) => p.replace(/^\//, '').replace(/\/$/, '') || 'index.html';

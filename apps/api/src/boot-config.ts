@@ -109,6 +109,21 @@ export function bootConfigErrors(env: Record<string, string | undefined> = proce
   for (const k of ['PUBLIC_SITE_URL', 'ADMIN_PUBLIC_URL'] as const) {
     if (env[k] && !env[k]!.startsWith('https://')) errs.push(`${k} must start with https:// in production`);
   }
+  for (const k of ['BETTER_AUTH_URL', 'PUBLIC_SITE_URL', 'ADMIN_PUBLIC_URL'] as const) {
+    if (env[k] && /^https:\/\/(localhost|127\.|0\.0\.0\.0|\[::1\])/i.test(env[k]!)) errs.push(`${k} must be the public site address, not ${env[k]}`);
+  }
+
+  // Cloudflare's published Turnstile test secrets always pass (or always fail),
+  // and RESEND_BASE_URL redirects all mail to a mock: both are for the zero-trust
+  // lab only, which acknowledges them explicitly (ZT-080). A real deployment that
+  // copied a lab or staging .env refuses to start.
+  const lab = env.TWINMOS_LAB_TEST_INTEGRATIONS === 'acknowledged-not-for-production';
+  if (env.TURNSTILE_SECRET_KEY && /^[123]x0{30,}AA$/.test(env.TURNSTILE_SECRET_KEY) && !lab) {
+    errs.push('TURNSTILE_SECRET_KEY is a Cloudflare test key (captcha always passes) — use the real secret');
+  }
+  if (env.RESEND_BASE_URL && !lab) {
+    errs.push('RESEND_BASE_URL must be unset in production (it redirects every e-mail away from Resend)');
+  }
 
   return errs;
 }

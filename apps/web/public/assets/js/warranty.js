@@ -62,12 +62,32 @@
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { r: r, d: d }; }); })
       .then(function (x) {
         btn.disabled = false;
-        if (x.r.status === 201) { out.innerHTML = box(true, 'Product registered. A confirmation e-mail is on its way.<br>' + describe(x.d)); reg.reset(); return; }
+        if (x.r.status === 202) { out.innerHTML = box(true, 'Almost done — open the confirmation link we sent to ' + esc(body.email) + ' to activate the registration (valid for 48 hours).'); reg.reset(); if (window.turnstile && holder) window.turnstile.reset(holder); return; } // tokens are single-use: the next registration needs a fresh challenge
         out.innerHTML = box(false, esc(problemText(x.d, x.r.status)));
         if (window.turnstile && holder) window.turnstile.reset(holder);
       })
       .catch(function () { btn.disabled = false; out.innerHTML = box(false, 'The registration service could not be reached — please retry.'); });
   });
+
+  // Confirmation link from the e-mail: activate on an explicit click (POST),
+  // so mail link scanners cannot activate a registration.
+  var confirmToken = new URLSearchParams(location.search).get('confirm');
+  var regCard = document.getElementById('register');
+  if (confirmToken && regCard) {
+    var panel = document.createElement('div');
+    panel.className = 'card card-pad';
+    panel.style.marginBottom = '16px';
+    panel.innerHTML = '<h2 class="h3">Confirm your registration</h2><p class="form-note">Click to activate the warranty registration requested with this e-mail address.</p><button class="btn btn-primary" type="button" id="wtyConfirmBtn">Confirm registration</button><div id="wtyConfirmOut" aria-live="polite" style="margin-top:12px"></div>';
+    regCard.parentNode.insertBefore(panel, regCard);
+    document.getElementById('wtyConfirmBtn').addEventListener('click', function () {
+      var b = this; b.disabled = true;
+      var out = document.getElementById('wtyConfirmOut');
+      fetch(API + '/warranty/confirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: confirmToken }) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { r: r, d: d }; }); })
+        .then(function (x) { b.style.display = 'none'; out.innerHTML = x.r.ok ? box(true, 'Registration confirmed.<br>' + describe(x.d)) : box(false, esc(problemText(x.d, x.r.status))); })
+        .catch(function () { b.disabled = false; out.innerHTML = box(false, 'The service could not be reached — please retry.'); });
+    });
+  }
 
   var look = document.getElementById('wtyLookupForm');
   if (look) look.addEventListener('submit', function (e) {

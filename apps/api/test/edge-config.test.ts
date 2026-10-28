@@ -36,9 +36,11 @@ describe('R0.6 · Edge Configuration & Startup (Z-07, EDGE-START, EDGE-01)', () 
       expect(conf).toContain('include /etc/nginx/snippets/realip_cloudflare.conf;');
     });
 
-    it('defines map_hash_bucket_size 128 before the first map directive', () => {
-      expect(conf).toContain('map_hash_bucket_size 128;');
-      const bucketIdx = conf.indexOf('map_hash_bucket_size 128;');
+    // 256: the longest redirect-map key is 171 chars — at 128 `nginx -t` failed
+    // and the edge never started (zero-trust audit, live lab run 2026-10-28).
+    it('defines map_hash_bucket_size 256 before the first map directive', () => {
+      expect(conf).toContain('map_hash_bucket_size 256;');
+      const bucketIdx = conf.indexOf('map_hash_bucket_size 256;');
       const firstMapIdx = conf.indexOf('map $uri $twinmos_csp');
       expect(bucketIdx).toBeGreaterThan(0);
       expect(firstMapIdx).toBeGreaterThan(bucketIdx);

@@ -31,6 +31,7 @@ const {
 }: any = await import('@twinmos/db');
 const { migrate } = await import('drizzle-orm/pglite/migrator');
 const { buildApp }: any = await import('../src/app.ts');
+const { formToken, registerSerial }: any = await import('./support/fixtures.ts');
 
 describe('MS4.7 · Truthful Entities, Forms & Localisation Suite', () => {
   let app: any;
@@ -253,7 +254,7 @@ describe('MS4.7 · Truthful Entities, Forms & Localisation Suite', () => {
       const res = await app.request('/api/v1/forms/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify({ formToken: formToken(),
           // Missing required email and consent
           name: 'Anonymous Inquirer',
         }),
@@ -268,7 +269,7 @@ describe('MS4.7 · Truthful Entities, Forms & Localisation Suite', () => {
       const res = await app.request('/api/v1/forms/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify({ formToken: formToken(),
           email: 'procurement@acme-systems.com',
           name: 'Jane Doe',
           consent: true,
@@ -292,7 +293,7 @@ describe('MS4.7 · Truthful Entities, Forms & Localisation Suite', () => {
       const res = await app.request('/api/v1/forms/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify({ formToken: formToken(),
           email: 'customer@domain.com',
           name: 'Alice Johnson',
           consent: true,

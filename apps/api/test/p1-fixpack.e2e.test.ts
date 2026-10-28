@@ -1,11 +1,11 @@
 // P1 — Critical fix-pack regression gates (REMEDIATION_PLAN TM-REM-2026-001).
 // 1.2: API-side markdown rendering is sanitized (preview URLs cannot carry
 //      hostile script even though the API CSP already neutralizes it).
-// 1.4: invite temp-passwords are 100% CSPRNG + flagged must_change_password;
-//      flagged accounts are refused by /admin (403) until they rotate.
+// 1.4: invites disclose no credential (set-password link, ZT-014) and stay
+//      flagged must_change_password; /admin answers 403 until accepted.
 // Fixture credentials are GENERATED at runtime — never literals.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -81,8 +81,20 @@ describe('P1.2: sanitized markdown in server-rendered content', () => {
   });
 });
 
-describe('P1.4: crypto invite passwords + forced rotation', () => {
-  it('generates CSPRNG-only temporary passwords (TwinMOS-<hex8>!<hex8>)', async () => {
+// ZT-014: an invite never discloses a credential — not in the API response, not
+// in e-mail. The invitee sets their own password through a single-use reset link;
+// mustChangePassword stays as defence in depth until that has happened.
+const latestResetToken = (to: string): string => {
+  const dir = process.env.MAIL_OUTBOX_DIR!;
+  const mails = readdirSync(dir).filter((f) => f.endsWith('.json')).sort()
+    .map((f) => JSON.parse(readFileSync(join(dir, f), 'utf8')))
+    .filter((m: any) => m.to === to && /Password Reset/.test(m.subject ?? ''));
+  const m = /reset-password\/([A-Za-z0-9_-]+)/.exec(mails.pop()?.text ?? '');
+  return m?.[1] ?? '';
+};
+
+describe('P1.4: invites without disclosed credentials + forced rotation', () => {
+  it('invite response and mail carry no password; a set-password link is sent', async () => {
     await mkUser('p1-inviter@twinmos.dev', pwAdmin, 'super_admin');
     const ck = await cookieFor('p1-inviter@twinmos.dev', pwAdmin);
     const r = await app.request('/api/v1/admin/users/invite', {
@@ -90,41 +102,46 @@ describe('P1.4: crypto invite passwords + forced rotation', () => {
       body: JSON.stringify({ email: 'p1-invited@twinmos.dev', name: 'Invited', role: 'viewer' }),
     });
     expect(r.status).toBe(201);
-    const { temporaryPassword } = await r.json();
-    expect(temporaryPassword).toMatch(/^TwinMOS-[0-9a-f]{8}![0-9a-f]{8}$/);
+    const body = await r.json();
+    expect(body.temporaryPassword).toBeUndefined();
+    expect(JSON.stringify(body)).not.toMatch(/password":/i);
+    expect(body.setPasswordLinkSent).toBe(true);
+    expect(latestResetToken('p1-invited@twinmos.dev')).toBeTruthy();
+    const dir = process.env.MAIL_OUTBOX_DIR!;
+    const invite = readdirSync(dir).map((f) => readFileSync(join(dir, f), 'utf8')).filter((t) => t.includes('p1-invited@twinmos.dev'));
+    expect(invite.join(' ')).not.toMatch(/temporary password|TwinMOS-[0-9a-f]{8}!/i);
   });
 
-  it('full rotation flow: flagged → /admin 403 → change-password + accept → gate cleared', async () => {
+  it('full rotation flow: set-password link → flagged → /admin 403 → accept → gate cleared', async () => {
     const inviterCk = await cookieFor('p1-inviter@twinmos.dev', pwAdmin);
     const inv = await app.request('/api/v1/admin/users/invite', {
       method: 'POST', headers: { 'content-type': 'application/json', cookie: inviterCk },
       body: JSON.stringify({ email: 'p1-rotate@twinmos.dev', name: 'Rotate', role: 'viewer' }),
     });
-    const { temporaryPassword } = await inv.json();
-    const ck = await cookieFor('p1-rotate@twinmos.dev', temporaryPassword);
+    expect(inv.status).toBe(201);
+    const newPw = genPw();
+    const reset = await auth.handler(new Request(origin + '/api/v1/auth/reset-password', {
+      method: 'POST', headers: { 'content-type': 'application/json', origin },
+      body: JSON.stringify({ token: latestResetToken('p1-rotate@twinmos.dev'), newPassword: newPw }),
+    }));
+    expect(reset.status).toBe(200);
+    const ck = await cookieFor('p1-rotate@twinmos.dev', newPw);
 
-    // flagged state visible; admin routes refused with the rotation problem
+    // still flagged until accepted; admin routes refused with the rotation problem
     const st = await app.request('/api/v1/admin/users/me/password-state', { headers: { cookie: ck } });
     expect(await st.json()).toEqual({ mustChangePassword: true });
     const blocked = await app.request('/api/v1/admin/stats', { headers: { cookie: ck } });
     expect(blocked.status).toBe(403);
     expect((await blocked.json()).title).toBe('Password change required');
 
-    // rotate through Better Auth, then clear the flag (change-password rotates
-    // the session token — sign in fresh with the new password first)
-    const newPw = genPw();
-    await auth.handler(new Request(origin + '/api/v1/auth/change-password', {
-      method: 'POST', headers: { 'content-type': 'application/json', origin, cookie: ck },
-      body: JSON.stringify({ currentPassword: temporaryPassword, newPassword: newPw, revokeOtherSessions: true }),
-    }));
-    const ck2 = await cookieFor('p1-rotate@twinmos.dev', newPw);
-    const accept = await app.request('/api/v1/admin/users/me/accept-password', { method: 'POST', headers: { 'content-type': 'application/json', cookie: ck2 }, body: '{}' });
+    const accept = await app.request('/api/v1/admin/users/me/accept-password', { method: 'POST', headers: { 'content-type': 'application/json', cookie: ck }, body: '{}' });
     expect(accept.status).toBe(200);
 
     // gate cleared — any remaining 403 must be role-based, not rotation-based
-    const st2 = await app.request('/api/v1/admin/users/me/password-state', { headers: { cookie: ck2 } });
+    const st2 = await app.request('/api/v1/admin/users/me/password-state', { headers: { cookie: ck } });
     expect(await st2.json()).toEqual({ mustChangePassword: false });
-    const after = await app.request('/api/v1/admin/stats', { headers: { cookie: ck2 } });
+    const after = await app.request('/api/v1/admin/stats', { headers: { cookie: ck } });
     expect((await after.json()).title).not.toBe('Password change required');
   });
 });
+

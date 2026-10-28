@@ -21,6 +21,8 @@ services:
   api:
     environment:
       - RESEND_BASE_URL=http://mailmock:3000
+      # the lab's Turnstile test keys + mail mock are refused at boot unless acknowledged
+      - TWINMOS_LAB_TEST_INTEGRATIONS=acknowledged-not-for-production
   postgres:
     ports: [ "127.0.0.1:15432:5432" ]
 volumes:

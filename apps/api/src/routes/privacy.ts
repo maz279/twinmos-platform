@@ -15,6 +15,7 @@ import {
   rmaEvent,
   partnerOrg,
   partnerMember,
+  productRegistration,
   auditLog,
   type DB,
 } from '@twinmos/db';
@@ -175,6 +176,10 @@ export function privacyRoute(
       rmaEvents = await db.select().from(rmaEvent).where(inArray(rmaEvent.rmaId, rmaIds));
     }
 
+    // 7b. Warranty registrations (ZT-076) — the confirmation token is a credential, not data
+    const warrantyRegistrations = (await db.select().from(productRegistration).where(eq(productRegistration.email, email)))
+      .map(({ confirmToken: _t, ...r }) => r);
+
     // 8. Partner organization and membership
     const partnerOrgs = await db.select().from(partnerOrg).where(eq(partnerOrg.contactEmail, email));
     let partnerMembers: any[] = [];
@@ -218,6 +223,7 @@ export function privacyRoute(
           applications: applications.length,
           rmas: rmas.length,
           rmaEvents: rmaEvents.length,
+          warrantyRegistrations: warrantyRegistrations.length,
           partnerOrgs: partnerOrgs.length,
           partnerMembers: partnerMembers.length,
           auditLogs: relevantAuditLogs.length,
@@ -238,6 +244,7 @@ export function privacyRoute(
         applications,
         rmas,
         rmaEvents,
+        warrantyRegistrations,
         partnerOrgs,
         partnerMembers,
         auditLogs: relevantAuditLogs,
@@ -329,6 +336,14 @@ export function privacyRoute(
       }).where(eq(user.id, u.id));
     }
 
+    // 5b. Warranty registrations: unconfirmed claims are deleted; confirmed or
+    //     voided ones keep the serial/dates for the service record, minus the person.
+    await db.delete(productRegistration).where(sql`${productRegistration.email} = ${email} and ${productRegistration.status} = 'pending'`);
+    const anonymizedRegs = await db.update(productRegistration).set({
+      email: sql`'anonymized-' || ${productRegistration.id} || '@deleted.twinmos.local'`,
+      name: 'Anonymized Customer', country: null, retailer: null, updatedAt: new Date(),
+    }).where(eq(productRegistration.email, email)).returning({ id: productRegistration.id });
+
     // 6. Partner organizations contactEmail scrub
     await db.update(partnerOrg).set({
       contactEmail: null,
@@ -362,6 +377,7 @@ export function privacyRoute(
           notesDeleted: subIds.length,
           applicationsAnonymized: matchingApps.length,
           rmasAnonymized: matchingRmas.length,
+          registrationsAnonymized: anonymizedRegs.length,
           usersAnonymized: matchingUsers.length,
         },
       },
@@ -376,6 +392,7 @@ export function privacyRoute(
         submissionsAnonymized: matchingSubs.length,
         applicationsAnonymized: matchingApps.length,
         rmasAnonymized: matchingRmas.length,
+        registrationsAnonymized: anonymizedRegs.length,
         usersAnonymized: matchingUsers.length,
       },
     });

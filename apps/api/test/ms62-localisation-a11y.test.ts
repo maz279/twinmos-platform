@@ -5,9 +5,14 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const WEB_ORIGIN = process.env.TEST_WEB_ORIGIN || 'http://localhost:4321';
+// T6.2.1–T6.2.3 probe a RUNNING web server. The unit run has none, so these
+// suites run only when TEST_WEB_ORIGIN names one (they used to fail with
+// ECONNREFUSED in every clean-clone run). Against the lab on 2026-10-28 they
+// fail for real: the eight locales are not translated or activated (ZT-044).
+const liveDescribe = process.env.TEST_WEB_ORIGIN ? describe : describe.skip;
 const ROOT_DIR = resolve(import.meta.dirname, '../../..');
 
-describe('MS6.2 · T6.2.1: Real locale pages (no placeholder)', () => {
+liveDescribe('MS6.2 · T6.2.1: Real locale pages (no placeholder)', () => {
   const locales = ['ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'];
 
   for (const loc of locales) {
@@ -31,7 +36,7 @@ describe('MS6.2 · T6.2.1: Real locale pages (no placeholder)', () => {
   }
 });
 
-describe('MS6.2 · T6.2.2: Right-to-left isolation & i18n runtime', () => {
+liveDescribe('MS6.2 · T6.2.2: Right-to-left isolation & i18n runtime', () => {
   it('English root page has no explicit dir (LTR default) and does NOT link rtl.css', async () => {
     const res = await fetch(`${WEB_ORIGIN}/`);
     expect(res.status).toBe(200);
@@ -80,7 +85,7 @@ describe('MS6.2 · T6.2.2: Right-to-left isolation & i18n runtime', () => {
   });
 });
 
-describe('MS6.2 · T6.2.3: Reciprocal hreflang validator & sitemaps', () => {
+liveDescribe('MS6.2 · T6.2.3: Reciprocal hreflang validator & sitemaps', () => {
   const allLocales = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'];
 
   function extractHreflangLinks(html: string): Map<string, string> {

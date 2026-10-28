@@ -1,22 +1,28 @@
 // Typed site settings schemas (Milestone MS4.2 · T4.2.1 / C1 / Z-39)
 import { z } from 'zod';
 
+// URL settings are rendered into href/src: only https/http or site-relative paths
+// (z.string().url() alone accepts javascript: — zero-trust audit ZT-058).
+const httpUrl = z.string().trim().url().refine((u) => /^https?:\/\//i.test(u), 'must be an http(s) URL');
+const sitePathOrUrl = z.string().trim().min(1).refine((u) => /^(\/(?!\/)|https?:\/\/)/i.test(u), 'must be a site path (/…) or an http(s) URL');
+
 // 1. site.brand
 export const siteBrandSchema = z.object({
   name: z.string().trim().min(1).max(100).default('TwinMOS Technologies'),
   tagline: z.string().trim().min(1).max(200).default('Legendary Memory Brand'),
-  logoUrl: z.string().trim().min(1).default('/assets/img/logo.webp'),
-  faviconUrl: z.string().trim().optional().default('/favicon.ico'),
+  logoUrl: sitePathOrUrl.default('/assets/img/logo.webp'),
+  faviconUrl: sitePathOrUrl.optional().default('/favicon.ico'),
   foundingYear: z.number().int().min(1900).max(2100).default(1998),
 });
 export type SiteBrandSettings = z.infer<typeof siteBrandSchema>;
 
 // 2. site.contact
 export const siteContactSchema = z.object({
-  email: z.string().trim().email().default('info@twinmos.com'),
+  // defaults = www.twinmos.com/contact (authoritative fact base)
+  email: z.string().trim().email().default('sales@twinmos.com'),
   supportEmail: z.string().trim().email().optional().default('support@twinmos.com'),
   salesEmail: z.string().trim().email().optional().default('sales@twinmos.com'),
-  phone: z.string().trim().min(1).max(50).default('+886 2 2659 0880'),
+  phone: z.string().trim().min(1).max(50).default('+886 970-368-077'),
   address: z.string().trim().min(1).max(300).default('5F.-5, No. 29, Sec. 1, Minsheng E. Rd., Zhongshan Dist., Taipei City 104619, Taiwan'),
   country: z.string().trim().optional().default('Taiwan'),
 });
@@ -24,12 +30,12 @@ export type SiteContactSettings = z.infer<typeof siteContactSchema>;
 
 // 3. site.social (single source for footer and Organization JSON-LD)
 export const siteSocialSchema = z.object({
-  facebook: z.string().trim().url().default('https://www.facebook.com/twinmos.tech'),
-  instagram: z.string().trim().url().default('https://instagram.com/twinmos.tech'),
-  linkedin: z.string().trim().url().default('https://www.linkedin.com/company/twinmos-technologies/'),
-  x: z.string().trim().url().default('https://x.com/twinmos'),
-  youtube: z.string().trim().url().default('https://www.youtube.com/c/TwinMOStech'),
-  pinterest: z.string().trim().url().optional().default('https://www.pinterest.com/twinmos'),
+  facebook: httpUrl.default('https://www.facebook.com/twinmos.tech'),
+  instagram: httpUrl.default('https://instagram.com/twinmos.tech'),
+  linkedin: httpUrl.default('https://www.linkedin.com/company/twinmos-technologies/'),
+  x: httpUrl.default('https://x.com/twinmos'),
+  youtube: httpUrl.default('https://www.youtube.com/c/TwinMOStech'),
+  pinterest: httpUrl.optional().default('https://www.pinterest.com/twinmos'),
 });
 export type SiteSocialSettings = z.infer<typeof siteSocialSchema>;
 
@@ -37,15 +43,15 @@ export type SiteSocialSettings = z.infer<typeof siteSocialSchema>;
 export const siteCookieSchema = z.object({
   title: z.string().trim().min(1).max(100).default('Cookie Preferences'),
   description: z.string().trim().min(1).max(500).default('We use essential cookies to ensure site security and proper functionality.'),
-  policyUrl: z.string().trim().min(1).default('/legal.html#cookies'),
+  policyUrl: sitePathOrUrl.default('/legal?tab=privacy'),
   essentialOnlyDefault: z.boolean().default(true),
 });
 export type SiteCookieSettings = z.infer<typeof siteCookieSchema>;
 
 // 5. site.whatsapp: keep the wa.me/<digits> format
 export const siteWhatsappSchema = z.object({
-  phoneNumber: z.string().trim().regex(/^\d{7,15}$/, 'Phone number must contain only digits (7 to 15 digits)').default('886226590880'),
-  waUrl: z.string().trim().regex(/^(https:\/\/)?wa\.me\/\d{7,15}$/, 'WhatsApp URL must follow the wa.me/<digits> format').default('https://wa.me/886226590880'),
+  phoneNumber: z.string().trim().regex(/^\d{7,15}$/, 'Phone number must contain only digits (7 to 15 digits)').default('886970368077'),
+  waUrl: z.string().trim().regex(/^(https:\/\/)?wa\.me\/\d{7,15}$/, 'WhatsApp URL must follow the wa.me/<digits> format').default('https://wa.me/886970368077'),
   defaultMessage: z.string().trim().optional().default(''),
 });
 export type SiteWhatsappSettings = z.infer<typeof siteWhatsappSchema>;
@@ -54,7 +60,7 @@ export type SiteWhatsappSettings = z.infer<typeof siteWhatsappSchema>;
 export const siteFiguresSchema = z.object({
   countriesCount: z.string().trim().min(1).default('93+'),
   foundingYear: z.number().int().min(1900).max(2100).default(1998),
-  productCount: z.number().int().min(1).default(40),
+  productCount: z.number().int().min(1).default(39),
 });
 export type SiteFiguresSettings = z.infer<typeof siteFiguresSchema>;
 

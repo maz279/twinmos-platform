@@ -7,6 +7,7 @@
 import Layout from '../../layouts/Layout.astro';
 
 Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('Referrer-Policy', 'no-referrer'); // ?confirm= tokens land on this URL
 const title = 'Warranty registration & status — TwinMOS';
 const desc = 'Register your TwinMOS product and check its warranty status with the serial number and your e-mail address.';
 ---
@@ -27,7 +28,7 @@ const desc = 'Register your TwinMOS product and check its warranty status with t
           <div class="card card-pad" id="register">
             <h2 class="h3">Register a product</h2>
             <p class="form-note" style="margin-top:4px">The serial number is printed on the product label and the retail packaging.</p>
-            <form id="wtyRegisterForm" novalidate style="margin-top:12px">
+            <form id="wtyRegisterForm" method="post" novalidate style="margin-top:12px">
               <div class="fg"><label for="wtySerial">Serial number *</label><input class="input" id="wtySerial" name="serial" autocomplete="off" required /></div>
               <div class="fg"><label for="wtyName">Full name *</label><input class="input" id="wtyName" name="name" autocomplete="name" required /></div>
               <div class="fg"><label for="wtyEmail">E-mail *</label><input class="input" id="wtyEmail" name="email" type="email" autocomplete="email" required /></div>
@@ -49,7 +50,7 @@ const desc = 'Register your TwinMOS product and check its warranty status with t
           <div class="card card-pad" id="status" style="background:var(--bg-tint)">
             <h2 class="h3">Check warranty status</h2>
             <p class="form-note" style="margin-top:4px">Use the serial number and the e-mail address you registered with.</p>
-            <form id="wtyLookupForm" novalidate style="margin-top:12px">
+            <form id="wtyLookupForm" method="post" novalidate style="margin-top:12px">
               <div class="fg"><label for="wtyLSerial">Serial number *</label><input class="input" id="wtyLSerial" name="serial" autocomplete="off" required /></div>
               <div class="fg"><label for="wtyLEmail">E-mail *</label><input class="input" id="wtyLEmail" name="email" type="email" autocomplete="email" required /></div>
               <button class="btn btn-primary" type="submit" style="margin-top:8px">Check status</button>

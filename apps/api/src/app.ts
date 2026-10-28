@@ -21,7 +21,7 @@ import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
 import { redactPersonalData } from './lib/redact.ts';
 import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
 import { snCheckRoute, snReportRoute, serialAdminRoute } from './routes/sncheck.ts';
-import { warrantyRoute, warrantyAdminRoute, warrantyFor } from './routes/warranty.ts';
+import { warrantyRoute, warrantyAdminRoute } from './routes/warranty.ts';
 import { navigationRoute } from './routes/navigation.ts';
 import { entitiesRoute } from './routes/entities.ts';
 import { privacyRoute } from './routes/privacy.ts';
@@ -181,6 +181,9 @@ export function buildApp(db: DB) {
   let bucketSweepAt = 0;
   app.use('/api/v1/forms/*', async (c, next) => {
     if (c.req.method !== 'POST' || c.req.path === '/api/v1/forms/token') return next();
+    // 256-bit single-purpose tokens: RFC 8058 one-click unsubscribes arrive from
+    // shared mailbox-provider IPs and must never be throttled away (ZT-048).
+    if (c.req.path === '/api/v1/forms/newsletter/unsubscribe' || c.req.path === '/api/v1/forms/newsletter/confirm') return next();
     const ip = clientIp(c);
     const now = Date.now();
     // periodic sweep: IPs that never return must not accumulate forever
@@ -593,7 +596,7 @@ export function buildApp(db: DB) {
     return new Response(signIn.body, { status: signIn.status, headers: signIn.headers });
   });
 
-  app.route('/api/v1', formsRoute(db));
+  app.route('/api/v1', formsRoute(db, clientIp));
   app.route('/api/v1/consent', consentRoute(db, clientIp)); // T6.3.2 / CONSENT-01 public consent collection
   app.route('/api/v1', previewRoute(db)); // public, token-gated draft previews
   app.route('/api/v1/delivery', makeDeliveryRouter(db, sessionFromRequest)); // Phase B Task B3 Delivery API
@@ -655,7 +658,7 @@ export function buildApp(db: DB) {
   app.route('/api/v1', publicMediaRoute(db)); // P8 imagery bridge — public read-only product imagery
   app.route('/api/v1', partnerRoute(db, { requireRole, sessionFromRequest })); // P5 portal (member)
   app.route('/api/v1/admin', partnerAdminRoute(db, { requireRole, sessionFromRequest, auth })); // P5 portal (admin)
-  app.route('/api/v1', snCheckRoute(db, { warrantyFor: (s) => warrantyFor(db, s) })); // P5 public anti-counterfeit check (+ warranty status, UR-17.1.5)
+  app.route('/api/v1', snCheckRoute(db, clientIp)); // P5 public anti-counterfeit check
   app.route('/api/v1', warrantyRoute(db)); // BRD §F8.3 warranty registration & lookup
   app.route('/api/v1/admin', warrantyAdminRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', snReportRoute(db, { requireRole, sessionFromRequest })); // P5 reporting

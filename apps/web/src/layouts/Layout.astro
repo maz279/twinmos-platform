@@ -8,7 +8,7 @@ import Footer from '../components/chrome/Footer.astro';
 import CookieBanner from '../components/chrome/CookieBanner.astro';
 import CompareTray from '../components/chrome/CompareTray.astro';
 import { getDeliverySettings, getDeliveryNavMenu, getDeliveryActiveLocales } from '../lib/delivery';
-import { SETTINGS_GROUP_DEFAULTS, resolveComputedFigures } from '@twinmos/shared';
+import { SETTINGS_GROUP_DEFAULTS, resolveComputedFigures, jsonForScript } from '@twinmos/shared';
 
 interface BreadcrumbItem {
   label: string;
@@ -224,13 +224,13 @@ const OG_TYPE = isHomepage ? 'website' : (path.startsWith('/learn/') ? 'article'
 
     {isHomepage && (
       <>
-        <script type="application/ld+json" set:html={ORG_LD} />
-        <script type="application/ld+json" set:html={SITE_LD} />
+        <script type="application/ld+json" set:html={jsonForScript(ORG_LD)} />
+        <script type="application/ld+json" set:html={jsonForScript(SITE_LD)} />
       </>
     )}
-    {BREADCRUMB_LD && <script type="application/ld+json" set:html={BREADCRUMB_LD} />}
+    {BREADCRUMB_LD && <script type="application/ld+json" set:html={jsonForScript(BREADCRUMB_LD)} />}
     {customLd && customLd.filter(Boolean).map((ld) => (
-      <script type="application/ld+json" set:html={ld} />
+      <script type="application/ld+json" set:html={jsonForScript(String(ld))} />
     ))}
   </head>
   <body class={bodyClass}>

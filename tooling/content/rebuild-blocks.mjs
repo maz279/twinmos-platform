@@ -322,6 +322,17 @@ function extract(type, s, ctx) {
       else if (el.id === 'homeFlagshipGrid') f.query = { featured: true, limit: 8 };
       break;
     }
+    case 'form': {
+      // the form's API type follows the page (blocks were stored without one and all
+      // submitted as 'contact' — no RMA case was ever created from /rma)
+      const byPage = { '/rma.html': 'rma', '/quote.html': 'quote', '/contact.html': 'contact', '/careers.html': 'job-application', '/partners.html': 'partner-portal' };
+      f.formType = byPage[ctx.page] ?? 'contact';
+      const h = q(el, 'h2, h3');
+      if (h && !s.head) f.title = text(h);
+      const btn = q(el, 'button[type=submit], form .btn');
+      if (btn) f.submitButtonText = text(btn);
+      break;
+    }
     case 'promo-card': {
       f.href = url(el.getAttribute('href') || q(el, 'a')?.getAttribute('href'));
       f.heading = text(q(el, 'b, h3'));
@@ -331,6 +342,11 @@ function extract(type, s, ctx) {
     }
     case 'json-ld': {
       try { f.jsonld = JSON.parse(el.textContent); } catch { /* leave empty */ }
+      // Roadmap Z-24: no FAQ structured data anywhere on the site.
+      if (/faq/i.test(String(f.jsonld?.['@type'] ?? ''))) {
+        removed.push({ ...ctx, text: `JSON-LD ${f.jsonld['@type']}`, reason: 'FAQ structured data is excluded site-wide (roadmap Z-24)' });
+        delete f.jsonld;
+      }
       break;
     }
     case 'breadcrumb': {

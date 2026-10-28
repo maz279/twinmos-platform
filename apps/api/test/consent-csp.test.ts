@@ -143,7 +143,9 @@ describe('R0.5 · Catalogue Stop-Gap (catalog-data.js & layout-init.js)', () => 
   });
 
   it('app.js does not contain prototype locale toasts or demo compat database wording', () => {
-    const appJsPath = join(WEB_PUBLIC, 'assets', 'js', 'app.js');
+    // apps/web/public/assets/js/app.js is a build copy (gitignored; the web
+    // Dockerfile copies it from the prototype) — test the tracked source.
+    const appJsPath = join(ROOT, 'prototype', 'assets', 'js', 'app.js');
     const content = readFileSync(appJsPath, 'utf8');
 
     expect(content).not.toContain('in this prototype');

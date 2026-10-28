@@ -3,6 +3,7 @@
 // parameter-bound. Never assemble SQL from strings (repo lint + review enforce).
 import { pgTable, pgEnum, text, varchar, integer, boolean, timestamp, jsonb, serial, numeric, uniqueIndex, index, date } from 'drizzle-orm/pg-core';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const roleEnum = pgEnum('role', ['super_admin', 'admin', 'editor', 'author', 'viewer', 'member']);
 export const contentStatusEnum = pgEnum('content_status', ['draft', 'in_review', 'scheduled', 'published', 'archived']);
@@ -290,7 +291,11 @@ export const rmaRequest = pgTable('rma_request', {
   warrantyTier: varchar('warranty_tier', { length: 20 }), createdAt: ts(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   // Phase 6 completion (§6.6 card chip): the assigned technician
   assigneeId: text('assignee_id').references(() => user.id, { onDelete: 'set null' }),
-}, (t) => [index('rma_assignee_idx').on(t.assigneeId)]);
+}, (t) => [
+  index('rma_assignee_idx').on(t.assigneeId),
+  // 0035 (ZT-068): one open case per serial, enforced by the database
+  uniqueIndex('rma_request_open_serial_uq').on(t.serial).where(sql`${t.serial} is not null and ${t.status} not in ('closed', 'delivered')`),
+]);
 export const rmaEvent = pgTable('rma_event', {
   id: serial('id').primaryKey(), rmaId: integer('rma_id').notNull().references(() => rmaRequest.id, { onDelete: 'cascade' }),
   fromStatus: rmaStatusEnum('from_status').notNull(), toStatus: rmaStatusEnum('to_status').notNull(),
@@ -352,8 +357,12 @@ export const productRegistration = pgTable('product_registration', {
   retailer: varchar('retailer', { length: 120 }),
   warrantyTerm: varchar('warranty_term', { length: 80 }),
   warrantyExpiresAt: timestamp('warranty_expires_at', { withTimezone: true }),
-  status: varchar('status', { length: 20 }).notNull().default('active'), // active | void
+  status: varchar('status', { length: 20 }).notNull().default('active'), // pending | active | void
   voidReason: text('void_reason'),
+  // 0034 (ZT-046): e-mail ownership proof before a registration becomes active
+  confirmToken: varchar('confirm_token', { length: 64 }),
+  confirmExpiresAt: timestamp('confirm_expires_at', { withTimezone: true }),
+  purchaseDateSource: varchar('purchase_date_source', { length: 20 }).notNull().default('self-declared'),
   createdAt: ts(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('product_registration_email_idx').on(t.email)]);

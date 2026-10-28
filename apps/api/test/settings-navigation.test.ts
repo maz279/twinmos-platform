@@ -143,7 +143,7 @@ describe('MS4.2 · T4.2.1 Typed Settings Groups & Delivery', () => {
     // site.figures dynamic computation
     const fig = json.data['site.figures'];
     expect(fig.foundingYear).toBe(1998);
-    expect(fig.productCount).toBe(40);
+    expect(fig.productCount).toBe(39); // the 39 products itemised in twinmos_mirror/authoritative_facts.md
     expect(fig.countriesCount).toBe('93+');
     const currentYear = new Date().getFullYear();
     expect(fig.years).toBe(currentYear - 1998);

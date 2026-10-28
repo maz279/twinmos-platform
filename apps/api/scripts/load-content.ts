@@ -32,11 +32,13 @@ try {
   // id), bumping each page's version — the upgrade path for databases loaded
   // before the page content rebuild (ZT-036). Nothing else is touched.
   if (process.argv.includes('--update-pages')) {
-    const pages = JSON.parse(readFileSync(join(SNAP, 'page.json'), 'utf8')) as Array<{ id: number; blocks: unknown }>;
+    const pages = JSON.parse(readFileSync(join(SNAP, 'page.json'), 'utf8')) as Array<{ id: number; path: string; locale: string; blocks: unknown }>;
     await client.query('begin');
     let n = 0;
     for (const p of pages) {
-      const r = await client.query('update page set blocks = $2::jsonb, version = coalesce(version, 1) + 1, updated_at = now() where id = $1', [p.id, JSON.stringify(p.blocks)]);
+      // match on path + locale (ids differ between databases)
+      const r = await client.query('update page set blocks = $3::jsonb, version = coalesce(version, 1) + 1, updated_at = now() where path = $1 and locale = $2 and deleted_at is null', [p.path, p.locale ?? 'en', JSON.stringify(p.blocks)]);
+      if (!r.rowCount) console.warn(`[content] no page at ${p.path} (${p.locale ?? 'en'}) — skipped`);
       n += r.rowCount ?? 0;
     }
     await client.query('commit');

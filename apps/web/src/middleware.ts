@@ -10,7 +10,8 @@ const CSP_DIRECTIVES = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  "connect-src 'self' http://127.0.0.1:8787 http://localhost:8787 https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com",
+  // localhost API origins are for the dev servers only (edge serves one origin in production)
+  `connect-src 'self'${process.env.NODE_ENV === 'production' ? '' : ' http://127.0.0.1:8787 http://localhost:8787'} https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com`,
   "frame-src https://challenges.cloudflare.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",

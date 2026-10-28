@@ -1,129 +1,73 @@
-# TwinMOS Continuous Deployment Workflow (DEPLOY-01, T3.7.2, T3.7.3)
-# Automates zero-SSH staging rollout in <15 minutes with manual approval gate for production.
-name: Continuous Deployment
+# TwinMOS release smoke (DEPLOY-01, T3.7.2)
+# Builds the production images and boots the stack (postgres, migrate, bootstrap,
+# content, api, web) on the GitHub runner, then smoke-tests it. This is a
+# release-candidate check, NOT a deployment: the runner is thrown away at the end.
+#
+# Zero-trust audit 2026-10-28 (ZT-082): the previous version called itself a
+# staging + production deployment, but both jobs ran on ephemeral runners (nothing
+# was ever deployed), carried fallback credentials in the file, and ignored its
+# inputs. Real staging/production rollout needs a target host and is done with
+# deploy/staging/deploy.sh per docs/runbooks/DEPLOY.md until one exists.
+name: Release smoke
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      target_env:
-        description: 'Deployment Target Environment'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
-      rollback_tag:
-        description: 'Rollback Release Tag (optional)'
-        required: false
-        type: string
+
+permissions:
+  contents: read
 
 concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
+  group: release-smoke-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  deploy-staging:
-    name: Deploy to Staging (<15min, Zero-SSH)
+  release-smoke:
+    name: Build images + boot stack + smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: staging
-
-    env:
-      NODE_ENV: production
-      POSTGRES_USER: twinmos_staging
-      POSTGRES_PASSWORD: ${{ secrets.STAGING_POSTGRES_PASSWORD || 'staging_secret_pw_123' }}
-      POSTGRES_DB: twinmos_staging
-      DATABASE_URL: postgresql://twinmos_staging:${{ secrets.STAGING_POSTGRES_PASSWORD || 'staging_secret_pw_123' }}@127.0.0.1:5432/twinmos_staging
-      BETTER_AUTH_SECRET: ${{ secrets.STAGING_AUTH_SECRET || 'staging_better_auth_secret_998877665544' }}
-      BETTER_AUTH_URL: https://staging.twinmos.com
-      RELEASE_TAG: ${{ github.sha }}
-
+    timeout-minutes: 30
     steps:
-      - name: Checkout Codebase
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Install Dependencies
-        run: npm ci
-
-      # 1. Build and verify container images with pinned tags
-      - name: Build Container Stack with Pinned Digest Tags
+      - name: Per-run throwaway secrets (never committed, never reused)
         run: |
-          echo "[deploy] Building stack images pinned to SHA: ${RELEASE_TAG}"
-          docker compose -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.prod.yml build
-
-      # 2. Start PostgreSQL service & wait for readiness
-      - name: Start PostgreSQL 18 Service
-        run: |
-          docker compose -f deploy/compose/docker-compose.yml up -d postgres
-          echo "[deploy] Awaiting PostgreSQL 18 health..."
-          for i in {1..30}; do
-            if docker compose -f deploy/compose/docker-compose.yml exec -T postgres pg_isready -U "${POSTGRES_USER}" >/dev/null 2>&1; then
-              echo "[deploy] Database is healthy."
-              break
-            fi
-            sleep 2
-          done
-
-      # 3. Run Migrations & Bootstrap Seed
-      - name: Run Database Migrations & Bootstrap Seed
-        run: |
-          docker compose -f deploy/compose/docker-compose.yml run --rm migrate
-          docker compose -f deploy/compose/docker-compose.yml run --rm bootstrap
-
-      # 4. Roll out API and Web services
-      - name: Deploy API, Web and Edge Services
-        run: |
-          docker compose -f deploy/compose/docker-compose.yml up -d --no-deps api web edge
-
-      # 5. Automated Smoke Tests (<15m gate)
-      - name: Execute Automated Smoke Tests
-        run: |
-          echo "[deploy] Running smoke checks against deployed stack..."
-          # Verify API Health
-          docker compose -f deploy/compose/docker-compose.yml exec -T api wget -q -O - http://127.0.0.1:8787/api/v1/health | grep '"status":"ok"'
-          # Verify Web SSR Root
-          docker compose -f deploy/compose/docker-compose.yml exec -T web wget -q -O - http://127.0.0.1:4321/ | grep -i '<html'
-          # Verify Delivery API
-          docker compose -f deploy/compose/docker-compose.yml exec -T api wget -q -O - http://127.0.0.1:8787/api/v1/delivery/products | grep '"data"'
-          echo "[deploy] Smoke tests passed cleanly."
-
-      # 6. Record Active Release Metadata for Rollback (T3.7.3)
-      - name: Record Release Metadata
-        run: |
-          mkdir -p deploy/staging
-          cat <<EOF > deploy/staging/.active_release.json
+          rnd() { openssl rand -hex 24; }
           {
-            "releaseTag": "${RELEASE_TAG}",
-            "deployedAt": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-            "environment": "staging",
-            "gitCommit": "${GITHUB_SHA}",
-            "status": "healthy"
-          }
-          EOF
-          cat deploy/staging/.active_release.json
+            echo "POSTGRES_USER=twinmos"
+            echo "POSTGRES_DB=twinmos"
+            echo "POSTGRES_PASSWORD=$(rnd)"
+            echo "BETTER_AUTH_SECRET=$(rnd)"
+            echo "BETTER_AUTH_URL=https://www.twinmos.com"
+            echo "PREVIEW_SIGNING_KEY=$(rnd)"
+            echo "REVALIDATE_SECRET=$(rnd)"
+            echo "SEED_ADMIN_EMAIL=smoke-admin@twinmos.com"
+            echo "SEED_ADMIN_PASSWORD=$(rnd)"
+          } > "$RUNNER_TEMP/smoke.env"
+          # The boot guard refuses test integrations unless acknowledged; this
+          # runner is a throwaway smoke environment with no real mail or captcha.
+          {
+            echo "TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA"
+            echo "PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA"
+            echo "RESEND_API_KEY=re_smoke_not_a_real_key"
+            echo "MAIL_FROM=TwinMOS <no-reply@twinmos.com>"
+            echo "FORMS_TO=smoke@twinmos.com"
+          } >> "$RUNNER_TEMP/smoke.env"
+          echo "C=docker compose -p smoke --env-file $RUNNER_TEMP/smoke.env -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.smoke.yml" >> "$GITHUB_ENV"
 
-  deploy-production:
-    name: Production Deployment (Manual Approval Gate)
-    needs: deploy-staging
-    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: production
+      - name: Build images
+        run: $C build api web
 
-    steps:
-      - name: Checkout Codebase
-        uses: actions/checkout@v4
+      - name: Boot postgres → migrate → bootstrap → content → api, web
+        run: $C up -d --wait api web
 
-      - name: Production Rollout
+      - name: Smoke
         run: |
-          echo "[deploy-prod] Manual approval confirmed. Rolling out release ${{ github.sha }} to production..."
-          bash deploy/staging/deploy.sh
+          $C exec -T api node -e "fetch('http://127.0.0.1:8787/api/v1/health').then(r=>r.json()).then(j=>{if(j.status!=='ok')process.exit(1)})"
+          $C exec -T api node -e "fetch('http://127.0.0.1:8787/api/v1/delivery/products').then(r=>r.json()).then(j=>{if(!Array.isArray(j.data)||!j.data.length)process.exit(1)})"
+          $C exec -T web node -e "fetch('http://127.0.0.1:4321/').then(r=>r.text()).then(t=>{if(!/<html/i.test(t))process.exit(1)})"
+
+      - name: Logs on failure
+        if: failure()
+        run: $C logs --no-color api web migrate bootstrap content | tail -300

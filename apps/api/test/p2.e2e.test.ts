@@ -22,6 +22,7 @@ process.env.NODE_ENV = 'test';
 const { createDb, user, formSubmission, auditLog, jobApplication, rmaRequest }: any = await import('@twinmos/db');
 const { migrate } = await import('drizzle-orm/pglite/migrator');
 const { buildApp }: any = await import('../src/app.ts');
+const { formToken, registerSerial }: any = await import('./support/fixtures.ts');
 
 mkdirSync(process.env.MAIL_OUTBOX_DIR!, { recursive: true }); // outbox readable before the first mail lands
 
@@ -50,6 +51,8 @@ beforeAll(async () => {
   });
   cookie = res.headers.getSetCookie().map((c: string) => c.split(';')[0]).join('; ');
   expect(cookie).toContain('token');
+  // BR-6.2: every RMA below is for a registered, in-warranty serial
+  for (const sn of ['VLT-1', 'P2-TRACK-1', 'P2-TRACK-2', 'P2-LIFE-1']) await registerSerial(db, sn, 'customer@example.com');
 });
 
 afterAll(async () => {
@@ -67,11 +70,13 @@ const ip = (n: number) => ({ 'x-real-ip': `10.1.0.${n}` });
 const outboxCount = () => readdirSync(process.env.MAIL_OUTBOX_DIR!).filter((f) => f.endsWith('.json')).length;
 
 // ---- forms: all 15 registry types ---------------------------------------
-describe('POST /api/v1/forms/:type — all 15 registry types', () => {
+describe('POST /api/v1/forms/:type — the registry types', () => {
+  // 'newsletter' is not in this loop: /forms/newsletter is the double opt-in
+  // endpoint (uniform pending answer, no reference) — see phase-d.e2e.
   const TYPES = [
     'contact', 'quote', 'rma', 'distributor-application', 'partner-inquiry',
     'press-request', 'job-application', 'general-application', 'support-ticket',
-    'callback-request', 'feedback', 'report-counterfeit', 'newsletter', 'event-rsvp', 'build-submission',
+    'callback-request', 'feedback', 'report-counterfeit', 'event-rsvp', 'build-submission',
   ];
   const PAYLOADS: Record<string, Record<string, unknown>> = {
     rma: { name: 'John Smith', product: 'VOLTX DDR5 32GB', serial: 'VLT-1', issue: 'Module fails POST after two weeks, tested in two boards.' },
@@ -83,7 +88,7 @@ describe('POST /api/v1/forms/:type — all 15 registry types', () => {
     const res = await app.request('/api/v1/forms/' + type, {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...ip(TYPES.indexOf(type) + 1) },
-      body: JSON.stringify({ type, email: 'customer@example.com', consent: true, payload: PAYLOADS[type] ?? PAYLOADS.default }),
+      body: JSON.stringify({ formToken: formToken(), type, email: 'customer@example.com', consent: true, payload: PAYLOADS[type] ?? PAYLOADS.default }),
     });
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -108,7 +113,7 @@ describe('POST /api/v1/forms/:type — all 15 registry types', () => {
   });
 
   it('rejects unknown type with 422', async () => {
-    const res = await app.request('/api/v1/forms/' + 'nonexistent', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(90) }, body: JSON.stringify({ type: 'nonexistent', email: 'customer@example.com', consent: true, payload: {} }) });
+    const res = await app.request('/api/v1/forms/' + 'nonexistent', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(90) }, body: JSON.stringify({ formToken: formToken(), type: 'nonexistent', email: 'customer@example.com', consent: true, payload: {} }) });
     expect(res.status).toBe(422);
     expect(res.headers.get('content-type')).toContain('application/problem+json');
   });
@@ -116,7 +121,7 @@ describe('POST /api/v1/forms/:type — all 15 registry types', () => {
   it('rejects missing consent with 422', async () => {
     const res = await app.request('/api/v1/forms/contact', {
       method: 'POST', headers: { 'content-type': 'application/json', ...ip(91) },
-      body: JSON.stringify({ type: 'contact', email: 'x@example.com', payload: {} }),
+      body: JSON.stringify({ formToken: formToken(), type: 'contact', email: 'x@example.com', payload: {} }),
     });
     expect(res.status).toBe(422);
   });
@@ -124,13 +129,13 @@ describe('POST /api/v1/forms/:type — all 15 registry types', () => {
   it('rejects invalid email with 422', async () => {
     const res = await app.request('/api/v1/forms/contact', {
       method: 'POST', headers: { 'content-type': 'application/json', ...ip(92) },
-      body: JSON.stringify({ type: 'contact', email: 'not-an-email', consent: true, payload: {} }),
+      body: JSON.stringify({ formToken: formToken(), type: 'contact', email: 'not-an-email', consent: true, payload: {} }),
     });
     expect(res.status).toBe(422);
   });
 
   it('RMA with a short issue is rejected with detail', async () => {
-    const res = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(93) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'A', product: 'P', issue: 'short' } }) });
+    const res = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(93) }, body: JSON.stringify({ formToken: formToken(), type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'A', product: 'P', issue: 'short' } }) });
     expect(res.status).toBe(422);
     const body = await res.json();
     expect(body.detail).toContain('product and issue details');
@@ -138,29 +143,42 @@ describe('POST /api/v1/forms/:type — all 15 registry types', () => {
 
   it('rate limit: 6th submission from one IP in a minute → 429 + Retry-After', async () => {
     for (let i = 1; i <= 5; i++) {
-      const ok = await app.request('/api/v1/forms/' + 'feedback', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(99) }, body: JSON.stringify({ type: 'feedback', email: 'customer@example.com', consent: true, payload: { message: 'site speed is great' } }) });
+      const ok = await app.request('/api/v1/forms/' + 'feedback', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(99) }, body: JSON.stringify({ formToken: formToken(), type: 'feedback', email: 'customer@example.com', consent: true, payload: { message: 'site speed is great' } }) });
       expect(ok.status).toBe(201);
     }
-    const sixth = await app.request('/api/v1/forms/' + 'feedback', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(99) }, body: JSON.stringify({ type: 'feedback', email: 'customer@example.com', consent: true, payload: { message: 'one too many' } }) });
+    const sixth = await app.request('/api/v1/forms/' + 'feedback', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(99) }, body: JSON.stringify({ formToken: formToken(), type: 'feedback', email: 'customer@example.com', consent: true, payload: { message: 'one too many' } }) });
     expect(sixth.status).toBe(429);
     expect(sixth.headers.get('retry-after')).toBeTruthy();
   });
 
   it('Idempotency-Key replays the same response without a second row', async () => {
     const key = 'idem-' + crypto.randomUUID();
+    // a true retry re-sends the identical request (same body, same form token)
+    const body = JSON.stringify({ type: 'feedback', email: 'a@example.com', consent: true, formToken: formToken(), payload: { message: 'once' } });
     const first = await app.request('/api/v1/forms/feedback', {
-      method: 'POST', headers: { 'content-type': 'application/json', ...ip(80), 'Idempotency-Key': key },
-      body: JSON.stringify({ type: 'feedback', email: 'a@example.com', consent: true, payload: { message: 'once' } }),
+      method: 'POST', headers: { 'content-type': 'application/json', ...ip(80), 'Idempotency-Key': key }, body,
     });
     const second = await app.request('/api/v1/forms/feedback', {
-      method: 'POST', headers: { 'content-type': 'application/json', ...ip(81), 'Idempotency-Key': key },
-      body: JSON.stringify({ type: 'feedback', email: 'a@example.com', consent: true, payload: { message: 'twice' } }),
+      method: 'POST', headers: { 'content-type': 'application/json', ...ip(81), 'Idempotency-Key': key }, body,
     });
     const b1 = await first.json(); const b2 = await second.json();
     expect(second.status).toBe(201);
     expect(b2.reference).toBe(b1.reference);
     const rows = await db.select().from(formSubmission);
     expect(rows.filter((r: any) => r.refCode === b1.reference)).toHaveLength(1);
+  });
+
+  it('Idempotency-Key never returns another submission for a different body (ZT-029)', async () => {
+    const key = 'idem-' + crypto.randomUUID();
+    const a = await app.request('/api/v1/forms/feedback', {
+      method: 'POST', headers: { 'content-type': 'application/json', ...ip(82), 'Idempotency-Key': key },
+      body: JSON.stringify({ type: 'feedback', email: 'first@example.com', consent: true, formToken: formToken(), payload: { message: 'mine' } }),
+    });
+    const b = await app.request('/api/v1/forms/feedback', {
+      method: 'POST', headers: { 'content-type': 'application/json', ...ip(83), 'Idempotency-Key': key },
+      body: JSON.stringify({ type: 'feedback', email: 'other@example.com', consent: true, formToken: formToken(), payload: { message: 'theirs' } }),
+    });
+    expect((await b.json()).reference).not.toBe((await a.json()).reference);
   });
 
   it('IdempotencyStore: entries expire after the TTL (unit, tiny TTL)', async () => {
@@ -180,11 +198,16 @@ describe('POST /api/v1/forms/:type — all 15 registry types', () => {
 });
 
 // ---- RMA: public tracker --------------------------------------------------
-describe('GET /api/v1/rma/:number — public tracker', () => {
+// Ownership proof is number + e-mail in a POST body (ZT-025/026).
+const track = (number: string, email = 'customer@example.com') => app.request('/api/v1/rma/track', {
+  method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ number, email }),
+});
+
+describe('POST /api/v1/rma/track — public tracker', () => {
   it('masks customer info and returns the timeline', async () => {
-    const created = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(70) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'Masked Customer', product: 'CoreX Pro', issue: 'Drive drops after warm boot consistently.' } }) });
+    const created = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(70) }, body: JSON.stringify({ formToken: formToken(), type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'Masked Customer', product: 'CoreX Pro', serial: 'P2-TRACK-1', issue: 'Drive drops after warm boot consistently.' } }) });
     const { rmaNumber } = await created.json();
-    const res = await app.request(`/api/v1/rma/${rmaNumber}`);
+    const res = await track(rmaNumber);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.maskedInfo.name).toBe('Masked C.');
@@ -192,20 +215,22 @@ describe('GET /api/v1/rma/:number — public tracker', () => {
     expect(body.timeline.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('accepts the TM- optional prefix and rejects junk', async () => {
-    const created = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(71) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'X Y', product: 'CoreX', issue: 'Read errors on Gen5 slot after firmware update.' } }) });
+  it('accepts the TM- optional prefix, rejects junk, a wrong e-mail and the old GET', async () => {
+    const created = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(71) }, body: JSON.stringify({ formToken: formToken(), type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'X Y', product: 'CoreX', serial: 'P2-TRACK-2', issue: 'Read errors on Gen5 slot after firmware update.' } }) });
     const { rmaNumber } = await created.json();
     const short = rmaNumber.replace('TM-', '');
-    expect((await app.request(`/api/v1/rma/${short}`)).status).toBe(200);
-    expect((await app.request('/api/v1/rma/BLAH')).status).toBe(400);
-    expect((await app.request('/api/v1/rma/TM-RMA-2026-000001')).status).toBe(404);
+    expect((await track(short)).status).toBe(200);
+    expect((await track('BLAH')).status).toBe(400);
+    expect((await track('TM-RMA-2026-000001')).status).toBe(404);
+    expect((await track(rmaNumber, 'someone-else@example.com')).status).toBe(404); // same answer as unknown
+    expect((await app.request(`/api/v1/rma/${rmaNumber}`)).status).toBe(410); // number-only lookup retired
   });
 });
 
 // ---- admin: RMA board + state machine -------------------------------------
 describe('RMA lifecycle (admin)', () => {
   it('walks the legal path end-to-end, rejects illegal jumps, audits every step', async () => {
-    const created = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(60) }, body: JSON.stringify({ type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'Lifecycle Test', product: 'VOLTX RGB', issue: 'RGB lighting dead on one module pair.' } }) });
+    const created = await app.request('/api/v1/forms/' + 'rma', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(60) }, body: JSON.stringify({ formToken: formToken(), type: 'rma', email: 'customer@example.com', consent: true, payload: { name: 'Lifecycle Test', product: 'VOLTX RGB', serial: 'P2-LIFE-1', issue: 'RGB lighting dead on one module pair.' } }) });
     const { rmaNumber } = await created.json();
     const list = await app.request('/api/v1/admin/rma?q=' + rmaNumber, { headers: { 'content-type': 'application/json', cookie } });
     const { items } = await list.json();
@@ -235,9 +260,9 @@ describe('RMA lifecycle (admin)', () => {
     expect(terminal.status).toBe(422);
 
     // public tracker reflects the full timeline
-    const track = await (await app.request(`/api/v1/rma/${rmaNumber}`)).json();
-    expect(track.status).toBe('closed');
-    expect(track.timeline).toHaveLength(1 + path.length);
+    const tracked = await (await track(rmaNumber)).json();
+    expect(tracked.status).toBe('closed');
+    expect(tracked.timeline).toHaveLength(1 + path.length);
 
     // every transition audited
     const audits = await db.select().from(auditLog);
@@ -271,7 +296,7 @@ describe('admin modules', () => {
   });
 
   it('job applications: listed from the form flow, status writable + audited', async () => {
-    const created = await app.request('/api/v1/forms/' + 'job-application', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(50) }, body: JSON.stringify({ type: 'job-application', email: 'customer@example.com', consent: true, payload: { name: 'Ada Dev', position: 'Firmware Engineer — SSD', coverLetter: 'I build firmware.' } }) });
+    const created = await app.request('/api/v1/forms/' + 'job-application', { method: 'POST', headers: { 'content-type': 'application/json', ...ip(50) }, body: JSON.stringify({ formToken: formToken(), type: 'job-application', email: 'customer@example.com', consent: true, payload: { name: 'Ada Dev', position: 'Firmware Engineer — SSD', coverLetter: 'I build firmware.' } }) });
     const { reference } = await created.json();
     const { items } = await (await app.request('/api/v1/admin' + '/job-applications', { headers: { 'content-type': 'application/json', cookie } })).json();
     const app1 = items.find((a: any) => a.refCode === reference);

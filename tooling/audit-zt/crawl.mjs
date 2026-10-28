@@ -23,6 +23,11 @@ const context = await browser.newContext({
   ignoreHTTPSErrors: true, // lab CA; the edge's real TLS/AOP behaviour is still exercised
   clientCertificates: [{ origin: ORIGIN, certPath: `${CERTS}/client.pem`, keyPath: `${CERTS}/client.key` }],
   viewport: { width: 1440, height: 900 },
+  // The service worker's own fetches do not honour ignoreHTTPSErrors, so under
+  // the lab CA it fails asset loads at random (iter-2: ERR_FAILED on product
+  // pages). Blocked here so the crawl measures the pages and the edge; sw.js is
+  // network-first and adds nothing a page needs.
+  serviceWorkers: 'block',
 });
 
 const pages = new Map(); // url -> record

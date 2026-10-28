@@ -71,8 +71,24 @@ tables.marketplace_listing = [];
 for (const s of tables.setting) {
   if (s.key === 'site.contact') { s.value = { ...s.value, phone: '+886 970-368-077', email: 'sales@twinmos.com' }; note('setting', 'site.contact phone/email', `+886 2 2659 0880 / info@ are not on twinmos.com — ${FACTS}`); }
   if (s.key === 'site.whatsapp') { s.value = { ...s.value, waUrl: 'https://wa.me/886970368077', phoneNumber: '886970368077' }; note('setting', 'site.whatsapp number', 'twinmos.com WhatsApp link uses +886 970 368 077'); }
+  if (s.key === 'site.cookie' && /legal.html#cookies/.test(s.value?.policyUrl ?? '')) { s.value = { ...s.value, policyUrl: '/legal?tab=privacy' }; note('setting', 'site.cookie.policyUrl → /legal?tab=privacy', 'old anchor matched no policy tab'); }
   if (s.key === 'site.figures') { s.value = { ...s.value, productCount: tables.product.filter((p) => p.status === 'published').length }; note('setting', 'site.figures.productCount = published catalogue size', 'was 40 against a 39-SKU catalogue'); }
   if (s.key === 'integrations') { s.value = { ...s.value, turnstileSiteKey: '' }; note('setting', 'integrations.turnstileSiteKey cleared', 'placeholder key 0x4AAAAAAAx disabled the captcha widget; the deploy-time key (PUBLIC_TURNSTILE_SITE_KEY) applies instead'); }
+}
+
+// 7b. Policies: the "legal approval" by "H. Lin, Legal Counsel" comes from the
+//     withdrawn, fabricated claims register — no named counsel exists in the
+//     fact base. Approval is cleared (delivery then withholds the policies) until
+//     a real legal owner approves real texts. Duplicate short-slug copies are archived.
+for (const pd of tables.policy_document) {
+  if (pd.legal_approved || pd.approver || pd.approved_by) {
+    note('policy_document', `${pd.slug}: cleared legal approval (approver "${pd.approver ?? ''}")`, 'sign-off by a person who does not exist in the client records; Terms (105 chars) and Warranty (124 chars) bodies are one-sentence stubs');
+    pd.legal_approved = false; pd.approver = null; pd.approved_by = null;
+  }
+  if ((pd.slug === 'privacy' && tables.policy_document.some((x) => x.slug === 'privacy-policy')) || (pd.slug === 'warranty' && tables.policy_document.some((x) => x.slug === 'warranty-policy'))) {
+    pd.status = 'archived';
+    note('policy_document', `${pd.slug}: archived duplicate`, `duplicate of ${pd.slug}-policy`);
+  }
 }
 
 // 8. Navigation entry point for the warranty registration & lookup feature.

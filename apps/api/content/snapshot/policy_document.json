@@ -30,18 +30,18 @@
   "created_at": "2026-10-26T14:21:24.042Z",
   "updated_at": "2026-10-26T14:21:24.042Z",
   "published_at": "2026-01-01T00:00:00.000Z",
-  "legal_approved": true,
-  "approved_by": "H. Lin, Legal Counsel (Taipei & Dubai)",
+  "legal_approved": false,
+  "approved_by": null,
   "change_summary": "Formal legal counsel sign-off and multi-jurisdiction schedule ratification.",
   "source": "Legal Department",
-  "approver": "H. Lin, Legal Counsel"
+  "approver": null
  },
  {
   "id": 68,
   "slug": "privacy",
   "title": "TwinMOS Global Privacy Policy",
   "version": "1.0",
-  "status": "published",
+  "status": "archived",
   "effective_date": "2026-01-01T00:00:00.000Z",
   "summary": "Formal counsel sign-off for GDPR Art. 13, Taiwan PDPA, UAE PDPL, and India DPDP statutory compliance (MS6.1 PRIV-01).",
   "body": "# TwinMOS Global Privacy Policy\n\n## 1. Scope & Commitment\nTwinMOS Technologies Inc. and its global affiliates (\"TwinMOS\", \"we\", \"us\", or \"our\") commit to protecting individual privacy rights and safeguarding personal data processed across our corporate website, e-commerce storefronts, RMA support systems, and partner portals.\n\n## 2. GDPR Compliance Schedule (Regulation (EU) 2016/679, Article 13)\n- **Data Controller**: TwinMOS Technologies Inc., 5F.-5, No. 29, Sec. 1, Minsheng E. Rd., Zhongshan Dist., Taipei City 104619, Taiwan.\n- **Data Protection Officer Contact**: privacy@twinmos.com.\n- **Lawful Bases for Processing**: Processing of personal data for warranty fulfillment, RMA processing, and customer support relies upon Contractual Necessity (Art. 6(1)(b)). Marketing communications rely upon affirmative consent (Art. 6(1)(a)).\n- **Data Subject Rights**: Right of access (Art. 15), rectification (Art. 16), erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20), and right to object (Art. 21).\n\n## 3. Taiwan Personal Data Protection Act (PDPA)\nIn compliance with the Taiwan Personal Data Protection Act (PDPA), personal information collected by TwinMOS within Taiwan is processed under strict collection purpose specifications, notification obligations, and statutory security measures.\n\n## 4. UAE Personal Data Protection Law (Federal Decree-Law No. 45 of 2021)\nFor users residing in the United Arab Emirates and the GCC region, TwinMOS Regional Headquarters (Dubai) processes personal information in strict accordance with Federal Decree-Law No. 45 regarding Personal Data Protection.\n\n## 5. India Digital Personal Data Protection Act, 2023\nIn compliance with the India Digital Personal Data Protection Act, personal data of Data Principals is processed solely for lawful purposes for which consent has been explicitly granted or for certain legitimate uses.\n\n## 6. Cookie Governance & Choice Withdrawal\nNon-essential analytics and preference cookies are blocked prior to affirmative consent. Users may modify choices or withdraw consent anytime via the persistent Cookie Preferences trigger in our website footer.",
@@ -51,11 +51,11 @@
   "created_at": "2026-10-26T14:21:24.080Z",
   "updated_at": "2026-10-26T14:21:24.080Z",
   "published_at": "2026-01-01T00:00:00.000Z",
-  "legal_approved": true,
-  "approved_by": "H. Lin, Legal Counsel (Taipei & Dubai)",
+  "legal_approved": false,
+  "approved_by": null,
   "change_summary": "Formal legal counsel sign-off and multi-jurisdiction schedule ratification.",
   "source": "Legal Department",
-  "approver": "H. Lin, Legal Counsel"
+  "approver": null
  },
  {
   "id": 69,
@@ -72,11 +72,11 @@
   "created_at": "2026-10-26T14:21:24.092Z",
   "updated_at": "2026-10-26T14:21:24.092Z",
   "published_at": "2026-01-01T00:00:00.000Z",
-  "legal_approved": true,
-  "approved_by": "H. Lin, Legal Counsel (Taipei & Dubai)",
+  "legal_approved": false,
+  "approved_by": null,
   "change_summary": "Initial publication.",
   "source": "Legal Department",
-  "approver": "H. Lin, Legal Counsel"
+  "approver": null
  },
  {
   "id": 70,
@@ -93,18 +93,18 @@
   "created_at": "2026-10-26T14:21:24.097Z",
   "updated_at": "2026-10-26T14:21:24.097Z",
   "published_at": "2026-01-01T00:00:00.000Z",
-  "legal_approved": true,
-  "approved_by": "H. Lin, Legal Counsel (Taipei & Dubai)",
+  "legal_approved": false,
+  "approved_by": null,
   "change_summary": "Initial publication.",
   "source": "Legal Department",
-  "approver": "H. Lin, Legal Counsel"
+  "approver": null
  },
  {
   "id": 71,
   "slug": "warranty",
   "title": "Hardware Warranty Policy",
   "version": "1.0",
-  "status": "published",
+  "status": "archived",
   "effective_date": "2026-01-01T00:00:00.000Z",
   "summary": "Comprehensive warranty tiers: Lifetime for DRAM modules, 5-Year for NVMe SSDs, and 3-Year for portable flash.",
   "body": "TwinMOS guarantees that all memory and storage products are free from defects in materials and workmanship under normal use.",
@@ -114,10 +114,10 @@
   "created_at": "2026-10-26T14:21:24.101Z",
   "updated_at": "2026-10-26T14:21:24.101Z",
   "published_at": "2026-01-01T00:00:00.000Z",
-  "legal_approved": true,
-  "approved_by": "H. Lin, Legal Counsel (Taipei & Dubai)",
+  "legal_approved": false,
+  "approved_by": null,
   "change_summary": "Initial publication.",
   "source": "Legal Department",
-  "approver": "H. Lin, Legal Counsel"
+  "approver": null
  }
 ]

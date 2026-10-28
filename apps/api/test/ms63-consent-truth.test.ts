@@ -179,27 +179,22 @@ describe('MS6.3 · Consent Manager & Truthful Content (CONSENT-01 / TRUTH-01 / C
   });
 
   describe('T6.3.3 · Claims Register & Business Facts Truthfulness (TRUTH-01 / CONTENT-02)', () => {
-    it('verifies claims_register_signed.md exists with business verification and formal signature', () => {
-      const claimsPath = resolve(REPO_ROOT, 'evidence', 'claims_register_signed.md');
-      expect(existsSync(claimsPath)).toBe(true);
-      const claimsContent = readFileSync(claimsPath, 'utf8');
+    // The former "claims_register_signed.md" carried an invented signatory and
+    // was withdrawn (docs/reports/withdrawn/2026-10-28). Until the real content
+    // owner signs, the honest artefacts are the generated review lists, and the
+    // shipped content must not carry any claim they removed.
+    it('claims review + corrections exist, no fabricated sign-off, removed claims absent from content', () => {
+      const contentDir = resolve(REPO_ROOT, 'apps', 'api', 'content');
+      const review = readFileSync(resolve(contentDir, 'CLAIMS_REVIEW.md'), 'utf8');
+      expect(review).toMatch(/Removed \(no source in the fact base\)/);
+      expect(existsSync(resolve(contentDir, 'CORRECTIONS.md'))).toBe(true);
+      expect(existsSync(resolve(REPO_ROOT, 'evidence', 'claims_register_signed.md'))).toBe(false);
 
-      // Core verified corporate facts
-      expect(claimsContent).toContain('1998');
-      expect(claimsContent).toContain('28+');
-      expect(claimsContent).toContain('93+');
-      expect(claimsContent).toContain('TÜV SÜD ISO 9001');
-      expect(claimsContent).toContain('14,000 MB/s');
-
-      // Verified warranty tiers
-      expect(claimsContent).toContain('Lifetime Limited');
-      expect(claimsContent).toContain('5-Year Limited');
-      expect(claimsContent).toContain('3-Year Limited');
-      expect(claimsContent).toContain('1-Year Limited');
-
-      // Verified sign-off
-      expect(claimsContent).toMatch(/Content Owner Signature/i);
-      expect(claimsContent).toContain('Director of Corporate Communications & Product Governance');
+      const pages = readFileSync(resolve(contentDir, 'snapshot', 'page.json'), 'utf8');
+      // (The 2022 UAE Superbrand news post is a real twinmos.com article and may be listed.)
+      for (const claim of ['Best SSD Manufacturer', '301–500 employees', 'first-pass yield', '4 continents']) {
+        expect(pages, claim).not.toContain(claim);
+      }
     });
 
     it('verifies 123 Technology Drive placeholder is absent from about page (CONTENT-02)', () => {

@@ -230,8 +230,9 @@
         if (data && data.token) {
           window.__TM_FORM_TOKEN__ = data.token;
           Array.prototype.forEach.call(document.querySelectorAll('form'), function (f) {
+            // the fresh token always wins: a cached page may carry an expired SSR one
             var inp = f.querySelector('[name="formToken"]');
-            if (inp && !inp.value) inp.value = data.token;
+            if (inp) inp.value = data.token;
           });
         }
       }).catch(function () {});
@@ -325,13 +326,16 @@
         form.innerHTML = '';
         var chip = document.createElement('span');
         chip.className = 'chip ok';
-        chip.textContent = '✓ Subscribed — welcome aboard';
+        chip.textContent = '✓ Almost done — check your inbox to confirm';
         form.appendChild(chip);
         return;
       }
       showSuccess(form, msg);
     }).catch(function (err) {
       if (btn) { btn.disabled = false; btn.textContent = busy; }
+      // Turnstile tokens are single-use: a failed attempt needs a fresh challenge
+      var ts = form.querySelector('.cf-turnstile');
+      if (ts && window.turnstile) { try { window.turnstile.reset(ts); } catch (_) {} }
       showError(form, 'We could not send your submission (' + (err && err.message ? err.message : 'network error') + '). Please try again in a moment.');
     });
   }, true); // capture: runs before the prototype's bubble-phase handlers
@@ -340,14 +344,16 @@
    * POST /forms/content-feedback (ZT-034). RMA tracking lives in portal.js. */
   Array.prototype.forEach.call(document.querySelectorAll('.btn-helpful[data-slug]'), function (b) {
     b.addEventListener('click', function () {
-      var box = document.getElementById('feedbackActions');
-      var msg = document.getElementById('feedbackMsg');
+      // article and news templates use different ids: resolve within this widget
+      var scope = b.closest('section') || document;
+      var box = scope.querySelector('[id$="eedbackActions"]');
+      var msg = scope.querySelector('[id$="eedbackMsg"]');
       var entity = /^\/news\//.test(location.pathname) ? 'news' : 'article';
       Array.prototype.forEach.call(document.querySelectorAll('.btn-helpful'), function (x) { x.disabled = true; });
       fetch(API + '/forms/content-feedback', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ entity: entity, slug: b.getAttribute('data-slug'), helpful: b.getAttribute('data-vote') === 'yes', locale: document.documentElement.lang || 'en' }),
+        body: JSON.stringify({ entity: entity, slug: b.getAttribute('data-slug'), helpful: b.getAttribute('data-vote') === 'yes', locale: document.documentElement.lang || 'en', formToken: window.__TM_FORM_TOKEN__ || '' }),
       }).then(function (r) {
         if (msg) { msg.style.display = 'block'; msg.style.color = r.ok ? '#16a34a' : '#B3261E'; msg.textContent = r.ok ? 'Thank you for your feedback.' : 'Your feedback could not be recorded — please try again later.'; }
         if (r.ok && box) box.style.display = 'none';

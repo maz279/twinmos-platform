@@ -34,31 +34,37 @@ const isBootstrap =
   process.env.SEED_MODE === 'bootstrap' ||
   (!isDemo && process.env.NODE_ENV === 'production');
 
-const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@twinmos.dev';
+// Better Auth stores e-mails lowercased; match it or a mixed-case value breaks re-runs
+const email = (process.env.SEED_ADMIN_EMAIL ?? 'admin@twinmos.dev').trim().toLowerCase();
 // Credentials come from env (SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD). The
 // default password is ONLY for a local PGlite dev store; seeding a
 // DATABASE_URL-backed (production) store must pass the password explicitly
 // — a known default super-admin credential must never be creatable there.
 const hasExternalDb = !!process.env.DATABASE_URL;
-const targetPassword = process.env.SEED_ADMIN_PASSWORD ?? (hasExternalDb ? undefined : 'DevOnly-ChangeMe-2026!');
-if (!targetPassword) {
+// compose passes "" when the variable is unset: treat empty as absent
+const targetPassword = process.env.SEED_ADMIN_PASSWORD || (hasExternalDb ? undefined : 'DevOnly-ChangeMe-2026!');
+const existing = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
+
+// A password is needed only to CREATE the admin (or for an explicit reset).
+// Requiring it on every re-run kept operators from removing it from the
+// environment after the first deploy: the bootstrap job then failed and the
+// stack never started (ZT-081).
+const needsPassword = existing.length === 0 || process.env.SEED_RESET_ADMIN_PASSWORD === '1';
+if (needsPassword && !targetPassword) {
   console.error(
-    '[seed] SEED_ADMIN_PASSWORD is required when seeding a DATABASE_URL-backed store; ' +
-      'refusing to create a super admin with a default password.',
+    '[seed] SEED_ADMIN_PASSWORD is required to create (or reset) the super admin on a DATABASE_URL-backed store; ' +
+      'refusing to use a default password.',
   );
   process.exit(1);
 }
-
-// 1) first admin user — created through Better Auth so the password hash format is correct
 // SEED-01 / AUTH-BOOT: super_admin created verified so staff sign-in is immediately unblocked
-if (targetPassword.length < 12) {
+if (needsPassword && targetPassword!.length < 12) {
   console.error('[seed] SEED_ADMIN_PASSWORD must be at least 12 characters.');
   process.exit(1);
 }
-const existing = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
 
 if (existing.length === 0) {
-  await auth.api.signUpEmail({ body: { email, password: targetPassword, name: 'Platform Admin' } });
+  await auth.api.signUpEmail({ body: { email, password: targetPassword!, name: 'Platform Admin' } });
   await db.update(user).set({ role: 'super_admin', emailVerified: true }).where(eq(user.email, email));
   console.log('[seed] admin user created: ' + email + ' (super_admin, verified; MFA enrolment is enforced at first console use)');
 } else {
@@ -66,7 +72,7 @@ if (existing.length === 0) {
   // weaken an existing account: the old code reset the password AND switched
   // MFA off on each run (ZT-024). Password reset is an explicit recovery step.
   if (process.env.SEED_RESET_ADMIN_PASSWORD === '1') {
-    const hash = await hashPassword(targetPassword);
+    const hash = await hashPassword(targetPassword!);
     await db.update(account)
       .set({ password: hash, updatedAt: new Date() })
       .where(and(eq(account.userId, existing[0].id), eq(account.providerId, 'credential')));

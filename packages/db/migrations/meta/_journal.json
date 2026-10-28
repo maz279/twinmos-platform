@@ -239,6 +239,20 @@
       "when": 1791543300000,
       "tag": "0033_warranty_registration",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791543400000,
+      "tag": "0034_registration_verification",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1791543500000,
+      "tag": "0035_rma_open_serial",
+      "breakpoints": true
     }
   ]
 }

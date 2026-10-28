@@ -1,4 +1,5 @@
 ---
+import { jsonForScript } from '@twinmos/shared';
 // Breadcrumb.astro — Accessible breadcrumbs with Schema.org JSON-LD generation.
 // Tasks D1b / WCAG 2.2 AA compliant.
 interface BreadcrumbItem {
@@ -51,4 +52,4 @@ const schemaLd = JSON.stringify({
     </ol>
   </nav>
 </div>
-<script type="application/ld+json" set:html={schemaLd} />
+<script type="application/ld+json" set:html={jsonForScript(schemaLd)} />
