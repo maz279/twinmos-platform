@@ -1,0 +1,58 @@
+PASS FORM-01 captcha required
+PASS FORM-02 contact accepted
+PASS FORM-03 customer auto-reply sent
+PASS FORM-04 form token mandatory
+PASS FORM-05 consent mandatory
+PASS FORM-06 idempotency key not replayable across bodies
+PASS SN-01 registry CSV import
+PASS WTY-00 registration answers 202 pending (no oracle)
+PASS WTY-01 owner confirms by e-mail link → active (squatter pending does not block)
+PASS WTY-01b forged/used confirmation token refused
+PASS WTY-02 second claimant: same 202 and same mail; confirm → 409 + dispute alert to support
+PASS WTY-03 future purchase date refused
+PASS WTY-03b impossible calendar date refused (422, not 500)
+PASS WTY-04 serial outside the factory registry refused
+PASS WTY-05 old purchase registers as expired
+PASS WTY-06 owner lookup shows status
+PASS WTY-07 non-owner lookup reveals nothing
+PASS SN-02 registered serial verified genuine
+PASS SN-04 public SN check reveals no registration/warranty data (UR-17.1.5 via owner lookup)
+PASS SN-03 unknown serial not verified
+PASS RMA-02 BR-6.2 unregistered serial refused
+PASS RMA-02b BR-6.2 expired warranty refused
+PASS RMA-01 intake creates case for a registered, in-warranty serial
+PASS RMA-01b only one open RMA per serial
+PASS RMA-03 confirmation mail with number
+PASS RMA-04 case visible to staff
+PASS RMA-05 warranty tier set by the server from the registration
+PASS RMA-06 staff reply sent
+PASS RMA-07 legal transition
+PASS RMA-08 illegal transition refused
+PASS RMA-09 number-only lookup no longer answers
+PASS RMA-09b wrong e-mail gets the not-found answer
+PASS RMA-11 owner can track with number + e-mail
+PASS RMA-10 tracking response carries no PII/staff notes
+PASS RMA-12 lookup paths rate-limited
+PASS COMPAT-01 finder returns rules
+PASS COMPAT-02 LIKE wildcards escaped
+PASS COMPAT-03 brand filter works
+PASS SEARCH-01 oversized query bounded
+PASS SEARCH-02 search finds CoreX
+PASS NL-00 form token required
+PASS NL-01 subscribe pending
+PASS NL-02 separate confirm/unsubscribe tokens; links open the site page
+PASS NL-03 GET on the confirm URL does not confirm (redirects to the page)
+PASS NL-04 landing page offers an explicit confirm button
+PASS NL-02b unsubscribe token cannot confirm
+PASS NL-05 explicit POST confirms
+PASS NL-06 confirmation token is one-time
+PASS NL-07 already-subscribed address gets the same answer (no oracle)
+PASS NL-08 malformed email rejected
+PASS NL-09 one-click unsubscribe never throttled by the forms limiter
+PASS ART-00 vote needs a form token
+PASS ART-01 "Was this helpful?" vote is stored
+PASS ART-02 vote for unknown content refused
+PASS OPS-01 /metrics not public
+PASS OPS-02 /health/deep not public
+PASS PREV-01 author cannot mint preview tokens for pages they do not own
+tools-api: 57 checks, 0 failed

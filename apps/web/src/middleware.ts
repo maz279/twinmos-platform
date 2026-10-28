@@ -159,7 +159,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow');
   } else {
     const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('text/html')) {
+    // A page that declared itself private (newsletter/warranty confirmation,
+    // token-bearing URLs) keeps that: never rewritten to public, never stored in
+    // the route cache — the cache key drops their query, so one visitor's page
+    // (and token) would be served to the next (ZT-086).
+    const pagePrivate = /no-store|private/i.test(response.headers.get('cache-control') || '');
+    if (contentType.includes('text/html') && pagePrivate) {
+      response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    } else if (contentType.includes('text/html')) {
       if (response.status >= 500) {
         // Outage response
         response.headers.set('Cache-Control', 'private, no-store');

@@ -10,7 +10,8 @@ export interface CacheEntry {
   expiresAt: number;
 }
 
-const ALLOWED_QUERY_PARAMS = new Set(['q', 'cat', 'type', 'page', 'groupKey', 'locale']);
+// 'tab' selects the legal policy tab server-side (/legal?tab=privacy)
+const ALLOWED_QUERY_PARAMS = new Set(['q', 'cat', 'type', 'page', 'groupKey', 'locale', 'tab']);
 
 class MemoryRouteCache {
   private cache = new Map<string, CacheEntry>();

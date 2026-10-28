@@ -18,13 +18,16 @@ const force = process.argv.includes('--force');
 const url = process.env.DATABASE_URL;
 if (!url) { console.error('[content] DATABASE_URL is required'); process.exit(1); }
 
-// the node-postgres pool behind the shared Drizzle client (same driver as the API)
 // The snapshot must satisfy the same block contract the admin API enforces.
-{
+// Checked only when the snapshot is about to be written: on an already-loaded
+// database (the --if-empty skip on every redeploy) a stale snapshot must not
+// fail this job and keep `web` from starting (ZT-089).
+function assertSnapshotPagesValid(): void {
   const pages = JSON.parse(readFileSync(join(SNAP, 'page.json'), 'utf8')) as Array<{ path: string; blocks: unknown }>;
   const invalid = pages.filter((p) => !validateBlocks(p.blocks ?? []).success).map((p) => p.path);
   if (invalid.length) { console.error('[content] refusing: invalid page blocks in', invalid.join(', ')); process.exit(1); }
 }
+// the node-postgres pool behind the shared Drizzle client (same driver as the API)
 const pool = (createDb(url) as unknown as { $client: pg.Pool }).$client;
 const client = await pool.connect();
 try {
@@ -32,6 +35,7 @@ try {
   // id), bumping each page's version — the upgrade path for databases loaded
   // before the page content rebuild (ZT-036). Nothing else is touched.
   if (process.argv.includes('--update-pages')) {
+    assertSnapshotPagesValid();
     const pages = JSON.parse(readFileSync(join(SNAP, 'page.json'), 'utf8')) as Array<{ id: number; path: string; locale: string; blocks: unknown }>;
     await client.query('begin');
     let n = 0;
@@ -50,6 +54,7 @@ try {
     console.log(`[content] catalogue already has ${n} products — skipping (use --force to re-apply)`);
     process.exit(0);
   }
+  assertSnapshotPagesValid();
   await client.query('begin');
   for (const t of CONTENT_TABLES) {
     const file = join(SNAP, `${t}.json`);

@@ -216,6 +216,13 @@ if (rmaNumber) {
   let limited = false;
   for (let i = 0; i < 7; i++) { const u = await edge(`/api/v1/forms/newsletter/unsubscribe?token=${'f'.repeat(64)}`, { method: 'POST' }); await u.arrayBuffer(); if (u.status === 429) limited = true; }
   rep.check('NL-09 one-click unsubscribe never throttled by the forms limiter', !limited, {});
+  // ZT-086: token pages are private — never served from a shared cache to the next visitor
+  const tA = 'a'.repeat(64), tB = 'b'.repeat(64);
+  const pA = await edge(`/newsletter?confirm=${tA}`);
+  const hA = await pA.text();
+  const pB = await edge(`/newsletter?unsubscribe=${tB}`);
+  const hB = await pB.text();
+  rep.check('NL-10 token pages are private (no-store) and never show another visitor\'s token', /no-store/.test(pA.headers.get('cache-control') ?? '') && /no-store/.test(pB.headers.get('cache-control') ?? '') && hB.includes(tB) && !hB.includes(tA) && hA.includes(tA), { ccA: pA.headers.get('cache-control'), ccB: pB.headers.get('cache-control'), leak: hB.includes(tA) });
 }
 await pause(61_000);
 

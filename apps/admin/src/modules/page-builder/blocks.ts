@@ -592,11 +592,23 @@ export function inferFields(block: Record<string, unknown>): FieldDef[] {
     }
     const scalar = scalarField(key, val);
     if (scalar) { out.push(scalar); continue; }
-    if (Array.isArray(val) && val.length && val.every((x) => x && typeof x === 'object' && !Array.isArray(x))) {
-      const keys = [...new Set(val.flatMap((x) => Object.keys(x as object)))];
-      const itemFields = keys.map((k) => scalarField(k, (val.find((x) => (x as Record<string, unknown>)[k] != null) as Record<string, unknown>)?.[k] ?? '')).filter(Boolean) as FieldDef[];
-      out.push({ k: 'list', key, label: human(key), itemLabel: human(key).replace(/s$/, ''), defaultItem: Object.fromEntries(itemFields.map((f) => [f.key, f.k === 'lines' ? [] : ''])), itemFields });
-    }
+    if (isObjectList(val)) out.push(objectListField(key, val));
   }
   return out;
+}
+const isObjectList = (v: unknown): v is Record<string, unknown>[] =>
+  Array.isArray(v) && v.length > 0 && v.every((x) => x && typeof x === 'object' && !Array.isArray(x));
+/** A list editor for an array of objects, recursing into nested object lists
+ *  (FAQ groups → questions). Dropping the nested list used to make "+ Add group"
+ *  save groups without items, which crashed the FAQ renderer (ZT-088). */
+function objectListField(key: string, val: Record<string, unknown>[]): FieldDef {
+  const keys = [...new Set(val.flatMap((x) => Object.keys(x)))];
+  const itemFields = keys.map((k) => {
+    const sample = val.find((x) => x[k] != null)?.[k] ?? '';
+    return scalarField(k, sample) ?? (isObjectList(sample) ? objectListField(k, sample) : null);
+  }).filter(Boolean) as FieldDef[];
+  return {
+    k: 'list', key, label: human(key), itemLabel: human(key).replace(/s$/, ''),
+    defaultItem: Object.fromEntries(itemFields.map((f) => [f.key, f.k === 'lines' || f.k === 'list' ? [] : ''])), itemFields,
+  };
 }

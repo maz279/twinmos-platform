@@ -1,0 +1,2 @@
+A cc public, max-age=0, must-revalidate | B cc public, max-age=0, must-revalidate HIT
+B shows its own token false | B shows A token (leak) true

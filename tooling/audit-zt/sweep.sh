@@ -18,7 +18,8 @@ docker restart twinmos-lab-api-1 >> "$E/media-persist.txt" 2>&1
 for i in $(seq 1 30); do [ "$(docker inspect -f '{{.State.Health.Status}}' twinmos-lab-api-1)" = healthy ] && break; sleep 2; done
 node tooling/audit-zt/media-persist.mjs verify "$E/media-persist.state" "$E/media-persist.json" < /dev/null >> "$E/media-persist.txt" 2>&1; echo "media-persist rc=$?"
 # backup + DR drill with the production scripts against the lab stack
+# (MSYS_NO_PATHCONV: Git Bash on the Windows lab host rewrites /app/... arguments)
 LABC="docker compose -p twinmos-lab --env-file tooling/audit-zt/lab/lab.vars -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.prod.yml -f tooling/audit-zt/lab/docker-compose.lab.yml"
-TWINMOS_COMPOSE="$LABC" BACKUP_ROOT="$PWD/$E/backup" bash deploy/backup.sh > "$E/backup.log" 2>&1; echo "backup rc=$?"
-TWINMOS_COMPOSE="$LABC" bash deploy/restore.sh --drill "$(ls -d "$E"/backup/20* | tail -1)" > "$E/restore-drill.log" 2>&1; echo "restore-drill rc=$?"
+MSYS_NO_PATHCONV=1 TWINMOS_COMPOSE="$LABC" BACKUP_ROOT="$PWD/$E/backup" bash deploy/backup.sh > "$E/backup.log" 2>&1; echo "backup rc=$?"
+MSYS_NO_PATHCONV=1 TWINMOS_COMPOSE="$LABC" bash deploy/restore.sh --drill "$(ls -d "$E"/backup/20* | tail -1)" > "$E/restore-drill.log" 2>&1; echo "restore-drill rc=$?"
 ZT_MAX_PAGES=700 bash tooling/audit-zt/run-in-browser.sh tooling/audit-zt/crawl.mjs "$E/crawl" > "$E/crawl.log" 2>&1; echo "crawl rc=$?"

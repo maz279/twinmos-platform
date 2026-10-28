@@ -29,6 +29,7 @@
 ## Drill log
 | Date | Duration | Result | Gaps found → fixes |
 |---|---|---|---|
+| 2026-10-28 (zero-trust lab, PG18 compose stack — not production) | ~15 s | PASS — `deploy/backup.sh` + `deploy/restore.sh --drill`: checksums OK; throwaway DB restored in one transaction; counts user=6, product=39, page=28, media_asset=1 equal to the live lab DB; 7 files (6 media) restored. Evidence: evidence/zt-2026-10-28/iter-4/{backup,restore-drill}.log | No PITR (WAL archiving not configured: RPO 24 h). A production drill is still required after go-live. |
 | ~~2026-10-27~~ | — | **WITHDRAWN 2026-10-28** — produced by the simulator `tooling/ops/dr-restore-drill.mjs` (4-row PGlite, no real dump/restore); see docs/reports/withdrawn/2026-10-28. Original text: (PITR restore verified: schema migrations restored, incremental WAL transactions replayed to T_TARGET, users/products/forms/audit verified, API health 200 with DB connected, RTO < 900s) | Z-23: Deleted fake drill tooling/dr-drill.mjs and implemented production-grade tooling/ops/dr-restore-drill.mjs. Z-41: Safe drill throwaway directory without writing to /var/lib/twinmos; fixed argument order in ROLLBACK.md. |
 | local-dev 2026-09-28 | 11.0s | PASS (Historical baseline run prior to MS7.1 hardening) | none |
 

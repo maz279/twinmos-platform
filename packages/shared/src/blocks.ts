@@ -608,14 +608,18 @@ const sectionBlockSchema = z.object({
 /** URL fields must be relative or http(s)/mailto/tel; no string anywhere may
  *  smuggle a script scheme. Browsers ignore C0 controls and whitespace inside a
  *  scheme ("java\tscript:"), so they are stripped before testing (ZT-049). */
-const URL_KEY = /(^|_)(url|href|link|src|image|targetUrl)$/i;
+// any key ending in url/href/link/src/image (also camelCase: headLink, ctaUrl, imageUrl)
+const URL_KEY = /(url|href|link|src|image)$/i;
 const SAFE_SCHEME = /^(https?:|mailto:|tel:|\/|#|\?|\.)/i;
 function unsafeUrlPaths(v: unknown, path: string[] = []): string[] {
   if (typeof v === 'string') {
     // eslint-disable-next-line no-control-regex
     const squeezed = v.replace(/[\u0000- \u007f]+/g, '');
     const key = path[path.length - 1] ?? '';
-    if (/^(javascript|vbscript|data):/i.test(squeezed)) return [path.join('.') || 'root'];
+    // script schemes are refused in any field; data: only where a URL goes —
+    // prose such as "Data: transfer speeds" is legitimate text (ZT-090)
+    if (/^(javascript|vbscript):/i.test(squeezed)) return [path.join('.') || 'root'];
+    if (URL_KEY.test(key) && /^data:/i.test(squeezed)) return [path.join('.') || 'root'];
     if (URL_KEY.test(key) && squeezed && /^[a-z][a-z0-9+.-]*:/i.test(squeezed) && !SAFE_SCHEME.test(squeezed)) return [path.join('.') || 'root'];
     return [];
   }

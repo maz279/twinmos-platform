@@ -24,7 +24,9 @@ done
 # integrity first
 ( cd "$SRC" && sha256sum -c SHA256SUMS )
 
-pgq() { "${C[@]}" exec -T postgres sh -c "psql -v ON_ERROR_STOP=1 -U \"\$POSTGRES_USER\" -d $1 -tA -c \"$2\""; }
+# SQL travels on stdin: inside sh -c "..." the quotes of "user" were lost and
+# Postgres answered CURRENT_USER's single row instead of the table count
+pgq() { printf '%s\n' "$2" | "${C[@]}" exec -T postgres sh -c "psql -v ON_ERROR_STOP=1 -U \"\$POSTGRES_USER\" -d $1 -tA"; }
 counts() {
   for t in '"user"' product article page audit_log rma_request product_registration media_asset; do
     echo "  $t=$(pgq "$1" "SELECT count(*) FROM $t")"

@@ -529,9 +529,9 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                 {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
                 {raw.title && <h2 class="h2" style="margin-bottom:20px">{raw.title}</h2>}
                 {raw.heading && !raw.title && <h2 class="h2" style="margin-bottom:20px">{raw.heading}</h2>}
-                {Array.isArray(raw.groups) && raw.groups.length > 0 ? (
+                {Array.isArray(raw.groups) && raw.groups.some((g: any) => Array.isArray(g?.items) && g.items.length) ? (
                   <div class="faq-groups" style="display:flex;flex-direction:column;gap:12px">
-                    {raw.groups.map((g: any, gi: number) => (
+                    {raw.groups.filter((g: any) => Array.isArray(g?.items) && g.items.length).map((g: any, gi: number) => (
                       <details class="faq-group card card-pad" open={gi === 0} style="border:1px solid #E6EBF1;border-radius:10px;padding:14px 16px">
                         <summary style="font-weight:800;cursor:pointer;font-size:17px;color:#0A2540">{g.label} <span style="font-weight:600;color:#64748B;font-size:13px">({g.items.length})</span></summary>
                         <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
