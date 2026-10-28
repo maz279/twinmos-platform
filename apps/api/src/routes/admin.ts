@@ -1343,9 +1343,12 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
 
+    // Idempotency cache key is scoped to this RMA row so one client's key can
+    // never be replayed against a different RMA's transition.
     const idemKey = c.req.header('Idempotency-Key');
-    if (idemKey) {
-      const cached = RMA_IDEM.get(idemKey) as { status: number; body: unknown } | undefined;
+    const idemScopedKey = idemKey ? `rma:${id}:${idemKey}` : null;
+    if (idemScopedKey) {
+      const cached = RMA_IDEM.get(idemScopedKey) as { status: number; body: unknown } | undefined;
       if (cached) return c.json(cached.body, cached.status as 200);
     }
 
@@ -1371,7 +1374,7 @@ export function adminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sess
       if (customer.email) await sendRmaStatusMail(String(customer.email), rma.number, rma.status, parsed.data.to, parsed.data.note);
     }
     const body = updated[0];
-    if (idemKey) RMA_IDEM.set(idemKey, { status: 200, body });
+    if (idemScopedKey) RMA_IDEM.set(idemScopedKey, { status: 200, body });
     return c.json(body);
   });
 

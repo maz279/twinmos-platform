@@ -230,6 +230,33 @@ export function buildApp(db: DB) {
     return next();
   });
 
+  // ---- RMA status-check rate limit: 10/min/IP (zero-trust audit finding: GET
+  // /rma/:number is number-only, so an unthrottled client could sweep the
+  // TM-RMA-YYYY-NNNNNN keyspace and read the status/timeline/masked-customer
+  // projection of every live RMA. Same bucket scheme as sn-check.) ----
+  app.use('/api/v1/rma/*', async (c, next) => {
+    const cfIp = c.req.header('cf-connecting-ip');
+    const ip = cfIp || clientIp(c);
+    const now = Date.now();
+    if (now > bucketSweepAt) {
+      bucketSweepAt = now + 60_000;
+      for (const [k, v] of FORM_BUCKETS) {
+        if (v.resetAt < now) FORM_BUCKETS.delete(k);
+      }
+    }
+    const key = 'rma:' + ip;
+    const bucket = FORM_BUCKETS.get(key);
+    if (!bucket || bucket.resetAt < now) {
+      FORM_BUCKETS.set(key, { count: 1, resetAt: now + 60_000 });
+      return next();
+    }
+    bucket.count += 1;
+    if (bucket.count > 10) {
+      c.header('Retry-After', String(Math.ceil((bucket.resetAt - now) / 1000)));
+      return c.json(problem(429, 'Too Many Requests', 'Limit is 10 RMA status checks per minute.'), 429, { 'Content-Type': 'application/problem+json' });
+    }
+    return next();
+  });
 
   // Reject non-JSON content types on /api/v1/auth/* POST routes (415) to eliminate lockout bypass
   app.post('/api/v1/auth/*', async (c, next) => {

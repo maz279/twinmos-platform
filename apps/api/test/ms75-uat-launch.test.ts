@@ -98,7 +98,10 @@ describe('MS7.5: UAT, Launch Readiness & Go/No-Go Certification', () => {
 
   it('EVID-01: verifies report-lint passes with zero errors and zero warnings across all active reports', () => {
     const reportsDir = resolve(CODEBASE_ROOT, 'docs', 'reports');
-    const lintResult = runReportLint(reportsDir, '2026-10-27');
+    // Reference date = today (rollover-safe): reports may carry today's evidence
+    // date, which a stale hardcoded yesterday would wrongly flag as a future date.
+    const today = new Date().toISOString().slice(0, 10);
+    const lintResult = runReportLint(reportsDir, today);
     expect(lintResult.errors).toHaveLength(0);
     expect(lintResult.warnings).toHaveLength(0);
   });

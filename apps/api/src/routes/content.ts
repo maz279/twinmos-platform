@@ -488,11 +488,13 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
     if (entity instanceof Response) return entity;
     const id = Number(c.req.param('id'));
 
+    // Idempotency replay happens AFTER authz (below) so an unauthenticated or
+    // under-privileged caller holding a captured key cannot read the cached
+    // transition result (deny-by-default; mirrors the RMA transition ordering).
+    // The cache key is scoped to this entity row so one client's key can never
+    // be replayed against a different row's transition.
     const idemKey = c.req.header('Idempotency-Key');
-    if (idemKey) {
-      const cached = TRANSITION_IDEM.get(idemKey) as { status: number; body: unknown } | undefined;
-      if (cached) return c.json(cached.body, cached.status as 200);
-    }
+    const idemScopedKey = idemKey ? `${entity}:${id}:${idemKey}` : null;
 
     const parsed = contentTransitionSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
@@ -514,6 +516,11 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
       if (existing.authorId && existing.authorId !== guard.user.id) {
         return c.json(problem(403, 'Forbidden', 'Authors may only transition their own content'), 403, { 'Content-Type': P });
       }
+    }
+
+    if (idemScopedKey) {
+      const cached = TRANSITION_IDEM.get(idemScopedKey) as { status: number; body: unknown } | undefined;
+      if (cached) return c.json(cached.body, cached.status as 200);
     }
 
     const legal = CONTENT_TRANSITIONS[existing.status as keyof typeof CONTENT_TRANSITIONS] ?? [];
@@ -567,7 +574,7 @@ export function contentRoute(db: DB, deps: { requireRole: (r: Role) => Guard; se
     } catch {}
 
     const body = row0(rows);
-    if (idemKey) TRANSITION_IDEM.set(idemKey, { status: 200, body });
+    if (idemScopedKey) TRANSITION_IDEM.set(idemScopedKey, { status: 200, body });
     return c.json(body);
   });
 

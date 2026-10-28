@@ -148,11 +148,28 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; s
   }
 
   // ---------- settings (menus live under the 'menus' key) ----------
+  /** Read-side masking (zero-trust audit): secret-shaped keys are write-only.
+   * GET must never echo stored credentials back to sessions below the writer
+   * role — the value is acknowledged, not returned (same rule the PUT path
+   * applies to audit rows via redactForAudit). */
+  function maskSettingRow(row: { key: string; value: unknown; updatedAt: Date }) {
+    const isSecret = /key|secret|password|token/i.test(row.key);
+    if (isSecret) return { ...row, value: { redacted: true } };
+    if (row.key === 'integrations' && row.value && typeof row.value === 'object' && !Array.isArray(row.value)) {
+      const out: Record<string, unknown> = {};
+      for (const [field, fieldValue] of Object.entries(row.value as Record<string, unknown>)) {
+        out[field] = SECRET_FIELD.test(field) ? '[redacted]' : fieldValue;
+      }
+      return { ...row, value: out };
+    }
+    return row;
+  }
+
   r.get('/settings', async (c) => {
     const a = await authed(c);
     if (a instanceof Response) return a;
     const rows = await db.select().from(setting);
-    return c.json({ items: rows });
+    return c.json({ items: rows.map(maskSettingRow) });
   });
 
   r.get('/settings/:key', async (c) => {
@@ -172,7 +189,7 @@ export function settingsRoute(db: DB, deps: { requireRole: (r: Role) => Guard; s
       }
       return c.json(problem(404, 'Setting not found'), 404, { 'Content-Type': P });
     }
-    return c.json(rows[0]);
+    return c.json(maskSettingRow(rows[0]));
   });
 
   r.put('/settings', async (c) => {
