@@ -75,6 +75,9 @@ const UNSUPPORTED = [
   [/Best SSD|Superbrand/i, 'award claim not on twinmos.com'],
   [/placeholder attributions|signed releases/i, 'refers to testimonials that are not published'],
   [/Amazon|Newegg|noon/i, 'marketplace presence not verified (listings removed)'],
+  [/covered for life;|SSDs and flash for \d+ years|Lifetime on DRAM, \d+ years on NVMe|SSDs? (&|and) Flash carry \d+ years/i, 'blanket warranty terms contradict the per-product terms (X3 Ultra / microSDXC lifetime, NVMe M.2 2280 3 years; live CoreX pages show lifetime): warranty is stated per product'],
+  [/tracked as concrete \d{4} targets/i, 'refers to corporate targets that are not published (removed)'],
+  [/operative product policy|production drafts pending/i, 'describes policy texts that are not published (no legally approved policy yet, ZT-055)'],
   [/Middle East FZE|ME LLC|parent with|privately held/i, 'corporate structure not published (the fact base names no parent or holding company)'],
 ];
 const unsupported = (s) => UNSUPPORTED.find(([re]) => re.test(s));

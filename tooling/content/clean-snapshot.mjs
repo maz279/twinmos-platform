@@ -30,7 +30,7 @@ for (const [t, rows] of Object.entries(tables)) {
 // 2. Offices — exactly the five on twinmos.com/contact. The US address on the
 //    live site ("12345 Silicon Valley Blvd") reads as a placeholder, so that
 //    row is kept as DRAFT for the content owner to confirm, not published.
-const now = new Date().toISOString();
+const now = '2026-10-28T00:00:00.000Z'; // fixed: regenerating the snapshot must not churn it
 const office = (id, sort, role, title, entity, address, flag, status) => ({
   id, role, title, entity, address, flag, note: null, sort, locale: 'en', created_at: now, updated_at: now,
   status, source: 'www.twinmos.com/contact (crawl 2026-09-23)', approver: null,

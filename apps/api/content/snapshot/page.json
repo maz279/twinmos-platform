@@ -223,7 +223,7 @@
      },
      {
       "title": "Vision",
-      "description": "To be the most trusted independent brand in memory and storage — recognized worldwide for innovation, reliability, and partnership. The destination the whole company steers toward — tracked as concrete 2030 targets below."
+      "description": "To be the most trusted independent brand in memory and storage — recognized worldwide for innovation, reliability, and partnership."
      }
     ]
    },
@@ -3186,7 +3186,7 @@
      },
      {
       "title": "DRAM Module Warranty",
-      "description": "Unmatched confidence: Every memory module is backed by our lifetime replacement policy. NVMe SSDs & Flash carry 5 years.",
+      "description": "Unmatched confidence: Every memory module is backed by our lifetime replacement policy.",
       "link": "/legal#warranty",
       "linkLabel": "View warranty policy"
      },
@@ -5373,7 +5373,7 @@
     "heading": "Policies & legal",
     "title": "Policies & legal",
     "eyebrow": "Legal",
-    "lede": "Warranty policy, terms of use and privacy in one place. The warranty text below is the operative product policy; terms and privacy are presented as production drafts pending final legal review."
+    "lede": "Warranty policy, terms of use and privacy in one place."
    },
    {
     "id": "legal-block-2",
@@ -6277,7 +6277,7 @@
     "heading": "RMA center",
     "title": "RMA center",
     "eyebrow": "Warranty service",
-    "lede": "Register a warranty return or track an existing one. Memory modules are covered for life; NVMe SSDs and flash for 5 years; SATA SSDs for 3 years — full policy."
+    "lede": "Register a warranty return or track an existing one."
    },
    {
     "id": "rma-block-2",
@@ -6920,8 +6920,7 @@
        "Since 1998 — a memory specialist, not a diversified conglomerate",
        "Rigorous quality control — TÜV SÜD ISO 9001 certified since 2002; RoHS, CE, FCC and EPEAT compliant",
        "JEDEC-compliant DRAM across DDR3, DDR4 and DDR5",
-       "Taipei HQ & R&D, Dongguan manufacturing, and offices in Dubai, Cologne and San Jose",
-       "Warranty that holds — lifetime on DRAM, 5 years on NVMe & flash, 3 years on SATA SSD"
+       "Taipei HQ & R&D, Dongguan manufacturing, and offices in Dubai, Cologne and San Jose"
       ]
      },
      {
@@ -7015,7 +7014,7 @@
      },
      {
       "title": "Warranty policy",
-      "description": "Lifetime on DRAM, 5 years on NVMe & flash, 3 years on SATA SSD — full terms and exclusions.",
+      "description": "",
       "badge": "Policy",
       "link": "/legal#warranty",
       "linkLabel": "Read the policy"
