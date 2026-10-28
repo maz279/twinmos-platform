@@ -25,6 +25,8 @@ const noindex = Boolean(preview) || Boolean(page?.noindex);
 
 <Layout title={title} desc={desc} noindex={noindex}>
   <main id="main">
+    <div id="faq" class="sr-only" aria-hidden="true"></div>
+    <div id="downloads" class="sr-only" aria-hidden="true"></div>
     <BlockDispatcher blocks={blocks} />
   </main>
 </Layout>

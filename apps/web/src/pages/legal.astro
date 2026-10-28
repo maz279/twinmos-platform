@@ -24,6 +24,10 @@ const breadcrumbs = [
 
 <Layout title={title} desc={desc} breadcrumbs={breadcrumbs} noindex={noindex}>
   <main id="main">
+    <div id="warranty" class="sr-only" aria-hidden="true"></div>
+    <div id="terms" class="sr-only" aria-hidden="true"></div>
+    <div id="privacy" class="sr-only" aria-hidden="true"></div>
+    <div id="eol" class="sr-only" aria-hidden="true"></div>
     <BlockDispatcher blocks={blocks} />
     <section class="wrap legal-cookie-registry-section" style="max-width:960px;margin:30px auto;padding:0 16px">
       <CookieTable />

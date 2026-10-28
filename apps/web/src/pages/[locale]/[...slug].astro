@@ -10,7 +10,10 @@ import { LOCALES } from '@twinmos/shared';
 export const prerender = false;
 
 const { locale, slug } = Astro.params;
-if (!locale || !LOCALES.includes(locale as any) || locale === 'en') {
+if (locale === 'en') {
+  return Astro.redirect(slug ? `/${slug}` : '/', 301);
+}
+if (!locale || !LOCALES.includes(locale as any)) {
   // Not a locale prefix at all — an ordinary unknown page: branded 404 (T5.2.2).
   return Astro.rewrite('/404');
 }

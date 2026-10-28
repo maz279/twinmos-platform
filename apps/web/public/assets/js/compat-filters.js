@@ -13,14 +13,19 @@
   if (!cards.length) return;
 
   function apply() {
-    var type = typeSelect ? typeSelect.value : '';
-    var brand = brandSelect ? brandSelect.value : '';
+    var rawType = (typeSelect ? typeSelect.value : '').toLowerCase().trim();
+    var type = rawType === 'motherboard' ? 'diy' : rawType;
+    var brand = (brandSelect ? brandSelect.value : '').toLowerCase().trim();
     var q = queryInput ? queryInput.value.trim().toLowerCase() : '';
     var shown = 0;
+
     cards.forEach(function (card) {
       var ok = true;
-      if (type && card.getAttribute('data-type') !== type) ok = false;
-      if (ok && brand && card.getAttribute('data-brand') !== brand) ok = false;
+      var cardType = (card.getAttribute('data-type') || '').toLowerCase();
+      var cardBrand = (card.getAttribute('data-brand') || '').toLowerCase();
+
+      if (type && cardType !== type && !(type === 'diy' && cardType === 'motherboard')) ok = false;
+      if (ok && brand && cardBrand !== brand) ok = false;
       if (ok && q) {
         var hay = (card.getAttribute('data-search') || card.textContent || '').toLowerCase();
         if (hay.indexOf(q) === -1) ok = false;
@@ -28,7 +33,10 @@
       card.style.display = ok ? '' : 'none';
       if (ok) shown++;
     });
-    if (countDisplay) countDisplay.textContent = shown + ' of ' + cards.length + ' systems';
+
+    if (countDisplay) {
+      countDisplay.textContent = 'Showing ' + shown + ' of ' + cards.length + ' Platforms';
+    }
   }
 
   if (typeSelect) typeSelect.addEventListener('change', apply);
@@ -37,9 +45,13 @@
 
   Array.prototype.forEach.call(quickPicks, function (btn) {
     btn.addEventListener('click', function () {
-      if (typeSelect) typeSelect.value = btn.getAttribute('data-type') || '';
-      if (brandSelect) brandSelect.value = btn.getAttribute('data-brand') || '';
-      if (queryInput) queryInput.value = '';
+      var qType = btn.getAttribute('data-type') || '';
+      var qBrand = btn.getAttribute('data-brand') || '';
+      var qQuery = btn.getAttribute('data-q') || '';
+
+      if (typeSelect) typeSelect.value = qType;
+      if (brandSelect) brandSelect.value = qBrand;
+      if (queryInput) queryInput.value = qQuery;
       apply();
     });
   });

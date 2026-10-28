@@ -10,7 +10,10 @@ import { getDeliverySettings, getDeliveryPage } from '../../lib/delivery';
 export const prerender = false;
 
 const { locale } = Astro.params;
-const isKnownLocale = LOCALES.includes(locale as any) && locale !== 'en';
+if (locale === 'en') {
+  return Astro.redirect('/', 301);
+}
+const isKnownLocale = LOCALES.includes(locale as any);
 if (!isKnownLocale) {
   return Astro.rewrite('/404');
 }

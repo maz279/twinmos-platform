@@ -31,7 +31,7 @@ const deviceTypes = [
   { value: '', label: 'All Device Types' },
   { value: 'laptop', label: 'Laptop / Notebook' },
   { value: 'desktop', label: 'Desktop PC' },
-  { value: 'motherboard', label: 'Motherboard / DIY' },
+  { value: 'diy', label: 'Motherboard / DIY' },
   { value: 'minipc', label: 'Mini PC / NUC' },
 ];
 
@@ -39,7 +39,9 @@ const uniqueBrands = Array.from(new Set(allRules.map((r) => r.deviceBrand).filte
 
 // Server-side filtered rules
 const filteredRules = allRules.filter((rule) => {
-  if (selectedType && rule.deviceType?.toLowerCase() !== selectedType) {
+  const normType = selectedType === 'motherboard' ? 'diy' : selectedType;
+  const ruleType = (rule.deviceType || '').toLowerCase();
+  if (normType && ruleType !== normType) {
     return false;
   }
   if (selectedBrand && rule.deviceBrand?.toLowerCase() !== selectedBrand.toLowerCase()) {
@@ -153,7 +155,7 @@ const breadcrumbs = [
             <button type="button" class="btn btn-ghost btn-sm quick-pick-btn" data-type="laptop" data-brand="Lenovo" data-q="ThinkPad T14" style="font-size: 0.82rem; padding: 4px 10px; background: #f1f5f9; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer;">
               ThinkPad T14 Gen 4 →
             </button>
-            <button type="button" class="btn btn-ghost btn-sm quick-pick-btn" data-type="motherboard" data-brand="ASUS" data-q="ROG Strix X670E" style="font-size: 0.82rem; padding: 4px 10px; background: #f1f5f9; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer;">
+            <button type="button" class="btn btn-ghost btn-sm quick-pick-btn" data-type="diy" data-brand="ASUS" data-q="ROG Strix X670E" style="font-size: 0.82rem; padding: 4px 10px; background: #f1f5f9; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer;">
               ROG Strix X670E →
             </button>
             <button type="button" class="btn btn-ghost btn-sm quick-pick-btn" data-type="laptop" data-brand="HP" data-q="OMEN 16" style="font-size: 0.82rem; padding: 4px 10px; background: #f1f5f9; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer;">

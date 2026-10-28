@@ -20,6 +20,11 @@ const CSP_DIRECTIVES = [
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, request } = context;
 
+  // Canonical English root redirect (Task LOC-02 / ADR D-8)
+  if (url.pathname === '/en' || url.pathname === '/en/') {
+    return context.redirect('/', 301);
+  }
+
   // 1. Check CMS Redirects (Task B6 & MS6.4)
   const redirect = await matchRedirect(url.pathname, url.search);
   if (redirect) {

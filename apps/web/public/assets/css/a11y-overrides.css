@@ -241,4 +241,11 @@ body.gaming :focus-visible,
   text-decoration: none !important;
 }
 
+/* RMA Tracking Card container fix: prevent card children from being treated as 4-column timeline cells */
+.card.rma-track {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
 

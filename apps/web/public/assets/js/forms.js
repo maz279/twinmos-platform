@@ -12,7 +12,7 @@
 (function () {
   'use strict';
 
-  var API = window.TWINMOS_API || '/api/v1';
+  var API = window.TWINMOS_API || (typeof window !== 'undefined' && window.location.port === '4321' ? 'http://127.0.0.1:8787/api/v1' : '/api/v1');
   if (API.charAt(API.length - 1) === '/') API = API.slice(0, -1);
 
   // Clean URLs are canonical; .html aliases are 301s. Normalise both.
@@ -79,8 +79,23 @@
       if (key === '_consent') { consentChecked = ctl.checked; return; }
       if (!value) return;
       payload[key] = value.slice(0, 4000);
-      if (key === 'email') email = value;
-      if (key === 'name') name = value;
+      if (key === 'email' || key === 'customerEmail' || key === 'emailAddress' || (!email && ctl.type === 'email')) {
+        email = value;
+        payload.email = value;
+      }
+      if (key === 'name' || key === 'customerName' || key === 'fullName') {
+        name = value;
+        payload.name = value;
+      }
+      if (key === 'productModel' || key === 'model') {
+        payload.product = value;
+      }
+      if (key === 'defectDescription' || key === 'faultDescription') {
+        payload.issue = value;
+      }
+      if (key === 'serialNumber') {
+        payload.serial = value;
+      }
     });
     // footer/newsletter inline form
     var nl = form.querySelector('#nlEmail');

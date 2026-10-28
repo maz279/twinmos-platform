@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-10-26T06:55:30.978Z",
+  "timestamp": "2026-10-28T06:01:46.285Z",
   "baseUrl": "http://127.0.0.1:4321",
   "summary": {
-    "routesScanned": 34,
-    "totalLinksEvaluated": 608,
-    "internalLinksCount": 324,
-    "externalLinksCount": 250,
-    "anchorLinksCount": 34,
-    "uniqueUrlsChecked": 40,
+    "routesScanned": 151,
+    "totalLinksEvaluated": 30673,
+    "internalLinksCount": 28393,
+    "externalLinksCount": 1155,
+    "anchorLinksCount": 177,
+    "uniqueUrlsChecked": 260,
     "brokenLinksCount": 0,
     "policyViolationsCount": 0,
     "status": "PASS"

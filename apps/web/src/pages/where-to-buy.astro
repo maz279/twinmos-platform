@@ -13,6 +13,10 @@ const blocks = page?.blocks ?? [];
 
 <Layout title={title} desc={desc} >
   <main id="main">
+    <div id="marketplaces" class="sr-only" aria-hidden="true"></div>
+    <div id="trust" class="sr-only" aria-hidden="true"></div>
+    <div id="locator" class="sr-only" aria-hidden="true"></div>
+    <div id="offices" class="sr-only" aria-hidden="true"></div>
     <BlockDispatcher blocks={blocks} />
   </main>
 </Layout>

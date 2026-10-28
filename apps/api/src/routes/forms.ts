@@ -302,7 +302,19 @@ export function formsRoute(db: DB) {
     // then store the submission referencing it.
     let rmaNumber: string | null = null;
     if (type === 'rma') {
-      const intake = rmaIntakeSchema.safeParse({ ...fullPayload, email });
+      const normalizedRma = {
+        ...fullPayload,
+        name: (fullPayload as any).name || (fullPayload as any).customerName || (fullPayload as any).fullName || name,
+        email: email || (fullPayload as any).email || (fullPayload as any).customerEmail,
+        product: (fullPayload as any).product || (fullPayload as any).productModel || (fullPayload as any).model,
+        serial: (fullPayload as any).serial || (fullPayload as any).serialNumber,
+        issue: (fullPayload as any).issue || (fullPayload as any).defectDescription || (fullPayload as any).faultDescription || (fullPayload as any).message,
+        phone: (fullPayload as any).phone || (fullPayload as any).phoneNumber,
+        country: (fullPayload as any).country || (fullPayload as any).countryRegion,
+        purchaseDate: (fullPayload as any).purchaseDate,
+        warrantyTier: (fullPayload as any).warrantyTier,
+      };
+      const intake = rmaIntakeSchema.safeParse(normalizedRma);
       if (!intake.success) {
         return c.json(problem(422, 'Validation Failed', 'RMA requests need product and issue details (10+ chars).', intake.error.issues), 422, { 'Content-Type': 'application/problem+json' });
       }
