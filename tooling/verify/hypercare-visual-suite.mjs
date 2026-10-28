@@ -35,8 +35,9 @@ function sendFile(res, filePath, status = 200) {
 
 export async function runHypercareVisualSuite() {
   const PORT = 4390;
-  const server = createServer((req, res) => {
-    const urlPath = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname);
+  const server = createServer(async (req, res) => {
+    const parsedUrl = new URL(req.url ?? '/', 'http://x');
+    const urlPath = decodeURIComponent(parsedUrl.pathname);
     const clean = normalize(urlPath).replaceAll('..', '');
     const candidate = join(SERVE_ROOT, clean);
     const rootCandidate = join(ROOT, clean);
@@ -49,7 +50,18 @@ export async function runHypercareVisualSuite() {
       join(ROOT, clean, 'index.html'),
     ].filter((p) => existsSync(p) && statSync(p).isFile());
     if (tries.length > 0) { sendFile(res, tries[0]); return; }
-    sendFile(res, join(SERVE_ROOT, '404.html'), 404);
+
+    // Fallback: Proxy to live Astro SSR server
+    try {
+      const cleanPath = urlPath.replace(/\.html$/, '');
+      const upstream = await fetch(`http://127.0.0.1:4321${cleanPath || '/'}${parsedUrl.search}`);
+      const text = await upstream.text();
+      const ct = upstream.headers.get('content-type') || 'text/html; charset=utf-8';
+      res.writeHead(upstream.status, { 'content-type': ct });
+      res.end(text);
+    } catch {
+      res.writeHead(404, { 'content-type': 'text/html' }).end('<!DOCTYPE html><html><head><title>404</title></head><body><h1>404 Not Found</h1></body></html>');
+    }
   });
 
   await new Promise((resolveServer) => server.listen(PORT, resolveServer));

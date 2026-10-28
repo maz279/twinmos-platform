@@ -180,7 +180,7 @@ export async function runMS75Audit() {
 
   // Gate 8: Quality Gate EVID-01 Report Linter
   await check('MS75-G8-EVID01-REPORT-LINT', 'EVID-01 automated report linter (0 errors, 0 warnings across all active reports)', async () => {
-    const lintResult = runReportLint(resolve(repoRoot, 'docs', 'reports'), '2026-10-27');
+    const lintResult = runReportLint(resolve(repoRoot, 'docs', 'reports'), process.env.AUDIT_DATE || '2026-10-28');
     if (lintResult.errors.length > 0) {
       throw new Error(`report-lint found ${lintResult.errors.length} errors: ${JSON.stringify(lintResult.errors)}`);
     }

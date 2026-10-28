@@ -1,0 +1,9 @@
+{
+  "ttfbMs": 2,
+  "domInteractiveMs": 124,
+  "domCompleteMs": 230,
+  "fcpMs": 210,
+  "lcpMs": 420,
+  "inpMs": 38,
+  "cls": 0.015
+}
