@@ -8,7 +8,7 @@
 //   • RMA: unregistered / expired refused; concurrent duplicates → one case (ZT-068)
 //   • public SN check counts the current request's country (ZT-074)
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -19,8 +19,12 @@ process.env.FORMS_TO = 'support@twinmos.dev';
 process.env.API_ALLOW_NO_TURNSTILE = '1';
 process.env.NODE_ENV = 'test';
 process.env.TRUST_PROXY = '1'; // per-request x-real-ip keeps the per-IP limiters out of the way
+delete process.env.RESEND_API_KEY;
 
-const MIGRATIONS = join(dirname(dirname(process.cwd())), 'packages', 'db', 'migrations');
+const rootDir = existsSync(join(process.cwd(), 'packages', 'db', 'migrations'))
+  ? process.cwd()
+  : dirname(dirname(process.cwd()));
+const MIGRATIONS = join(rootDir, 'packages', 'db', 'migrations');
 
 const schema: any = await import('@twinmos/db');
 const { createDb, productRegistration, rmaRequest, serialRegistry, snCheck } = schema;
@@ -35,17 +39,8 @@ await migrate(db, { migrationsFolder: MIGRATIONS });
 const app = buildApp(db);
 mkdirSync(process.env.MAIL_OUTBOX_DIR!, { recursive: true });
 
-const { betterAuth } = await import('better-auth');
-const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
-const auth = betterAuth({
-  database: drizzleAdapter(db, { provider: 'pg', schema }),
-  emailAndPassword: { enabled: true, minPasswordLength: 10 },
-  advanced: { database: { generateId: () => crypto.randomUUID() } },
-  user: { additionalFields: { role: { type: 'string', defaultValue: 'viewer', input: false } } },
-});
+process.env.ENFORCE_MFA = '0';
 const ADMIN_PW = 'Wty-Admin-' + new Date().getFullYear() + '!';
-await auth.api.signUpEmail({ body: { email: 'wty-admin@twinmos.dev', password: ADMIN_PW, name: 'Wty Admin' } });
-await db.update(schema.user).set({ role: 'super_admin' }).where(eq(schema.user.email, 'wty-admin@twinmos.dev'));
 
 let cookie = '';
 let n = 0;
@@ -61,11 +56,18 @@ const register = (serial: string, email: string, purchaseDate = '2026-01-15') =>
   post('/api/v1/warranty/register', { serial, email, name: 'Wendy Owner', purchaseDate, consent: true, formToken: formToken() });
 
 beforeAll(async () => {
+  await app.request('/api/v1/auth/sign-up/email', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'wty-admin@twinmos.dev', password: ADMIN_PW, name: 'Wty Admin' }),
+  });
+  await db.update(schema.user).set({ role: 'super_admin', emailVerified: true }).where(eq(schema.user.email, 'wty-admin@twinmos.dev'));
+
   const res = await app.request('/api/v1/auth/sign-in/email', {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email: 'wty-admin@twinmos.dev', password: ADMIN_PW }),
   });
-  cookie = res.headers.get('set-cookie')?.split(';')[0] ?? '';
+  cookie = res.headers.getSetCookie().map((c: string) => c.split(';')[0]).join('; ');
   expect(cookie).toBeTruthy();
   await db.insert(serialRegistry).values([
     { serial: 'WTY-0001', manufacturedAt: new Date('2025-06-01T00:00:00Z') },

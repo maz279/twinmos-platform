@@ -69,8 +69,8 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install Dependencies for SBOM
-        run: npm ci --omit=dev
+      - name: Install Monorepo Dependencies
+        run: npm ci
 
       - name: Generate CycloneDX SBOM (SBOM-01)
         run: |

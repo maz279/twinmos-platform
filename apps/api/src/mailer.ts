@@ -15,7 +15,9 @@ export type MailInput = {
   meta?: Record<string, unknown>;
 };
 
-const OUTBOX = process.env.MAIL_OUTBOX_DIR ?? './data/outbox';
+function getOutbox(): string {
+  return process.env.MAIL_OUTBOX_DIR ?? './data/outbox';
+}
 
 /** Per-type routing: recipient comes from env (FORMS_TO or <TYPE>_TO); falls back to FORMS_TO. */
 export const FORM_MAIL_ROUTES: Record<string, { subject: string; body: string }> = {
@@ -73,18 +75,19 @@ async function sendViaResend(mail: MailInput): Promise<boolean> {
 let outboxSeq = 0;
 
 function sendViaOutbox(mail: MailInput): void {
-  mkdirSync(OUTBOX, { recursive: true });
+  const outbox = getOutbox();
+  mkdirSync(outbox, { recursive: true });
   const name = `${Date.now()}-${String(outboxSeq++).padStart(6, '0')}.json`;
-  writeFileSync(join(OUTBOX, name), JSON.stringify({ ...mail, at: new Date().toISOString() }, null, 2));
+  writeFileSync(join(outbox, name), JSON.stringify({ ...mail, at: new Date().toISOString() }, null, 2));
 }
 
 /** Fire-and-forget semantics at call sites: never throws (delivery failure must not fail a submission). */
 export async function sendMail(mail: MailInput): Promise<boolean> {
   try {
-    if (process.env.RESEND_API_KEY) {
+    if (process.env.RESEND_API_KEY && process.env.NODE_ENV !== 'test' && !process.env.MAIL_OUTBOX_DIR) {
       return await sendViaResend(mail);
     }
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && !process.env.RESEND_API_KEY) {
       console.error('[mailer] RESEND_API_KEY is not set in production — refusing silent outbox write');
       return false;
     }
