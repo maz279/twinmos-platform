@@ -41,6 +41,11 @@ jobs:
       - name: Build Web Application Bundle
         run: npm run build --workspace @twinmos/web
 
+      - name: Start Web SSR Server
+        run: |
+          PORT=4321 HOST=0.0.0.0 node apps/web/dist/server/entry.mjs &
+          sleep 3
+
       - name: WCAG 2.2 AA Axe-Core Audit (Every Route Reduced & Settled Motion)
         run: node tooling/verify/visual-a11y-audit.mjs
 
@@ -63,6 +68,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+
+      - name: Install Dependencies for SBOM
+        run: npm ci --omit=dev
 
       - name: Generate CycloneDX SBOM (SBOM-01)
         run: |
