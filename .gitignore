@@ -31,3 +31,5 @@ evidence/zt-2026-10-28/**/crawl*/shots/
 # zero-trust audit: DR drill backups hold lab DB dumps
 evidence/zt-2026-10-28/*/backup/
 evidence/zt-2026-10-28/*/media-persist.state
+_audit_evidence/*.png
+

@@ -79,11 +79,11 @@ async function main() {
       processedSlugs.add(slug);
       const pr = protoProdMap.get(slug) || {};
       const validFirstGallery = (Array.isArray(dbP.gallery) && typeof dbP.gallery[0] === 'string' && (dbP.gallery[0].startsWith('assets/') || dbP.gallery[0].startsWith('/') || dbP.gallery[0].startsWith('http'))) ? dbP.gallery[0] : null;
-      const defaultImg = (slug.includes('ddr5') || slug.includes('ram') || slug.includes('dimm')) ? 'assets/img/voltx-rgb-elem.webp' : 'assets/img/prodrive-1.webp';
+      const defaultImg = (slug.includes('ddr5') || slug.includes('ram') || slug.includes('dimm')) ? '/assets/img/voltx-rgb-elem.webp' : '/assets/img/prodrive-1.webp';
       const img = heroMap[slug] || validFirstGallery || pr.img || defaultImg;
       const validGallery = Array.isArray(dbP.gallery) ? dbP.gallery.filter((g: any) => typeof g === 'string' && (g.startsWith('assets/') || g.startsWith('/') || g.startsWith('http'))) : [];
       const gallery = (validGallery.length > 0) ? validGallery : (pr.gallery || [img]);
-      const imgC = pr.imgC || (img.startsWith('assets/img/') && !img.includes('/card/') ? img.replace('assets/img/', 'assets/img/card/') : img);
+      const imgNorm = img.startsWith('/') ? img : '/' + img; const imgC = pr.imgC ? (pr.imgC.startsWith('/') ? pr.imgC : '/' + pr.imgC) : (imgNorm.startsWith('/assets/img/') && !imgNorm.includes('/card/') ? imgNorm.replace('/assets/img/', '/assets/img/card/') : imgNorm);
       const galleryC = pr.galleryC || gallery.map((g: string) => (g.startsWith('assets/img/') && !g.includes('/card/') ? g.replace('assets/img/', 'assets/img/card/') : g));
 
       mergedProducts.push({

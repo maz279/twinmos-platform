@@ -18,7 +18,12 @@ var TM = window.TM || {};
   function $(s, c) { return (c || document).querySelector(s); }
   function $$(s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); }
   // reuse the versioned logo URL the server already rendered (cache-busts with the build)
-  var LOGO = ($('.site-header .logo img') || {}).src || 'assets/img/logo.webp';
+  var LOGO = ($('.site-header .logo img') || {}).src || '/assets/img/logo.webp';
+  function rootImg(u) {
+    if (!u) return '';
+    if (/^(https?:|data:|\/)/.test(u)) return u;
+    return '/' + u.replace(/^\.?\//, '');
+  }
   function icon(name, size) {
     size = size || 17;
     var p = {
@@ -431,7 +436,7 @@ var TM = window.TM || {};
   function productCard(p) {
     var badges = '';
     if (p.badge) badges += '<span class="' + (p.badge === 'Gen5' ? 'b-gen5' : p.badge === 'Gaming' ? 'b-gaming' : 'b-new') + '">' + esc(p.badge) + '</span>';
-    var ic = p.imgC || p.img;  // trimmed card variant: product sizes the box, not the canvas
+    var ic = rootImg(p.imgC || p.img);  // trimmed card variant: product sizes the box, not the canvas
     return '' +
       '<article class="card pcard" data-id="' + esc(p.id) + '">' +
       '  <div class="pcard-img">' + (badges ? '<div class="badge"><span>' + esc(p.badge) + '</span></div>' : '') +
@@ -487,7 +492,7 @@ var TM = window.TM || {};
       '<div class="qv-veil" data-qv-close></div>' +
       '<div class="qv-box">' +
       '  <button class="icon-btn qv-close" data-qv-close aria-label="Close quick view">' + icon('close') + '</button>' +
-      '  <div class="qv-img"><img src="' + esc(p.imgC || p.img) + '" alt="' + esc(p.name) + '"></div>' +
+      '  <div class="qv-img"><img src="' + esc(rootImg(p.imgC || p.img)) + '" alt="' + esc(p.name) + '"></div>' +
       '  <div class="qv-body">' +
       '    <span class="pcard-cat">' + esc(p.catLabel) + (p.brand && p.brand !== 'TwinMOS' ? ' · ' + esc(p.brand) : '') + '</span>' +
       '    <h3>' + esc(p.name) + '</h3>' +
@@ -657,8 +662,8 @@ var TM = window.TM || {};
         { '@type': 'ListItem', position: 3, name: p.name, item: location.href }] });
     document.head.appendChild(bld);
     var bc = $('#bcName'); if (bc) bc.textContent = p.name;
-    var imgs = (p.gallery && p.gallery.length ? p.gallery : [p.img]);
-    var gimgs = (p.galleryC && p.galleryC.length ? p.galleryC : [p.imgC || p.img]);
+    var imgs = (p.gallery && p.gallery.length ? p.gallery : [p.img]).map(rootImg);
+    var gimgs = (p.galleryC && p.galleryC.length ? p.galleryC : [p.imgC || p.img]).map(rootImg);
     var variantHtml = (p.variants && p.variants.length)
       ? '<h3 class="h3" style="margin-top:26px">Available capacities</h3><div class="variant-row">' + p.variants.map(function (v, i) { return '<button class="variant' + (i === 0 ? ' on' : '') + '">' + esc(v) + '</button>'; }).join('') + '</div>'
       : '';
@@ -772,7 +777,7 @@ var TM = window.TM || {};
     mount.innerHTML =
       '<div class="cmp-table-wrap"><table class="cmp"><thead><tr><th>Product</th>' +
       list.map(function (p) {
-        return '<th class="cmp-prod-head"><img src="' + esc(p.imgC || p.img) + '" alt=""><a href="/product?id=' + encodeURIComponent(p.id) + '">' + esc(p.name) + '</a><br><button class="cmp-btn on" data-id="' + esc(p.id) + '" title="Remove">✕</button></th>';
+        return '<th class="cmp-prod-head"><img src="' + esc(rootImg(p.imgC || p.img)) + '" alt=""><a href="/product?id=' + encodeURIComponent(p.id) + '">' + esc(p.name) + '</a><br><button class="cmp-btn on" data-id="' + esc(p.id) + '" title="Remove">✕</button></th>';
       }).join('') +
       '</tr></thead><tbody>' +
       keys.map(function (k) { return row(k, null, false); }).join('') +
@@ -1142,7 +1147,7 @@ var TM = window.TM || {};
       '<span class="eyebrow">' + esc(a.cat) + '</span>' +
       '<h1 class="h1" style="margin-bottom:10px">' + esc(a.title) + '</h1>' +
       '<div class="article-meta">' + metaChips + '</div>' +
-      (a.img ? '<figure class="article-hero"><img src="' + esc(a.img) + '" alt="' + esc(a.title) + '"></figure>' : '') +
+      (a.img ? '<figure class="article-hero"><img src="' + esc(rootImg(a.img)) + '" alt="' + esc(a.title) + '"></figure>' : '') +
       '<p class="lede">' + esc(a.desc) + '</p>' +
       secs +
       pn + relChips +
@@ -1391,7 +1396,7 @@ var TM = window.TM || {};
         var p = (TM.products || []).filter(function (x) { return x.id === activeGoalObj.prodId; })[0];
         if (!p) p = TM.products[0];
 
-        var img = p.imgC || p.img || 'assets/img/card/corex-pro.webp';
+        var img = rootImg(p.imgC || p.img || '/assets/img/card/corex-pro.webp');
         recBox.innerHTML =
           '<div class="ua-rec-img">' +
           '  <img src="' + esc(img) + '" alt="' + esc(p.name) + '">' +

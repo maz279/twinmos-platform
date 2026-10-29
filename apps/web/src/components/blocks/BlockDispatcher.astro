@@ -576,12 +576,12 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                 {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
                 {raw.title && <h2 class="h2" style="margin-bottom:16px">{raw.title}</h2>}
                 {raw.heading && !raw.title && <h3 class="h3" style="margin-bottom:16px">{raw.heading}</h3>}
-                <table style="width:100%;border-collapse:collapse;font-size:14px">
+                <table style="width:100%;border-collapse:collapse;font-size:14px;color:inherit">
                   {Array.isArray(raw.headers) && (
                     <thead>
                       <tr>
                         {raw.headers.map((h: string) => (
-                          <th style="padding:10px 12px;border-bottom:2px solid #E6EBF1;text-align:left;background:#F8FAFC">{h}</th>
+                          <th style="padding:10px 12px;border-bottom:2px solid rgba(125,125,125,0.25);text-align:left;background:rgba(125,125,125,0.08);color:inherit">{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -590,7 +590,7 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                     {Array.isArray(raw.rows) && raw.rows.map((row: string[]) => (
                       <tr>
                         {row.map((cell: string) => (
-                          <td style="padding:10px 12px;border-bottom:1px solid #F0F3F7">{cell}</td>
+                          <td style="padding:10px 12px;border-bottom:1px solid rgba(125,125,125,0.15);color:inherit">{cell}</td>
                         ))}
                       </tr>
                     ))}
@@ -726,18 +726,29 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                 ? [{ quote: raw.quote, author: raw.author, role: raw.role, context: raw.context }]
                 : deliveryTestimonials);
           if (!items.length) return null; // only named, consented quotes are published
+          const testTitle = raw.title || raw.heading;
           return (
             <section class="block-testimonial" data-block-id={blockId} style="padding:48px 0">
-              <div class="wrap" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px">
-                {items.map((t: any) => (
-                  <blockquote class="card card-pad" style="border-left:4px solid #1DBF9F;background:#F8FAFC;padding:24px;border-radius:8px">
-                    <p style="font-size:17px;font-style:italic;color:#0F172A;line-height:1.6">"{t.quote || t.body}"</p>
-                    <footer style="margin-top:14px;font-size:14px;font-weight:700;color:#334155">
-                      — {t.author}{t.role ? `, ${t.role}` : ''}
-                      {t.context && <span style="display:block;font-size:12px;color:#64748B;font-weight:400;margin-top:2px">{t.context}</span>}
-                    </footer>
-                  </blockquote>
-                ))}
+              <div class="wrap">
+                {(raw.eyebrow || testTitle) && (
+                  <div class="section-head" style="margin-bottom:24px">
+                    <div>
+                      {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                      {testTitle && <h2 class="h2">{testTitle}</h2>}
+                    </div>
+                  </div>
+                )}
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px">
+                  {items.map((t: any) => (
+                    <blockquote class="card card-pad" style="border-left:4px solid #1DBF9F;background:#F8FAFC;padding:24px;border-radius:8px">
+                      <p style="font-size:17px;font-style:italic;color:#0F172A;line-height:1.6">"{t.quote || t.body}"</p>
+                      <footer style="margin-top:14px;font-size:14px;font-weight:700;color:#334155">
+                        — {t.author}{t.role ? `, ${t.role}` : ''}
+                        {t.context && <span style="display:block;font-size:12px;color:#64748B;font-weight:400;margin-top:2px">{t.context}</span>}
+                      </footer>
+                    </blockquote>
+                  ))}
+                </div>
               </div>
             </section>
           );
@@ -757,7 +768,7 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
               )}
               <div class="wrap" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
                 {Array.isArray(raw.badges) && raw.badges.map((b: any) => (
-                  <span class="badge" style="background:#EEF2F6;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600">
+                  <span class="badge" style="background:#EEF2F6;color:#0F172A;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600">
                     {typeof b === 'string' ? b : b.label}
                   </span>
                 ))}
@@ -878,20 +889,42 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
         case 'linkChips':
         case 'link-chips':
         case 'link-list':
-        case 'filter-chips':
-          if (!Array.isArray(raw.chips) || raw.chips.length === 0) return null;
+        case 'filter-chips': {
+          const isNewsFilter = Boolean(blockId?.includes('news') || raw.heading?.includes('Latest news'));
+          const defaultNewsChips = ['All', 'Article', 'Benchmark', 'Blog', 'Event', 'Explainer', 'Guide', 'Product News'];
+          const chips = Array.isArray(raw.chips) && raw.chips.length > 0 ? raw.chips : (isNewsFilter ? defaultNewsChips : []);
+          if (chips.length === 0) return null;
+          const chipHead = raw.heading || raw.title;
           return (
             <nav class="block-link-chips" data-block-id={blockId} style="padding:16px 0">
-              <div class="wrap" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-                {raw.title && <span style="font-weight:700;font-size:13px;color:var(--muted);margin-right:4px">{raw.title}:</span>}
-                {Array.isArray(raw.chips) && raw.chips.map((ch: any) => (
-                  ch.url
-                    ? <a href={ch.url} class="chip-link" style="background:#F1F5F9;padding:6px 14px;border-radius:16px;text-decoration:none;font-size:13px;font-weight:600;color:#0A2540">{ch.label}</a>
-                    : <span class="chip">{ch.label}</span>
-                ))}
+              <div class="wrap">
+                {(raw.eyebrow || chipHead) && (
+                  <div class="section-head" style="margin-bottom:16px">
+                    <div>
+                      {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                      {chipHead && <h2 class="h2">{chipHead}</h2>}
+                    </div>
+                    {raw.headLink && <a class="link-arrow" href={raw.headLink.url}>{raw.headLink.label}</a>}
+                  </div>
+                )}
+                <div class={isNewsFilter ? "tabs" : undefined} id={isNewsFilter ? 'newsChips' : undefined} role={isNewsFilter ? "tablist" : undefined} aria-label={isNewsFilter ? "Filter by category" : undefined} style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                  {raw.title && !chipHead && <span style="font-weight:700;font-size:13px;color:var(--muted);margin-right:4px">{raw.title}:</span>}
+                  {chips.map((ch: any, idx: number) => {
+                    const label = typeof ch === 'string' ? ch : ch.label;
+                    const u = typeof ch === 'object' ? ch.url : null;
+                    if (u) {
+                      return <a href={u} class="chip-link" style="background:#F1F5F9;padding:6px 14px;border-radius:16px;text-decoration:none;font-size:13px;font-weight:600;color:#0A2540">{label}</a>;
+                    }
+                    if (isNewsFilter) {
+                      return <button class={`tab ${idx === 0 ? 'on' : ''}`} data-ncat={label === 'All' ? 'all' : label} role="tab">{label}</button>;
+                    }
+                    return <span class="chip">{label}</span>;
+                  })}
+                </div>
               </div>
             </nav>
           );
+        }
 
         case 'categoryTiles':
         case 'category-tiles': {
@@ -1048,7 +1081,7 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                         ? new Date(art.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
                         : null;
                       return (
-                        <article class="card card-pad" style="border:1px solid #E6EBF1;border-radius:12px;background:#FFFFFF;display:flex;flex-direction:column">
+                        <article class="card card-pad" style="border:1px solid #E6EBF1;border-radius:12px;background:#FFFFFF;color:#0F172A;display:flex;flex-direction:column">
                           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
                             {(art.tag || (Array.isArray(art.tags) && art.tags[0]) || art.category) && (
                               <span class="chip" style="font-size:12px;font-weight:700;color:var(--accent-deep);background:#EFF6FF">
@@ -1056,17 +1089,17 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                               </span>
                             )}
                             {raw.showDate !== false && artDate && (
-                              <span style="font-size:12px;color:#64748B">{artDate}</span>
+                              <span style="font-size:12px;color:#475569">{artDate}</span>
                             )}
                           </div>
                           <h3 class="h3" style="font-size:18px;margin:8px 0;line-height:1.4">
-                            <a href={`/learn/${art.slug || art.id}`} style="color:inherit;text-decoration:none">
+                            <a href={`/learn/${art.slug || art.id}`} style="color:#0F172A;text-decoration:none">
                               {art.title}
                             </a>
                           </h3>
-                          {art.excerpt && <p style="color:var(--body);font-size:14px;line-height:1.5;flex:1">{art.excerpt}</p>}
+                          {art.excerpt && <p style="color:#334155;font-size:14px;line-height:1.5;flex:1">{art.excerpt}</p>}
                           {art.readingTime && raw.showReadingTime !== false && (
-                            <div style="margin-top:12px;font-size:12px;color:#94A3B8">
+                            <div style="margin-top:12px;font-size:12px;color:#64748B">
                               ⏱ {art.readingTime} min read
                             </div>
                           )}
@@ -1715,84 +1748,97 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
 
           return (
             <section class="block-form" data-block-id={blockId} data-form-type={formType} style="padding:32px 0">
-              <div class="wrap" style="max-width:920px">
-                <div class="card card-pad" data-form-box>
-                  {formTitle && <h2 class="h2" style="margin-bottom:8px">{formTitle}</h2>}
-                  {formDesc && <p class="lede" style="margin-bottom:24px;color:#64748B">{formDesc}</p>}
-                  <form
-                    data-tm-form
-                    data-form-type={formType}
-                    action={`/api/v1/forms/${formType}`}
-                    method="POST"
-                    novalidate
-                    data-success={successMsg}
-                    data-loaded-at={Date.now()}
-                  >
-                    <input type="text" name="hp" tabindex="-1" style="position:absolute;left:-9999px;opacity:0;pointer-events:none" aria-hidden="true" />
-                    <input type="hidden" name="formToken" value={formToken} />
-                    <div class="form-grid">
-                      {formFields.map((f: any) => {
-                        const isFull = f.type === 'textarea' || f.name === 'message' || f.name === 'specifications';
-                        return (
-                          <div class={`fg ${isFull ? 'full' : ''}`} data-req={f.required ? 'true' : undefined} data-min={f.minLength || (f.type === 'textarea' ? 10 : undefined)}>
-                            <label>
-                              {f.label} {f.required && <span class="req">*</span>}
-                            </label>
-                            {f.type === 'textarea' ? (
-                              <textarea
-                                class="input"
-                                name={f.name}
-                                rows={4}
-                                placeholder={f.placeholder || ''}
-                                required={f.required}
-                              ></textarea>
-                            ) : f.type === 'select' ? (
-                              <select
-                                class="input"
-                                name={f.name}
-                                id={f.name === 'productInterest' ? 'qProduct' : `form-field-${f.name}`}
-                                required={f.required}
-                              >
-                                <option value="">Select an option…</option>
-                                {(f.name === 'productInterest' && quoteProducts.length > 0
-                                  ? quoteProducts.map((p: any) => ({ value: p.name || p.slug, label: p.name || p.slug, slug: p.slug }))
-                                  : (Array.isArray(f.options) ? f.options : [])
-                                ).map((opt: any) => (
-                                  <option value={typeof opt === 'string' ? opt : opt.value} data-slug={typeof opt === 'object' ? opt.slug : undefined}>
-                                    {typeof opt === 'string' ? opt : opt.label}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              <input
-                                class="input"
-                                type={f.type || 'text'}
-                                name={f.name}
-                                placeholder={f.placeholder || ''}
-                                autocomplete={autocompleteFor(f)}
-                                required={f.required}
-                              />
-                            )}
-                            <span class="err">{f.placeholder ? `Please enter ${f.label.toLowerCase()}` : `Please fill out this field`}</span>
-                          </div>
-                        );
-                      })}
+              <div class="wrap" style={formType === 'rma' ? undefined : "max-width:920px"}>
+                <div class={formType === 'rma' ? "wrap rma-cols" : undefined} style={formType === 'rma' ? "display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px" : undefined}>
+                  <div class="card card-pad" data-form-box>
+                    {formTitle && <h2 class="h2" style="margin-bottom:8px">{formTitle}</h2>}
+                    {formDesc && <p class="lede" style="margin-bottom:24px;color:#64748B">{formDesc}</p>}
+                    <form
+                      data-tm-form
+                      data-form-type={formType}
+                      action={`/api/v1/forms/${formType}`}
+                      method="POST"
+                      novalidate
+                      data-success={successMsg}
+                      data-loaded-at={Date.now()}
+                    >
+                      <input type="text" name="hp" tabindex="-1" style="position:absolute;left:-9999px;opacity:0;pointer-events:none" aria-hidden="true" />
+                      <input type="hidden" name="formToken" value={formToken} />
+                      <div class="form-grid">
+                        {formFields.map((f: any) => {
+                          const isFull = f.type === 'textarea' || f.name === 'message' || f.name === 'specifications';
+                          return (
+                            <div class={`fg ${isFull ? 'full' : ''}`} data-req={f.required ? 'true' : undefined} data-min={f.minLength || (f.type === 'textarea' ? 10 : undefined)}>
+                              <label>
+                                {f.label} {f.required && <span class="req">*</span>}
+                              </label>
+                              {f.type === 'textarea' ? (
+                                <textarea
+                                  class="input"
+                                  name={f.name}
+                                  rows={4}
+                                  placeholder={f.placeholder || ''}
+                                  required={f.required}
+                                ></textarea>
+                              ) : f.type === 'select' ? (
+                                <select
+                                  class="input"
+                                  name={f.name}
+                                  id={f.name === 'productInterest' ? 'qProduct' : `form-field-${f.name}`}
+                                  required={f.required}
+                                >
+                                  <option value="">Select an option…</option>
+                                  {(f.name === 'productInterest' && quoteProducts.length > 0
+                                    ? quoteProducts.map((p: any) => ({ value: p.name || p.slug, label: p.name || p.slug, slug: p.slug }))
+                                    : (Array.isArray(f.options) ? f.options : [])
+                                  ).map((opt: any) => (
+                                    <option value={typeof opt === 'string' ? opt : opt.value} data-slug={typeof opt === 'object' ? opt.slug : undefined}>
+                                      {typeof opt === 'string' ? opt : opt.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  class="input"
+                                  type={f.type || 'text'}
+                                  name={f.name}
+                                  placeholder={f.placeholder || ''}
+                                  autocomplete={autocompleteFor(f)}
+                                  required={f.required}
+                                />
+                              )}
+                              <span class="err">{f.placeholder ? `Please enter ${f.label.toLowerCase()}` : `Please fill out this field`}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div class="fg full" style="margin-top:16px">
+                        {formDef?.privacyNotice && (
+                          <p class="form-privacy-notice" style="font-size:12.5px;color:#475569;margin-bottom:10px;line-height:1.45" data-form-privacy-notice>
+                            {formDef.privacyNotice}
+                          </p>
+                        )}
+                        <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#334155;cursor:pointer">
+                          <input type="checkbox" name="consent" required style="margin-top:3px;accent-color:#0066FF" />
+                          <span>I agree to the processing of my contact and inquiry data pursuant to the <a href="/legal?tab=privacy" style="color:#0066FF;text-decoration:underline;font-weight:600">TwinMOS Privacy Policy</a>. We never sell or share personal data.</span>
+                        </label>
+                      </div>
+                      <button class="btn btn-primary btn-lg" type="submit" style="margin-top:18px">
+                        {submitBtn}
+                      </button>
+                    </form>
+                  </div>
+                  {formType === 'rma' && (
+                    <div class="card card-pad">
+                      <h2 class="h3">Track an RMA</h2>
+                      <p class="form-note">Enter the RMA number from your confirmation email. Demo IDs: TM-RMA-2026-0142 · TM-RMA-2026-0388 · TM-RMA-2026-0517</p>
+                      <div style="display:flex;gap:10px;flex-wrap:wrap">
+                        <input class="input" id="rmaId" placeholder="TM-RMA-2026-0142" style="flex:1;min-width:200px" />
+                        <button class="btn btn-accent" id="rmaTrackBtn">Track</button>
+                      </div>
+                      <div id="rmaOut"></div>
                     </div>
-                    <div class="fg full" style="margin-top:16px">
-                      {formDef?.privacyNotice && (
-                        <p class="form-privacy-notice" style="font-size:12.5px;color:#475569;margin-bottom:10px;line-height:1.45" data-form-privacy-notice>
-                          {formDef.privacyNotice}
-                        </p>
-                      )}
-                      <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#334155;cursor:pointer">
-                        <input type="checkbox" name="consent" required style="margin-top:3px;accent-color:#0066FF" />
-                        <span>I agree to the processing of my contact and inquiry data pursuant to the <a href="/legal?tab=privacy" style="color:#0066FF;text-decoration:underline;font-weight:600">TwinMOS Privacy Policy</a>. We never sell or share personal data.</span>
-                      </label>
-                    </div>
-                    <button class="btn btn-primary btn-lg" type="submit" style="margin-top:18px">
-                      {submitBtn}
-                    </button>
-                  </form>
+                  )}
                 </div>
               </div>
             </section>
@@ -1803,26 +1849,28 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
         case 'tabbed-rich-text':
         case 'policyTabs':
         case 'tabs': {
-          // If raw tabs are explicitly provided (e.g. on non-legal tabbed pages), use them
-          if (Array.isArray(raw.tabs) && raw.tabs.length > 0 && !raw.id?.includes('legal')) {
+          if (Array.isArray(raw.tabs) && raw.tabs.length > 0) {
             return (
               <section class="block-tabs block-policy-tabs" data-block-id={blockId} style="padding:48px 0">
                 <div class="wrap">
                   {raw.title && <h2 class="h2">{raw.title}</h2>}
                   {raw.description && <p class="lede">{raw.description}</p>}
-                  {/* Same markup as the policy tabs below, so the site's [data-tab]
-                      handler (app.js) switches them; panels hide by class only (ZT-054). */}
                   <div class="tabs" role="tablist" aria-label={raw.title || 'Tabs'}>
                     {raw.tabs.map((tab: any, tIdx: number) => (
-                      <button class={`tab ${tIdx === 0 ? 'on' : ''}`} data-tab={`tab-${blockId}-${tIdx}`} role="tab" type="button" aria-selected={tIdx === 0 ? 'true' : 'false'}>
+                      <button class={`tab ${tIdx === 0 ? 'on' : ''}`} data-tab={tab.id || `tab-${blockId}-${tIdx}`} role="tab" type="button" aria-selected={tIdx === 0 ? 'true' : 'false'}>
                         {tab.label || tab.title}
                       </button>
                     ))}
                   </div>
                   {raw.tabs.map((tab: any, tIdx: number) => (
-                    <div class={`tabpane ${tIdx === 0 ? 'on' : ''}`} id={`tab-${blockId}-${tIdx}`} role="tabpanel" style="margin-top:20px">
-                      {tab.content && <div set:html={sanitizeRichText(tab.content)} />}
-                      {tab.body && <p style="color:var(--body);line-height:1.6">{tab.body}</p>}
+                    <div class={`tabpane ${tIdx === 0 ? 'on' : ''}`} id={tab.id || `tab-${blockId}-${tIdx}`} role="tabpanel" style="margin-top:20px">
+                      <div class="card card-pad article-body">
+                        {tab.content ? (
+                          <div set:html={sanitizeRichText(tab.content)} />
+                        ) : tab.body ? (
+                          <p style="color:var(--body);line-height:1.6">{tab.body}</p>
+                        ) : null}
+                      </div>
                     </div>
                   ))}
                 </div>
