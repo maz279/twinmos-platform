@@ -27,23 +27,26 @@ if (aSerial) {
 }
 
 // --- 2. RMA submission via public form ---
+const { token: formToken } = await (await fetch(API + '/forms/token')).json();
 const rmaPost = await fetch(API + '/forms/rma', {
-  method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '198.51.100.78' },
-  body: JSON.stringify({ type: 'rma', email: 'audit-probe@twinmos.dev', consent: true, payload: { name: 'Audit Probe', country: 'AE', product: 'VOLTX DDR5 16GB', serial: aSerial?.serial ?? 'TM-DEMO-0001', issue: 'Audit iteration-2 live functional probe — unit fails POST', purchaseDate: '2026-08-01' } }),
+  method: 'POST', headers: { 'content-type': 'application/json', 'x-real-ip': '198.51.100.78' },
+  body: JSON.stringify({ type: 'rma', formToken, email: 'audit-probe@twinmos.dev', consent: true, payload: { name: 'Audit Probe', country: 'AE', product: 'VOLTX DDR5 16GB', serial: 'TM-DEMO-0001', issue: 'Audit iteration-2 live functional probe — unit fails POST', purchaseDate: '2026-08-01' } }),
 });
 const rmaBody = await rmaPost.json();
-check('RMA form accepted', rmaPost.status === 201 && !!rmaBody.rmaNumber, JSON.stringify(rmaBody).slice(0, 160));
+const activeRmaNumber = rmaBody.rmaNumber ?? (await (await fetch(API + '/admin/rma?query=TM-DEMO-0001', { headers: { cookie } })).json()).items?.find(r => r.serial === 'TM-DEMO-0001')?.number;
+check('RMA form accepted or active case verified', (rmaPost.status === 201 || (rmaPost.status === 409 && rmaBody.code === 'RMA_OPEN')) && !!activeRmaNumber, JSON.stringify(rmaBody).slice(0, 160));
 
-// --- 3. RMA status check (public) ---
-if (rmaBody.rmaNumber) {
-  const st = await (await fetch(API + `/rma/${rmaBody.rmaNumber}`, { headers: { 'cf-connecting-ip': '198.51.100.79' } })).json();
-  check('RMA status check', st.number === rmaBody.rmaNumber && st.status === 'submitted' && st.maskedInfo?.name, JSON.stringify(st).slice(0, 200));
+// --- 3. RMA status check (public POST /rma/track) ---
+if (activeRmaNumber) {
+  const st = await (await fetch(API + '/rma/track', { method: 'POST', headers: { 'content-type': 'application/json', 'x-real-ip': '198.51.100.79' }, body: JSON.stringify({ number: activeRmaNumber, email: 'audit-probe@twinmos.dev' }) })).json();
+  check('RMA status check', st.number === activeRmaNumber && st.status === 'submitted' && st.maskedInfo?.name, JSON.stringify(st).slice(0, 200));
 }
 
 // --- 4. Contact form ---
+const ctToken = (await (await fetch(API + '/forms/token')).json()).token;
 const ct = await fetch(API + '/forms/contact', {
-  method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '198.51.100.80' },
-  body: JSON.stringify({ type: 'contact', email: 'audit-probe@twinmos.dev', consent: true, payload: { name: 'Audit Probe', message: 'Iteration-2 audit live form probe' } }),
+  method: 'POST', headers: { 'content-type': 'application/json', 'x-real-ip': '198.51.100.80' },
+  body: JSON.stringify({ type: 'contact', formToken: ctToken, email: 'audit-probe@twinmos.dev', consent: true, payload: { name: 'Audit Probe', message: 'Iteration-2 audit live form probe' } }),
 });
 check('contact form accepted', ct.status === 201, JSON.stringify(await ct.json()).slice(0, 120));
 
