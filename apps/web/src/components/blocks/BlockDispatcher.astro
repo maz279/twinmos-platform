@@ -332,14 +332,23 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                     </div>
                   </div>
                 )}
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;text-align:center">
-                  {stats.map((stat: any) => (
-                    <div class="stat-item b-cell">
-                      <div style="font-size:36px;font-weight:800;color:#08705C">{stat.link ? <a href={stat.link}>{stat.value}</a> : stat.value}</div>
-                      <div style="font-size:14px;color:var(--body);margin-top:4px">{stat.label}</div>
-                      {stat.sub && <small style="display:block;color:var(--muted);margin-top:2px">{stat.sub}</small>}
-                    </div>
-                  ))}
+                <div class="cb-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;text-align:center">
+                  {stats.map((stat: any) => {
+                    const numVal = parseInt(String(stat.value).replace(/[^0-9]/g, ''), 10);
+                    return (
+                      <div class="cb-cell stat-item b-cell">
+                        <div style="font-size:36px;font-weight:800;color:#08705C">
+                          {stat.link ? (
+                            <a href={stat.link} data-counter={numVal || undefined}>{stat.value}</a>
+                          ) : (
+                            <span data-counter={numVal || undefined}>{stat.value}</span>
+                          )}
+                        </div>
+                        <div style="font-size:14px;color:var(--body);margin-top:4px">{stat.label}</div>
+                        {stat.sub && <small style="display:block;color:var(--muted);margin-top:2px">{stat.sub}</small>}
+                      </div>
+                    );
+                  })}
                 </div>
                 {raw.body && <p style="color:var(--body);max-width:72ch;margin:20px auto 0;text-align:center" set:html={sanitizeRichText(replaceLogoToken(raw.body))} />}
                 {Array.isArray(raw.chips) && raw.chips.length > 0 && (
@@ -416,6 +425,19 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
           const ctaTitle = raw.title || raw.heading || '';
           const ctaList = Array.isArray(raw.ctas) ? raw.ctas : [];
           if (!ctaTitle && !raw.subtitle && ctaList.length === 0) return null;
+          if (!ctaTitle && !raw.subtitle && ctaList.length > 0) {
+            return (
+              <section class="block-cta-row" data-block-id={blockId} id={raw.sectionId || undefined} style="padding:16px 0 32px">
+                <div class="wrap" style="text-align:center">
+                  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                    {ctaList.map((cta: any) => (
+                      <a class={`btn ${cta.variant === 'secondary' || cta.variant === 'outline' ? 'btn-ghost' : 'btn-accent'}`} href={cta.url || '/'}>{cta.label}</a>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            );
+          }
           return (
             <section class="block-cta" data-block-id={blockId} id={raw.sectionId || undefined} style="padding:48px 0">
               <div class="wrap">
@@ -605,6 +627,76 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
         case 'product-cards':
         case 'productShowcase':
         case 'product-rail': {
+          const isHomeFlagship =
+            raw.heading?.includes('Featured Flagship') ||
+            raw.title?.includes('Featured Flagship') ||
+            blockId?.includes('flagship') ||
+            raw.component?.includes('homeFlagshipGrid');
+
+          if (isHomeFlagship) {
+            const flagshipAllIds = [
+              'voltx-rgb-ddr5-u-dimm-for-desktop',
+              'corex-pro-m2-pcie-gen-5-0-nvme-ssd',
+              'portable-ssd-elite-drive-pro-usb-type-c',
+              'tornadox7-pro-ddr4-3200mhz-cl16-u-dimm-for-desktop'
+            ];
+            const flagshipItems = flagshipAllIds
+              .map((id) => deliveryProducts.find((p) => p.slug === id || p.id === id))
+              .filter(Boolean);
+            const displayList = flagshipItems.length > 0 ? flagshipItems : deliveryProducts.slice(0, 4);
+
+            return (
+              <section class="block-product-showcase" data-block-id={blockId} style="padding-top:0">
+                <div class="wrap">
+                  <div class="section-head">
+                    <div>
+                      {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                      <h2 class="h2">{raw.title || raw.heading || 'Featured Flagship Hardware'}</h2>
+                      <p class="lede">{raw.subtitle || 'High-performance components tested and verified for stability, low latency, and sustained endurance.'}</p>
+                    </div>
+                    <div class="flagship-tabs" id="flagshipTabs" role="tablist" aria-label="Flagship categories">
+                      <button class="ftab on" data-fseg="all" role="tab" aria-selected="true" type="button">🔥 All Flagships</button>
+                      <button class="ftab" data-fseg="nvme" role="tab" aria-selected="false" type="button">⚡ Gen 5 &amp; NVMe</button>
+                      <button class="ftab" data-fseg="gaming" role="tab" aria-selected="false" type="button">🎮 VOLTX Gaming</button>
+                      <button class="ftab" data-fseg="portable" role="tab" aria-selected="false" type="button">💼 Portable &amp; Flash</button>
+                    </div>
+                  </div>
+                  <div class="grid g4" id="homeFlagshipGrid">
+                    {displayList.map((p: any) => {
+                      const imgUrl = p.imageUrl || p.img || p.images?.[0]?.url || '/assets/img/card/corex-pro.webp';
+                      const badge = p.badge || (p.featured ? 'Featured' : '');
+                      const badgeClass = badge === 'Gen5' ? 'b-gen5' : badge === 'Gaming' ? 'b-gaming' : 'b-new';
+                      return (
+                        <article class="card pcard" data-id={p.slug || p.id}>
+                          <div class="pcard-img">
+                            {badge && <div class="badge"><span class={badgeClass}>{badge}</span></div>}
+                            <a href={`/products/${p.slug || p.id}`} aria-label={p.name}>
+                              <img src={imgUrl} alt={p.name} loading="lazy" />
+                            </a>
+                            <button class="qv-btn" data-qv={p.slug || p.id} aria-label={`Quick view ${p.name}`} type="button">Quick view</button>
+                          </div>
+                          <div class="pcard-body">
+                            <span class="pcard-cat">{p.categoryName || p.catLabel || 'Hardware'}</span>
+                            <h3 class="h3 pcard-title">
+                              <a class="pcard-name" href={`/products/${p.slug || p.id}`}>{p.name}</a>
+                            </h3>
+                            <span class="pcard-meta">{p.shortSpec || p.spec || p.description}</span>
+                            <div class="pcard-foot">
+                              <a class="btn btn-ghost btn-sm" href={`/products/${p.slug || p.id}`}>View details</a>
+                              <div class="pcard-actions">
+                                <button class="cmp-btn" data-id={p.slug || p.id} title="Add to compare" aria-label={`Add ${p.name} to compare`} type="button">⇄</button>
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+              </section>
+            );
+          }
+
           const query = raw.query || {};
           let list: any[] = deliveryProducts;
           if (Array.isArray(query.skus) && query.skus.length > 0) {
