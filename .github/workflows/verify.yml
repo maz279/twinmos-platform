@@ -2,10 +2,10 @@ name: verify-kit
 
 on:
   schedule:
-    - cron: '0 3 * * *' # Nightly at 03:00 UTC
+    - cron: "0 3 * * *" # Nightly at 03:00 UTC
   workflow_dispatch:
   push:
-    branches: [main, 'release/**']
+    branches: [main, "release/**"]
 
 jobs:
   nightly-verification:
@@ -34,8 +34,8 @@ jobs:
       BETTER_AUTH_URL: http://127.0.0.1:8787
       PORT: 8787
       MAIL_TRANSPORT: mock
-      CAPTCHA_BYPASS: '1'
-      API_ALLOW_NO_TURNSTILE: '1'
+      CAPTCHA_BYPASS: "1"
+      API_ALLOW_NO_TURNSTILE: "1"
       SEED_ADMIN_EMAIL: admin@twinmos.dev
       SEED_ADMIN_PASSWORD: Verify-Kit-Only-2026!
       PUBLIC_API_URL: http://127.0.0.1:8787/api/v1
@@ -76,7 +76,6 @@ jobs:
         run: |
           node tooling/verify/edge-ip-proof.mjs
           node tooling/verify/static-sweep.mjs
-          node --experimental-strip-types --no-warnings tooling/verify/check-translations.mjs
           # hard-01-audit.mjs was withdrawn with the ZT-006 fabricated
           # verifiers; its remaining live checks live in static-sweep.mjs.
 
@@ -85,6 +84,12 @@ jobs:
           npm run start --workspace @twinmos/api &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8787/api/v1/health && break; sleep 2; done
           curl -f http://127.0.0.1:8787/api/v1/health
+
+      # DATA-01/DATA-02 are LIVE checks (they fetch /api/v1/i18n/ar from the
+      # daemon) — they previously sat in the static sweeps BEFORE the daemon
+      # started and failed to connect.
+      - name: Live Translation Encoding Check (DATA-01/DATA-02)
+        run: node --experimental-strip-types --no-warnings tooling/verify/check-translations.mjs
 
       - name: Build Web & Admin after API (BUILD-01)
         run: |

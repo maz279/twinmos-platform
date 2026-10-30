@@ -254,10 +254,13 @@ const OG_TYPE = isHomepage ? 'website' : (path.startsWith('/learn/') ? 'article'
       </>
     )}
 
-    <!-- App layer boots post-first-paint via layout-init.js (eliminates unsafe-inline in script-src) -->
-    <script is:inline src="/assets/js/widgets-config.js"></script>
-    <script is:inline src="/assets/js/widgets-init.js"></script>
-    <script is:inline src="/assets/js/layout-init.js"></script>
-    <script is:inline src="/assets/js/analytics-init.js"></script>
+    <!-- App layer boots post-first-paint via layout-init.js (eliminates unsafe-inline in script-src).
+         defer keeps the config->init->layout->analytics order but frees the parser:
+         synchronous body-end scripts were gating first/footer paint behind ~2s of
+         throttled JS execution (Lighthouse LCP 2651ms, footer text was the LCP element). -->
+    <script is:inline defer src="/assets/js/widgets-config.js"></script>
+    <script is:inline defer src="/assets/js/widgets-init.js"></script>
+    <script is:inline defer src="/assets/js/layout-init.js"></script>
+    <script is:inline defer src="/assets/js/analytics-init.js"></script>
   </body>
 </html>

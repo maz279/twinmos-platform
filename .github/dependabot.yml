@@ -15,9 +15,25 @@ updates:
         patterns:
           - "*"
 
-  # 2. Container Images & Dockerfiles
+  # 2. Container Images & Dockerfiles — one entry per Dockerfile (dependabot's
+  # docker ecosystem requires a Dockerfile in the directory; /deploy/compose
+  # holds only compose manifests and failed with dependency_file_not_found).
   - package-ecosystem: "docker"
-    directory: "/deploy/compose"
+    directory: "/apps/api"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:30"
+      timezone: "UTC"
+  - package-ecosystem: "docker"
+    directory: "/apps/web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:30"
+      timezone: "UTC"
+  - package-ecosystem: "docker"
+    directory: "/deploy/edge"
     schedule:
       interval: "weekly"
       day: "monday"

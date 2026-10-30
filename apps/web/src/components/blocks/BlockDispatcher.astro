@@ -263,9 +263,12 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                 <div class="sl-track">
                   {slides.map((s: any, idx: number) => (
                     <article class={`sl-slide ${idx === 0 ? 'on' : ''}`} data-accent={s.accent || 'navy'} role="group" aria-roledescription="slide" aria-label={`Slide ${idx + 1} of ${slides.length}`}>
+                      {s.image && idx === 0 && (
+                        <link rel="preload" as="image" href={s.image} fetchpriority="high" />
+                      )}
                       {s.image && (
                         <div class="sl-bg">
-                          <img src={s.image} alt={s.alt || 'TwinMOS slide image'} loading={idx === 0 ? 'eager' : 'lazy'} />
+                          <img src={s.image} alt={s.alt || 'TwinMOS slide image'} loading={idx === 0 ? 'eager' : 'lazy'} fetchpriority={idx === 0 ? 'high' : undefined} decoding="async" />
                         </div>
                       )}
                       <div class="wrap sl-content">

@@ -25,6 +25,9 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/db/package.json ./packages/db/
 COPY apps/web/package.json ./apps/web/
 RUN npm ci --omit=dev --workspaces --include-workspace-root
+# Guarantee per-workspace node_modules dirs exist (npm keeps non-hoisted
+# packages there) so the runner stage can COPY them unconditionally.
+RUN mkdir -p apps/web/node_modules packages/shared/node_modules packages/db/node_modules
 
 # Stage 3: Runtime image (non-root per SEC-C1)
 FROM mirror.gcr.io/library/node:24-alpine AS runner
@@ -36,6 +39,11 @@ ENV PORT=4321
 RUN chown -R node:node /app
 
 COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules
+# Merge non-hoisted workspace dependencies into the runtime root — the server
+# entry (/app/dist/server/entry.mjs) resolves only against /app/node_modules.
+COPY --from=dependencies --chown=node:node /app/apps/web/node_modules ./node_modules
+COPY --from=dependencies --chown=node:node /app/packages/shared/node_modules ./node_modules
+COPY --from=dependencies --chown=node:node /app/packages/db/node_modules ./node_modules
 COPY --from=builder --chown=node:node /app/apps/web/dist ./dist
 COPY --from=builder --chown=node:node /app/apps/web/package.json ./package.json
 
