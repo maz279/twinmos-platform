@@ -276,7 +276,7 @@ if (isCategoryPage && categoryMatch) {
                       <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid #F1F5F9;align-items:center">
                         <a href={`/products/${p.slug}`} class="btn btn-primary btn-sm" style="flex:1;text-align:center">View details</a>
                         <button class="btn btn-ghost btn-sm qv-btn" data-qv={p.slug} type="button" aria-label={`Quick view ${p.name}`} title="Quick View">👁️</button>
-                        <button class="btn btn-ghost btn-sm cmp-add-btn" data-cmp-slug={p.slug} type="button" aria-label={`Add ${p.name} to compare`} title="Compare">⚖️</button>
+                        <button class="btn btn-ghost btn-sm cmp-btn" data-id={p.slug} type="button" aria-label={`Add ${p.name} to compare`} title="Compare">⚖️</button>
                       </div>
                     </article>
                   );
@@ -428,8 +428,8 @@ if (isCategoryPage && categoryMatch) {
                 </a>
                 <button
                   type="button"
-                  class="btn btn-ghost cmp-add-btn"
-                  data-cmp-slug={product.slug}
+                  class="btn btn-ghost cmp-btn"
+                  data-id={product.slug}
                   aria-label={`Add ${product.name} to compare tray`}
                 >
                   ⚖️ Compare

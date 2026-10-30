@@ -157,10 +157,6 @@
               "value": "1998 · Taipei, Taiwan"
             },
             {
-              "label": "Team",
-              "value": "301–500 employees"
-            },
-            {
               "label": "Reach",
               "value": "93+ countries · 5 continents"
             },
@@ -334,11 +330,6 @@
             "year": "2022",
             "title": "VOLTX DDR5 RGB launches",
             "description": "Addressable RGB, XMP 3.0/EXPO profiles and enthusiast frequencies inaugurate the VOLTX gaming era."
-          },
-          {
-            "year": "2023",
-            "title": "Best SSD Manufacturer",
-            "description": "The TwinMOS SSD line earns a Best SSD Manufacturer award."
           },
           {
             "year": "2024",
@@ -640,7 +631,7 @@
         "heading": "Awards policy",
         "title": "Awards policy",
         "eyebrow": "",
-        "message": "only verified recognition is published — Best SSD Manufacturer 2023 is retained; the UAE Superbrand 2022 listing remains conditional on certificate evidence."
+        "message": "only verified recognition is published — award listings appear only once the certificate evidence is on file; the UAE Superbrand 2022 listing remains conditional on certificate evidence."
       },
       {
         "id": "about-block-18",
@@ -815,7 +806,7 @@
           },
           {
             "value": "5",
-            "label": "offices · 4 continents"
+            "label": "offices · 3 continents"
           },
           {
             "value": "Since 1998",
@@ -3136,8 +3127,7 @@
           "FCC",
           "RoHS",
           "REACH",
-          "EAC",
-          "🏆 Best SSD Manufacturer 2023"
+          "EAC"
         ]
       },
       {

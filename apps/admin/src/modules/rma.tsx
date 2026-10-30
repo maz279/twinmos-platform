@@ -54,7 +54,7 @@ const btnSmGhost: React.CSSProperties = { ...btnGhost, padding: '5px 9px', fontS
 
 export default function RmaBoard({ canWrite, me }: { canWrite: boolean; me?: { user?: { id?: string } } }) {
   const toast = useToast();
-  const [view, setView] = useState<'board' | 'table'>('board');
+  const [view, setView] = useState<'board' | 'table' | 'warranty'>('board');
   const [status, setStatus] = useState('');
   const [q, setQ] = useState('');
   const [assignee, setAssignee] = useState('');
@@ -139,16 +139,18 @@ export default function RmaBoard({ canWrite, me }: { canWrite: boolean; me?: { u
         </select>
         {data?.total != null && <span style={{ fontSize: 12.5, color: MUTED, alignSelf: 'center' }}>{data.total} case{data.total === 1 ? '' : 's'}</span>}
         <div role="group" aria-label="View" style={{ marginLeft: 'auto', display: 'inline-flex', border: `1px solid ${LINE}`, borderRadius: 8, background: '#fff', overflow: 'hidden' }}>
-          {(['board', 'table'] as const).map((v) => (
+          {(['board', 'table', 'warranty'] as const).map((v) => (
             <button key={v} aria-pressed={view === v} onClick={() => setView(v)}
               style={view === v
                 ? { ...btnSm, borderRadius: 0, boxShadow: 'none' }
                 : { ...btnSmGhost, borderRadius: 0, border: 0, color: MUTED }}>
-              {v === 'board' ? 'Board' : 'Table'}
+              {v === 'board' ? 'Board' : v === 'table' ? 'Table' : 'Warranty registrations'}
             </button>
           ))}
         </div>
       </div>
+      {view === 'warranty' ? <WarrantyRegistrations canWrite={canWrite} /> : (
+        <>
       {error ? <Err error={error} /> : null}
       {loading ? <p>Loading…</p> : data ? (
         data.items.length === 0 ? <Empty text="No RMA requests match." /> :
@@ -174,6 +176,88 @@ export default function RmaBoard({ canWrite, me }: { canWrite: boolean; me?: { u
         )
       ) : null}
       {openId != null && <RmaDetailPanel id={openId} canWrite={canWrite} onChanged={reload} />}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---- Warranty registrations (GET /admin/warranty-registrations, POST /:id/void) ----
+
+type WarrantyRow = {
+  id: number; serial: string; sku: string | null; email: string; name: string;
+  country: string | null; purchaseDate: string; retailer: string | null;
+  warrantyTerm: string | null; warrantyExpiresAt: string | null;
+  status: string; warrantyStatus: string; voidReason: string | null;
+  purchaseDateSource: string; createdAt: string; updatedAt: string;
+};
+
+/** Product warranty registrations from the public double-opt-in register
+ *  flow — the registry RMA intake validates serials against. Editor+ write
+ *  (void requires a reason; the action is audited server-side). */
+function WarrantyRegistrations({ canWrite }: { canWrite: boolean }) {
+  const toast = useToast();
+  const [q, setQ] = useState('');
+  const [voiding, setVoiding] = useState<WarrantyRow | null>(null);
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const qs = new URLSearchParams({ limit: '100' });
+  if (q) qs.set('q', q);
+  const { data, error, loading, reload } = useAsync<{ items: WarrantyRow[]; total: number }>(
+    () => apiGet<{ items: WarrantyRow[]; total: number }>(`/admin/warranty-registrations?${qs.toString()}`), [q]);
+
+  async function voidRegistration() {
+    if (!voiding || !reason.trim()) return;
+    setBusy(true);
+    try {
+      await apiSend('POST', `/admin/warranty-registrations/${voiding.id}/void`, { reason: reason.trim() });
+      toast.success(`Registration ${voiding.serial} voided`);
+      setVoiding(null); setReason('');
+      reload();
+    } catch (e) {
+      toast.error(errText(e));
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, margin: '10px 0', alignItems: 'center', flexWrap: 'wrap' }}>
+        <input style={{ ...input, width: 260 }} placeholder="Search serial or email…" aria-label="Search warranty registrations" value={q} onChange={(e) => setQ(e.target.value.trim())} />
+        {data && <span style={{ fontSize: 12.5, color: MUTED }}>{data.total} registration{data.total === 1 ? '' : 's'}</span>}
+      </div>
+      {error ? <Err error={error} /> : null}
+      {loading ? <p>Loading…</p> : data ? (
+        data.items.length === 0 ? <Empty text="No warranty registrations match." /> : (
+          <Table head={['Serial', 'Registered to', 'SKU', 'Purchased', 'Warranty', 'Status', '']}>
+            {data.items.map((r) => (
+              <tr key={r.id}>
+                <td style={td}><b style={{ fontFamily: 'ui-monospace, Menlo, monospace' }}>{r.serial}</b></td>
+                <td style={td}>{r.name} · {r.email}</td>
+                <td style={td}>{r.sku ?? '—'}</td>
+                <td style={td}>{r.purchaseDate}{r.retailer ? ` · ${r.retailer}` : ''}</td>
+                <td style={td}>{r.warrantyTerm ?? '—'}{r.warrantyExpiresAt ? ` (to ${fmtDate(r.warrantyExpiresAt)})` : ''}</td>
+                <td style={td}><Badge value={r.warrantyStatus} />{r.voidReason ? <div style={{ fontSize: 11.5, color: MUTED }}>“{r.voidReason}”</div> : null}</td>
+                <td style={td}>
+                  {canWrite && r.status === 'active' && (
+                    <button style={btnGhost} onClick={() => { setVoiding(r); setReason(''); }}>Void…</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </Table>
+        )
+      ) : null}
+      {voiding && (
+        <div style={{ marginTop: 12, border: `1px solid ${LINE}`, borderRadius: 10, padding: 14, background: '#F8FAFC' }}>
+          <b>Void registration {voiding.serial}</b>
+          <p style={{ fontSize: 12.5, color: MUTED }}>Voiding ends warranty coverage for this registration (audited, reversible only by re-registration).</p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input style={{ ...input, flex: '1 1 280px' }} placeholder="Reason (required, max 500 chars)" value={reason} onChange={(e) => setReason(e.target.value)} />
+            <button style={btn} disabled={busy || !reason.trim()} onClick={voidRegistration}>Void registration</button>
+            <button style={btnGhost} disabled={busy} onClick={() => setVoiding(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

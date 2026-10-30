@@ -20,7 +20,7 @@ const VIEWPORTS = [
 const ROUTES = [
   { name: "home", path: "/" },
   { name: "shop", path: "/shop" },
-  { name: "product", path: "/products/voltx-ddr5-udimm-16gb" },
+  { name: "product", path: "/products/voltx-ddr5-u-dimm-for-desktop" },
   { name: "rma", path: "/rma" },
   { name: "learn", path: "/learn" },
   { name: "arabic", path: "/ar/" },

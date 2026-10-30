@@ -27,6 +27,9 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
   const focusId = ctx?.kind === 'product' && ctx.id ? Number(ctx.id) : null;
   const [editing, setEditing] = useState<number | 'new' | null>(focusId ?? null);
   useEffect(() => { if (focusId != null && Number.isFinite(focusId)) setEditing(focusId); }, [focusId]);
+  // MS4.5 reference data lives beside the catalog it normalizes: the spec
+  // dictionary (canonical spec keys) and per-category spec templates.
+  const [view, setView] = useState<'catalog' | 'specs'>('catalog');
 
   // Third-level sidebar deep link (§6.4): ctx { kind:'category', id } opens the
   // list pre-filtered to that taxonomy category (GET /admin/products?category=).
@@ -46,6 +49,10 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
   const { data, error, loading, reload } = useAsync<{ items: Product[] }>(() => apiGet('/admin/products' + (query ? '?' + query : '')), [query]);
   const tax = useAsync<Taxonomy>(() => apiGet('/admin/taxonomy'), []);
 
+  if (view === 'specs') {
+    return <SpecDictionary canWrite={canWrite} taxonomy={tax.data ?? undefined} onBack={() => setView('catalog')} />;
+  }
+
   if (editing !== null) {
     return <Editor id={editing === 'new' ? null : editing} taxonomy={tax.data} canWrite={canWrite}
       onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />;
@@ -56,6 +63,7 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
     <div>
       <Toolbar style={{ gap: 10 }}>
         <h1 style={{ margin: 0, fontSize: 22 }}>Products</h1>
+        <button style={btnGhost} onClick={() => setView('specs')} title="Canonical spec keys and per-category spec templates">Spec dictionary</button>
         {canWrite && <button style={btn} onClick={() => setEditing('new')}>+ New product</button>}
         <button style={btnGhost} onClick={() => setBulk(true)} title="Bulk CSV import and full-catalog export">Import / Export</button>
         <span style={{ flex: 1 }} />
@@ -749,6 +757,142 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ---- MS4.5 spec dictionary & templates (CRUD /admin/spec-dictionary, /admin/spec-templates) ----
+
+type SpecDictRow = {
+  id: number; key: string; normalizedKey: string; categoryId: number | null;
+  dataType: string; unit: string | null; description: string | null; createdAt: string;
+};
+type SpecTemplateRow = {
+  id: number; categoryId: number; name: string; specKeys: string[]; requiredKeys: string[]; createdAt: string;
+};
+
+/** Canonical spec keys + per-category templates that normalize product specs
+ *  (delivery spec tables, template validation on import). Editor+ write. */
+function SpecDictionary({ canWrite, taxonomy, onBack }: { canWrite: boolean; taxonomy?: Taxonomy; onBack: () => void }) {
+  const [q, setQ] = useState('');
+  const [nk, setNk] = useState('');
+  const [cat, setCat] = useState<number | ''>('');
+  const [dtype, setDtype] = useState('string');
+  const [unit, setUnit] = useState('');
+  const [tplCat, setTplCat] = useState<number | ''>('');
+  const [tplName, setTplName] = useState('');
+  const [tplKeys, setTplKeys] = useState('');
+  const [tplReq, setTplReq] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<unknown>(null);
+  const qs = new URLSearchParams();
+  if (q.trim()) qs.set('q', q.trim());
+  const dict = useAsync<{ data: SpecDictRow[] }>(() => apiGet('/admin/spec-dictionary' + (qs.toString() ? '?' + qs.toString() : '')), [q]);
+  const tpl = useAsync<{ data: SpecTemplateRow[] }>(() => apiGet('/admin/spec-templates' + (tplCat !== '' ? `?categoryId=${tplCat}` : '')), [tplCat]);
+  const catName = (id: number | null) => (id == null ? '—' : taxonomy?.categories.find((c) => c.id === id)?.name ?? `#${id}`);
+
+  async function addKey() {
+    if (!q.trim() || !nk.trim()) return;
+    setBusy(true); setErr(null);
+    try {
+      await apiSend('POST', '/admin/spec-dictionary', {
+        key: q.trim(), normalizedKey: nk.trim(),
+        categoryId: cat === '' ? null : cat,
+        dataType: dtype, unit: unit.trim() || null,
+      });
+      setNk(''); setUnit(''); setErr(null);
+      dict.reload();
+    } catch (e) { setErr(e); } finally { setBusy(false); }
+  }
+  async function delKey(id: number) {
+    setBusy(true); setErr(null);
+    try { await apiSend('DELETE', `/admin/spec-dictionary/${id}`); dict.reload(); }
+    catch (e) { setErr(e); } finally { setBusy(false); }
+  }
+  async function addTemplate() {
+    if (tplCat === '' || !tplName.trim() || !tplKeys.trim()) return;
+    setBusy(true); setErr(null);
+    try {
+      await apiSend('POST', '/admin/spec-templates', {
+        categoryId: tplCat, name: tplName.trim(),
+        specKeys: tplKeys.split(',').map((s) => s.trim()).filter(Boolean),
+        requiredKeys: tplReq.split(',').map((s) => s.trim()).filter(Boolean),
+      });
+      setTplName(''); setTplKeys(''); setTplReq('');
+      tpl.reload();
+    } catch (e) { setErr(e); } finally { setBusy(false); }
+  }
+  async function delTemplate(id: number) {
+    setBusy(true); setErr(null);
+    try { await apiSend('DELETE', `/admin/spec-templates/${id}`); tpl.reload(); }
+    catch (e) { setErr(e); } finally { setBusy(false); }
+  }
+
+  return (
+    <div>
+      <Toolbar style={{ gap: 10 }}>
+        <h1 style={{ margin: 0, fontSize: 22 }}>Spec dictionary</h1>
+        <button style={btnGhost} onClick={onBack}>← Catalog</button>
+      </Toolbar>
+      {err ? <Err error={err} /> : null}
+      <SectionCard title="Canonical spec keys" style={{ marginTop: 12 }}>
+        {canWrite && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 12px', alignItems: 'center' }}>
+            <input style={{ ...input, width: 180 }} placeholder="Display key (e.g. CAS Latency)" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Spec key" />
+            <input style={{ ...input, width: 180 }} placeholder="Normalized key (e.g. cas latency)" value={nk} onChange={(e) => setNk(e.target.value)} aria-label="Normalized key" />
+            <select style={input} value={cat} onChange={(e) => setCat(e.target.value ? Number(e.target.value) : '')} aria-label="Category">
+              <option value="">Any category</option>
+              {(taxonomy?.categories ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <select style={input} value={dtype} onChange={(e) => setDtype(e.target.value)} aria-label="Data type">
+              {['string', 'number', 'boolean', 'array'].map((t) => <option key={t}>{t}</option>)}
+            </select>
+            <input style={{ ...input, width: 90 }} placeholder="Unit" value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Unit" />
+            <button style={btn} disabled={busy || !q.trim() || !nk.trim()} onClick={addKey}>+ Add key</button>
+          </div>
+        )}
+        {dict.error ? <Err error={dict.error} /> : dict.loading ? <p>Loading…</p> : (
+          <Table head={['Key', 'Normalized', 'Category', 'Type', 'Unit', '']}>
+            {(dict.data?.data ?? []).map((r) => (
+              <tr key={r.id}>
+                <td style={td}><b>{r.key}</b></td>
+                <td style={td} title={r.description ?? undefined}>{r.normalizedKey}</td>
+                <td style={td}>{catName(r.categoryId)}</td>
+                <td style={td}>{r.dataType}</td>
+                <td style={td}>{r.unit ?? '—'}</td>
+                <td style={td}>{canWrite && <button style={btnGhost} disabled={busy} onClick={() => delKey(r.id)}>Delete</button>}</td>
+              </tr>
+            ))}
+          </Table>
+        )}
+      </SectionCard>
+      <SectionCard title="Per-category spec templates" style={{ marginTop: 12 }}>
+        {canWrite && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 12px', alignItems: 'center' }}>
+            <select style={input} value={tplCat} onChange={(e) => setTplCat(e.target.value ? Number(e.target.value) : '')} aria-label="Template category">
+              <option value="">Select category…</option>
+              {(taxonomy?.categories ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <input style={{ ...input, width: 200 }} placeholder="Template name" value={tplName} onChange={(e) => setTplName(e.target.value)} aria-label="Template name" />
+            <input style={{ ...input, width: 280 }} placeholder="Spec keys, comma-separated" value={tplKeys} onChange={(e) => setTplKeys(e.target.value)} aria-label="Spec keys" />
+            <input style={{ ...input, width: 200 }} placeholder="Required keys (optional)" value={tplReq} onChange={(e) => setTplReq(e.target.value)} aria-label="Required keys" />
+            <button style={btn} disabled={busy || tplCat === '' || !tplName.trim() || !tplKeys.trim()} onClick={addTemplate}>+ Add template</button>
+          </div>
+        )}
+        {tpl.error ? <Err error={tpl.error} /> : tpl.loading ? <p>Loading…</p> : (
+          <Table head={['Template', 'Category', 'Spec keys', 'Required', '']}>
+            {(tpl.data?.data ?? []).map((r) => (
+              <tr key={r.id}>
+                <td style={td}><b>{r.name}</b></td>
+                <td style={td}>{catName(r.categoryId)}</td>
+                <td style={td}>{(r.specKeys ?? []).join(', ')}</td>
+                <td style={td}>{(r.requiredKeys ?? []).join(', ') || '—'}</td>
+                <td style={td}>{canWrite && <button style={btnGhost} disabled={busy} onClick={() => delTemplate(r.id)}>Delete</button>}</td>
+              </tr>
+            ))}
+          </Table>
+        )}
+      </SectionCard>
     </div>
   );
 }

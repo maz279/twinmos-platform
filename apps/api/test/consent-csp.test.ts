@@ -114,12 +114,14 @@ describe('R0.5 · Service Worker Hardening (apps/web/public/sw.js)', () => {
 });
 
 describe('R0.5 · Catalogue Stop-Gap (catalog-data.js & layout-init.js)', () => {
-  it('layout-init.js loads consent.js and catalog-data.js before app.js', () => {
+  it('layout-init.js loads consent.js and the live catalog endpoint before app.js', () => {
     const layoutInitPath = join(WEB_PUBLIC, 'assets', 'js', 'layout-init.js');
     const content = readFileSync(layoutInitPath, 'utf8');
 
     const consentIdx = content.indexOf('assets/js/consent.js');
-    const catalogIdx = content.indexOf('assets/js/catalog-data.js');
+    // The catalog ships live-first from the SSR endpoint /api/catalog-data.js
+    // (Delivery API canonical, snapshot file only as its outage fallback).
+    const catalogIdx = content.indexOf('api/catalog-data.js');
     const appIdx = content.indexOf('assets/js/app.js');
 
     expect(consentIdx).toBeGreaterThan(-1);

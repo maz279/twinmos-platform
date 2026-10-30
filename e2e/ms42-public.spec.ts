@@ -32,9 +32,11 @@ test.describe('MS4.2 public chrome', () => {
     await expect(page.locator('footer.site-footer a[href*="wa.me"]')).toBeVisible();
     await expect(page.locator('#cookieBar')).toBeVisible();
     await expect(page.locator('#cookieBar')).toContainText('essential cookies');
-    // Turnstile key is supplied by site settings at render time.
+    // Turnstile key is supplied by site settings at render time. The zero-trust
+    // hardening deliberately blanks the demo placeholder (Layout.astro), so with
+    // no real key configured the meta must render EMPTY — never a fake key.
     const key = await page.locator('meta[name="turnstile-site-key"]').getAttribute('content');
-    expect(key).toBe('0x4AAAAAAAx');
+    expect(key ?? '').toBe('');
     // Analytics is disabled by default, so no measurement ID is emitted.
     expect(await page.locator('meta[name="twinmos-analytics"]').getAttribute('content')).toBe('');
   });

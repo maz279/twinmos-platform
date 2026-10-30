@@ -18,6 +18,7 @@ import {
   getDeliveryCompatibility,
   getDeliverySettings,
   getDeliverySearchResults,
+  getDeliveryMarketplaces,
 } from '../../lib/delivery';
 import locatorData from '../../data/locator.json';
 import { getDeliveryDistributors } from '../../lib/delivery';
@@ -63,6 +64,14 @@ const deliveryProducts: any[] = needsDeliveryProducts && !isQuotePage ? await ge
 
 const needsCompatibility = blocks.some((b: any) => b?.type === 'qvlCompatibility');
 const deliveryCompatibility: any[] = needsCompatibility ? await getDeliveryCompatibility() : [];
+
+// Marketplace cards render the live marketplace_listing registry (admin
+// partners module → GET /delivery/marketplaces). The block JSON list is only
+// an offline fallback; a ✓ chip appears when the listing is verified.
+const needsMarketplaces = blocks.some((b: any) => b?.type === 'marketplace-cards');
+const liveMarketplaces: any[] = needsMarketplaces
+  ? ((await getDeliveryMarketplaces()) ?? []).slice().sort((a: any, b: any) => (a?.sort ?? 0) - (b?.sort ?? 0))
+  : [];
 
 // T4.8.1 whereToBuy: the locator grid is data-bound to the CMS distributor
 // directory; the checked-in locator.json is only a cold-start fallback.
@@ -753,8 +762,10 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
         }
 
         case 'marketplace-cards': {
-          const marketplaces = Array.isArray(raw.marketplaces) ? raw.marketplaces : [];
-          if (!marketplaces.length) return null; // only verified listings are shown
+          // Live registry first (admin partners module); block JSON is the offline fallback.
+          const fallbackList = Array.isArray(raw.marketplaces) ? raw.marketplaces : [];
+          const marketplaces = liveMarketplaces.length > 0 ? liveMarketplaces : fallbackList;
+          if (!marketplaces.length) return null; // nothing published and no fallback — omit the section
           return (
             <section class="block-marketplaces" data-block-id={blockId} style="padding:32px 0">
               <div class="wrap">
@@ -763,8 +774,9 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                 <div class="grid g2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:18px">
                   {marketplaces.map((m: any) => (
                     <a class="card card-pad" href={m.url || '#'} style="border:1px solid #E6EBF1;border-radius:12px;text-decoration:none;color:inherit">
-                      <h3 class="h3" style="font-size:16px">{m.platform || m.name}</h3>
+                      <h3 class="h3" style="font-size:16px">{m.platform || m.name}{m.verifiedAt && <span class="chip" style={{ marginLeft: 8 }}>✓ Verified store</span>}</h3>
                       {m.description && <p style="font-size:13px;color:var(--body);margin-top:4px">{m.description}</p>}
+                      {m.country && <p style="font-size:12px;color:var(--body);margin-top:2px">{m.country}</p>}
                     </a>
                   ))}
                   {marketplaces.length === 0 && <p class="form-note">Marketplace links are being verified.</p>}

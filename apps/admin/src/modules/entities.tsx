@@ -19,19 +19,160 @@ type FormDef = { id: number; type: string; title: string; description: string | 
 type FormFieldRow = { id: number; formId: number; name: string; label: string; type: string; placeholder: string | null; helpText: string | null; required: boolean; options: unknown; sort: number };
 
 export default function Entities({ canWrite }: ModProps) {
-  const [tab, setTab] = useState<'policies' | 'offices' | 'testimonials' | 'forms'>('policies');
+  const [tab, setTab] = useState<'policies' | 'glossary' | 'offices' | 'testimonials' | 'forms'>('policies');
   return (
     <div style={{ padding: '18px 22px', maxWidth: 1100 }}>
-      <PageHeader title="Truth & Entities" subtitle="Versioned policies, the approved office registry, permission-backed testimonials and form definitions." />
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-        {([['policies', 'Policies'], ['offices', 'Offices'], ['testimonials', 'Testimonials'], ['forms', 'Form definitions']] as const).map(([k, l]) => (
+      <PageHeader title="Truth & Entities" subtitle="Versioned policies, the technical glossary, the approved office registry, permission-backed testimonials and form definitions." />
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+        {([['policies', 'Policies'], ['glossary', 'Glossary'], ['offices', 'Offices'], ['testimonials', 'Testimonials'], ['forms', 'Form definitions']] as const).map(([k, l]) => (
           <button key={k} style={tab === k ? btn : btnGhost} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
       {tab === 'policies' && <Policies canWrite={canWrite} />}
+      {tab === 'glossary' && <Glossary canWrite={canWrite} />}
       {tab === 'offices' && <Offices canWrite={canWrite} />}
       {tab === 'testimonials' && <Testimonials canWrite={canWrite} />}
       {tab === 'forms' && <Forms canWrite={canWrite} />}
+    </div>
+  );
+}
+
+// ---------------- Glossary (CRUD /admin/entities/glossary) ----------------
+
+type GlossaryRow = {
+  id: number; term: string; definition: string; letter: string | null;
+  explainerSlug: string | null; status: string; locale: string;
+  translationGroup: string | null; source: string | null; approver: string | null;
+};
+
+/** Technical glossary feeding the public glossary index and term lookups
+ *  (GET /delivery/glossary). Definition text is engineering-approved copy. */
+function Glossary({ canWrite }: { canWrite: boolean }) {
+  const [q, setQ] = useState('');
+  const [editing, setEditing] = useState<GlossaryRow | 'new' | null>(null);
+  const qs = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : '';
+  const { data, error, loading, reload } = useAsync<{ items: GlossaryRow[] }>(() => apiGet(`/admin/entities/glossary${qs}`), [q]);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<unknown>(null);
+
+  async function remove(row: GlossaryRow) {
+    if (!window.confirm(`Delete glossary term “${row.term}”?`)) return;
+    setBusy(true); setErr(null);
+    try { await apiSend('DELETE', `/admin/entities/glossary/${row.id}`); reload(); }
+    catch (e) { setErr(e); } finally { setBusy(false); }
+  }
+
+  if (editing) return <GlossaryEditor row={editing === 'new' ? null : editing} canWrite={canWrite}
+    onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />;
+
+  return (
+    <div style={{ display: 'grid', gap: 12 }}>
+      <CommandBar style={{ gap: 10 }}>
+        {canWrite && <button style={btn} onClick={() => setEditing('new')}>+ New term</button>}
+        <span style={{ flex: 1 }} />
+        <input style={{ ...input, width: 220 }} placeholder="Search term or definition…" aria-label="Search glossary" value={q} onChange={(e) => setQ(e.target.value)} />
+        <span style={{ color: MUTED, fontSize: 12 }}>{data?.items?.length ?? 0} terms</span>
+      </CommandBar>
+      {err ? <Err error={err} /> : null}
+      {error ? <Err error={error} /> : loading ? <p>Loading…</p> : (
+        <Table head={['Term', 'Status', 'Locale', 'Explainer', '']}>
+          {(data?.items ?? []).map((g) => (
+            <tr key={g.id}>
+              <td style={td}><b>{g.term}</b> <span style={{ color: MUTED, fontSize: 11 }}>({g.letter})</span>
+                <div style={{ color: MUTED, fontSize: 11.5, maxWidth: 480 }}>{g.definition.slice(0, 140)}{g.definition.length > 140 ? '…' : ''}</div>
+              </td>
+              <td style={td}><Badge value={g.status} /></td>
+              <td style={td}>{g.locale}</td>
+              <td style={td}>{g.explainerSlug ?? '—'}</td>
+              <td style={{ ...td, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                {canWrite && <button style={{ ...btnGhost, fontSize: 12 }} onClick={() => setEditing(g)}>Edit</button>}{' '}
+                {canWrite && <button style={{ ...btnGhost, fontSize: 12 }} disabled={busy} onClick={() => remove(g)}>Delete</button>}
+              </td>
+            </tr>
+          ))}
+          {(data?.items ?? []).length === 0 && <tr><td style={td} colSpan={5}><Empty text="No glossary terms match." /></td></tr>}
+        </Table>
+      )}
+    </div>
+  );
+}
+
+function GlossaryEditor({ row, canWrite, onDone, onCancel }: { row: GlossaryRow | null; canWrite: boolean; onDone: () => void; onCancel: () => void }) {
+  const [form, setForm] = useState({
+    term: row?.term ?? '',
+    definition: row?.definition ?? '',
+    letter: row?.letter ?? '',
+    explainerSlug: row?.explainerSlug ?? '',
+    status: row?.status ?? 'published',
+    locale: row?.locale ?? 'en',
+    source: row?.source ?? 'Engineering datasheets',
+    approver: row?.approver ?? '',
+  });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function save() {
+    setErr(null);
+    if (!form.term.trim() || !form.definition.trim()) { setErr('Term and definition are required.'); return; }
+    setBusy(true);
+    const body: Record<string, unknown> = {
+      term: form.term.trim(),
+      definition: form.definition.trim(),
+      status: form.status,
+      locale: form.locale,
+      source: form.source.trim() || null,
+      approver: form.approver.trim() || null,
+    };
+    if (form.letter.trim()) body.letter = form.letter.trim().toUpperCase().slice(0, 2);
+    if (form.explainerSlug.trim()) body.explainerSlug = form.explainerSlug.trim();
+    try {
+      if (row) await apiSend('PATCH', `/admin/entities/glossary/${row.id}`, body);
+      else await apiSend('POST', '/admin/entities/glossary', body);
+      onDone();
+    } catch (e) {
+      const problem = e as { message?: string; detail?: string };
+      setErr(problem?.message ? `${problem.message}${problem.detail ? ` — ${problem.detail}` : ''}` : String(e));
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div style={card}>
+      <h3 style={{ fontSize: 15 }}>{row ? `Edit — ${row.term}` : 'New glossary term'}</h3>
+      {err && <p style={{ color: '#C2453C', fontSize: 12.5 }}>{err}</p>}
+      <label style={label} htmlFor="g-term">Term</label>
+      <input id="g-term" style={input} value={form.term} onChange={(e) => set('term', e.target.value)} placeholder="e.g. CAS Latency (CL)" />
+      <label style={label} htmlFor="g-def">Definition</label>
+      <textarea id="g-def" style={{ ...input, width: '100%', minHeight: 100, fontFamily: 'inherit' }} value={form.definition} onChange={(e) => set('definition', e.target.value)} />
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 120px' }}>
+          <label style={label} htmlFor="g-letter">Letter</label>
+          <input id="g-letter" style={input} maxLength={2} value={form.letter} onChange={(e) => set('letter', e.target.value)} placeholder="C" />
+        </div>
+        <div style={{ flex: '1 1 160px' }}>
+          <label style={label} htmlFor="g-slug">Explainer article slug</label>
+          <input id="g-slug" style={input} value={form.explainerSlug} onChange={(e) => set('explainerSlug', e.target.value)} placeholder="cas-latency-explained" />
+        </div>
+        <div style={{ flex: '1 1 120px' }}>
+          <label style={label} htmlFor="g-status">Status</label>
+          <select id="g-status" style={input} value={form.status} onChange={(e) => set('status', e.target.value)}>
+            {['draft', 'in_review', 'published', 'archived'].map((s) => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+        <div style={{ flex: '1 1 90px' }}>
+          <label style={label} htmlFor="g-locale">Locale</label>
+          <input id="g-locale" style={input} value={form.locale} onChange={(e) => set('locale', e.target.value)} />
+        </div>
+      </div>
+      <label style={label} htmlFor="g-source">Source</label>
+      <input id="g-source" style={input} value={form.source} onChange={(e) => set('source', e.target.value)} />
+      <label style={label} htmlFor="g-approver">Approver</label>
+      <input id="g-approver" style={input} value={form.approver} onChange={(e) => set('approver', e.target.value)} />
+      <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+        <button style={btn} disabled={busy || !canWrite} onClick={save}>{row ? 'Save changes' : 'Create term'}</button>
+        <button style={btnGhost} onClick={onCancel}>Cancel</button>
+        {!canWrite && <span style={{ color: MUTED, fontSize: 12.5, alignSelf: 'center' }}>Editor role required to save.</span>}
+      </div>
     </div>
   );
 }

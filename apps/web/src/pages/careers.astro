@@ -3,10 +3,14 @@
 // Tasks D2, D8b / GPROV-100 = 100% / G-NOHARDCODE = 0 / WCAG 2.2 AA compliant.
 import Layout from '../layouts/Layout.astro';
 import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
-import { getDeliveryPage } from '../lib/delivery';
+import { getDeliveryPage, getDeliveryJobs } from '../lib/delivery';
 
 const preview = Astro.url.searchParams.get('preview') ?? undefined;
 const page = await getDeliveryPage('careers', 'en', preview);
+// Live open positions from the careers module (admin job-postings →
+// GET /delivery/jobs). Rendered only when published roles exist — the CMS
+// blocks carry the employer-brand copy, the roles themselves are module data.
+const jobs = ((await getDeliveryJobs()) ?? []).filter((j: any) => j?.status === 'published');
 
 if (preview) {
   Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
@@ -23,10 +27,40 @@ const title = page?.title ?? "Careers at TwinMOS — Open roles, benefits & inte
 const desc = page?.seoDescription ?? "Careers at TwinMOS — memory and storage since 1998, with teams in Taipei, Dubai, Cologne and Dongguan.";
 const blocks = page?.blocks ?? [];
 const noindex = Boolean(preview) || Boolean(page?.noindex);
+// Hero-first convention: the page-hero block leads, the live open positions
+// follow it, then the rest of the CMS block stream.
+const heroBlocks = blocks.length > 0 && (blocks[0] as any)?.type === 'page-hero' ? [blocks[0]] : [];
+const restBlocks = heroBlocks.length > 0 ? blocks.slice(1) : blocks;
 ---
 
 <Layout title={title} desc={desc} noindex={noindex}>
   <main id="main">
-    <BlockDispatcher blocks={blocks} />
+    {heroBlocks.length > 0 && <BlockDispatcher blocks={heroBlocks} />}
+    {jobs.length > 0 && (
+      <section id="open-positions" class="block-jobs" style="padding:32px 0" aria-labelledby="open-positions-h">
+        <div class="wrap">
+          <h2 class="h2" id="open-positions-h">Open positions</h2>
+          <p class="form-note" style="margin-top:4px">{jobs.length} role{jobs.length === 1 ? '' : 's'} across TwinMOS teams — apply with the form below.</p>
+          <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:18px">
+            {jobs.map((j: any) => (
+              <article class="card card-pad" style="border:1px solid #E6EBF1;border-radius:12px;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;gap:8;align-items:baseline;flex-wrap:wrap">
+                  <h3 class="h3" style="font-size:16px;margin:0">{j.title}</h3>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--body, #4A5568)">
+                  {j.dept && <span class="chip">{j.dept}</span>}
+                  {j.location && <span class="chip">{j.location}</span>}
+                  {j.type && <span class="chip">{String(j.type).replace('-', ' ')}</span>}
+                  {j.level && <span class="chip">{j.level}</span>}
+                </div>
+                {j.applyBy && <p style="font-size:12.5px;margin:0">Apply by {String(j.applyBy).slice(0, 10)}</p>}
+                <a href="#apply" style="font-size:13.5px;font-weight:700;margin-top:auto">Apply for this role ↓</a>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+    <BlockDispatcher blocks={restBlocks} />
   </main>
 </Layout>

@@ -148,6 +148,21 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql
+    # ZT-079: continuous WAL archiving cuts RPO from 24 h (nightly pg_dump) to
+    # ≤15 min. Segments land in a postgres-owned dir on the pgdata volume
+    # (a separate named volume would be root-owned and unwritable); the
+    # nightly backup copies them off-site and retention prunes them.
+    # archive_command is idempotent (test ! -f) so restarts never clobber.
+    command:
+      - postgres
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=mkdir -p /var/lib/postgresql/wal_archive && test ! -f /var/lib/postgresql/wal_archive/%f && cp %p /var/lib/postgresql/wal_archive/%f
+      - -c
+      - archive_timeout=900
+      - -c
+      - wal_level=replica
     networks:
       - twinmos_internal
     healthcheck:

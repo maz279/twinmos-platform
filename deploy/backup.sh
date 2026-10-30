@@ -55,7 +55,22 @@ echo "[backup] uploaded files (media + partner-files)"
 "${C[@]}" exec -T api tar czf - -C /app/apps/api/data . > "$DEST/files.tgz"
 tar tzf "$DEST/files.tgz" > /dev/null
 
-( cd "$DEST" && sha256sum db.dump globals.sql files.tgz > SHA256SUMS )
+# 3b) Archived WAL segments (ZT-079: PITR between nightly fulls, RPO ≤ 15 min).
+# Snapshots every segment currently on the wal_archive volume; retention
+# prunes the volume after the segments have landed in nightly backups.
+echo "[backup] archived WAL segments (PITR)"
+WALDEST="$DEST/wal"
+mkdir -p "$WALDEST"
+for f in $("${C[@]}" exec -T postgres sh -c 'ls /var/lib/postgresql/wal_archive 2>/dev/null' | tr -d '\r'); do
+  "${C[@]}" exec -T postgres sh -c "cat /var/lib/postgresql/wal_archive/$f" > "$WALDEST/$f"
+done
+rmdir "$WALDEST" 2>/dev/null || true
+
+if [ -d "$DEST/wal" ] && [ -n "$(ls -A "$DEST/wal" 2>/dev/null)" ]; then
+  ( cd "$DEST" && sha256sum db.dump globals.sql files.tgz wal/* > SHA256SUMS )
+else
+  ( cd "$DEST" && sha256sum db.dump globals.sql files.tgz > SHA256SUMS )
+fi
 
 # 4) Encrypted copies for off-site storage
 if [ -n "$BACKUP_ENCRYPTION_KEY" ]; then
@@ -64,6 +79,12 @@ if [ -n "$BACKUP_ENCRYPTION_KEY" ]; then
   for f in db.dump globals.sql files.tgz; do
     openssl enc -aes-256-cbc -salt -pbkdf2 -pass env:BACKUP_ENCRYPTION_KEY -in "$DEST/$f" -out "$DEST/offsite/$f.enc"
   done
+  if [ -d "$DEST/wal" ] && [ -n "$(ls -A "$DEST/wal" 2>/dev/null)" ]; then
+    tar czf "$DEST/offsite/wal.tgz.enc.tar" -C "$DEST" wal 2>/dev/null \
+      && openssl enc -aes-256-cbc -salt -pbkdf2 -pass env:BACKUP_ENCRYPTION_KEY \
+           -in "$DEST/offsite/wal.tgz.enc.tar" -out "$DEST/offsite/wal.tgz.enc" \
+      && rm -f "$DEST/offsite/wal.tgz.enc.tar"
+  fi
   ( cd "$DEST/offsite" && sha256sum ./*.enc > SHA256SUMS )
 fi
 

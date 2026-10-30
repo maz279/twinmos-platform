@@ -12,7 +12,10 @@
 (function () {
   'use strict';
 
-  var API = window.TWINMOS_API || (typeof window !== 'undefined' && window.location.port === '4321' ? 'http://127.0.0.1:8787/api/v1' : '/api/v1');
+  // Same-origin /api/v1 always works: the SSR proxy forwards to the API (and
+  // the edge routes /api/ to the API backend in production), so no hardcoded
+  // dev fallback URL ships in the public bundle (CONTENT-03).
+  var API = window.TWINMOS_API || '/api/v1';
   if (API.charAt(API.length - 1) === '/') API = API.slice(0, -1);
 
   // Clean URLs are canonical; .html aliases are 301s. Normalise both.

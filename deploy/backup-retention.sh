@@ -46,3 +46,14 @@ find "$BACKUP_ROOT" -maxdepth 1 -type d -name '20*' -mtime "+$DAILY_RETAIN_DAYS"
 done
 
 echo "[retention] Retention cycle completed successfully."
+
+# ZT-079: prune the postgres wal_archive volume. Segments older than 2 days
+# are guaranteed captured by at least one nightly backup (which snapshots the
+# whole volume), so dropping them bounds the volume while keeping PITR depth.
+if command -v docker >/dev/null 2>&1; then
+  PG_CID="$(docker ps --filter name=postgres --format '{{.ID}}' | head -1 || true)"
+  if [ -n "$PG_CID" ]; then
+    echo "[retention] pruning wal_archive segments older than 2 days"
+    docker exec "$PG_CID" sh -c 'find /var/lib/postgresql/wal_archive -maxdepth 1 -type f -mtime +2 -name "000*" -delete 2>/dev/null || true' || true
+  fi
+fi

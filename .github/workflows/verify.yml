@@ -75,9 +75,10 @@ jobs:
       - name: Static Configuration & Encoding Sweeps
         run: |
           node tooling/verify/edge-ip-proof.mjs
-          node tooling/verify/hard-01-audit.mjs
           node tooling/verify/static-sweep.mjs
           node --experimental-strip-types --no-warnings tooling/verify/check-translations.mjs
+          # hard-01-audit.mjs was withdrawn with the ZT-006 fabricated
+          # verifiers; its remaining live checks live in static-sweep.mjs.
 
       - name: Start API Daemon
         run: |

@@ -325,8 +325,9 @@ var TM = window.TM || {};
           debounceTimer = setTimeout(function () {
             abortCtrl = new AbortController();
             // TWINMOS_API carries the full /api/v1 prefix (forms.js, rmaFetchCase);
-            // strip it here so this URL is built exactly once.
-            var rawBase = window.TWINMOS_API || (location.port === '4321' || location.port === '5173' ? 'http://127.0.0.1:8787' : '');
+            // strip it here so this URL is built exactly once. Without it, use
+            // same-origin /api/v1 (the SSR proxy or the edge route to the API).
+            var rawBase = window.TWINMOS_API || '';
             var apiBase = rawBase.replace(/\/api\/v1\/?$/, '');
             var url = apiBase + '/api/v1/delivery/search/suggest?q=' + encodeURIComponent(val);
             fetch(url, { signal: abortCtrl.signal })
@@ -1690,6 +1691,10 @@ var TM = window.TM || {};
     initHeader(); initCookie(); initTabs(); initSlider(); initShop(); initPDP(); initCompare(); initCompat();
     initRMA(); initForms(); initSearch(); initArticle(); initRails(); initHomeEnhancements(); syncCmpUI();
     initLocator(); initGlossary();
+    // SSR-rendered cards (products grid, PDP header) live outside the mount
+    // scopes the inits bind — bind quick-view + compare document-wide; the
+    // _bound guard makes this idempotent with the scoped passes.
+    bindQuickView(document); bindCardCompare(document);
     // MS4.2 T4.2.3: counts in labels are rendered from
     // site.figures.productCount by the server. The legacy client patch that
     // rewrote "39 products" to the local catalog length was removed so the CMS

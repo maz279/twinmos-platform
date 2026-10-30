@@ -12,7 +12,7 @@
     "sitemap": "node ../../tooling/gen_sitemap.mjs",
     "catalog:build": "node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts",
     "predev": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts",
-    "prebuild": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts",
+    "prebuild": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts && node ../../tooling/sync-admin-dist.mjs",
     "sync:proto": "node ../../tooling/sync-prototype-assets.mjs",
     "import:corpus": "node --experimental-strip-types --no-warnings ../../tooling/import-corpus.ts"
   },

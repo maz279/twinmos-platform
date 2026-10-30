@@ -44,6 +44,7 @@
     "verify:visual": "node tooling/verify/visual-a11y-audit.mjs",
     "verify:greflect": "node tooling/verify/greflect-fixture.mjs",
     "verify:gparity": "node tooling/verify/gparity-harness.mjs",
+    "verify:catalog-drift": "node tooling/verify/verify-catalog-drift.mjs --expect-live",
     "lint": "npm run lint --workspace @twinmos/admin",
     "format:check": "npx prettier --check package.json tooling/verify/greflect-fixture.mjs tooling/verify/gparity-harness.mjs",
     "format": "npx prettier --write package.json tooling/verify/greflect-fixture.mjs tooling/verify/gparity-harness.mjs",

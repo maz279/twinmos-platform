@@ -49,10 +49,12 @@
     /* never block the page */
   }
 
-  // App layer boots post-first-paint
+  // App layer boots post-first-paint. Catalog ships live-first from
+  // /api/catalog-data.js (SSR, Delivery API canonical); the static
+  // catalog-data.js remains only as that endpoint's outage fallback.
   var files = [
     '/assets/js/consent.js',
-    '/assets/js/catalog-data.js',
+    '/api/catalog-data.js',
     '/assets/js/app.js',
     '/assets/js/img-dims.js',
     '/assets/js/a11y.js',

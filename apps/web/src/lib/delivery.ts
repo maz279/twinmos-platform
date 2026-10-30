@@ -21,7 +21,12 @@ try {
   trackedFixturePages = {};
 }
 
-async function fetchDelivery(endpoint: string, options: { preview?: string; tags?: string[] } = {}) {
+type DeliveryResult =
+  | { kind: 'ok'; json: any }
+  | { kind: 'miss' }    // HTTP 404 — the API answered: entity does not exist
+  | { kind: 'outage' }; // network error / timeout / 5xx — the API could not answer
+
+async function fetchDeliveryEx(endpoint: string, options: { preview?: string; tags?: string[] } = {}): Promise<DeliveryResult> {
   const url = new URL(`${API_BASE}/api/v1/delivery${endpoint}`);
   if (options.preview) {
     url.searchParams.set('preview', options.preview);
@@ -38,38 +43,66 @@ async function fetchDelivery(endpoint: string, options: { preview?: string; tags
     if (res.status === 404) {
       // A missing entity is a normal read miss (e.g. an unseeded page that has
       // a template fallback), not an outage.
-      return null;
+      return { kind: 'miss' };
     }
     if (!res.ok) {
       console.warn(`[Delivery API] HTTP ${res.status} fetching ${url.toString()}`);
-      return null;
+      return { kind: 'outage' };
     }
 
-    return await res.json();
+    return { kind: 'ok', json: await res.json() };
   } catch (err) {
     console.warn(`[Delivery API] Failed to reach Delivery API at ${url.toString()}: ${(err as Error).message}`);
-    return null;
+    return { kind: 'outage' };
   }
 }
 
+async function fetchDelivery(endpoint: string, options: { preview?: string; tags?: string[] } = {}) {
+  const res = await fetchDeliveryEx(endpoint, options);
+  return res.kind === 'ok' ? res.json : null;
+}
+
+// A 404 from a SEEDED API is a real miss (page unpublished/deleted) and must not
+// resurrect fixture content; a 404 from an unseeded API (fresh dev DB) keeps the
+// fixture prototype pages. Cached briefly to avoid an extra request per miss.
+let seededCache: { at: number; val: boolean } | null = null;
+async function isApiSeeded(): Promise<boolean> {
+  if (seededCache && Date.now() - seededCache.at < 60_000) return seededCache.val;
+  const res = await fetchDeliveryEx('/pages?locale=en');
+  const val = res.kind === 'ok' && Array.isArray(res.json?.data) && res.json.data.length > 0;
+  seededCache = { at: Date.now(), val };
+  return val;
+}
+
 export async function getDeliveryPage(slug: string, locale = 'en', preview?: string) {
-  const res = await fetchDelivery(`/pages/${encodeURIComponent(slug)}?locale=${encodeURIComponent(locale)}`, { preview });
-  if (res?.data) {
-    return { ...res.data, cacheTags: res.meta?.cacheTags ?? [`pages`, `page:${res.data.slug}`] };
+  const res = await fetchDeliveryEx(`/pages/${encodeURIComponent(slug)}?locale=${encodeURIComponent(locale)}`, { preview });
+  if (res.kind === 'ok' && res.json?.data) {
+    return { ...res.json.data, cacheTags: res.json.meta?.cacheTags ?? [`pages`, `page:${res.json.data.slug}`] };
   }
-  // Resilient fallback to tracked fixture if API is unseeded or offline
-  const normalizedSlug = slug.replace(/\.html$/, '');
-  return trackedFixturePages[normalizedSlug] || trackedFixturePages[slug] || null;
+  // Fixture fallback is outage resilience only: it must fire when the API is
+  // unreachable, or when the API is unseeded (fresh dev DB) — never when a
+  // seeded API answers 404 (the page was unpublished; resurrecting the fixture
+  // would fabricate content). Draft previews never fall back to fixtures.
+  if (preview) return null;
+  if (res.kind === 'outage' || !(await isApiSeeded())) {
+    const normalizedSlug = slug.replace(/\.html$/, '');
+    return trackedFixturePages[normalizedSlug] || trackedFixturePages[slug] || null;
+  }
+  return null;
 }
 
 export async function getDeliveryPageByPath(path: string, locale = 'en', preview?: string) {
   const query = `?path=${encodeURIComponent(path)}&locale=${encodeURIComponent(locale)}`;
-  const res = await fetchDelivery(`/pages/by-path${query}`, { preview });
-  if (res?.data) {
-    return { ...res.data, cacheTags: res.meta?.cacheTags ?? [`pages`, `page:${res.data.slug}`] };
+  const res = await fetchDeliveryEx(`/pages/by-path${query}`, { preview });
+  if (res.kind === 'ok' && res.json?.data) {
+    return { ...res.json.data, cacheTags: res.json.meta?.cacheTags ?? [`pages`, `page:${res.json.data.slug}`] };
   }
-  const cleanPath = path.replace(/^\//, '').replace(/\.html$/, '') || 'index';
-  return trackedFixturePages[cleanPath] || trackedFixturePages[path] || null;
+  if (preview) return null;
+  if (res.kind === 'outage' || !(await isApiSeeded())) {
+    const cleanPath = path.replace(/^\//, '').replace(/\.html$/, '') || 'index';
+    return trackedFixturePages[cleanPath] || trackedFixturePages[path] || null;
+  }
+  return null;
 }
 
 export async function getDeliveryPages(locale = 'en') {
@@ -265,6 +298,21 @@ export async function getDeliveryFormToken(): Promise<string> {
 
 export async function getDeliveryCompatibility() {
   const res = await fetchDelivery('/compatibility');
+  return res?.data ?? [];
+}
+
+export async function getDeliveryDeviceTypeLabels() {
+  const res = await fetchDelivery('/device-type-labels');
+  return res?.data ?? [];
+}
+
+export async function getDeliveryMarketplaces() {
+  const res = await fetchDelivery('/marketplaces');
+  return res?.data ?? [];
+}
+
+export async function getDeliveryJobs() {
+  const res = await fetchDelivery('/jobs');
   return res?.data ?? [];
 }
 
