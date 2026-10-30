@@ -1254,3 +1254,9 @@ body.gaming .art-pn b{color:#DCE7F0}
 [dir=rtl] .dep-do li{padding-left:0;padding-right:17px}
 [dir=rtl] .dep-do li::before{left:auto;right:0}
 @media (max-width:1020px){.learn-stats5 .cb-cell:last-child{grid-column:1/-1}}
+
+/* Perf: skip layout/paint of below-fold CMS blocks until near-viewport.
+   The homepage renders 18 blocks; deferring offscreen ones cuts first
+   Style&Layout (the dominant LCP cost under Lighthouse mobile throttling).
+   contain-intrinsic-size auto-remembers rendered heights (negligible CLS). */
+.block-stream > section:not(:first-child) { content-visibility: auto; contain-intrinsic-size: auto 480px; }

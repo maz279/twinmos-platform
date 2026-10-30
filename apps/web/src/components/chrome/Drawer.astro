@@ -22,7 +22,7 @@ const {
 } = Astro.props;
 
 const brandName = brand.name || 'TwinMOS Technologies';
-const logoUrl = brand.logoUrl || '/assets/img/logo.webp';
+const logoUrl = brand.logoUrl || '/assets/img/logo-400.webp';
 const hrefOf = (item: NavItem) => item.targetUrl || '#';
 const items: NavItem[] = menu?.items ?? [];
 const isQuote = (item: NavItem) => /quote/i.test(item.title);

@@ -135,7 +135,7 @@ const ORG_LD = JSON.stringify({
   '@type': 'Organization',
   name: brand.name,
   url: 'https://www.twinmos.com/',
-  logo: new URL(brand.logoUrl || '/assets/img/logo.webp', siteOrigin).toString(),
+  logo: new URL(brand.logoUrl || '/assets/img/logo-400.webp', siteOrigin).toString(),
   foundingDate: String(figures.foundingYear || brand.foundingYear || 1998),
   email: contact.email,
   telephone: contact.phone,
