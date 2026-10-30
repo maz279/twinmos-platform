@@ -32,6 +32,12 @@ jobs:
       NODE_ENV: test
       BETTER_AUTH_SECRET: test-secret-twinmos-workflow-ci-key-12345
       BETTER_AUTH_URL: http://127.0.0.1:8787
+      # The verification scripts sign in from the admin SPA's dev origin
+      # (better-auth rejects untrusted cross-origin auth POSTs), and the
+      # DATA-02 write probes hit /admin routes — the S-07 MFA gate has a
+      # supported non-production opt-out that this test-mode kit uses.
+      BETTER_AUTH_TRUSTED_ORIGINS: http://localhost:5173
+      ENFORCE_MFA: "0"
       PORT: 8787
       MAIL_TRANSPORT: mock
       CAPTCHA_BYPASS: "1"
