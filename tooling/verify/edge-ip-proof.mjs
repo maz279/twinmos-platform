@@ -51,11 +51,16 @@ if (conf.includes('real_ip_header')) {
 } else {
   console.log('[edge-ip-proof] PASS Z-07: Zero duplicate real_ip_header directives in twinmos.conf.');
 }
-if (!conf.includes('map_hash_bucket_size 128;')) {
-  console.error('[edge-ip-proof] FAIL Z-07: map_hash_bucket_size 128; missing from twinmos.conf.');
+// Z-07: map_hash_bucket_size must be explicitly configured and >= 128 — the
+// Cloudflare allow-list map keys overflow nginx's 64-byte default bucket. The
+// conf was deliberately raised to 256 in zt-iter-1 (longer redirect-map keys),
+// so parse the value instead of grepping for the original literal 128.
+const mapHashMatch = conf.match(/map_hash_bucket_size\s+(\d+);/);
+if (!mapHashMatch || Number(mapHashMatch[1]) < 128) {
+  console.error('[edge-ip-proof] FAIL Z-07: map_hash_bucket_size missing or < 128 in twinmos.conf.');
   failures++;
 } else {
-  console.log('[edge-ip-proof] PASS Z-07: map_hash_bucket_size 128 configured.');
+  console.log(`[edge-ip-proof] PASS Z-07: map_hash_bucket_size ${mapHashMatch[1]} configured (>= 128).`);
 }
 const privateCidrs = ['127.0.0.1/32', '172.16.0.0/12', '10.0.0.0/8', '192.168.0.0/16'];
 for (const priv of privateCidrs) {
