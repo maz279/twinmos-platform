@@ -15,15 +15,20 @@ console.log(
 );
 
 async function runFixture() {
-  // Step 1: Staff Sign-in
+  // Step 1: Staff Sign-in. Credentials follow the seed environment so the
+  // fixture works against the CI bootstrap seed (SEED_ADMIN_*) and local dev
+  // seeds alike — the old hardcoded admin@twinmos.dev/admin pair no longer
+  // exists in any seeded environment.
   process.stdout.write("[*] 1. Authenticating as staff admin through API... ");
+  const seedEmail = process.env.SEED_ADMIN_EMAIL || "admin@twinmos.dev";
+  const seedPassword = process.env.SEED_ADMIN_PASSWORD || "admin";
   const loginRes = await fetch(`${API_BASE}/api/v1/auth/sign-in/email`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       origin: "http://localhost:5173",
     },
-    body: JSON.stringify({ email: "admin@twinmos.dev", password: "admin" }),
+    body: JSON.stringify({ email: seedEmail, password: seedPassword }),
   });
   if (loginRes.status !== 200) {
     console.log("FAIL");
@@ -34,8 +39,141 @@ async function runFixture() {
     console.log("FAIL");
     throw new Error("Missing set-cookie header");
   }
-  const cookie = rawCookie.split(";")[0];
+  let cookie = rawCookie.split(";")[0];
   console.log("PASS (Session established)");
+
+  // Step 1b: MFA enrollment. Production deployments (and CI stage 7 runs in
+  // NODE_ENV=production) enforce S-07 MFA on every /admin route, and the CI
+  // bootstrap seed creates a pristine un-enrolled admin — so the fixture
+  // enrolls a throwaway TOTP authenticator before touching the console.
+  // otplib is already an @twinmos/api dependency (TOTP verification).
+  process.stdout.write("[*] 1b. Enrolling throwaway TOTP MFA (S-07)... ");
+  const { authenticator } = await import("otplib");
+  const enableRes = await fetch(`${API_BASE}/api/v1/auth/two-factor/enable`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      cookie,
+      origin: "http://localhost:5173",
+    },
+    body: JSON.stringify({ method: "totp", password: seedPassword }),
+  });
+  if (enableRes.status !== 200) {
+    console.log("FAIL");
+    const detail = await enableRes.text();
+    if (enableRes.status === 401) {
+      throw new Error(
+        `MFA enable failed with status 401: ${detail} — the admin is already MFA-enrolled ` +
+          `(previous fixture run on a persistent DB?). The fixture requires a freshly seeded ` +
+          `admin; reset with: UPDATE "user" SET two_factor_enabled=false; DELETE FROM two_factor;`,
+      );
+    }
+    throw new Error(
+      `MFA enable failed with status ${enableRes.status}: ${detail}`,
+    );
+  }
+  const enableBody = await enableRes.json();
+  const totpUri = enableBody.totpURI ?? enableBody.totpUri ?? enableBody.uri;
+  if (!totpUri) {
+    console.log("FAIL");
+    throw new Error(
+      `MFA enable response has no totpURI: ${JSON.stringify(enableBody)}`,
+    );
+  }
+  const totpSecret = new URL(
+    totpUri.replace(/^otpauth:\/\//, "http://"),
+  ).searchParams.get("secret");
+  const totpRes = await fetch(
+    `${API_BASE}/api/v1/auth/two-factor/verify-totp`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie,
+        origin: "http://localhost:5173",
+      },
+      body: JSON.stringify({ code: authenticator.generate(totpSecret) }),
+    },
+  );
+  if (totpRes.status !== 200) {
+    console.log("FAIL");
+    throw new Error(
+      `TOTP verification failed with status ${totpRes.status}: ${await totpRes.text()}`,
+    );
+  }
+  console.log("PASS (TOTP enrolled + verified)");
+
+  // Step 1c: Re-sign-in. Enabling 2FA invalidates the pre-MFA session, so
+  // sign in again through the TOTP challenge for a console-capable session.
+  // A fresh code is required — TOTP codes are single-use per 30s window.
+  process.stdout.write(
+    "[*] 1c. Re-authenticating through the TOTP challenge... ",
+  );
+  await new Promise((r) => setTimeout(r, 1000));
+  const prevCode = authenticator.generate(totpSecret);
+  for (let i = 0; i < 35; i++) {
+    if (authenticator.generate(totpSecret) !== prevCode) break;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  const challengeLoginRes = await fetch(
+    `${API_BASE}/api/v1/auth/sign-in/email`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: "http://localhost:5173",
+      },
+      body: JSON.stringify({ email: seedEmail, password: seedPassword }),
+    },
+  );
+  const challengeCookiePre = challengeLoginRes.headers.get("set-cookie");
+  const challengeBody = await challengeLoginRes.json().catch(() => ({}));
+  // better-auth may set a pre-MFA session cookie in the same response that
+  // asks for the second factor — decide on the BODY flag, not the cookie.
+  const mfaChallenged =
+    challengeBody?.twoFactorRedirect === true ||
+    challengeBody?.twoFactor === true;
+  if (challengeLoginRes.status !== 200) {
+    console.log("FAIL");
+    throw new Error(
+      `Re-login failed with status ${challengeLoginRes.status}: ${JSON.stringify(challengeBody)}`,
+    );
+  }
+  if (!mfaChallenged && challengeCookiePre) {
+    // MFA not challenged (e.g. dev env with ENFORCE_MFA=0): use the plain session.
+    cookie = challengeCookiePre.split(";")[0];
+    console.log("PASS (plain session, MFA not challenged)");
+  } else {
+    // Forward every cookie the challenge set (incl. the better-auth
+    // two_factor cookie) — verify-totp rejects the call without it.
+    const challengeCookies = (challengeLoginRes.headers.getSetCookie?.() ?? [])
+      .map((c) => c.split(";")[0])
+      .join("; ");
+    const challengeVerifyRes = await fetch(
+      `${API_BASE}/api/v1/auth/two-factor/verify-totp`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "http://localhost:5173",
+          cookie: challengeCookies,
+        },
+        body: JSON.stringify({
+          code: authenticator.generate(totpSecret),
+          trustDevice: false,
+        }),
+      },
+    );
+    const challengeCookie = challengeVerifyRes.headers.get("set-cookie");
+    if (challengeVerifyRes.status !== 200 || !challengeCookie) {
+      console.log("FAIL");
+      throw new Error(
+        `Challenge TOTP failed with status ${challengeVerifyRes.status}: ${await challengeVerifyRes.text()}`,
+      );
+    }
+    cookie = challengeCookie.split(";")[0];
+    console.log("PASS (MFA-verified session)");
+  }
 
   // Step 2: Create draft content
   const testId = Date.now();

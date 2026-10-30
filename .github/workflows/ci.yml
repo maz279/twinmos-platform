@@ -58,6 +58,14 @@ jobs:
       FORMS_TO: ci@twinmos.com
       INTERNAL_WEB_URL: http://127.0.0.1:4321
       ALLOWED_ORIGIN: http://127.0.0.1:4321,http://localhost:4321
+      # CI is a lab context (ZT-080): Cloudflare's published Turnstile test
+      # keys are deliberate here, and the production boot guard in
+      # boot-config.ts requires this explicit acknowledgment to start.
+      TWINMOS_LAB_TEST_INTEGRATIONS: acknowledged-not-for-production
+      # The G-REFLECT fixture (gate-b VC-B-17) signs in from the admin SPA's
+      # dev origin; better-auth rejects cross-origin auth POSTs that are not
+      # trusted in production mode.
+      BETTER_AUTH_TRUSTED_ORIGINS: http://localhost:5173
 
     services:
       postgres:
@@ -239,4 +247,3 @@ jobs:
 
       - name: Verify canonical X-Real-IP propagation
         run: node tooling/verify/edge-ip-proof.mjs
-
