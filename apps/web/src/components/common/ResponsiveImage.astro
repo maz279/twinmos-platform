@@ -1,0 +1,108 @@
+---
+export interface Props {
+  src: string;
+  alt?: string;
+  isDecorative?: boolean;
+  class?: string;
+  loading?: 'lazy' | 'eager';
+  decoding?: 'async' | 'sync' | 'auto';
+  width?: number;
+  height?: number;
+  sizes?: string;
+  mediaId?: number | string;
+  aspectRatio?: string;
+}
+
+const {
+  src,
+  alt = '',
+  isDecorative = false,
+  class: className = '',
+  loading = 'lazy',
+  decoding = 'async',
+  width,
+  height,
+  sizes = '(max-width: 768px) 100vw, 1200px',
+  mediaId,
+  aspectRatio,
+} = Astro.props;
+
+// Determine if we have a mediaId from prop or extracted from /media/:id URL
+let mId = mediaId;
+if (!mId && typeof src === 'string') {
+  const match = src.match(/\/api\/media\/(\d+)|\/media\/(\d+)/);
+  if (match) {
+    mId = match[1] || match[2];
+  }
+}
+
+const isSvg = typeof src === 'string' && src.endsWith('.svg');
+const safeAlt = isDecorative ? '' : (alt || '');
+const safeAriaHidden = isDecorative ? 'true' : undefined;
+
+// Ensure relative keys/paths - never absolute http(s) origin URLs
+let cleanSrc = src;
+if (cleanSrc.startsWith('http://') || cleanSrc.startsWith('https://')) {
+  try {
+    const urlObj = new URL(cleanSrc);
+    cleanSrc = urlObj.pathname + urlObj.search;
+  } catch {
+    // keep as is
+  }
+}
+---
+
+{isSvg ? (
+  <img
+    src={cleanSrc}
+    alt={safeAlt}
+    aria-hidden={safeAriaHidden}
+    class={className}
+    loading={loading}
+    decoding={decoding}
+    width={width}
+    height={height}
+    style={aspectRatio ? `aspect-ratio: ${aspectRatio};` : undefined}
+  />
+) : mId ? (
+  <picture class={`responsive-picture ${className}`.trim()}>
+    <!-- AVIF derivative for modern browser delivery -->
+    <source
+      type="image/avif"
+      srcset={`/api/media/${mId}?variant=heroAvif 1600w`}
+      sizes={sizes}
+    />
+    <!-- WebP responsive srcset -->
+    <source
+      type="image/webp"
+      srcset={`/api/media/${mId}?variant=thumb 320w, /api/media/${mId}?variant=card 640w, /api/media/${mId}?variant=hero 1600w, /api/media/${mId}?variant=full 2400w`}
+      sizes={sizes}
+    />
+    <!-- Fallback image -->
+    <img
+      src={cleanSrc}
+      alt={safeAlt}
+      aria-hidden={safeAriaHidden}
+      class={className}
+      loading={loading}
+      decoding={decoding}
+      width={width}
+      height={height}
+      style={aspectRatio ? `aspect-ratio: ${aspectRatio};` : undefined}
+    />
+  </picture>
+) : (
+  <picture class={`responsive-picture ${className}`.trim()}>
+    <img
+      src={cleanSrc}
+      alt={safeAlt}
+      aria-hidden={safeAriaHidden}
+      class={className}
+      loading={loading}
+      decoding={decoding}
+      width={width}
+      height={height}
+      style={aspectRatio ? `aspect-ratio: ${aspectRatio};` : undefined}
+    />
+  </picture>
+)}

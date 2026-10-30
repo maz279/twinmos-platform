@@ -5,10 +5,11 @@
 // via tab ctx { kind:'product', id }.
 import React, { useEffect, useMemo, useState } from 'react';
 import { API, ApiError, apiGet, apiSend, fmtDate } from '../api';
-import { Badge, btn, btnGhost, CommandBar, Empty, Err, Field, formGrid, input, SectionCard, Table, td, Toolbar, useAsync, usePanelScroll } from '../ui';
+import { Badge, btn, btnGhost, CommandBar, Empty, Err, Field, formGrid, input, MUTED, SectionCard, Table, td, Toolbar, useAsync, usePanelScroll } from '../ui';
 import { MediaPicker } from '../media-picker';
 import { AUTHORIZED_CURRENCIES } from '@twinmos/shared';
 import type { ModProps, TabCtx } from '../nav';
+import { useDialogA11y } from '../dialog-a11y';
 
 const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
 
@@ -26,6 +27,9 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
   const focusId = ctx?.kind === 'product' && ctx.id ? Number(ctx.id) : null;
   const [editing, setEditing] = useState<number | 'new' | null>(focusId ?? null);
   useEffect(() => { if (focusId != null && Number.isFinite(focusId)) setEditing(focusId); }, [focusId]);
+  // MS4.5 reference data lives beside the catalog it normalizes: the spec
+  // dictionary (canonical spec keys) and per-category spec templates.
+  const [view, setView] = useState<'catalog' | 'specs'>('catalog');
 
   // Third-level sidebar deep link (§6.4): ctx { kind:'category', id } opens the
   // list pre-filtered to that taxonomy category (GET /admin/products?category=).
@@ -45,6 +49,10 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
   const { data, error, loading, reload } = useAsync<{ items: Product[] }>(() => apiGet('/admin/products' + (query ? '?' + query : '')), [query]);
   const tax = useAsync<Taxonomy>(() => apiGet('/admin/taxonomy'), []);
 
+  if (view === 'specs') {
+    return <SpecDictionary canWrite={canWrite} taxonomy={tax.data ?? undefined} onBack={() => setView('catalog')} />;
+  }
+
   if (editing !== null) {
     return <Editor id={editing === 'new' ? null : editing} taxonomy={tax.data} canWrite={canWrite}
       onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />;
@@ -55,9 +63,9 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
     <div>
       <Toolbar style={{ gap: 10 }}>
         <h1 style={{ margin: 0, fontSize: 22 }}>Products</h1>
+        <button style={btnGhost} onClick={() => setView('specs')} title="Canonical spec keys and per-category spec templates">Spec dictionary</button>
         {canWrite && <button style={btn} onClick={() => setEditing('new')}>+ New product</button>}
         <button style={btnGhost} onClick={() => setBulk(true)} title="Bulk CSV import and full-catalog export">Import / Export</button>
-        <RefreshBridgeButton />
         <span style={{ flex: 1 }} />
         <input style={{ ...input, width: 240 }} placeholder="Search name or SKU…" aria-label="Search name or SKU" value={q} onChange={(e) => setQ(e.target.value)} />
         <select style={input} value={category} onChange={(e) => setCategory(e.target.value ? Number(e.target.value) : '')}
@@ -83,12 +91,12 @@ export default function Products({ canWrite, ctx, nav }: ModProps) {
               <td style={td}><b>{p.sku}</b></td>
               <td style={td}>
                 <b style={{ color: NAVY }}>{p.name}</b>
-                <div style={{ color: '#93A0B4', fontSize: 11.5 }}>{brandName(p.brandId)} · {p.slug}</div>
-                {(p.badges ?? []).slice(0, 4).map((b) => <span key={b} style={{ fontSize: 10.5, background: '#E7F7F2', color: '#0E9F7E', borderRadius: 5, padding: '1px 6px', marginRight: 4 }}>{b}</span>)}
+                <div style={{ color: MUTED, fontSize: 11.5 }}>{brandName(p.brandId)} · {p.slug}</div>
+                {(p.badges ?? []).slice(0, 4).map((b) => <span key={b} style={{ fontSize: 10.5, background: '#E7F7F2', color: '#065F46', borderRadius: 5, padding: '1px 6px', marginRight: 4 }}>{b}</span>)}
               </td>
-              <td style={td}>{p.priceUsd != null ? <b>{(p.currency || 'USD')} {Number(p.priceUsd).toFixed(2)}</b> : <span style={{ color: '#93A0B4' }}>—</span>}</td>
+              <td style={td}>{p.priceUsd != null ? <b>{(p.currency || 'USD')} {Number(p.priceUsd).toFixed(2)}</b> : <span style={{ color: MUTED }}>—</span>}</td>
               <td style={td}><Badge value={p.status} /></td>
-              <td style={{ ...td, color: '#66748A', fontSize: 12 }}>{fmtDate(p.updatedAt)}</td>
+              <td style={{ ...td, color: MUTED, fontSize: 12 }}>{fmtDate(p.updatedAt)}</td>
               <td style={{ ...td, width: 70 }}>
                 <button style={{ ...btnGhost, padding: '4px 9px', fontSize: 12 }} onClick={(e) => { e.stopPropagation(); nav('products', { kind: 'product', id: String(p.id), label: p.sku }, { newTab: true }); }}>Tab ↗</button>
               </td>
@@ -113,6 +121,8 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
   const [form, setForm] = useState({
     sku: '', slug: '', name: '', brandId: 0, categoryId: 0, status: 'draft',
     description: '', price: '', currency: 'USD', badges: '', warranty: '', shortSpec: '',
+    featured: false, launchDate: '', isComingSoon: false, warrantyTier: '',
+    source: '', approver: '',
   });
   // 0016 storefront facets — controlled vocabularies that drive the public shop filters
   const [facets, setFacets] = useState({ gen: '', cap: '', interface: '', form: '' });
@@ -136,6 +146,12 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
       description: existing.description ?? '', price: existing.priceUsd != null ? String(Number(existing.priceUsd)) : '',
       currency: existing.currency ?? 'USD', badges: (existing.badges ?? []).join(', '),
       warranty: existing.warranty ?? '', shortSpec: existing.shortSpec ?? '',
+      featured: Boolean((existing as any).featured),
+      launchDate: (existing as any).launchDate ? String((existing as any).launchDate).slice(0, 10) : '',
+      isComingSoon: Boolean((existing as any).isComingSoon),
+      warrantyTier: (existing as any).warrantyTier ?? '',
+      source: (existing as any).source ?? '',
+      approver: (existing as any).approver ?? '',
     });
     setFacets({
       gen: existing.facets?.gen ?? '', cap: existing.facets?.cap ?? '',
@@ -159,15 +175,24 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) { setForm((f) => ({ ...f, [k]: v })); }
 
+  async function transition(to: string) {
+    if (isNew || id == null) return;
+    setErr(null); setBusy(true);
+    try {
+      await apiSend('POST', `/admin/products/${id}/transition`, { to });
+      onDone();
+    } catch (e) { setErr(e instanceof Error ? e.message : 'Transition failed.'); }
+    finally { setBusy(false); }
+  }
+
   async function save(publish?: boolean) {
     setErr(null);
     const price = form.price.trim() === '' ? null : Number(form.price);
     if (price != null && !Number.isFinite(price)) { setErr('Price must be a number (or empty).'); return; }
     if (!isNew && !canWrite) { setErr('Your role cannot save product changes.'); return; }
-    const body = {
+    const body: Record<string, unknown> = {
       sku: form.sku.trim().toUpperCase(), slug: form.slug.trim().toLowerCase() || form.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
       name: form.name.trim(), brandId: form.brandId, categoryId: form.categoryId,
-      status: publish ? 'published' : form.status,
       description: form.description, priceUsd: price, currency: form.currency.toUpperCase(),
       badges: form.badges.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 8),
       warranty: form.warranty.trim() || null,
@@ -175,17 +200,32 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
       facets: Object.fromEntries(Object.entries(facets).filter(([, v]) => v.trim()).map(([k, v]) => [k, v.trim()])),
       specs: Object.fromEntries(specs.filter(([k]) => k.trim()).map(([k, v]) => [k.trim(), v])),
       heroMediaId: hero, gallery, datasheets: datasheets.filter((d) => d.label && d.url),
+      featured: form.featured,
+      launchDate: form.launchDate ? new Date(form.launchDate).toISOString() : null,
+      isComingSoon: form.isComingSoon,
+      warrantyTier: form.warrantyTier.trim() || null,
+    // Provenance is only sent when provided — an empty editor field must not
+    // read as "clear provenance" on a legacy row (T4.7.2 gate fires otherwise).
+    ...(form.source.trim() ? { source: form.source.trim() } : {}),
+    ...(form.approver.trim() ? { approver: form.approver.trim() } : {}),
     };
+    if (isNew && !publish) body.status = 'draft';
     setBusy(true);
     try {
+      let productId = id;
       if (isNew) {
         if (!form.sku || !form.name || !form.brandId || !form.categoryId) { setErr('SKU, name, brand and category are required for a new product.'); setBusy(false); return; }
-        await apiSend('POST', '/admin/products', body);
+        const created = await apiSend<Product>('POST', '/admin/products', body);
+        productId = created.id;
       } else {
         // Phase 3.4: send the revision we loaded — the API refuses with 409
         // when someone else saved in the meantime (no silent overwrites).
         await apiSend('PATCH', '/admin/products/' + id, body,
           existing ? { 'If-Match': new Date(existing.updatedAt).toISOString() } : undefined);
+      }
+      if (publish) {
+        // T4.6.1: status moves only through the audited transition endpoint.
+        await apiSend('POST', `/admin/products/${productId}/transition`, { to: 'published' });
       }
       onDone();
     } catch (e) {
@@ -237,10 +277,14 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
               <span><label style={labelStyle}>Name *</label><input style={{ ...input, width: '100%' }} value={form.name} onChange={(e) => set('name', e.target.value)} /></span>
               <span><label style={labelStyle}>SKU * <span style={{ color: '#93A0B4', fontWeight: 400 }}>(A-Z 0-9 -)</span></label><input style={{ ...input, width: '100%' }} value={form.sku} onChange={(e) => set('sku', e.target.value)} disabled={!isNew} /></span>
               <span><label style={labelStyle}>Slug</label><input style={{ ...input, width: '100%' }} value={form.slug} onChange={(e) => set('slug', e.target.value)} placeholder="auto from name" /></span>
-              <span><label style={labelStyle}>Status</label>
-                <select style={{ ...input, width: '100%' }} value={form.status} onChange={(e) => set('status', e.target.value)} disabled={!canWrite}>
-                  {['draft', 'in_review', 'scheduled', 'published', 'archived'].map((s) => <option key={s}>{s}</option>)}
-                </select></span>
+              <span><label style={labelStyle}>Status (via transition)</label>
+                <input style={{ ...input, width: '100%' }} value={form.status} readOnly />
+                {canWrite && !isNew && form.status !== 'published' && (
+                  <button style={{ ...btnGhost, fontSize: 11, marginTop: 4 }} onClick={() => void transition('published')}>Submit → published</button>
+                )}
+                {canWrite && !isNew && form.status === 'published' && (
+                  <button style={{ ...btnGhost, fontSize: 11, marginTop: 4 }} onClick={() => void transition('archived')}>Archive (410)</button>
+                )}</span>
               <span><label style={labelStyle}>Brand *</label>
                 <select style={{ ...input, width: '100%' }} value={form.brandId} onChange={(e) => set('brandId', Number(e.target.value))}>
                   <option value={0}>— choose —</option>
@@ -251,6 +295,25 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
                   <option value={0}>— choose —</option>
                   {(taxonomy?.categories ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select></span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                <input id="feat" type="checkbox" checked={form.featured} onChange={(e) => set('featured', e.target.checked)} />
+                <label htmlFor="feat" style={{ fontSize: 13 }}>Featured</label>
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                <input id="cs" type="checkbox" checked={form.isComingSoon} onChange={(e) => set('isComingSoon', e.target.checked)} />
+                <label htmlFor="cs" style={{ fontSize: 13 }}>Coming soon</label>
+              </span>
+              <span><label style={labelStyle}>Launch date (90-day "New" badge)</label>
+                <input style={{ ...input, width: '100%' }} type="date" value={form.launchDate} onChange={(e) => set('launchDate', e.target.value)} /></span>
+              <span><label style={labelStyle}>Warranty tier</label>
+                <select style={{ ...input, width: '100%' }} value={form.warrantyTier} onChange={(e) => set('warrantyTier', e.target.value)}>
+                  <option value="">—</option>
+                  {['standard', 'extended', 'lifetime', 'limited_lifetime', '1_year', '2_year', '3_year', '5_year', '10_year'].map((t) => <option key={t}>{t}</option>)}
+                </select></span>
+              <span><label style={labelStyle}>Source (provenance)</label>
+                <input style={{ ...input, width: '100%' }} placeholder="e.g. Engineering datasheets (BD-05)" value={form.source} onChange={(e) => set('source', e.target.value)} /></span>
+              <span><label style={labelStyle}>Approver (provenance)</label>
+                <input style={{ ...input, width: '100%' }} placeholder="e.g. Elena Rostova" value={form.approver} onChange={(e) => set('approver', e.target.value)} /></span>
             </div>
           </SectionCard>
 
@@ -582,33 +645,13 @@ type ImportReport = {
   errors: Array<{ line: number; sku?: string; message: string }>;
 };
 
-/** P2.2: one-click content-bridge refresh — POST /admin/content/export
- * regenerates cms-content.js from the API's own DB handle (safe while the
- * API is live; the CLI exporter needs the API stopped). */
-function RefreshBridgeButton() {
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState<string | null>(null);
-  async function refresh() {
-    setBusy(true); setNote(null);
-    try {
-      const r = await apiSend<{ counts: { products: number; compatRules: number; distributors: number; jobs: number } }>('POST', '/admin/content/export', {});
-      setNote(`Bridge refreshed — ${r.counts.products} products, ${r.counts.compatRules} compat rules`);
-    } catch (e) {
-      setNote(e instanceof ApiError ? `Refresh failed — ${e.message}` : 'Refresh failed.');
-    } finally { setBusy(false); }
-  }
-  return (
-    <button style={btnGhost} onClick={refresh} disabled={busy} title="Regenerate the public site's cms-content.js from the live database (editor+)">
-      {busy ? 'Refreshing…' : 'Refresh site content'}{note ? ` · ${note}` : ''}
-    </button>
-  );
-}
 
 function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose: () => void; onDone: () => void }) {
   const [csv, setCsv] = useState('');
   const [report, setReport] = useState<ImportReport | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const dialogRef = useDialogA11y({ isOpen: true, onClose });
 
   function download(path: string, fallbackName: string) {
     fetch(API + path, { credentials: 'include' })
@@ -636,7 +679,7 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
   const card: React.CSSProperties = { width: 'min(760px, 94vw)', maxHeight: '84vh', overflowY: 'auto', background: '#fff', borderRadius: 14, boxShadow: '0 30px 80px rgba(2,12,28,.5)', padding: 18 };
   return (
     <div style={overlay} onClick={onClose}>
-      <div style={card} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Bulk import and export">
+      <div ref={dialogRef} style={card} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Bulk import and export">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <b style={{ fontSize: 15, color: '#1F2A37', flex: 1 }}>Bulk import &amp; export</b>
           <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={onClose}>✕</button>
@@ -645,7 +688,7 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
 
         <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <b style={{ fontSize: 13 }}>1 · Get the data</b>
-          <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: '#66748A' }}>
+          <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: MUTED }}>
             Download the template to see the exact columns (sku, slug, name, brand, category, status, currency, priceUsd, description —
             brand and category are slugs, currency must be one of the authorized six), or export the full catalog.
           </p>
@@ -657,13 +700,13 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
 
         <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <b style={{ fontSize: 13 }}>2 · Upload your CSV</b>
-          <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: '#66748A' }}>Choose a .csv file, then validate it first — nothing is written during a dry-run.</p>
-          <input type="file" accept=".csv,text/csv" style={input} disabled={!canImport}
+          <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: MUTED }}>Choose a .csv file, then validate it first — nothing is written during a dry-run.</p>
+          <input type="file" accept=".csv,text/csv" aria-label="Upload CSV file" style={input} disabled={!canImport}
             onChange={(e) => {
               const f = e.target.files?.[0]; if (!f) return;
               f.text().then((t) => { setCsv(t); setReport(null); setErr(null); });
             }} />
-          {csv && <p style={{ margin: '8px 0 0', fontSize: 12, color: '#0E9F7E', fontWeight: 700 }}>✓ Loaded {csv.split(/\r?\n/).filter((l) => l.trim()).length - 1} data row(s)</p>}
+          {csv && <p style={{ margin: '8px 0 0', fontSize: 12, color: '#065F46', fontWeight: 700 }}>✓ Loaded {csv.split(/\r?\n/).filter((l) => l.trim()).length - 1} data row(s)</p>}
         </div>
 
         <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12 }}>
@@ -701,7 +744,7 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
                       <tr key={r.line}>
                         <td style={td}>{r.line}</td>
                         <td style={td}>{r.action === 'create'
-                          ? <span style={{ fontSize: 11, background: '#E7F7F2', color: '#0E9F7E', borderRadius: 5, padding: '1px 7px', fontWeight: 700 }}>create</span>
+                          ? <span style={{ fontSize: 11, background: '#E7F7F2', color: '#065F46', borderRadius: 5, padding: '1px 7px', fontWeight: 700 }}>create</span>
                           : <span style={{ fontSize: 11, background: '#FBF3E2', color: '#8A6420', borderRadius: 5, padding: '1px 7px', fontWeight: 700 }}>update</span>}</td>
                         <td style={td}><b>{r.sku}</b></td>
                         <td style={td}>{r.name}</td>
@@ -714,6 +757,142 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ---- MS4.5 spec dictionary & templates (CRUD /admin/spec-dictionary, /admin/spec-templates) ----
+
+type SpecDictRow = {
+  id: number; key: string; normalizedKey: string; categoryId: number | null;
+  dataType: string; unit: string | null; description: string | null; createdAt: string;
+};
+type SpecTemplateRow = {
+  id: number; categoryId: number; name: string; specKeys: string[]; requiredKeys: string[]; createdAt: string;
+};
+
+/** Canonical spec keys + per-category templates that normalize product specs
+ *  (delivery spec tables, template validation on import). Editor+ write. */
+function SpecDictionary({ canWrite, taxonomy, onBack }: { canWrite: boolean; taxonomy?: Taxonomy; onBack: () => void }) {
+  const [q, setQ] = useState('');
+  const [nk, setNk] = useState('');
+  const [cat, setCat] = useState<number | ''>('');
+  const [dtype, setDtype] = useState('string');
+  const [unit, setUnit] = useState('');
+  const [tplCat, setTplCat] = useState<number | ''>('');
+  const [tplName, setTplName] = useState('');
+  const [tplKeys, setTplKeys] = useState('');
+  const [tplReq, setTplReq] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<unknown>(null);
+  const qs = new URLSearchParams();
+  if (q.trim()) qs.set('q', q.trim());
+  const dict = useAsync<{ data: SpecDictRow[] }>(() => apiGet('/admin/spec-dictionary' + (qs.toString() ? '?' + qs.toString() : '')), [q]);
+  const tpl = useAsync<{ data: SpecTemplateRow[] }>(() => apiGet('/admin/spec-templates' + (tplCat !== '' ? `?categoryId=${tplCat}` : '')), [tplCat]);
+  const catName = (id: number | null) => (id == null ? '—' : taxonomy?.categories.find((c) => c.id === id)?.name ?? `#${id}`);
+
+  async function addKey() {
+    if (!q.trim() || !nk.trim()) return;
+    setBusy(true); setErr(null);
+    try {
+      await apiSend('POST', '/admin/spec-dictionary', {
+        key: q.trim(), normalizedKey: nk.trim(),
+        categoryId: cat === '' ? null : cat,
+        dataType: dtype, unit: unit.trim() || null,
+      });
+      setNk(''); setUnit(''); setErr(null);
+      dict.reload();
+    } catch (e) { setErr(e); } finally { setBusy(false); }
+  }
+  async function delKey(id: number) {
+    setBusy(true); setErr(null);
+    try { await apiSend('DELETE', `/admin/spec-dictionary/${id}`); dict.reload(); }
+    catch (e) { setErr(e); } finally { setBusy(false); }
+  }
+  async function addTemplate() {
+    if (tplCat === '' || !tplName.trim() || !tplKeys.trim()) return;
+    setBusy(true); setErr(null);
+    try {
+      await apiSend('POST', '/admin/spec-templates', {
+        categoryId: tplCat, name: tplName.trim(),
+        specKeys: tplKeys.split(',').map((s) => s.trim()).filter(Boolean),
+        requiredKeys: tplReq.split(',').map((s) => s.trim()).filter(Boolean),
+      });
+      setTplName(''); setTplKeys(''); setTplReq('');
+      tpl.reload();
+    } catch (e) { setErr(e); } finally { setBusy(false); }
+  }
+  async function delTemplate(id: number) {
+    setBusy(true); setErr(null);
+    try { await apiSend('DELETE', `/admin/spec-templates/${id}`); tpl.reload(); }
+    catch (e) { setErr(e); } finally { setBusy(false); }
+  }
+
+  return (
+    <div>
+      <Toolbar style={{ gap: 10 }}>
+        <h1 style={{ margin: 0, fontSize: 22 }}>Spec dictionary</h1>
+        <button style={btnGhost} onClick={onBack}>← Catalog</button>
+      </Toolbar>
+      {err ? <Err error={err} /> : null}
+      <SectionCard title="Canonical spec keys" style={{ marginTop: 12 }}>
+        {canWrite && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 12px', alignItems: 'center' }}>
+            <input style={{ ...input, width: 180 }} placeholder="Display key (e.g. CAS Latency)" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Spec key" />
+            <input style={{ ...input, width: 180 }} placeholder="Normalized key (e.g. cas latency)" value={nk} onChange={(e) => setNk(e.target.value)} aria-label="Normalized key" />
+            <select style={input} value={cat} onChange={(e) => setCat(e.target.value ? Number(e.target.value) : '')} aria-label="Category">
+              <option value="">Any category</option>
+              {(taxonomy?.categories ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <select style={input} value={dtype} onChange={(e) => setDtype(e.target.value)} aria-label="Data type">
+              {['string', 'number', 'boolean', 'array'].map((t) => <option key={t}>{t}</option>)}
+            </select>
+            <input style={{ ...input, width: 90 }} placeholder="Unit" value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Unit" />
+            <button style={btn} disabled={busy || !q.trim() || !nk.trim()} onClick={addKey}>+ Add key</button>
+          </div>
+        )}
+        {dict.error ? <Err error={dict.error} /> : dict.loading ? <p>Loading…</p> : (
+          <Table head={['Key', 'Normalized', 'Category', 'Type', 'Unit', '']}>
+            {(dict.data?.data ?? []).map((r) => (
+              <tr key={r.id}>
+                <td style={td}><b>{r.key}</b></td>
+                <td style={td} title={r.description ?? undefined}>{r.normalizedKey}</td>
+                <td style={td}>{catName(r.categoryId)}</td>
+                <td style={td}>{r.dataType}</td>
+                <td style={td}>{r.unit ?? '—'}</td>
+                <td style={td}>{canWrite && <button style={btnGhost} disabled={busy} onClick={() => delKey(r.id)}>Delete</button>}</td>
+              </tr>
+            ))}
+          </Table>
+        )}
+      </SectionCard>
+      <SectionCard title="Per-category spec templates" style={{ marginTop: 12 }}>
+        {canWrite && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 12px', alignItems: 'center' }}>
+            <select style={input} value={tplCat} onChange={(e) => setTplCat(e.target.value ? Number(e.target.value) : '')} aria-label="Template category">
+              <option value="">Select category…</option>
+              {(taxonomy?.categories ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <input style={{ ...input, width: 200 }} placeholder="Template name" value={tplName} onChange={(e) => setTplName(e.target.value)} aria-label="Template name" />
+            <input style={{ ...input, width: 280 }} placeholder="Spec keys, comma-separated" value={tplKeys} onChange={(e) => setTplKeys(e.target.value)} aria-label="Spec keys" />
+            <input style={{ ...input, width: 200 }} placeholder="Required keys (optional)" value={tplReq} onChange={(e) => setTplReq(e.target.value)} aria-label="Required keys" />
+            <button style={btn} disabled={busy || tplCat === '' || !tplName.trim() || !tplKeys.trim()} onClick={addTemplate}>+ Add template</button>
+          </div>
+        )}
+        {tpl.error ? <Err error={tpl.error} /> : tpl.loading ? <p>Loading…</p> : (
+          <Table head={['Template', 'Category', 'Spec keys', 'Required', '']}>
+            {(tpl.data?.data ?? []).map((r) => (
+              <tr key={r.id}>
+                <td style={td}><b>{r.name}</b></td>
+                <td style={td}>{catName(r.categoryId)}</td>
+                <td style={td}>{(r.specKeys ?? []).join(', ')}</td>
+                <td style={td}>{(r.requiredKeys ?? []).join(', ') || '—'}</td>
+                <td style={td}>{canWrite && <button style={btnGhost} disabled={busy} onClick={() => delTemplate(r.id)}>Delete</button>}</td>
+              </tr>
+            ))}
+          </Table>
+        )}
+      </SectionCard>
     </div>
   );
 }

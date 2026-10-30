@@ -143,7 +143,7 @@ export function partnerRoute(db: DB, deps: { requireRole: (r: any) => Guard; ses
 }
 
 
-export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession> }) {
+export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guard; sessionFromRequest: (req: Request) => Promise<AuthSession>; auth?: any }) {
   const r = new Hono();
   const FILES_DIR = process.env.PARTNER_FILES_DIR ?? './data/partner-files';
 
@@ -173,6 +173,17 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     });
   }
 
+
+  function prunePatch<T extends Record<string, any>>(raw: any, parsed: T): Partial<T> {
+    const out: any = {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+    for (const k of Object.keys(parsed)) {
+      if (Object.prototype.hasOwnProperty.call(raw, k)) {
+        out[k] = (parsed as any)[k];
+      }
+    }
+    return out;
+  }
 
   // ---------- admin: orgs ----------
   r.get('/partner-orgs', async (c) => {
@@ -205,17 +216,21 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     return c.json(rows[0], 201);
   });
 
-  r.patch('/partner-orgs/:id', async (c) => {
+  const updatePartnerOrg = async (c: any) => {
     const guard = await adminGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = partnerOrgUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = partnerOrgUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
-    const rows = await db.update(partnerOrg).set(parsed.data).where(eq(partnerOrg.id, id)).returning();
+    const patchData = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(partnerOrg).set(patchData).where(eq(partnerOrg.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Organization not found'), 404, { 'Content-Type': P });
-    await auditRow(c, guard.user.id, 'partnerOrg.update', String(id), parsed.data);
+    await auditRow(c, guard.user.id, 'partnerOrg.update', String(id), patchData);
     return c.json(rows[0]);
-  });
+  };
+  r.patch('/partner-orgs/:id', updatePartnerOrg);
+  r.put('/partner-orgs/:id', updatePartnerOrg);
 
   /** 0020: org deletion — admin+, refused while members exist (empty-delete
    *  guard, same discipline as media folders). Assets cascade via FK. */
@@ -241,16 +256,82 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     const parsed = partnerMemberAddSchema.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
     const { user } = await import('@twinmos/db');
-    const found = await db.select({ id: user.id }).from(user).where(eq(user.email, parsed.data.email)).limit(1);
-    if (!found[0]) {
-      return c.json(problem(404, 'No account with that email', 'The partner must create a site account first (sign-up), then be added.'), 404, { 'Content-Type': P });
+    const normalizedEmail = parsed.data.email.toLowerCase().trim();
+    const found = await db.select({ id: user.id }).from(user).where(eq(user.email, normalizedEmail)).limit(1);
+    let userId = found[0]?.id;
+    let autoProvisioned = false;
+
+    if (!userId) {
+      // A1 / A-INVITE: Self-signup is disabled in production. Staff member invitation
+      // auto-provisions the user account with role='member' and mustChangePassword=true.
+      const tempPassword = crypto.randomUUID() + crypto.randomUUID(); // never shown or mailed
+      if (deps.auth?.api?.createUser) {
+        try {
+          const res = await deps.auth.api.createUser({
+            body: {
+              email: normalizedEmail,
+              password: tempPassword,
+              name: normalizedEmail.split('@')[0],
+              role: 'member',
+            },
+          });
+          const createdUser = res.user ?? res;
+          userId = createdUser.id;
+          await db.update(user).set({ mustChangePassword: true, emailVerified: false }).where(eq(user.id, userId));
+          autoProvisioned = true;
+        } catch {
+          // fallback to direct insertion
+        }
+      }
+      if (!userId) {
+        const generatedId = crypto.randomUUID();
+        const [newUser] = await db.insert(user).values({
+          id: generatedId,
+          email: normalizedEmail,
+          name: normalizedEmail.split('@')[0],
+          role: 'member',
+          emailVerified: false,
+          mustChangePassword: true,
+        }).returning({ id: user.id });
+        userId = newUser.id;
+        autoProvisioned = true;
+      }
+      // Invited partners are created unverified. The verification link returns
+      // them to the public partner portal (same origin as Better Auth, so it is
+      // a trusted callback — the old http://localhost:5173 default was rejected
+      // with 403 and no partner could ever activate: ZT-013).
+      const site = (process.env.PUBLIC_SITE_URL || 'https://www.twinmos.com').replace(/\/+$/, '');
+      try {
+        await deps.auth?.api?.sendVerificationEmail?.({ body: { email: normalizedEmail, callbackURL: `${site}/partners?verified=1` } });
+      } catch (err) {
+        console.warn('[partner] verification mail failed:', err);
+      }
+      // No credentials by e-mail (ZT-014): a single-use set-password link instead.
+      try {
+        const { adminBaseUrl } = await import('../mailer.ts');
+        await deps.auth?.api?.requestPasswordReset?.({ body: { email: normalizedEmail, redirectTo: adminBaseUrl() } });
+      } catch (err) {
+        console.warn('[partner] set-password link failed:', err);
+      }
+      try {
+        const { sendMail } = await import('../mailer.ts');
+        await sendMail({
+          to: normalizedEmail,
+          subject: 'TwinMOS Partner Portal Invitation',
+          text: `You have been added to the TwinMOS Partner Portal.\n\n1. Open the verification link in the separate e-mail.\n2. Choose your password with the single-use link we also sent (valid for 1 hour).\n3. Sign in at ${site}/partners.`,
+          meta: { kind: 'partner-invite', email: normalizedEmail },
+        });
+      } catch (err) {
+        console.warn('[partner] invitation mail failed:', err);
+      }
     }
+
     const rows = await db.insert(partnerMember)
-      .values({ orgId: id, userId: found[0].id, role: parsed.data.role })
+      .values({ orgId: id, userId, role: parsed.data.role })
       .onConflictDoNothing().returning();
     if (!rows[0]) return c.json(problem(409, 'Already a member of this organization'), 409, { 'Content-Type': P });
-    await auditRow(c, guard.user.id, 'partnerMember.add', String(id), { email: parsed.data.email, role: parsed.data.role });
-    return c.json(rows[0], 201);
+    await auditRow(c, guard.user.id, 'partnerMember.add', String(id), { email: normalizedEmail, role: parsed.data.role, autoProvisioned });
+    return c.json({ ...rows[0], email: normalizedEmail, userCreated: autoProvisioned, member: { ...rows[0], email: normalizedEmail } }, 201);
   });
 
   r.get('/partner-orgs/:id/members', async (c) => {
@@ -383,17 +464,21 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     return c.json(rows[0], 201);
   });
 
-  r.patch('/distributors/:id', async (c) => {
+  const updateDistributor = async (c: any) => {
     const guard = await editorGuard(c);
     if (guard instanceof Response) return guard;
     const id = Number(c.req.param('id'));
-    const parsed = distributorUpdateSchema.safeParse(await c.req.json().catch(() => ({})));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = distributorUpdateSchema.safeParse(rawJson);
     if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
-    const rows = await db.update(distributor).set(parsed.data as any).where(eq(distributor.id, id)).returning();
+    const patchData = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(distributor).set(patchData as any).where(eq(distributor.id, id)).returning();
     if (!rows[0]) return c.json(problem(404, 'Distributor not found'), 404, { 'Content-Type': P });
-    await auditRow(c, guard.user.id, 'distributor.update', String(id), parsed.data);
+    await auditRow(c, guard.user.id, 'distributor.update', String(id), patchData);
     return c.json(rows[0]);
-  });
+  };
+  r.patch('/distributors/:id', updateDistributor);
+  r.put('/distributors/:id', updateDistributor);
 
   r.delete('/distributors/:id', async (c) => {
     const guard = await editorGuard(c);
@@ -497,6 +582,22 @@ export function partnerAdminRoute(db: DB, deps: { requireRole: (r: Role) => Guar
     await auditRow(c, guard.user.id, 'marketplace.create', String(rows[0].id), parsed.data);
     return c.json(rows[0], 201);
   });
+
+  const updateMarketplaceListing = async (c: any) => {
+    const guard = await editorGuard(c);
+    if (guard instanceof Response) return guard;
+    const id = Number(c.req.param('id'));
+    const rawJson = await c.req.json().catch(() => ({}));
+    const parsed = marketplaceListingUpdateSchema.safeParse(rawJson);
+    if (!parsed.success) return c.json(problem(422, 'Validation Failed', undefined, parsed.error.issues), 422, { 'Content-Type': P });
+    const patchData = prunePatch(rawJson, parsed.data);
+    const rows = await db.update(marketplaceListing).set(patchData as any).where(eq(marketplaceListing.id, id)).returning();
+    if (!rows[0]) return c.json(problem(404, 'Listing not found'), 404, { 'Content-Type': P });
+    await auditRow(c, guard.user.id, 'marketplace.update', String(id), patchData);
+    return c.json(rows[0]);
+  };
+  r.patch('/marketplace-listings/:id', updateMarketplaceListing);
+  r.put('/marketplace-listings/:id', updateMarketplaceListing);
 
   r.delete('/marketplace-listings/:id', async (c) => {
     const guard = await editorGuard(c);

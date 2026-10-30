@@ -1,0 +1,118 @@
+---
+// Footer.astro — Server-rendered footer. Columns and the legal bar come from
+// the CMS footer menu (MS5.1 T5.1.3); brand, contact, social, figures and
+// WhatsApp come from site settings (MS4.2 T4.2.1-T4.2.2).
+interface NavItem {
+  id?: number;
+  title: string;
+  targetUrl?: string | null;
+  metadata?: Record<string, any>;
+  children?: NavItem[];
+}
+
+interface Props {
+  brand?: { name?: string; tagline?: string; logoUrl?: string; foundingYear?: number };
+  contact?: { email?: string; salesEmail?: string; phone?: string; address?: string; country?: string };
+  social?: Record<string, string | undefined>;
+  figures?: { foundingYear?: number; countriesCount?: string; productCount?: number; years?: number };
+  whatsapp?: { phoneNumber?: string; waUrl?: string; defaultMessage?: string };
+  menu?: { items?: NavItem[] } | null;
+}
+
+const { brand = {}, contact = {}, social = {}, figures = {}, whatsapp = {}, menu = null } = Astro.props;
+const currentYear = new Date().getFullYear();
+const brandName = brand.name || 'TwinMOS Technologies';
+const logoUrl = brand.logoUrl || '/assets/img/logo.webp';
+const foundingYear = figures.foundingYear || brand.foundingYear || 1998;
+const countries = figures.countriesCount || '93+';
+const address = contact.address || 'Taipei, Taiwan';
+const salesEmail = contact.salesEmail || contact.email || 'sales@twinmos.com';
+// Fallbacks match www.twinmos.com/contact exactly (authoritative fact base, ZT-021).
+const phone = contact.phone || '+886 970-368-077';
+const waUrl = whatsapp.waUrl || (whatsapp.phoneNumber ? `https://wa.me/${whatsapp.phoneNumber.replace(/[^0-9]/g, '')}` : 'https://wa.me/886970368077');
+
+const hrefOf = (item: NavItem) => item.targetUrl || '#';
+const groups: NavItem[] = menu?.items ?? [];
+const columns = groups.filter((group: NavItem) => group.metadata?.kind === 'column');
+const contactGroup = groups.find((group: NavItem) => /contact/i.test(group.title));
+const legalGroup = groups.find((group: NavItem) => /legal/i.test(group.title));
+const quoteLink = contactGroup?.children?.[0];
+const legalLinks = legalGroup?.children ?? [];
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <img src={logoUrl} alt={brandName} />
+        <p style="font-size:13.5px;max-width:34ch">
+          {brand.tagline || 'Legendary memory brand'} since {foundingYear}. Memory modules, SSDs, portable storage and accessories for customers in {countries} countries.
+        </p>
+
+        <form id="nlForm" class="newsletter" method="post" data-tm-form style="max-width:320px">
+          <input id="nlEmail" name="email" type="email" placeholder="Email for product news" aria-label="Email for newsletter" required />
+          <button class="btn btn-accent btn-sm" type="submit">Join</button>
+        </form>
+        <p class="newsletter-privacy-notice" style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.4" data-newsletter-notice>
+          By joining you agree to our <a href="/legal?tab=privacy" style="color:#cbd5e1;text-decoration:underline">Privacy Policy</a>. Unsubscribe anytime.
+        </p>
+
+        <div class="social-row">
+          {social.facebook && <a href={social.facebook} aria-label="Facebook (opens in a new tab)" target="_blank" rel="noopener">f</a>}
+          {social.instagram && <a href={social.instagram} aria-label="Instagram (opens in a new tab)" target="_blank" rel="noopener">&#9678;</a>}
+          {social.linkedin && <a href={social.linkedin} aria-label="LinkedIn (opens in a new tab)" target="_blank" rel="noopener">in</a>}
+          {social.x && <a href={social.x} aria-label="X (Twitter) (opens in a new tab)" target="_blank" rel="noopener">&#120143;</a>}
+          {social.youtube && <a href={social.youtube} aria-label="YouTube (opens in a new tab)" target="_blank" rel="noopener">&#9654;</a>}
+          {social.pinterest && <a href={social.pinterest} aria-label="Pinterest (opens in a new tab)" target="_blank" rel="noopener">P</a>}
+        </div>
+      </div>
+
+      {columns.map((column: NavItem) => (
+        <div>
+          <h4>{column.title}</h4>
+          {(column.children ?? []).map((link: NavItem) => (
+            <a href={hrefOf(link)}>{link.title}</a>
+          ))}
+        </div>
+      ))}
+
+      <div class="footer-contact">
+        <h4 style="display:flex;align-items:center;gap:8px">
+          <img class="ilog" src={logoUrl} alt="" style="height:17px;width:auto" loading="lazy" />
+          {brandName}
+        </h4>
+        {address}<br />
+        <b>{salesEmail}</b><br />
+        <b>{phone}</b><br />
+        Mon&ndash;Fri: 9am&ndash;5pm
+        <div style="margin-top:10px">
+          <a class="btn btn-accent btn-sm" href={quoteLink ? hrefOf(quoteLink) : '/quote'}>
+            {quoteLink?.title || 'Request a quote'}
+          </a>
+        </div>
+        {waUrl && (
+          <div style="margin-top:8px;font-size:13px">
+            <a href={waUrl} target="_blank" rel="noopener" class="link-arrow" aria-label="Chat on WhatsApp (opens in a new tab)">Chat on WhatsApp ↗</a>
+          </div>
+        )}
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <span style="display:inline-flex;align-items:center;gap:6px">
+        <img class="ilog" src={logoUrl} alt="" style="height:13px;width:auto" loading="lazy" />
+        {brandName} &copy; {currentYear}. All rights reserved.
+      </span>
+      <span>
+        <button id="cookiePreferencesBtn" type="button" style="background:none;border:none;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer;display:inline">Cookie Preferences</button>
+        {legalLinks.length > 0 && ' \u00b7 '}
+        {legalLinks.map((link: NavItem, idx: number) => (
+          <>
+            {idx > 0 && ' \u00b7 '}
+            <a href={hrefOf(link)} style="display:inline">{link.title}</a>
+          </>
+        ))}
+      </span>
+    </div>
+  </div>
+</footer>

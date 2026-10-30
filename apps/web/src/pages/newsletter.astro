@@ -1,0 +1,37 @@
+---
+// /newsletter — where the links in newsletter e-mails land. Confirming or
+// unsubscribing takes a click (POST from /assets/js/newsletter.js), so mail
+// link scanners that fetch every URL cannot change anyone's subscription
+// (ZT-033/048).
+import Layout from '../layouts/Layout.astro';
+
+const confirmToken = Astro.url.searchParams.get('confirm') ?? '';
+const unsubscribeToken = Astro.url.searchParams.get('unsubscribe') ?? '';
+const mode = confirmToken ? 'confirm' : unsubscribeToken ? 'unsubscribe' : 'info';
+const COPY = {
+  confirm: { title: 'Confirm your subscription', body: 'Click the button to start receiving TwinMOS product news. Every e-mail carries a one-click unsubscribe link.', button: 'Confirm subscription' },
+  unsubscribe: { title: 'Unsubscribe from the newsletter', body: 'Click the button to stop receiving the TwinMOS newsletter.', button: 'Unsubscribe' },
+  info: { title: 'TwinMOS newsletter', body: 'Subscribe from the footer of any page to receive product news.', button: '' },
+} as const;
+const msg = COPY[mode];
+Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('Referrer-Policy', 'no-referrer'); // the token is in this URL
+---
+
+<Layout title={`${msg.title} — TwinMOS`} desc="TwinMOS newsletter subscription." noindex={true}>
+  <main id="main">
+    <div class="page-hero">
+      <div class="wrap">
+        <span class="eyebrow">Newsletter</span>
+        <h1 class="h1" id="nlTitle">{msg.title}</h1>
+        <p class="lede" id="nlBody">{msg.body}</p>
+        {msg.button && (
+          <button class="btn btn-primary" id="nlAction" type="button" style="margin-top:18px"
+            data-action={mode} data-token={mode === 'confirm' ? confirmToken : unsubscribeToken}>{msg.button}</button>
+        )}
+        <p style="margin-top:18px"><a class="btn btn-ghost" href="/">Back to the home page</a></p>
+      </div>
+    </div>
+  </main>
+  <script is:inline src="/assets/js/newsletter.js" defer></script>
+</Layout>

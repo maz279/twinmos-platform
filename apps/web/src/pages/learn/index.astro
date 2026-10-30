@@ -1,0 +1,20 @@
+---
+// learn/index.astro — Dynamic SSR Knowledge Hub Hub (Tasks D2, D8b)
+import Layout from '../../layouts/Layout.astro';
+import BlockDispatcher from '../../components/blocks/BlockDispatcher.astro';
+import { getDeliveryPage } from '../../lib/delivery';
+
+const page = await getDeliveryPage('learn');
+const title = page?.title ?? "Knowledge Hub — Learn Memory & Storage — TwinMOS";
+const desc = page?.seoDescription ?? "TwinMOS Knowledge Hub: buying guides, DDR5/NVMe technology explainers, benchmarks, and glossary.";
+const blocks = page?.blocks ?? [];
+
+Astro.response.headers.set('Cache-Tag', 'learn, page-learn');
+Astro.response.headers.set('X-Cache-Tags', 'learn, page-learn');
+---
+
+<Layout title={title} desc={desc}>
+  <main id="main">
+    <BlockDispatcher blocks={blocks} />
+  </main>
+</Layout>

@@ -19,7 +19,7 @@ const externalAssets = join(here, '..', '..', 'Corporate website development for
 const inRepoAssets = join(here, '..', 'prototype', 'assets', 'js');
 const dest = join(here, '..', 'apps', 'web', 'public', 'assets', 'js');
 
-const files = ['app.js', 'data.js'];
+const files = ['app.js'];
 mkdirSync(dest, { recursive: true });
 const usingInRepo = files.some((f) => existsSync(join(inRepoAssets, f)));
 if (!usingInRepo) {

@@ -3,9 +3,10 @@
 // cookie flags, preflight shape, no server banner, and the clientIp
 // trust-proxy policy (rate-limit spoofing protection).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const TMP = mkdtempSync(join(tmpdir(), 'twinmos-p7-'));
 process.env.PGLITE_DATA = join(TMP, 'db');
@@ -13,9 +14,14 @@ process.env.MAIL_OUTBOX_DIR = join(TMP, 'outbox');
 process.env.FORMS_TO = 'security@twinmos.dev';
 process.env.API_ALLOW_NO_TURNSTILE = '1';
 process.env.NODE_ENV = 'test';
+// The CORS allow-list tests below assert the DEFAULT dev allow-list
+// (http://localhost:5173). CI exports ALLOWED_ORIGIN for the SSR proxy
+// (ci.yml build-and-verify job), which would leak in here and flip the
+// allow-list — drop it so app.ts falls back to its default before import.
+delete process.env.ALLOWED_ORIGIN;
 
-// Repo root = parent of the workspace cwd (apps/api); no traversal literals.
-const MIGRATIONS = join(dirname(dirname(process.cwd())), 'packages', 'db', 'migrations');
+// Robust migration folder resolution independent of cwd
+const MIGRATIONS = resolve(dirname(fileURLToPath(import.meta.url)), '../../../packages/db/migrations');
 
 const { createDb }: any = await import('@twinmos/db');
 const { migrate } = await import('drizzle-orm/pglite/migrator');
@@ -130,16 +136,23 @@ describe('P7: clientIp trust policy (rate-limit spoofing guard)', () => {
   const fakeCtx = (headers: Record<string, string>, env: object = {}) =>
     ({ req: { header: (n: string) => headers[n] }, env }) as never;
 
-  it('honours forwarded headers when TRUST_PROXY=1 (dev/test/staging behind Cloudflare)', () => {
+  it('honours x-real-ip only when TRUST_PROXY=1 (behind edge reverse proxy)', () => {
     process.env.TRUST_PROXY = '1';
     try {
-      expect(clientIp(fakeCtx({ 'cf-connecting-ip': '203.0.113.9' }))).toBe('203.0.113.9');
-      expect(clientIp(fakeCtx({ 'x-forwarded-for': '198.51.100.7' }))).toBe('198.51.100.7');
+      expect(clientIp(fakeCtx({ 'x-real-ip': '203.0.113.9' }))).toBe('203.0.113.9');
+      // T2.5.2: drops spoofable cf-connecting-ip and x-forwarded-for fallbacks
+      expect(clientIp(fakeCtx({ 'cf-connecting-ip': '203.0.113.9' }))).toBe('local');
+      expect(clientIp(fakeCtx({ 'x-forwarded-for': '198.51.100.7' }))).toBe('local');
     } finally { delete process.env.TRUST_PROXY; }
   });
 
-  it('NON-production default keeps header trust (dev/test ergonomics)', () => {
-    expect(clientIp(fakeCtx({ 'x-forwarded-for': '198.51.100.1' }))).toBe('198.51.100.1');
+  it('WITHOUT TRUST_PROXY ignores all spoofable headers and falls back to socket address', () => {
+    delete process.env.TRUST_PROXY;
+    const ip = clientIp(fakeCtx({ 'x-real-ip': '6.6.6.6', 'x-forwarded-for': '6.6.6.6' }, {
+      incoming: { socket: { remoteAddress: '10.0.0.5' } },
+    }));
+    expect(ip).toBe('10.0.0.5');
+    expect(clientIp(fakeCtx({}))).toBe('unknown');
   });
 
   it('production WITHOUT TRUST_PROXY ignores spoofable headers', () => {
@@ -158,14 +171,32 @@ describe('P7: clientIp trust policy (rate-limit spoofing guard)', () => {
 
 describe('P7: production anti-spam wiring (dist-gated)', () => {
   const WEB = join(dirname(dirname(process.cwd())), 'apps', 'web', 'dist');
-  const hasDist = existsSync(join(WEB, 'index.html'));
+  // SSR builds have no dist/index.html; the page HTML is rendered by the
+  // server bundle at request time, so inspect the server entry + chunks.
+  const SERVER_ENTRY = join(WEB, 'server', 'entry.mjs');
+  const hasDist = existsSync(SERVER_ENTRY);
   const maybeIt = hasDist ? it : it.skip;
-  if (!hasDist) console.warn('[p7-security] apps/web/dist not built — Turnstile wiring assertion SKIPPED (run test:ci).');
+  if (!hasDist) console.warn('[p7-security] apps/web/dist/server/entry.mjs not built — Turnstile wiring assertion SKIPPED (run test:ci).');
 
-  maybeIt('built pages define window.TURNSTILE_SITE_KEY (Turnstile renders in production)', () => {
-    const html = readFileSync(join(WEB, 'index.html'), 'utf8');
-    expect(html).toContain('window.TURNSTILE_SITE_KEY');
-    // the injected value comes from PUBLIC_TURNSTILE_SITE_KEY (empty in dev builds — widget hidden)
-    expect(html).toMatch(/TURNSTILE_SITE_KEY = (turnstileSiteKey|"")/);
+  maybeIt('built pages define turnstile-site-key meta tag and layout-init sets window.TURNSTILE_SITE_KEY (Turnstile renders in production without CSP violation)', () => {
+    const serverDir = join(WEB, 'server');
+    const chunks = [SERVER_ENTRY];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir, { withFileTypes: true })) {
+        const p = join(dir, name.name);
+        if (name.isDirectory()) walk(p);
+        else if (name.name.endsWith('.mjs') || name.name.endsWith('.js')) chunks.push(p);
+      }
+    };
+    walk(join(serverDir, 'chunks'));
+    const bundle = chunks.map((p) => readFileSync(p, 'utf8')).join(String.fromCharCode(10));
+    // Astro compiles the component template into the server bundle; the
+    // literal must survive so every SSR response carries the meta tag.
+    expect(bundle).toContain('turnstile-site-key');
+    const layoutInitPath = existsSync(join(WEB, 'client', 'assets', 'js', 'layout-init.js'))
+      ? join(WEB, 'client', 'assets', 'js', 'layout-init.js')
+      : join(WEB, 'assets', 'js', 'layout-init.js');
+    const layoutInit = readFileSync(layoutInitPath, 'utf8');
+    expect(layoutInit).toContain('window.TURNSTILE_SITE_KEY = turnstileMeta');
   });
 });

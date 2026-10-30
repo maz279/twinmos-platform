@@ -1,0 +1,178 @@
+---
+// Header.astro — Server-rendered header; navigation comes from the CMS
+// header menu (MS5.1 T5.1.1) and brand/figures from site settings.
+interface NavItem {
+  id?: number;
+  title: string;
+  targetUrl?: string | null;
+  targetId?: string | null;
+  metadata?: Record<string, any>;
+  children?: NavItem[];
+}
+
+interface Props {
+  activePath?: string;
+  currentLocale?: string;
+  brand?: { name?: string; logoUrl?: string };
+  figures?: { foundingYear?: number; countriesCount?: string; productCount?: number };
+  menu?: { items?: NavItem[] } | null;
+  /** locale codes activated in the CMS (English always) */
+  locales?: string[];
+}
+
+const {
+  activePath = '',
+  currentLocale = 'en',
+  brand = {},
+  menu = null,
+} = Astro.props;
+
+// MS4.2 T4.2.1: every figure in the chrome comes from site.brand/site.figures.
+const brandName = brand.name || 'TwinMOS Technologies';
+const logoUrl = brand.logoUrl || '/assets/img/logo.webp';
+
+// Supported locales for global multi-language navigation (LOC-02)
+const LOCALES = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'] as const;
+const activeLocale = (LOCALES as readonly string[]).includes(currentLocale.toLowerCase()) ? currentLocale : 'en';
+// Only locales activated in the CMS are offered (inactive ones redirect to English).
+const activeLocales: string[] = Astro.props.locales ?? ['en'];
+void activeLocale;
+
+const normalize = (p: string) => p.replace(/^\//, '').replace(/\/$/, '') || 'index.html';
+const current = normalize(activePath);
+
+const isCurrent = (p: string) => {
+  const norm = normalize(p);
+  if (norm === 'index.html' && (current === 'index.html' || current === '')) return true;
+  return current === norm || current.startsWith(norm.replace('.html', ''));
+};
+
+const hrefOf = (item: NavItem) => item.targetUrl || '#';
+const mediaUrl = (src: string) => (/^https?:\/\//.test(src) ? src : '/' + src.replace(/^\.?\//, ''));
+const items: NavItem[] = menu?.items ?? [];
+
+const megaClass = (columnCount: number) => {
+  if (columnCount >= 4) return 'mega mega-wide';
+  if (columnCount === 3) return 'mega mega-edge';
+  if (columnCount === 2) return 'mega mega-co';
+  return 'mega';
+};
+---
+
+<header class="site-header">
+  <div class="wrap header-in">
+    <a class="logo" href="/" aria-label={`${brandName} home`}>
+      <img src={logoUrl} alt={brandName} />
+    </a>
+
+    <nav aria-label="Main navigation">
+      <ul class="nav">
+        {items.map((item: NavItem) => {
+          const children: NavItem[] = item.children ?? [];
+          const columns = children.filter((child: NavItem) => child.metadata?.kind === 'column');
+          const feature = children.find((child: NavItem) => child.metadata?.kind === 'feature_panel');
+          const allRows = children.filter((child: NavItem) => child.metadata?.kind === 'all_row');
+          const hasMega = columns.length > 0 || Boolean(feature) || allRows.length > 0;
+          const href = hrefOf(item);
+          return (
+            <li>
+              <a
+                href={href}
+                aria-haspopup={hasMega ? 'true' : undefined}
+                aria-expanded={hasMega ? 'false' : undefined}
+                class={isCurrent(href) ? 'on' : ''}
+                aria-current={isCurrent(href) ? 'page' : undefined}
+              >
+                {item.title} {hasMega && <span class="caret" aria-hidden="true">&#9662;</span>}
+              </a>
+              {hasMega && (
+                <div
+                  class={megaClass(columns.length)}
+                  aria-label={`${item.title} submenu`}
+                  style={columns.length === 3 ? 'grid-template-columns:repeat(3,minmax(0,1fr)) minmax(190px,.65fr)' : undefined}
+                >
+                  {columns.map((column: NavItem) => (
+                    <div class="mega-col">
+                      <h4>{column.title}</h4>
+                      {(column.children ?? []).map((link: NavItem) => (
+                        <a
+                          href={hrefOf(link)}
+                          style={link.metadata?.emphasis ? 'color:var(--accent-deep);font-weight:750' : undefined}
+                        >
+                          {link.title}
+                        </a>
+                      ))}
+                    </div>
+                  ))}
+
+                  {feature && (
+                    <div class="mega-feature">
+                      {feature.metadata?.image && (
+                        <img
+                          src={mediaUrl(String(feature.metadata.image))}
+                          alt={feature.metadata.imageAlt ? String(feature.metadata.imageAlt) : ''}
+                          loading="lazy"
+                        />
+                      )}
+                      {feature.metadata?.heading && <b>{feature.metadata.heading}</b>}
+                      {feature.metadata?.description && (
+                        <span style="font-size:12.5px;color:var(--muted)">{feature.metadata.description}</span>
+                      )}
+                      <a class="link-arrow" href={hrefOf(feature)}>{feature.title}</a>
+                    </div>
+                  )}
+
+                  {allRows.length > 0 && (
+                    <div class="mega-all">
+                      <a href={hrefOf(allRows[0])}>{allRows[0].title}</a>
+                      {allRows.length > 1 && (
+                        <span style="margin-left:16px;display:inline-flex;gap:16px;font-weight:650">
+                          {allRows.slice(1).map((row: NavItem) => (
+                            <a href={hrefOf(row)}>{row.title}</a>
+                          ))}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+
+    <div class="header-cta">
+      {activeLocales.length > 1 && (
+        <select id="langSel" class="lang-sel" aria-label="Language">
+          {activeLocales.map((code: string) => (
+            <option value={code} selected={activeLocale.toLowerCase() === code}>{code === 'ar' ? 'AR (RTL)' : code.toUpperCase()}</option>
+          ))}
+        </select>
+      )}
+
+      <button class="icon-btn" id="searchBtn" aria-label="Search" type="button">
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="8.2" cy="8.2" r="5.6"></circle>
+          <path d="M12.4 12.4 16 16"></path>
+        </svg>
+      </button>
+
+      <a class="icon-btn" href="/compare" aria-label="Compare tray">
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2.5 5h11M13.5 5l-2.4-2.4M13.5 5l-2.4 2.4"></path>
+          <path d="M13.5 11h-11M2.5 11l2.4-2.4M2.5 11l2.4 2.4"></path>
+        </svg>
+        <span class="tray-count" data-tray-count style="display:none">0</span>
+      </a>
+
+      <a class="btn btn-accent btn-sm" href="/quote" style="margin-left:4px">Get a quote</a>
+
+      <button class="icon-btn burger" id="burger" aria-label="Open menu" aria-expanded="false" type="button">
+        <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2 4h12M2 8h12M2 12h12"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>

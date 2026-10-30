@@ -1,0 +1,31 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:twinmos-edge-sbom-1792765615089",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-10-23T14:26:55.089Z",
+    "component": {
+      "type": "container",
+      "name": "twinmos-edge",
+      "version": "1.0.0"
+    }
+  },
+  "components": [
+    {
+      "type": "operating-system",
+      "name": "alpine-linux",
+      "version": "3.21"
+    },
+    {
+      "type": "application",
+      "name": "nginx",
+      "version": "alpine"
+    },
+    {
+      "type": "library",
+      "name": "openssl",
+      "version": "alpine"
+    }
+  ]
+}

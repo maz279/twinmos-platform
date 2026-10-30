@@ -1,0 +1,299 @@
+[
+  {
+    "route": "/",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "index — TwinMOS",
+    "hasTM": true,
+    "cookieVisible": true,
+    "cookieAfterDecline": false
+  },
+  {
+    "route": "/shop.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "shop — TwinMOS",
+    "hasTM": true,
+    "shopCards": 39
+  },
+  {
+    "route": "/product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD — TwinMOS",
+    "hasTM": true,
+    "pdpH1": "TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD",
+    "isLoading": false
+  },
+  {
+    "route": "/product.html?id=voltx-ddr5-u-dimm-for-desktop",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "TwinMOS VOLTX DDR5 U-DIMM for Desktop — TwinMOS",
+    "hasTM": true,
+    "pdpH1": "TwinMOS VOLTX DDR5 U-DIMM for Desktop",
+    "isLoading": false
+  },
+  {
+    "route": "/where-to-buy.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "where-to-buy — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/compatibility.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "compatibility — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/support.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "support — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/rma.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "rma — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/careers.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "careers — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/partners.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "partners — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/quote.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "quote — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/contact.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "contact — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/about.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "about — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/technology.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "technology — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/gaming.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "gaming — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/solutions.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "solutions — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/learn.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "learn — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/learn-guides.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "learn-guides — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/learn-explained.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "learn-explained — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/learn-benchmarks.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "learn-benchmarks — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/learn-glossary.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "learn-glossary — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/learn-blog.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "learn-blog — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/news.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "news — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/legal.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "legal — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/article.html?id=what-is-xmp",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "What is XMP? One-Click Memory Overclocking | TwinMOS Knowledge Hub — TwinMOS Knowledge Hub",
+    "hasTM": true
+  },
+  {
+    "route": "/search.html?q=DDR5",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "Search: DDR5 — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/sitemap.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "sitemap — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/compare.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "compare — TwinMOS",
+    "hasTM": true
+  },
+  {
+    "route": "/ar.html",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [],
+    "status": 200,
+    "title": "توين موس — حلول الذاكرة والتخزين الرائدة منذ 1998",
+    "hasTM": true
+  }
+]

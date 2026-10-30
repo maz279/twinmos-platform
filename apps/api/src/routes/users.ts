@@ -4,11 +4,11 @@ import { Hono } from 'hono';
 import { and, count, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { problem, ROLES } from '@twinmos/shared';
-import { auditLog, session, user } from '@twinmos/db';
+import { account, auditLog, session, user } from '@twinmos/db';
 import type { DB } from '@twinmos/db';
 import type { AuthSession } from '../auth.ts';
 import type { Role } from '@twinmos/shared';
-import { sendStaffInviteMail } from '../mailer.ts';
+import { adminBaseUrl, sendStaffInviteMail } from '../mailer.ts';
 
 class AsyncMutex {
   private queue: Promise<void> = Promise.resolve();
@@ -91,9 +91,32 @@ export function usersRoute(db: DB, deps: {
   r.post('/users/me/accept-password', async (c) => {
     const s = await sessionGuard(c);
     if (s instanceof Response) return s;
+    const [usr] = await db.select({
+      mustChangePassword: user.mustChangePassword,
+    }).from(user).where(eq(user.id, s.user.id)).limit(1);
+
+    // If rotation was required, verify that the account was updated after creation
+    const [acc] = await db.select({
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+    }).from(account).where(eq(account.userId, s.user.id)).limit(1);
+
+    if (usr?.mustChangePassword && acc && acc.updatedAt.getTime() <= acc.createdAt.getTime()) {
+      return c.json(
+        problem(400, 'Password change required', 'You must change your password using the password rotation flow before accepting.'),
+        400,
+        { 'Content-Type': P }
+      );
+    }
+
     // Clear only after Better Auth's change-password succeeded — the SPA calls
     // this right after POST /auth/change-password with the temporary credential.
-    await db.update(user).set({ mustChangePassword: false, updatedAt: new Date() }).where(eq(user.id, s.user.id));
+    await db.update(user).set({
+      mustChangePassword: false,
+      failedLoginCount: 0,
+      lockedUntil: null,
+      updatedAt: new Date(),
+    }).where(eq(user.id, s.user.id));
     await auditRow(c, s.user.id, 'user.password-rotated', s.user.id, { invitedRotation: true });
     return c.json({ ok: true });
   });
@@ -171,9 +194,9 @@ export function usersRoute(db: DB, deps: {
       db.select({ n: count() }).from(user).where(eq(user.banned, true)),
       db.select({ n: count() }).from(session).where(sql`${session.expiresAt} > now()`),
     ]);
-    const joins = await db.select({ d: sql<string>`to_char(${user.createdAt}, 'YYYY-MM-DD')`, n: count() })
+    const joins = await db.select({ d: sql<string>`to_char(${user.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`, n: count() })
       .from(user).where(sql`${user.createdAt} > now() - interval '13 days'`)
-      .groupBy(sql`to_char(${user.createdAt}, 'YYYY-MM-DD')`);
+      .groupBy(sql`to_char(${user.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`);
     const series: Array<{ d: string; n: number }> = [];
     for (let i = 13; i >= 0; i--) {
       const key = new Date(Date.now() - i * 86400_000).toISOString().slice(0, 10);
@@ -227,13 +250,12 @@ export function usersRoute(db: DB, deps: {
       return c.json(problem(409, 'User already exists', 'An account with this email address already exists.'), 409, { 'Content-Type': P });
     }
 
-    // P1.4 (CWE-338, audit finding U-5/F-2): 100% CSPRNG material — two UUID
-    // segments ≈ 96 bits (NIST 800-63B-compliant generated secret). The old
-    // form mixed in Math.random() digits (~42 bits total). Accounts invited
-    // with a generated password are flagged mustChangePassword and locked out
-    // of /admin until they set their own (guard in app.ts).
+    // When the inviter sets no password, the account gets a random, never-shown
+    // secret and the invitee receives a single-use set-password link (ZT-014:
+    // temporary passwords used to travel in the API response and in plain-text
+    // e-mail). mustChangePassword stays as defence in depth until they reset.
     const generated = !parsed.data.password;
-    const tempPassword = parsed.data.password || ('TwinMOS-' + crypto.randomUUID().slice(0, 8) + '!' + crypto.randomUUID().slice(0, 8));
+    const tempPassword = parsed.data.password || (crypto.randomUUID() + crypto.randomUUID());
     try {
       const res = await deps.auth.api.createUser({
         body: {
@@ -244,20 +266,36 @@ export function usersRoute(db: DB, deps: {
         },
       });
       const createdUser = res.user ?? res;
-      await db.update(user).set({ role: parsed.data.role, ...(generated ? { mustChangePassword: true } : {}) }).where(eq(user.id, createdUser.id));
+      await db.update(user).set({
+        role: parsed.data.role,
+        emailVerified: false,
+        failedLoginCount: 0,
+        lockedUntil: null,
+        ...(generated ? { mustChangePassword: true } : {}),
+      }).where(eq(user.id, createdUser.id));
       await auditRow(c, s.user.id, 'user.invite', createdUser.id, { email: parsed.data.email, role: parsed.data.role, name: parsed.data.name, generatedCredential: generated });
 
-      // Dispatch staff invitation email containing login instructions and temporary credentials
-      const emailSent = await sendStaffInviteMail(
-        parsed.data.email,
-        parsed.data.name,
-        parsed.data.role,
-        parsed.data.password ? undefined : tempPassword,
-      );
+      let setPasswordLinkSent = false;
+      if (generated) {
+        try {
+          await deps.auth.api.requestPasswordReset({ body: { email: parsed.data.email, redirectTo: adminBaseUrl() } });
+          setPasswordLinkSent = true;
+        } catch (err) {
+          console.error('[users.invite] set-password link failed:', err);
+        }
+      }
+      const emailSent = await sendStaffInviteMail(parsed.data.email, parsed.data.name, parsed.data.role, setPasswordLinkSent);
+
+      // Dispatch email verification token so staff member receives verification in mailer/outbox
+      try {
+        if (deps.auth?.api?.sendVerificationEmail) {
+          await deps.auth.api.sendVerificationEmail({ body: { email: parsed.data.email } });
+        }
+      } catch { /* non-fatal verification email */ }
 
       return c.json({
-        user: { ...createdUser, role: parsed.data.role },
-        temporaryPassword: parsed.data.password ? undefined : tempPassword,
+        user: { ...createdUser, role: parsed.data.role, emailVerified: false },
+        setPasswordLinkSent,
         emailSent,
       }, 201);
     } catch (err: any) {

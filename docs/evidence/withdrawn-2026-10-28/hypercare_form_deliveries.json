@@ -1,0 +1,44 @@
+[
+  {
+    "type": "contact",
+    "status": 201,
+    "delivered": true,
+    "reference": "CT-2026-2e1df94b"
+  },
+  {
+    "type": "quote",
+    "status": 201,
+    "delivered": true,
+    "reference": "QT-2026-ef1949ef"
+  },
+  {
+    "type": "rma",
+    "status": 201,
+    "delivered": true,
+    "reference": "RMA-2026-ba6cc083"
+  },
+  {
+    "type": "partner-inquiry",
+    "status": 201,
+    "delivered": true,
+    "reference": "PI-2026-65aed3cf"
+  },
+  {
+    "type": "support-ticket",
+    "status": 201,
+    "delivered": true,
+    "reference": "TS-2026-dbc2552b"
+  },
+  {
+    "type": "feedback",
+    "status": 201,
+    "delivered": true,
+    "reference": "FB-2026-4a874091"
+  },
+  {
+    "type": "newsletter",
+    "status": 201,
+    "delivered": true,
+    "reference": "NL-2026-83fd730c"
+  }
+]

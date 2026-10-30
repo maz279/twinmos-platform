@@ -1,0 +1,6 @@
+lab-up rc=0
+provision rc=0
+tools-api rc=1
+routes 325
+routes-authz rc=1
+crawl rc=1

@@ -27,7 +27,7 @@ Shared: `packages/db` (Drizzle schema + migrations, **Postgres dialect** — PGl
 | API | Hono on Node 24 (via `@hono/node-server`) | 4.13.9 | Same code runs on own VM; middleware chain: requestId → rate-limit → auth → RBAC → audit |
 | ORM / DB | Drizzle ORM + drizzle-kit | 0.45.3 / 0.31.11 | **All queries are parameter-bound by construction; raw SQL only via Drizzle `sql``` template (also parameterized). No string-concatenated SQL anywhere.** |
 | Dev DB | @electric-sql/pglite | 0.5.8 | Real Postgres dialect in-process; **dev/test only — API refuses to boot on PGlite when `NODE_ENV=production`** |
-| Prod DB | PostgreSQL 16 (own VM) | — | Same schema, zero rewrite |
+| Prod DB | PostgreSQL 18 (own VM) | — | Same schema, zero rewrite (ADR D-10, PG-06) |
 | Auth | Better Auth (Drizzle adapter, admin + RBAC plugins) | 1.7.6 | Sessions, MFA, roles; `/api/v1/auth/*` |
 | Validation | Zod (shared contracts) | 4.6.5 | One schema validates API input, admin forms, and web payloads |
 | Search | Pagefind (built into `apps/web` dist) | 1.5.2 | Zero-infra fuzzy multilingual search; swap to MeiliSearch only if analytics demand |

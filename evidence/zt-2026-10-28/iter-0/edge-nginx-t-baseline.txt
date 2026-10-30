@@ -1,0 +1,3 @@
+2026/10/28 12:49:47 [emerg] 1#1: could not build map_hash, you should increase map_hash_bucket_size: 128
+nginx: [emerg] could not build map_hash, you should increase map_hash_bucket_size: 128
+nginx: configuration file /etc/nginx/nginx.conf test failed

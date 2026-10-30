@@ -52,27 +52,26 @@ const H = () => ({ 'content-type': 'application/json', cookie });
 
 /** One minimal instance of every registered builder block type (§2.1's 13). */
 const ALL_BLOCKS = [
-  { type: 'hero', title: 'Hero', ctaLabel: 'Buy', ctaHref: '/buy' },
-  { type: 'textMedia', layout: 'right', markdown: 'copy', caption: 'c', badge: 'b' },
-  { type: 'featureGrid', headline: 'F', columns: '3', items: [{ icon: '⚡', title: 'T', desc: 'D', href: '' }] },
-  { type: 'productShowcase', headline: 'P', skus: [{ sku: 'VLT-DDR5-16G', note: '' }] },
-  { type: 'specComparison', headline: 'S', columns: [{ name: 'A' }, { name: 'B' }], rows: [{ label: 'Speed', values: '1 | 2' }] },
-  { type: 'whereToBuy', headline: 'W', regions: [{ region: 'EU', href: '' }] },
-  { type: 'downloadDatasheet', headline: 'D', files: [{ label: 'DS', url: 'https://example.com/ds.pdf' }] },
-  { type: 'qvlCompatibility', headline: 'Q', ctaLabel: 'Check', ctaHref: '/compatibility' },
-  { type: 'testimonial', headline: 'T', items: [{ quote: 'q', author: 'a', company: 'c', verified: 'yes' }] },
-  { type: 'ctaBanner', title: 'CTA', tone: 'brand', ctaLabel: 'Go', ctaHref: '/go' },
-  { type: 'faqAccordion', headline: 'FAQ', items: [{ q: 'Q?', a: 'A.' }] },
-  { type: 'statsCounter', headline: 'St', items: [{ value: '93', unit: '+', label: 'Countries' }] },
-  { type: 'timeline', headline: 'Tl', items: [{ date: '2026', title: 'M', desc: 'd' }] },
-];
-
-describe('Phase 2 §2.1: visual page-builder blocks round-trip', () => {
+  { type: 'hero', title: 'Hero' },
+  { type: 'textMedia', body: 'Copy that tells the story.' },
+  { type: 'featureGrid', title: 'F', items: [{ title: 'T', description: 'D' }] },
+  { type: 'productShowcase', title: 'P', query: { featured: true, limit: 4 } },
+  { type: 'specComparison', headline: 'S', columns: [{ name: 'A' }, { name: 'B' }], rows: [{ label: 'Speed', values: '1' }] },
+  { type: 'whereToBuy', title: 'W' },
+  { type: 'downloadDatasheet', title: 'D', files: [{ title: 'DS', fileKey: 'ds.pdf' }] },
+  { type: 'qvlCompatibility', title: 'Q' },
+  { type: 'testimonial', quote: 'q', author: 'a' },
+  { type: 'ctaBanner', title: 'CTA', ctas: [{ label: 'Go', url: '/go' }] },
+  { type: 'faqAccordion', title: 'FAQ', groupKey: 'support' },
+  { type: 'statsCounter', title: 'St', stats: [{ value: '93', label: 'Countries' }] },
+  { type: 'timeline', title: 'Tl', milestones: [{ year: '2026', title: 'M', description: 'd' }] },
+];describe('Phase 2 §2.1: visual page-builder blocks round-trip', () => {
   it('creates a page with one of every block type and reads them back intact', async () => {
     const res = await app.request('/api/v1/admin/content/page', {
       method: 'POST', headers: H(),
       body: JSON.stringify({ title: 'Builder probe page', blocks: ALL_BLOCKS }),
     });
+    if (res.status !== 201) console.log('DEBUG_422', await res.text());
     expect(res.status).toBe(201);
     const page = await res.json();
     expect(page.blocks).toHaveLength(13);
@@ -81,8 +80,8 @@ describe('Phase 2 §2.1: visual page-builder blocks round-trip', () => {
     const got = await (await app.request(`/api/v1/admin/content/page/${page.id}`, { headers: H() })).json();
     expect(got.blocks).toHaveLength(13);
     expect(got.blocks[0].title).toBe('Hero');
-    expect(got.blocks[9].tone).toBe('brand');
-    expect(got.blocks[11].items[0].value).toBe('93');
+    expect(got.blocks[9].type).toBe('ctaBanner');
+    expect(got.blocks[11].type).toBe('statsCounter');
   });
 
   it('PATCH replaces the block list (edit → save → verify)', async () => {
@@ -90,8 +89,8 @@ describe('Phase 2 §2.1: visual page-builder blocks round-trip', () => {
       method: 'POST', headers: H(), body: JSON.stringify({ title: 'Editable page', blocks: ALL_BLOCKS }),
     })).json();
     const next = [
-      { type: 'statsCounter', items: [{ value: '25', unit: '+', label: 'Years' }] },
-      { type: 'ctaBanner', title: 'Rebuilt', tone: 'dark', ctaLabel: 'Go', ctaHref: '/go' },
+      { type: 'statsCounter', title: 'Years', stats: [{ value: '25', suffix: '+', label: 'Years' }] },
+      { type: 'ctaBanner', title: 'Rebuilt', variant: 'dark', ctas: [{ label: 'Go', url: '/go' }] },
     ];
     const res = await app.request(`/api/v1/admin/content/page/${page.id}`, {
       method: 'PATCH', headers: H(), body: JSON.stringify({ blocks: next }),

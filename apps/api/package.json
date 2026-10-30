@@ -3,22 +3,28 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node --env-file-if-exists=../../.env --watch --experimental-strip-types --no-warnings src/index.ts",
+    "dev": "node --env-file-if-exists=../../.env --watch-path=src --watch --experimental-strip-types --no-warnings src/index.ts",
     "start": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings src/index.ts",
     "test": "vitest run",
     "db:migrate": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/migrate.ts",
     "db:seed": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/seed.ts",
-    "db:reset": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/reset.ts"
+    "db:seed:bootstrap": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/seed.ts --bootstrap",
+    "db:seed:demo": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/seed.ts --demo",
+    "db:import:menus": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/import-prototype-menus.ts",
+    "db:reset": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/reset.ts",
+    "db:repair-translations": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/repair-translations.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",
     "@twinmos/db": "0.1.0",
     "@twinmos/shared": "0.1.0",
-    "better-auth": "^1.7.6",
+    "better-auth": "^1.7.14",
     "drizzle-orm": "^0.45.3",
     "hono": "^4.13.9",
     "isomorphic-dompurify": "^4.4.0",
+    "jsdom": "^30.0.0",
     "marked": "^18.0.14",
+    "pino": "^10.4.0",
     "resend": "^6.30.0",
     "sharp": "^0.35.5"
   },

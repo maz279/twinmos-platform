@@ -1,0 +1,10 @@
+lab-up rc=0
+provision rc=0
+tools-api rc=0
+routes 325
+routes-authz rc=0
+cms-reflect rc=0
+media-persist rc=0
+backup rc=0
+restore-drill rc=0
+crawl rc=1

@@ -4,11 +4,13 @@
 // up/down/duplicate/delete actions), and see the page in the live preview
 // modal (desktop/tablet/mobile). No raw JSON typing anywhere.
 import React, { useState } from 'react';
-import { BLOCK_DEFS, blockDef } from './blocks';
+import { BLOCK_DEFS, blockDef, inferFields } from './blocks';
 import type { FieldDef, PageBlock } from './blocks';
 import { MediaPicker } from '../../media-picker';
 import { API } from '../../api';
 import { btn, btnGhost, input } from '../../ui';
+
+const NL = String.fromCharCode(10); // one list entry per line in 'lines' editors
 
 const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
 
@@ -110,16 +112,16 @@ export default function PageBuilder({ blocks, onChange }: {
                 <span>{def?.icon ?? '▪️'}</span>
                 <b style={{ color: NAVY, fontSize: 13.5, flex: 1 }}>{def?.label ?? block.type} <span style={{ color: '#93A0B4', fontWeight: 400, fontSize: 11.5 }}>#{i + 1}</span></b>
                 <span style={{ display: 'flex', gap: 4 }}>
-                  <IconBtn title="Move up" disabled={i === 0} onClick={(e) => { e.stopPropagation(); move(i, i - 1); }}>↑</IconBtn>
-                  <IconBtn title="Move down" disabled={i === blocks.length - 1} onClick={(e) => { e.stopPropagation(); move(i, i + 1); }}>↓</IconBtn>
-                  <IconBtn title="Duplicate" onClick={(e) => { e.stopPropagation(); duplicate(i); }}>⧉</IconBtn>
-                  <IconBtn title="Delete block" onClick={(e) => { e.stopPropagation(); remove(i); }}>✕</IconBtn>
-                  <IconBtn title={expanded ? 'Collapse' : 'Settings'}>{expanded ? '▾' : '▸'}</IconBtn>
+                  <IconBtn title="Move up" ariaLabel={`Move ${def?.label ?? block.type} block up`} disabled={i === 0} onClick={(e) => { e.stopPropagation(); move(i, i - 1); }}>↑</IconBtn>
+                  <IconBtn title="Move down" ariaLabel={`Move ${def?.label ?? block.type} block down`} disabled={i === blocks.length - 1} onClick={(e) => { e.stopPropagation(); move(i, i + 1); }}>↓</IconBtn>
+                  <IconBtn title="Duplicate" ariaLabel={`Duplicate ${def?.label ?? block.type} block`} onClick={(e) => { e.stopPropagation(); duplicate(i); }}>⧉</IconBtn>
+                  <IconBtn title="Delete block" ariaLabel={`Delete ${def?.label ?? block.type} block`} onClick={(e) => { e.stopPropagation(); remove(i); }}>✕</IconBtn>
+                  <IconBtn title={expanded ? 'Collapse' : 'Settings'} ariaLabel={expanded ? 'Collapse block settings' : 'Expand block settings'}>{expanded ? '▾' : '▸'}</IconBtn>
                 </span>
               </div>
-              {expanded && def && (
+              {expanded && (
                 <div style={{ padding: '10px 12px', display: 'grid', gap: 10 }}>
-                  {def.fields.map((f) => (
+                  {(def ? def.fields : inferFields(block as Record<string, unknown>)).map((f) => (
                     <FieldRow key={f.key} field={f} value={(block as Record<string, unknown>)[f.key]} basePath={[f.key]}
                       onMediaPick={(path) => setPickMedia({ path: [i, ...path] })}
                       onChange={(path, v) => setField(i, path, v)} />
@@ -145,9 +147,9 @@ export default function PageBuilder({ blocks, onChange }: {
   );
 }
 
-function IconBtn({ title, children, disabled, onClick }: { title: string; children: React.ReactNode; disabled?: boolean; onClick?: (e: React.MouseEvent) => void }) {
+function IconBtn({ title, ariaLabel, children, disabled, onClick }: { title: string; ariaLabel?: string; children: React.ReactNode; disabled?: boolean; onClick?: (e: React.MouseEvent) => void }) {
   return (
-    <button title={title} disabled={disabled} onClick={onClick}
+    <button title={title} aria-label={ariaLabel || title} disabled={disabled} onClick={onClick}
       style={{ width: 24, height: 24, border: '1px solid #E6EBF1', borderRadius: 6, background: '#fff', color: NAVY, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.4 : 1, fontSize: 12, padding: 0 }}>
       {children}
     </button>
@@ -159,7 +161,8 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
   field: FieldDef; value: unknown; basePath: (number | string)[];
   onChange: (path: (number | string)[], v: unknown) => void; onMediaPick: (path: (number | string)[]) => void;
 }) {
-  const label = <label style={{ fontSize: 11.5, fontWeight: 700, color: '#66748A', display: 'block', marginBottom: 3 }}>{field.label}</label>;
+  const inputId = `pb-field-${basePath.join('-')}-${(field.key || field.label).replace(/\s+/g, '-').toLowerCase()}`;
+  const label = <label htmlFor={inputId} style={{ fontSize: 11.5, fontWeight: 700, color: '#66748A', display: 'block', marginBottom: 3 }}>{field.label}</label>;
 
   if (field.k === 'list') {
     const items = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
@@ -177,13 +180,13 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
           <div key={idx} style={{ display: 'grid', gap: 8, border: '1px solid #F0F3F7', borderRadius: 7, padding: 8, marginBottom: 8, background: '#FBFDFE' }}>
             <div style={{ display: 'flex', gap: 4 }}>
               <b style={{ fontSize: 11.5, color: '#66748A', flex: 1 }}>{field.itemLabel} {idx + 1}</b>
-              <IconBtn title="Move up" disabled={idx === 0} onClick={() => {
+              <IconBtn title="Move up" ariaLabel={`Move ${field.itemLabel} ${idx + 1} up`} disabled={idx === 0} onClick={() => {
                 const next = [...items]; const [x] = next.splice(idx, 1); next.splice(idx - 1, 0, x); onChange(basePath, next);
               }}>↑</IconBtn>
-              <IconBtn title="Move down" disabled={idx === items.length - 1} onClick={() => {
+              <IconBtn title="Move down" ariaLabel={`Move ${field.itemLabel} ${idx + 1} down`} disabled={idx === items.length - 1} onClick={() => {
                 const next = [...items]; const [x] = next.splice(idx, 1); next.splice(idx + 1, 0, x); onChange(basePath, next);
               }}>↓</IconBtn>
-              <IconBtn title="Remove" onClick={() => onChange(basePath, items.filter((_, j) => j !== idx))}>✕</IconBtn>
+              <IconBtn title="Remove" ariaLabel={`Remove ${field.itemLabel} ${idx + 1}`} onClick={() => onChange(basePath, items.filter((_, j) => j !== idx))}>✕</IconBtn>
             </div>
             {field.itemFields.map((f) => (
               <FieldRow key={f.key} field={f} value={item[f.key]} basePath={[...basePath, idx, f.key]}
@@ -206,7 +209,7 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
             {id != null && Number.isFinite(id) && <img src={API + '/admin/media/' + id + '/file'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
           </span>
           <button style={{ ...btnGhost, fontSize: 12 }} onClick={() => onMediaPick(basePath)}>{id ? 'Change' : 'Choose image'}</button>
-          {id != null && <IconBtn title="Clear" onClick={() => onChange(basePath, null)}>✕</IconBtn>}
+          {id != null && <IconBtn title="Clear" ariaLabel={`Clear ${field.label} image`} onClick={() => onChange(basePath, null)}>✕</IconBtn>}
         </div>
       </div>
     );
@@ -216,9 +219,20 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
     return (
       <div>
         {label}
-        <select style={{ ...input, width: '100%' }} value={String(value ?? '')} onChange={(e) => onChange(basePath, e.target.value)}>
+        <select id={inputId} aria-label={field.label} style={{ ...input, width: '100%' }} value={String(value ?? '')} onChange={(e) => onChange(basePath, e.target.value)}>
           {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
+      </div>
+    );
+  }
+  if (field.k === 'lines') {
+    const lines = Array.isArray(value) ? (value as unknown[]).map(String) : [];
+    return (
+      <div>
+        {label}
+        <textarea id={inputId} aria-label={field.label} style={{ ...input, width: '100%', minHeight: 70, fontFamily: 'inherit' }}
+          value={lines.join(NL)} onChange={(e) => onChange(basePath, e.target.value.split(NL))}
+          onBlur={(e) => onChange(basePath, e.target.value.split(NL).map((l) => l.trim()).filter(Boolean))} />
       </div>
     );
   }
@@ -226,7 +240,7 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
     return (
       <div>
         {label}
-        <textarea style={{ ...input, width: '100%', minHeight: 70, fontFamily: 'inherit' }} placeholder={field.placeholder}
+        <textarea id={inputId} aria-label={field.label} style={{ ...input, width: '100%', minHeight: 70, fontFamily: 'inherit' }} placeholder={field.placeholder}
           value={String(value ?? '')} onChange={(e) => onChange(basePath, e.target.value)} />
       </div>
     );
@@ -235,7 +249,7 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
     return (
       <div>
         {label}
-        <input type="number" style={{ ...input, width: '100%' }} min={field.min} max={field.max}
+        <input id={inputId} aria-label={field.label} type="number" style={{ ...input, width: '100%' }} min={field.min} max={field.max}
           value={value == null ? '' : Number(value)} onChange={(e) => onChange(basePath, e.target.value === '' ? null : Number(e.target.value))} />
       </div>
     );
@@ -243,7 +257,7 @@ function FieldRow({ field, value, basePath, onChange, onMediaPick }: {
   return (
     <div>
       {label}
-      <input style={{ ...input, width: '100%' }} placeholder={field.placeholder} value={String(value ?? '')}
+      <input id={inputId} aria-label={field.label} style={{ ...input, width: '100%' }} placeholder={field.placeholder} value={String(value ?? '')}
         onChange={(e) => onChange(basePath, e.target.value)} />
     </div>
   );

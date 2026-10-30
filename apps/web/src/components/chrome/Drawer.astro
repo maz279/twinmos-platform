@@ -1,0 +1,90 @@
+---
+// Drawer.astro — Mobile navigation drawer; entries come from the CMS drawer
+// menu (MS5.1 T5.1.1) and the brand block from site settings.
+interface NavItem {
+  id?: number;
+  title: string;
+  targetUrl?: string | null;
+  metadata?: Record<string, any>;
+  children?: NavItem[];
+}
+
+interface Props {
+  currentLocale?: string;
+  brand?: { name?: string; logoUrl?: string };
+  menu?: { items?: NavItem[] } | null;
+}
+
+const {
+  currentLocale = 'en',
+  brand = {},
+  menu = null,
+} = Astro.props;
+
+const brandName = brand.name || 'TwinMOS Technologies';
+const logoUrl = brand.logoUrl || '/assets/img/logo.webp';
+const hrefOf = (item: NavItem) => item.targetUrl || '#';
+const items: NavItem[] = menu?.items ?? [];
+const isQuote = (item: NavItem) => /quote/i.test(item.title);
+const isCompare = (item: NavItem) => /compare/i.test(item.title);
+---
+
+<div class="drawer" id="drawer">
+  <div class="drawer-veil"></div>
+  <div class="drawer-panel" role="dialog" aria-label="Mobile menu">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <img src={logoUrl} alt={brandName} style="height:22px" />
+      <button class="icon-btn drawer-close" aria-label="Close menu" type="button">
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3.5 3.5l9 9M12.5 3.5l-9 9"></path>
+        </svg>
+      </button>
+    </div>
+
+    <label for="drawerLangSel" style="display:block;font-size:12px;font-weight:700;color:var(--muted);margin:2px 0 6px">Language / region</label>
+    <select id="drawerLangSel" class="lang-sel drawer-lang" aria-label="Language / region">
+      <option value="en" selected={!currentLocale || currentLocale.toLowerCase() === 'en'}>EN</option>
+      <option value="ar" selected={currentLocale?.toLowerCase() === 'ar'}>AR (RTL)</option>
+      <option value="hi" selected={currentLocale?.toLowerCase() === 'hi'}>HI</option>
+      <option value="ru" selected={currentLocale?.toLowerCase() === 'ru'}>RU</option>
+      <option value="zh-cn" selected={currentLocale?.toLowerCase() === 'zh-cn'}>ZH-CN</option>
+      <option value="fr" selected={currentLocale?.toLowerCase() === 'fr'}>FR</option>
+      <option value="es" selected={currentLocale?.toLowerCase() === 'es'}>ES</option>
+      <option value="pt" selected={currentLocale?.toLowerCase() === 'pt'}>PT</option>
+      <option value="de" selected={currentLocale?.toLowerCase() === 'de'}>DE</option>
+    </select>
+
+    {items.map((item: NavItem, idx: number) => {
+      const children: NavItem[] = item.children ?? [];
+      const group = children.length > 0 || item.metadata?.kind === 'drawer_group';
+      if (group) {
+        const subId = `dsub-${item.id ?? idx}`;
+        return (
+          <>
+            <a class="dlink" href="#" data-sub={subId} aria-expanded="false" aria-controls={subId} role="button">
+              {item.title} <span aria-hidden="true">&#9662;</span>
+            </a>
+            <div class="drawer-sub" id={subId}>
+              {children.map((child: NavItem) => (
+                <a href={hrefOf(child)}>{child.title}</a>
+              ))}
+            </div>
+          </>
+        );
+      }
+      if (isQuote(item)) {
+        return (
+          <a class="btn btn-accent" style="margin-top:16px" href={hrefOf(item)}>{item.title}</a>
+        );
+      }
+      if (isCompare(item)) {
+        return (
+          <a class="dlink" href={hrefOf(item)}>
+            {item.title} <span class="tray-count" data-tray-count style="display:none">0</span>
+          </a>
+        );
+      }
+      return <a class="dlink" href={hrefOf(item)}>{item.title}</a>;
+    })}
+  </div>
+</div>

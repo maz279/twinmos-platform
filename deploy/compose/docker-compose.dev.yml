@@ -1,0 +1,18 @@
+# Development overlay for local debugging
+services:
+  edge:
+    volumes:
+      - ../../apps/web/dist:/var/www/twinmos/web:ro
+      - ../../apps/admin/dist:/var/www/twinmos/admin:ro
+
+  api:
+    ports:
+      - "127.0.0.1:8787:8787" # Exposed to local loopback ONLY during development
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../../apps/api/data:/app/apps/api/data
+
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"

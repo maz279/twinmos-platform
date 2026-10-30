@@ -7,9 +7,10 @@
 // wash out against the gradient. On white cards the navy wordmark is as-is.
 import React, { useState } from 'react';
 import { API, apiGet } from './api';
+import ForgotPassword from './forgot-password';
 
 const NAVY = '#16222F'; const CYAN = '#1DBF9F'; const GOLD = '#E8A33D';
-const LOGO = '/assets/img/logo.webp';
+const LOGO = `${import.meta.env.BASE_URL}assets/img/logo.webp`;
 // Rail top: the ORIGINAL navy TwinMOS wordmark on a frosted-glass chip — true
 // brand colours stay visible against the dark rail regardless of width/zoom
 // (a filtered monochrome wordmark can read as washed out or invisible).
@@ -36,7 +37,7 @@ const btnMain: React.CSSProperties = {
 export type Me = { user?: { id: string; email: string; role: string; twoFactorEnabled?: boolean } };
 
 export default function Login({ onDone }: { onDone: (me: Me) => void }) {
-  const [step, setStep] = useState<'credentials' | 'challenge'>('credentials');
+  const [step, setStep] = useState<'credentials' | 'challenge' | 'forgot'>('credentials');
   const [email, setEmail] = useState(''); const [password, setPassword] = useState('');
   const [code, setCode] = useState(''); const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
@@ -156,16 +157,28 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
               <p style={{ margin: '0 0 24px', color: '#66748A', fontSize: 13.5, textAlign: 'center' }}>
                 Authorised TwinMOS personnel only. Activity is logged.
               </p>
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>User ID (email)</label>
-              <input className="tm-in" autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="name@twinmos.com" type="email" required autoComplete="username" style={cardIn} />
-              <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Password</label>
-              <input className="tm-in" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••" type="password" required autoComplete="current-password" style={cardIn} />
+              <label htmlFor="login-email" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>User ID (email)</label>
+              <input id="login-email" aria-label="User ID (email)" className="tm-in" autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="name@twinmos.com" type="email" required autoComplete="username" style={cardIn} />
+              <label htmlFor="login-password" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Password</label>
+              <input id="login-password" aria-label="Password" className="tm-in" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••" type="password" required autoComplete="current-password" style={cardIn} />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -6, marginBottom: 14 }}>
+                <button
+                  type="button"
+                  onClick={() => setStep('forgot')}
+                  style={{ background: 'none', border: 0, padding: 0, color: CYAN, fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
+                  Forgot password?
+                </button>
+              </div>
               <button className="tm-btn" disabled={busy} style={{ ...btnMain, opacity: busy ? 0.65 : 1 }}>{busy ? 'Verifying…' : 'Sign in'}</button>
               {err && <p role="alert" style={{ color: '#C2453C', fontSize: 13.5, margin: '14px 0 0', textAlign: 'center' }}>{err}</p>}
               <p style={{ color: '#66748A', fontSize: 12, margin: '20px 0 0', textAlign: 'center' }}>
                 Protected by TOTP multi-factor · TwinMOS ISO-aligned controls
               </p>
             </form>
+          )}
+
+          {step === 'forgot' && (
+            <ForgotPassword onBack={() => setStep('credentials')} />
           )}
 
           {step === 'challenge' && (
@@ -180,7 +193,8 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
                 Enter the 6-digit code from your authenticator app.<br />
                 <span style={{ fontSize: 12.5 }}>You may also enter a recovery code (format XXXX-XXXX).</span>
               </p>
-              <input className="tm-in" autoFocus value={code} onChange={e => setCode(e.target.value)} placeholder="123 456" inputMode="numeric" autoComplete="one-time-code" required
+              <label htmlFor="login-totp-code" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>Authentication code</label>
+              <input id="login-totp-code" aria-label="Authentication code" className="tm-in" autoFocus value={code} onChange={e => setCode(e.target.value)} placeholder="123 456" inputMode="numeric" autoComplete="one-time-code" required
                 style={{ ...cardIn, textAlign: 'center', fontSize: 22, letterSpacing: 6, fontWeight: 700 }} />
               <button className="tm-btn" disabled={busy} style={{ ...btnMain, opacity: busy ? 0.65 : 1 }}>{busy ? 'Checking…' : 'Verify'}</button>
               {err && <p role="alert" style={{ color: '#C2453C', fontSize: 13.5, margin: '14px 0 0' }}>{err}</p>}

@@ -1,0 +1,722 @@
+[
+ {
+  "id": 1,
+  "device_brand": "Lenovo",
+  "device_model": "IdeaPad Slim 3 (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 16,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 1,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 2,
+  "device_brand": "Lenovo",
+  "device_model": "ThinkPad T14 Gen 4 (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "SO-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR5-5600",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 3,
+  "device_brand": "Lenovo",
+  "device_model": "ThinkPad E16 (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 32,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 4,
+  "device_brand": "HP",
+  "device_model": "Pavilion 15 (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 16,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 5,
+  "device_brand": "HP",
+  "device_model": "OMEN 16 (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "SO-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR5-5600",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 6,
+  "device_brand": "HP",
+  "device_model": "Victus 15 (DDR4/DDR5 by SKU)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 32,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR4-3200 / DDR5-4800",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 7,
+  "device_brand": "Dell",
+  "device_model": "Inspiron 15 3000 (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 16,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 8,
+  "device_brand": "Dell",
+  "device_model": "XPS 15 9520 (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "SO-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR5-4800",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 9,
+  "device_brand": "Dell",
+  "device_model": "Latitude 5440 (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 32,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 10,
+  "device_brand": "ASUS",
+  "device_model": "VivoBook 15 (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 16,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 1,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 11,
+  "device_brand": "ASUS",
+  "device_model": "ROG Strix G16 (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "SO-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR5-4800",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 12,
+  "device_brand": "ASUS",
+  "device_model": "Zenbook 14 OLED (storage upgrade)",
+  "memory_gen": "DDR4",
+  "form_factor": "SODIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "Memory soldered on board",
+  "cats": [
+   "portable-ssd"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "portable-ssd"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 13,
+  "device_brand": "Acer",
+  "device_model": "Aspire 5 (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 32,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 14,
+  "device_brand": "Acer",
+  "device_model": "Nitro 5 (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 32,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 15,
+  "device_brand": "MSI",
+  "device_model": "Katana 15 (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "SO-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "DDR5-4800",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 16,
+  "device_brand": "MSI",
+  "device_model": "Modern 14 (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 16,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 1,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 17,
+  "device_brand": "Apple",
+  "device_model": "MacBook Pro 14″ (M-series)",
+  "memory_gen": "DDR4",
+  "form_factor": "SODIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "laptop",
+  "slots": 2,
+  "speed": "Unified memory — soldered",
+  "cats": [
+   "portable-ssd"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 18,
+  "device_brand": "HP",
+  "device_model": "Pavilion Desktop TP01 (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "U-DIMM",
+  "max_gb": 32,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "desktop",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-desktop"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 19,
+  "device_brand": "HP",
+  "device_model": "OMEN 45L (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "U-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "desktop",
+  "slots": 4,
+  "speed": "DDR5-5200",
+  "cats": [
+   "dram-gaming",
+   "dram-desktop"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 20,
+  "device_brand": "Dell",
+  "device_model": "Inspiron Desktop 5000 (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "U-DIMM",
+  "max_gb": 32,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "desktop",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-desktop"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 21,
+  "device_brand": "Dell",
+  "device_model": "Alienware Aurora R16 (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "U-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "desktop",
+  "slots": 4,
+  "speed": "DDR5-5600",
+  "cats": [
+   "dram-gaming",
+   "dram-desktop"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 22,
+  "device_brand": "Lenovo",
+  "device_model": "IdeaCentre 5i (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "U-DIMM",
+  "max_gb": 32,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "desktop",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-desktop"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 23,
+  "device_brand": "Lenovo",
+  "device_model": "Legion T5 (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "U-DIMM",
+  "max_gb": 32,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "desktop",
+  "slots": 2,
+  "speed": "DDR5-4800",
+  "cats": [
+   "dram-gaming"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 24,
+  "device_brand": "ASUS",
+  "device_model": "PRIME B650M-A (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "U-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "diy",
+  "slots": 2,
+  "speed": "DDR5-6400 (OC)",
+  "cats": [
+   "dram-desktop",
+   "dram-gaming"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 25,
+  "device_brand": "ASUS",
+  "device_model": "TUF Gaming B560M (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "U-DIMM",
+  "max_gb": 128,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "diy",
+  "slots": 4,
+  "speed": "DDR4-5000 (OC)",
+  "cats": [
+   "dram-desktop",
+   "dram-gaming"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 26,
+  "device_brand": "ASUS",
+  "device_model": "ROG Strix X670E (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "U-DIMM",
+  "max_gb": 128,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "diy",
+  "slots": 4,
+  "speed": "DDR5-6400+ (OC)",
+  "cats": [
+   "dram-gaming",
+   "dram-desktop"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 27,
+  "device_brand": "MSI",
+  "device_model": "PRO B760M (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "U-DIMM",
+  "max_gb": 128,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "diy",
+  "slots": 4,
+  "speed": "DDR5-7200 (OC)",
+  "cats": [
+   "dram-desktop"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 28,
+  "device_brand": "MSI",
+  "device_model": "MAG B550 Tomahawk (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "U-DIMM",
+  "max_gb": 128,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "diy",
+  "slots": 4,
+  "speed": "DDR4-4400 (OC)",
+  "cats": [
+   "dram-gaming",
+   "dram-desktop"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 29,
+  "device_brand": "Gigabyte",
+  "device_model": "B650 AORUS Elite (DDR5)",
+  "memory_gen": "DDR5",
+  "form_factor": "U-DIMM",
+  "max_gb": 128,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "diy",
+  "slots": 4,
+  "speed": "DDR5-6000 (OC)",
+  "cats": [
+   "dram-gaming",
+   "dram-desktop"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 30,
+  "device_brand": "Gigabyte",
+  "device_model": "B450 AORUS M (DDR4)",
+  "memory_gen": "DDR4",
+  "form_factor": "U-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "diy",
+  "slots": 2,
+  "speed": "DDR4-3600 (OC)",
+  "cats": [
+   "dram-desktop"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme",
+   "ssd-sata"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 31,
+  "device_brand": "Intel NUC",
+  "device_model": "NUC 12 Wall Street Canyon (DDR4 SO-DIMM)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "minipc",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 32,
+  "device_brand": "Intel NUC",
+  "device_model": "NUC 13 Arena (DDR4 SO-DIMM)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "minipc",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 33,
+  "device_brand": "ASUS",
+  "device_model": "ExpertCenter PN52 (DDR5 SO-DIMM)",
+  "memory_gen": "DDR5",
+  "form_factor": "SO-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "minipc",
+  "slots": 2,
+  "speed": "DDR5-4800",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 34,
+  "device_brand": "ASUS",
+  "device_model": "ExpertCenter PN54 (DDR5 SO-DIMM)",
+  "memory_gen": "DDR5",
+  "form_factor": "SO-DIMM",
+  "max_gb": 64,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "minipc",
+  "slots": 2,
+  "speed": "DDR5-5600",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ },
+ {
+  "id": 35,
+  "device_brand": "MSI",
+  "device_model": "Cubi NUC 13 CUB (DDR4 SO-DIMM)",
+  "memory_gen": "DDR4",
+  "form_factor": "SO-DIMM",
+  "max_gb": 32,
+  "notes": "Dual-channel architecture supported.",
+  "device_type": "minipc",
+  "slots": 2,
+  "speed": "DDR4-3200",
+  "cats": [
+   "dram-notebook"
+  ],
+  "ssd_note": "PCIe NVMe M.2 2280 upgrade supported",
+  "ssd_cats": [
+   "ssd-nvme"
+  ],
+  "qvl_status": "certified"
+ }
+]

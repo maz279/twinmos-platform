@@ -49,7 +49,7 @@ const VERDICT: Record<string, { label: string; color: string; bg: string; hint: 
 };
 
 export default function Serials({ canWrite }: { canWrite: boolean }) {
-  const [tab, setTab] = useState<'registry' | 'import' | 'anomalies'>('registry');
+  const [tab, setTab] = useState<'registry' | 'checks' | 'import' | 'anomalies'>('registry');
 
   return (
     <div>
@@ -60,17 +60,79 @@ export default function Serials({ canWrite }: { canWrite: boolean }) {
       />
       <AnalyticsStrip />
       <Toolbar style={{ margin: '12px 0' }}>
-        {(['registry', 'import', 'anomalies'] as const).map((t) => (
+        {(['registry', 'checks', 'import', 'anomalies'] as const).map((t) => (
           <button key={t} style={tab === t ? btn : btnGhost} onClick={() => setTab(t)}>
-            {t === 'registry' ? 'Registry' : t === 'import' ? 'CSV import' : 'Anomaly scan'}
+            {t === 'registry' ? 'Registry' : t === 'checks' ? 'Check log' : t === 'import' ? 'CSV import' : 'Anomaly scan'}
           </button>
         ))}
       </Toolbar>
 
       {tab === 'registry' && <Registry canWrite={canWrite} />}
+      {tab === 'checks' && <ChecksLogTab />}
       {tab === 'import' && <ImportTab canWrite={canWrite} />}
       {tab === 'anomalies' && <AnomalyTab canWrite={canWrite} />}
     </div>
+  );
+}
+
+// ---- check log (GET /admin/sn-checks) -----------------------------------------
+
+type SnChecksReport = {
+  window: { from: string; to: string };
+  total: number;
+  byResult: Record<string, number>;
+  topSerials: Array<{ serial: string; checks: number }>;
+  recent: Array<{ id: number; serial: string; sku: string | null; result: string; ip: string | null; country: string | null; ua: string | null; checkedAt: string }>;
+};
+
+/** Public verification log with a from/to window (default: last 30 days) —
+ *  the report view over every POST /api/v1/sn-check the site served. */
+function ChecksLogTab() {
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const [from, setFrom] = useState(iso(new Date(Date.now() - 30 * 86400_000)));
+  const [to, setTo] = useState(iso(new Date()));
+  const qs = new URLSearchParams({ from, to });
+  const { data, error, loading, reload } = useAsync<SnChecksReport>(() => apiGet<SnChecksReport>(`/admin/sn-checks?${qs.toString()}`), [from, to]);
+
+  return (
+    <SectionCard title="Verification check log">
+      <div style={{ display: 'flex', gap: 8, margin: '10px 0', alignItems: 'center', flexWrap: 'wrap' }}>
+        <label style={{ fontSize: 12.5, color: MUTED }}>From <input type="date" style={input} value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label style={{ fontSize: 12.5, color: MUTED }}>To <input type="date" style={input} value={to} onChange={(e) => setTo(e.target.value)} /></label>
+        <button style={btnGhost} onClick={reload}>Refresh</button>
+        {data && (
+          <span style={{ fontSize: 12.5, color: MUTED }}>
+            {data.total} check{data.total === 1 ? '' : 's'} ·{' '}
+            {Object.entries(data.byResult).map(([r, n]) => `${r} ${n}`).join(' · ')}
+          </span>
+        )}
+      </div>
+      {error ? <Err error={error} /> : null}
+      {loading ? <p>Loading…</p> : data ? (
+        data.recent.length === 0 ? <Empty text="No public serial checks in this window." /> : (
+          <>
+            {data.topSerials.length > 0 && (
+              <p style={{ fontSize: 12.5, color: MUTED }}>
+                Most-checked serials: {data.topSerials.slice(0, 5).map((s) => `${s.serial} (${s.checks})`).join(' · ')}
+              </p>
+            )}
+            <Table head={['Checked at', 'Serial', 'Result', 'SKU', 'IP', 'Country']}>
+              {data.recent.map((r) => (
+                <tr key={r.id}>
+                  <td style={td}>{fmtDate(r.checkedAt)}</td>
+                  <td style={td}><b style={{ fontFamily: 'ui-monospace, Menlo, monospace' }}>{r.serial}</b></td>
+                  <td style={td}><Badge value={r.result} /></td>
+                  <td style={td}>{r.sku ?? '—'}</td>
+                  <td style={td}>{r.ip ?? '—'}</td>
+                  <td style={td}>{r.country ?? '—'}</td>
+                </tr>
+              ))}
+            </Table>
+            <p style={{ fontSize: 11.5, color: FAINT }}>Showing the {data.recent.length} most recent checks in the window (API cap 50) — use the window to narrow.</p>
+          </>
+        )
+      ) : null}
+    </SectionCard>
   );
 }
 

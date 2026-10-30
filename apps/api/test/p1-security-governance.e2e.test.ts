@@ -154,7 +154,8 @@ describe('Phase 1.1: Users & Roles Management Module & Better Auth Admin Plugin'
     });
     expect(invalid.status).toBe(422);
 
-    // Successful invite with auto-generated password
+    // Successful invite: no credential in the response or the mail (ZT-014);
+    // the invitee sets a password through a single-use reset link
     const res = await app.request('/api/v1/admin/users/invite', {
       method: 'POST',
       headers: { 'content-type': 'application/json', cookie: superAdminCookie },
@@ -164,19 +165,12 @@ describe('Phase 1.1: Users & Roles Management Module & Better Auth Admin Plugin'
     const body = await res.json();
     expect(body.user.email).toBe('staff1@twinmos.dev');
     expect(body.user.role).toBe('editor');
-    expect(body.temporaryPassword).toBeTruthy();
+    expect(body.temporaryPassword).toBeUndefined();
+    expect(body.setPasswordLinkSent).toBe(true);
     expect(body.emailSent).toBe(true);
     invitedUserId = body.user.id;
 
-    // Verify invited user can successfully sign in with the issued temporary password
-    const loginRes = await app.request('/api/v1/auth/sign-in/email', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: 'staff1@twinmos.dev', password: body.temporaryPassword }),
-    });
-    expect(loginRes.status).toBe(200);
-
-    // Verify staff invite email was dispatched to MAIL_OUTBOX_DIR with temporary credentials
+    // Verify the staff invite e-mail and the set-password link reached MAIL_OUTBOX_DIR
     const mailFiles = readdirSync(process.env.MAIL_OUTBOX_DIR!);
     const inviteMails = mailFiles
       .map((f) => {
@@ -186,14 +180,17 @@ describe('Phase 1.1: Users & Roles Management Module & Better Auth Admin Plugin'
           return null;
         }
       })
-      .filter((m) => m?.meta?.kind === 'staff-invite' && m?.to === 'staff1@twinmos.dev');
+      .filter((m) => m?.to === 'staff1@twinmos.dev');
+    const resetMail = inviteMails.find((m) => /Password Reset/.test(m.subject ?? ''));
+    expect(resetMail?.text).toMatch(/reset-password\/[A-Za-z0-9_-]+/);
+    const staffInvites = inviteMails.filter((m) => m?.meta?.kind === 'staff-invite');
 
-    expect(inviteMails.length).toBeGreaterThanOrEqual(1);
-    const inviteMail = inviteMails[0];
+    expect(staffInvites.length).toBeGreaterThanOrEqual(1);
+    const inviteMail = staffInvites[0];
     expect(inviteMail.to).toBe('staff1@twinmos.dev');
     expect(inviteMail.subject).toContain('Staff Invitation');
     expect(inviteMail.subject).toContain('editor');
-    expect(inviteMail.text).toContain(body.temporaryPassword);
+    expect(inviteMail.text).not.toMatch(/temporary password|password:/i);
     expect(inviteMail.text).toContain('Staff One');
 
     // Duplicate email rejected with 409
@@ -552,6 +549,7 @@ describe('Phase 1.2: Forensic Audit Currency Compliance Fix', () => {
         brandId: 1,
         categoryId: 1,
         currency: 'BDT',
+        source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
       }),
     });
     expect(bdtRes.status).toBe(422);
@@ -568,6 +566,7 @@ describe('Phase 1.2: Forensic Audit Currency Compliance Fix', () => {
           brandId: 1,
           categoryId: 1,
           currency: badCur,
+          source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
         }),
       });
       expect(res.status).toBe(422);
@@ -590,6 +589,7 @@ describe('Phase 1.2: Forensic Audit Currency Compliance Fix', () => {
           categoryId: 1,
           priceUsd: 149.99,
           currency: cur,
+          source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
         }),
       });
       expect(res.status).toBe(201);
@@ -609,6 +609,7 @@ describe('Phase 1.2: Forensic Audit Currency Compliance Fix', () => {
         brandId: 1,
         categoryId: 1,
         currency: 'EUR',
+        source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
       }),
     });
     expect(createRes.status).toBe(201);
@@ -647,6 +648,7 @@ describe('Phase 1.2: Forensic Audit Currency Compliance Fix', () => {
         currency: 'AED',
         badges: ['Flagship', 'PCIe5'],
         specs: { Interface: 'PCIe 5.0 x4', FormFactor: 'M.2 2280' },
+        source: 'Test fixture (T4.7.2)', approver: 'QA Suite',
       }),
     });
     expect(createRes.status).toBe(201);

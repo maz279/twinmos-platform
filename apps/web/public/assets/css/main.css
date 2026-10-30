@@ -11,7 +11,7 @@
   --brand-ink:#0A2540;
   --ink:#13273B;
   --body:#3D5568;
-  --muted:#5E7691;
+  --muted:#475467;
   --accent:#00A3E0;
   --accent-deep:#0082B3;
   --accent-2:#7C3AED;
@@ -60,8 +60,8 @@ p{margin:0 0 1em}
 ul{margin:0 0 1em;padding-left:1.2em}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
 body.gaming :focus-visible{outline-color:#00F0FF}
-.skip-link{position:absolute;left:-9999px;top:0;background:var(--primary);color:#fff;padding:10px 16px;z-index:200;border-radius:0 0 8px 0}
-.skip-link:focus{left:0}
+.skip-link{position:absolute;top:-64px;inset-inline-start:16px;background:var(--primary);color:#fff;padding:10px 16px;z-index:200;border-radius:0 0 8px 0;transition:top .15s}
+.skip-link:focus{top:8px}
 .wrap{max-width:var(--wrap);margin:0 auto;padding:0 clamp(16px,4vw,40px)}
 .wrap-wide{max-width:1440px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
 section{padding:clamp(40px,7vw,84px) 0}
@@ -246,6 +246,12 @@ body.gaming .ilog{filter:brightness(0) invert(1)}
 .sl-count{position:absolute;right:clamp(16px,4vw,40px);bottom:20px;z-index:20;display:inline-flex;align-items:baseline;padding:8px 14px;border-radius:99px;background:rgba(5,14,26,.5);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);color:rgba(255,255,255,.75);font-size:12px;letter-spacing:.14em;font-variant-numeric:tabular-nums}
 .sl-count b{color:#fff;font-size:19px;font-weight:800}
 .sl-count i{font-style:normal;opacity:.5;margin:0 5px}
+.sl-pause,.slider-pause{position:absolute;left:clamp(16px,4vw,40px);bottom:20px;z-index:20;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;background:rgba(5,14,26,.65);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(6px);color:#fff;font-size:12px;font-weight:700;letter-spacing:.05em;cursor:pointer;transition:.16s;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.sl-pause:hover,.slider-pause:hover{background:rgba(5,14,26,.9);border-color:rgba(255,255,255,.5);transform:scale(1.04)}
+.sl-pause:focus-visible,.slider-pause:focus-visible{outline:2px solid var(--accent-cyan,#00F0FF);outline-offset:2px}
+.sl-pause[aria-pressed=true],.slider-pause[aria-pressed=true]{background:rgba(0,163,224,.85);border-color:transparent}
+[dir=rtl] .sl-pause,[dir=rtl] .slider-pause{left:auto;right:clamp(16px,4vw,40px)}
+[dir=rtl] .sl-count{right:auto;left:clamp(16px,4vw,40px)}
 .hero-stats-band{padding:clamp(20px,3vw,36px) 0 clamp(26px,4vw,44px);background:linear-gradient(180deg,#FFFFFF,var(--bg-soft))}
 body.gaming .hero-stats-band{background:linear-gradient(180deg,#0D0D0D,var(--bg-soft));border-top:1px solid #1C1C1C;border-bottom:1px solid #1C1C1C}
 .hero-stats-band .hero-stats{margin-top:0}

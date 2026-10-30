@@ -21,6 +21,7 @@ const MIGRATIONS = join(dirname(dirname(process.cwd())), 'packages', 'db', 'migr
 const { createDb, formSubmission }: any = await import('@twinmos/db');
 const { migrate } = await import('drizzle-orm/pglite/migrator');
 const { buildApp }: any = await import('../src/app.ts');
+const { formToken, registerSerial }: any = await import('./support/fixtures.ts');
 
 const db = createDb();
 await db.$client.exec('CREATE SCHEMA IF NOT EXISTS drizzle');
@@ -60,7 +61,7 @@ beforeAll(async () => {
   const mk = async (email: string, type: string, payload: Record<string, unknown>) => {
     const r = await app.request('/api/v1/forms/' + type, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email, consent: true, payload }),
+      body: JSON.stringify({ formToken: formToken(), email, consent: true, payload }),
     });
     expect(r.status).toBe(201);
     return (await r.json()).id as number;

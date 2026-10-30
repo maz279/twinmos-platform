@@ -1,0 +1,2177 @@
+---
+// BlockDispatcher.astro — Comprehensive 31-component Dynamic Page Block Dispatcher.
+// Supports all 25 CMS schema block types and forensic inventory components.
+// Tasks D2, D8b / GREF-D / GPROV-100 / WCAG 2.2 AA compliant.
+import { sanitizeRichText, replaceLogoToken, SETTINGS_GROUP_DEFAULTS, CANONICAL_WIDGET_ADVISORS, CANONICAL_WIDGET_WORKLOADS, CANONICAL_WIDGET_FLAGSHIPS } from '@twinmos/shared';
+import type { Block } from '@twinmos/shared';
+import {
+  getDeliveryFacets,
+  getDeliveryGlossary,
+  getDeliveryPolicies,
+  getDeliveryOffices,
+  getDeliveryTestimonials,
+  getDeliveryFaqs,
+  getDeliveryProducts,
+  getDeliveryArticles,
+  getDeliveryFormDefinition,
+  getDeliveryFormToken,
+  getDeliveryCompatibility,
+  getDeliverySettings,
+  getDeliverySearchResults,
+  getDeliveryMarketplaces,
+} from '../../lib/delivery';
+import locatorData from '../../data/locator.json';
+import { getDeliveryDistributors } from '../../lib/delivery';
+
+interface Props {
+  blocks?: Block[];
+  className?: string;
+}
+
+const { blocks = [], className = '' } = Astro.props;
+
+const CANONICAL_CONFIGS: Record<string, any> = {
+  advisor: CANONICAL_WIDGET_ADVISORS,
+  speed_visualizer: CANONICAL_WIDGET_WORKLOADS,
+  flagship: CANONICAL_WIDGET_FLAGSHIPS,
+  rgb_lab: { effects: ['Static', 'Breathing', 'Rainbow', 'Wave', 'Meteor'] },
+  'rgb-lab': { effects: ['Static', 'Breathing', 'Rainbow', 'Wave', 'Meteor'] },
+  counters: { stats: [{ num: 1998, label: 'Founded in Taipei' }, { num: 93, label: 'Countries Served' }, { num: 14000, label: 'MB/s Read Speed' }] },
+  tabs: { items: [{ id: 'tab1', label: 'Overview', desc: 'TwinMOS memory and storage solutions.' }, { id: 'tab2', label: 'Specs', desc: 'Engineered to JEDEC and NVMe specifications.' }] },
+};
+
+// The shop widgets need the live category facets for their filter rail and category tiles.
+// Only fetch when the page actually contains the product listing or category tiles block.
+const needsShopFacets = blocks.some((b: any) => b?.type === 'widget:product-listing' || b?.type === 'categoryTiles' || b?.type === 'category-tiles');
+const facets: any = needsShopFacets ? await getDeliveryFacets() : null;
+const shopCategories: any[] = facets?.categories ?? [];
+const isQuotePage = /^\/quote(\.html)?\/?$/.test(Astro.url.pathname);
+const needsSliderFigures = blocks.some((b: any) => b?.type === 'slider' || b?.type === 'hero-slider');
+const liveSettings: any = needsSliderFigures ? await getDeliverySettings() : {};
+const liveFigures = { ...SETTINGS_GROUP_DEFAULTS['site.figures'], ...(liveSettings['site.figures'] || {}) };
+const quoteProducts: any[] = isQuotePage ? await getDeliveryProducts() : [];
+
+// MS4.8 data-bound blocks: product showcase, downloads and QVL read live CMS
+// entities instead of literal rows stored in the block JSON.
+const needsDeliveryProducts = blocks.some((b: any) =>
+  b?.type === 'productShowcase' ||
+  b?.type === 'productList' ||
+  b?.type === 'product-rail' ||
+  b?.type === 'downloadDatasheet' ||
+  b?.type === 'downloads-gallery'
+);
+const deliveryProducts: any[] = needsDeliveryProducts && !isQuotePage ? await getDeliveryProducts() : quoteProducts;
+
+const needsCompatibility = blocks.some((b: any) => b?.type === 'qvlCompatibility');
+const deliveryCompatibility: any[] = needsCompatibility ? await getDeliveryCompatibility() : [];
+
+// Marketplace cards render the live marketplace_listing registry (admin
+// partners module → GET /delivery/marketplaces). The block JSON list is only
+// an offline fallback; a ✓ chip appears when the listing is verified.
+const needsMarketplaces = blocks.some((b: any) => b?.type === 'marketplace-cards');
+const liveMarketplaces: any[] = needsMarketplaces
+  ? ((await getDeliveryMarketplaces()) ?? []).slice().sort((a: any, b: any) => (a?.sort ?? 0) - (b?.sort ?? 0))
+  : [];
+
+// T4.8.1 whereToBuy: the locator grid is data-bound to the CMS distributor
+// directory; the checked-in locator.json is only a cold-start fallback.
+const REGION_LABELS: Record<string, string> = {
+  me: 'Middle East & GCC', af: 'Africa', as: 'Asia-Pacific', eu: 'Europe', cis: 'Russia & CIS', am: 'Americas',
+};
+const needsLocator = blocks.some((b: any) => b?.type === 'distributor-locator' || b?.type === 'widget:locator-controls');
+const deliveryDistributors: any[] = needsLocator ? await getDeliveryDistributors().catch(() => []) : [];
+const toLocatorCard = (row: any) => ({
+  cc: row.isoCountry || '',
+  region: row.region,
+  status: row.ctaConfig?.status || 'active',
+  search: `${row.name} ${row.regionLabel ?? ''} ${row.tagline ?? ''} ${(row.cities || []).join(' ')}`.toLowerCase(),
+  name: row.name,
+  regionLabel: REGION_LABELS[row.region] || row.regionLabel || row.region,
+  chip: row.tagline ? 'Verified channel' : 'Available on inquiry',
+  chipClass: row.tagline ? 'ok' : '',
+  tag: row.tagline || 'Named partners are shared on inquiry',
+  note: row.note || '',
+  cities: row.cities || [],
+  actions: Array.isArray(row.ctaConfig?.actions) ? row.ctaConfig.actions : [
+    { label: 'Contact the hub', href: '/contact', primary: true },
+    { label: 'Email sales', href: `mailto:sales@twinmos.com?subject=${encodeURIComponent(row.name)} sales inquiry`, primary: false },
+  ],
+});
+const locatorCards: any[] = deliveryDistributors.length > 0 ? deliveryDistributors.map(toLocatorCard) : locatorData.cards;
+const locatorRegions: any[] = deliveryDistributors.length > 0
+  ? [{ code: 'all', label: 'All regions', count: locatorCards.length, on: true },
+     ...Object.entries(REGION_LABELS).map(([code, label]) => ({
+       code, label,
+       count: locatorCards.filter((c: any) => c.region === code).length,
+       on: false,
+     })).filter((r: any) => r.count > 0)]
+  : locatorData.regions;
+
+// MS4.8 Live Delivery Data for Articles
+const needsArticles = blocks.some((b: any) =>
+  b?.type === 'articleList' ||
+  b?.type === 'article-cards' ||
+  b?.type === 'article-index' ||
+  b?.type === 'featured-articles' ||
+  b?.type === 'article-feed' ||
+  b?.type === 'learning-paths'
+);
+const deliveryArticles: any[] = needsArticles ? await getDeliveryArticles() : [];
+
+// MS4.3 & MS4.8 Live Delivery Data for Glossary & Legal Policies
+const needsGlossary = blocks.some((b: any) =>
+  b?.type === 'widget:glossary-filter' ||
+  b?.type === 'glossary-letter' ||
+  b?.type === 'glossaryIndex' ||
+  b?.type === 'glossary-index'
+);
+const glossaryTerms: any[] = needsGlossary ? await getDeliveryGlossary() : [];
+const termsByLetter: Record<string, any[]> = {};
+for (const t of glossaryTerms) {
+  const l = (t.letter || t.term?.charAt(0) || 'A').toUpperCase();
+  termsByLetter[l] = termsByLetter[l] || [];
+  termsByLetter[l].push(t);
+}
+
+const needsPolicies = blocks.some((b: any) => b?.type === 'tabbed-rich-text' || b?.type === 'policyTabs');
+const publishedPolicies: any[] = needsPolicies ? await getDeliveryPolicies() : [];
+
+// MS4.7 Live Delivery Data for Offices, Testimonials, FAQs
+const needsOffices = blocks.some((b: any) => b?.type === 'officeCards' || b?.type === 'office-cards' || b?.type === 'whereToBuy');
+const deliveryOffices: any[] = needsOffices ? await getDeliveryOffices() : [];
+
+const needsTestimonials = blocks.some((b: any) => b?.type === 'testimonial' || b?.type === 'testimonials');
+const deliveryTestimonials: any[] = needsTestimonials ? await getDeliveryTestimonials() : [];
+
+const needsFaqs = blocks.some((b: any) => b?.type === 'faq' || b?.type === 'faqAccordion' || b?.type === 'faq-accordion' || b?.type === 'tabbed-faq');
+const deliveryFaqs: any[] = needsFaqs ? await getDeliveryFaqs() : [];
+
+// MS4.8 Form Definitions for dynamic form blocks
+const formBlocks = blocks.filter((b: any) => b?.type === 'form');
+const formDefsByType: Record<string, any> = {};
+let formToken = '';
+if (formBlocks.length > 0) {
+  formToken = await getDeliveryFormToken();
+}
+for (const fb of formBlocks) {
+  const fType = (fb as any).formType || (isQuotePage ? 'quote' : 'contact');
+  if (!formDefsByType[fType]) {
+    formDefsByType[fType] = await getDeliveryFormDefinition(fType);
+  }
+}
+
+// MS5.3/MS5.6 SSR Search Results for search-results widget with type facets
+const needsSearch = blocks.some((b: any) => b?.type === 'widget:search-results');
+const rawSearchQuery = needsSearch ? (Astro.url.searchParams.get('q') || '') : '';
+const rawSearchType = needsSearch ? (Astro.url.searchParams.get('type') || 'all') : 'all';
+const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(rawSearchQuery, rawSearchType) : null;
+---
+
+<div class={`block-stream ${className}`}>
+  {blocks.map((b: Block, idx: number) => {
+    try {
+      if (!b || !b.type) return null;
+      const type: string = (b as any).type;
+      const raw = b as any;
+      const blockId = raw.id ?? `block-${idx}`;
+
+      // If the block contains pre-compiled, sanitized HTML from the CMS/importer, render through strict DOMPurify
+      if (raw.html && typeof raw.html === 'string' && raw.html.trim().length > 0) {
+        return (
+          <div class={`block-wrapper block-${type}`} data-block-id={blockId} data-block-type={type} set:html={sanitizeRichText(raw.html)} />
+        );
+      }
+
+      switch (type as string) {
+        case 'hero':
+        case 'page-hero':
+        case 'error-hero':
+          return (
+            <section class="block-hero page-hero" data-block-id={blockId}>
+              <div class="wrap">
+                {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                {(() => {
+                  let headingText = raw.title || raw.heading || '';
+                  if (blockId === 'search-block-1' || (headingText.includes('Results for') && Astro.url.pathname.startsWith('/search'))) {
+                    const qParam = Astro.url.searchParams.get('q') || '';
+                    if (qParam) {
+                      headingText = `Results for "${qParam.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}"`;
+                    }
+                  }
+                  return headingText ? <h1 class="h1" set:html={sanitizeRichText(replaceLogoToken(headingText))} /> : null;
+                })()}
+                {raw.lede && <p class="lede" set:html={sanitizeRichText(replaceLogoToken(raw.lede))} />}
+                {Array.isArray(raw.chips) && raw.chips.length > 0 && (
+                  <div class="pillar-row" aria-label="Business pillars" style="margin-top:16px">
+                    {raw.chips.map((chip: string) => (
+                      <span class="pillar-chip">{chip}</span>
+                    ))}
+                  </div>
+                )}
+                {Array.isArray(raw.ctas) && raw.ctas.length > 0 && (
+                  <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+                    {raw.ctas.map((cta: any) => (
+                      <a class={`btn ${cta.variant === 'secondary' || cta.variant === 'ghost' ? 'btn-ghost' : 'btn-accent'}`} href={cta.url || '#'}>
+                        {cta.label}
+                      </a>
+                    ))}
+                  </div>
+                )}
+                {Array.isArray(raw.jumpLinks) && raw.jumpLinks.length > 0 && (
+                  <nav class="jump-links" aria-label="Page jump links" style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+                    {raw.jumpLinks.map((j: any) => (
+                      <a href={`#${j.targetId}`} class="jump-chip" style="font-size:13px;font-weight:600;text-decoration:none;padding:6px 14px;border-radius:20px;background:#EEF2F6;color:#0A2540">
+                        {j.label} ↓
+                      </a>
+                    ))}
+                  </nav>
+                )}
+                {raw.searchForm && (
+                  <form class="hero-search-form" action="/search" method="GET" role="search" style="margin-top:24px;display:flex;gap:8px;max-width:480px">
+                    <input class="input" type="search" name="q" placeholder="Search products, articles, guides…" aria-label="Search site content" style="flex:1" />
+                    <button class="btn btn-accent" type="submit">Search</button>
+                  </form>
+                )}
+                {Array.isArray(raw.trustStats) && raw.trustStats.length > 0 && (
+                  <div class="hero-stats-band" style="margin-top:32px">
+                    <div class="hero-stats">
+                      {raw.trustStats.map((st: any) => (
+                        <div class="hero-stat-box">
+                          <b class="hero-stat-num">{st.value}</b>
+                          <span class="hero-stat-lbl">{st.label}</span>
+                          {st.sub && <small class="hero-stat-sub">{st.sub}</small>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+
+        case 'slider':
+        case 'hero-slider':
+        case 'heroSlider': {
+          // No invented fallback slides (ZT-041): an empty slider renders nothing.
+          const slides = Array.isArray(raw.slides) ? raw.slides : [];
+          if (!slides.length) return null;
+          const interval = raw.intervalMs ?? 5000;
+          return (
+            <section class="hero hero-has-slider" data-block-id={blockId}>
+              <div class="slider hero-slider" data-slider data-autoplay={raw.autoplay !== false ? interval : 0} aria-roledescription="carousel" aria-label="Featured highlights" style="position:relative">
+                <button class="sl-arrow sl-prev" data-sl-prev aria-label="Previous slide" tabindex="-1">‹</button>
+                <div class="sl-track">
+                  {slides.map((s: any, idx: number) => (
+                    <article class={`sl-slide ${idx === 0 ? 'on' : ''}`} data-accent={s.accent || 'navy'} role="group" aria-roledescription="slide" aria-label={`Slide ${idx + 1} of ${slides.length}`}>
+                      {s.image && (
+                        <div class="sl-bg">
+                          <img src={s.image} alt={s.alt || 'TwinMOS slide image'} loading={idx === 0 ? 'eager' : 'lazy'} />
+                        </div>
+                      )}
+                      <div class="wrap sl-content">
+                        <div class="sl-copy">
+                          {s.kicker && <span class="sl-kicker">{s.kicker}</span>}
+                          {s.title && (idx === 0
+                            ? <h1 class="sl-title" set:html={sanitizeRichText(replaceLogoToken(s.title))} />
+                            : <h2 class="sl-title" set:html={sanitizeRichText(replaceLogoToken(s.title))} />
+                          )}
+                          {s.lede && <p class="sl-lede" set:html={sanitizeRichText(replaceLogoToken(s.lede))} />}
+                          <div class="sl-ctas">
+                            {Array.isArray(s.ctas) && s.ctas.length > 0 ? (
+                              s.ctas.map((c: any, i: number) => (
+                                <a class={`btn btn-lg ${i === 0 ? 'sl-cta1 btn-accent' : 'sl-cta2 btn-ghost'}`} href={c.url || '#'}>
+                                  {c.label} <span aria-hidden="true">→</span>
+                                </a>
+                              ))
+                            ) : s.cta ? (
+                              <a class="btn btn-lg sl-cta1 btn-accent" href={s.link || '#'}>
+                                {s.cta} <span aria-hidden="true">→</span>
+                              </a>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                <button class="sl-arrow sl-next" data-sl-next aria-label="Next slide" tabindex="-1">›</button>
+                {slides.length > 1 && (
+                  <div class="sl-dots" role="tablist" aria-label="Slide dots">
+                    {slides.map((_: any, idx: number) => (
+                      <button class={`sl-dot ${idx === 0 ? 'on' : ''}`} data-sl-dot={idx} role="tab" aria-label={`Go to slide ${idx + 1}`} aria-selected={idx === 0 ? 'true' : 'false'}></button>
+                    ))}
+                  </div>
+                )}
+                {slides.length > 1 && (
+                  <div class="sl-count" aria-hidden="true">
+                    <b>01</b><i>/</i><span>{slides.length < 10 ? `0${slides.length}` : slides.length}</span>
+                  </div>
+                )}
+                {raw.pauseControl !== false && (
+                  <button class="slider-pause sl-pause" data-sl-pause type="button" aria-label="Pause slide auto-rotation" aria-pressed="false" style="position:absolute;bottom:20px;left:clamp(16px,4vw,40px);z-index:20;background:rgba(5,14,26,0.65);color:#fff;border:1px solid rgba(255,255,255,0.25);border-radius:99px;padding:8px 14px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;backdrop-filter:blur(6px)">
+                    <span class="pause-icon" aria-hidden="true">⏸</span>
+                    <span class="pause-text">Pause</span>
+                  </button>
+                )}
+              </div>
+            </section>
+          );
+        }
+
+        case 'stats':
+        case 'statsCounter':
+        case 'stat-strip':
+        case 'statStrip':
+        case 'stats-tiles':
+        case 'stats-band-copy':
+        case 'stats-demo': {
+          // No hard-coded fallback figures (ZT-036/041): the block shows its own
+          // CMS stats or nothing at all.
+          const stats = Array.isArray(raw.stats) ? raw.stats : [];
+          if (!stats.length) return null;
+          const head = raw.heading || raw.title;
+          return (
+            <section class="block-stats" data-block-id={blockId} id={raw.sectionId || undefined} style="padding:40px 0;background:#F8FAFC">
+              <div class="wrap">
+                {(raw.eyebrow || head) && (
+                  <div class="section-head" style="margin-bottom:20px">
+                    <div>
+                      {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                      {head && <h2 class="h2" set:html={sanitizeRichText(replaceLogoToken(head))} />}
+                    </div>
+                  </div>
+                )}
+                <div class="cb-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;text-align:center">
+                  {stats.map((stat: any) => {
+                    const numVal = parseInt(String(stat.value).replace(/[^0-9]/g, ''), 10);
+                    return (
+                      <div class="cb-cell stat-item b-cell">
+                        <div style="font-size:36px;font-weight:800;color:#08705C">
+                          {stat.link ? (
+                            <a href={stat.link} data-counter={numVal || undefined}>{stat.value}</a>
+                          ) : (
+                            <span data-counter={numVal || undefined}>{stat.value}</span>
+                          )}
+                        </div>
+                        <div style="font-size:14px;color:var(--body);margin-top:4px">{stat.label}</div>
+                        {stat.sub && <small style="display:block;color:var(--muted);margin-top:2px">{stat.sub}</small>}
+                      </div>
+                    );
+                  })}
+                </div>
+                {raw.body && <p style="color:var(--body);max-width:72ch;margin:20px auto 0;text-align:center" set:html={sanitizeRichText(replaceLogoToken(raw.body))} />}
+                {Array.isArray(raw.chips) && raw.chips.length > 0 && (
+                  <div class="pillar-row" style="justify-content:center;margin-top:16px">{raw.chips.map((c: string) => <span class="pillar-chip">{c}</span>)}</div>
+                )}
+                {Array.isArray(raw.ctas) && raw.ctas.length > 0 && (
+                  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px">
+                    {raw.ctas.map((cta: any) => <a class={`btn ${cta.variant === 'secondary' ? 'btn-ghost' : 'btn-accent'}`} href={cta.url}>{cta.label}</a>)}
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+        }
+
+        case 'features':
+        case 'featureGrid':
+        case 'card-grid':
+        case 'icon-card-grid':
+        case 'section-tiles':
+        case 'bentoGrid':
+        case 'bento-grid': {
+          // One card renderer for the grid families; cards carry their own chip,
+          // list and link from the CMS (ZT-036). Empty grids render nothing.
+          const head = raw.title || raw.heading;
+          if (!Array.isArray(raw.items) || raw.items.length === 0) return null;
+          return (
+            <section class="block-grid" data-block-id={blockId} id={raw.sectionId || undefined} style="padding:40px 0">
+              <div class="wrap">
+                {(raw.eyebrow || head) && (
+                  <div class="section-head" style="margin-bottom:20px">
+                    <div>
+                      {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                      {head && <h2 class="h2" set:html={sanitizeRichText(replaceLogoToken(head))} />}
+                    </div>
+                    {raw.headLink && <a class="link-arrow" href={raw.headLink.url}>{raw.headLink.label}</a>}
+                  </div>
+                )}
+                {raw.intro && <p class="form-note" style="margin:-8px 0 18px">{raw.intro}</p>}
+                {raw.subtitle && <p class="lede" style="margin-bottom:24px">{raw.subtitle}</p>}
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px">
+                  {raw.items.map((item: any) => {
+                    const inner = (
+                      <Fragment>
+                        {item.image && <img src={item.image} alt={item.alt || ''} loading="lazy" style="width:100%;height:auto;border-radius:8px;margin-bottom:10px" />}
+                        {item.icon && <div class="item-icon" aria-hidden="true" style="font-size:24px;margin-bottom:8px">{item.icon}</div>}
+                        {item.badge && <span class="chip" style="margin-bottom:8px;display:inline-block">{item.badge}</span>}
+                        {item.title && <h3 class="h3" style="font-size:18px;margin-bottom:8px" set:html={sanitizeRichText(replaceLogoToken(item.title))} />}
+                        {(item.description || item.desc) && <p style="color:var(--body);font-size:14px;line-height:1.6" set:html={sanitizeRichText(replaceLogoToken(item.description || item.desc))} />}
+                        {Array.isArray(item.list) && item.list.length > 0 && (
+                          <ul style="color:var(--body);font-size:14px;line-height:1.6;padding-left:18px;margin:8px 0 0">{item.list.map((li: string) => <li set:html={sanitizeRichText(replaceLogoToken(li))} />)}</ul>
+                        )}
+                        {item.link && item.linkLabel && <span class="link-arrow" style="display:inline-block;margin-top:10px">{item.linkLabel}</span>}
+                      </Fragment>
+                    );
+                    return item.link
+                      ? <a class="card card-pad" href={item.link} style="border:1px solid #E6EBF1;border-radius:12px;text-decoration:none;color:inherit;display:block">{inner}</a>
+                      : <div class="card card-pad" style="border:1px solid #E6EBF1;border-radius:12px">{inner}</div>;
+                  })}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        case 'cta':
+        case 'ctaBanner':
+        case 'cta-banner':
+        case 'cta-inline-card':
+        case 'cta-row':
+        case 'splitCta':
+        case 'cta-split': {
+          // No invented fallback copy (ZT-041); an empty CTA block renders nothing.
+          const ctaTitle = raw.title || raw.heading || '';
+          const ctaList = Array.isArray(raw.ctas) ? raw.ctas : [];
+          if (!ctaTitle && !raw.subtitle && ctaList.length === 0) return null;
+          if (!ctaTitle && !raw.subtitle && ctaList.length > 0) {
+            return (
+              <section class="block-cta-row" data-block-id={blockId} id={raw.sectionId || undefined} style="padding:16px 0 32px">
+                <div class="wrap" style="text-align:center">
+                  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                    {ctaList.map((cta: any) => (
+                      <a class={`btn ${cta.variant === 'secondary' || cta.variant === 'outline' ? 'btn-ghost' : 'btn-accent'}`} href={cta.url || '/'}>{cta.label}</a>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            );
+          }
+          return (
+            <section class="block-cta" data-block-id={blockId} id={raw.sectionId || undefined} style="padding:48px 0">
+              <div class="wrap">
+                <div class="card card-pad" style="background:#0A2540;color:#fff;border-radius:16px;padding:40px 32px;text-align:center;position:relative;overflow:hidden">
+                  {raw.badge && <span class="chip" style="background:rgba(255,255,255,0.15);color:#fff;margin-bottom:12px;display:inline-block">{raw.badge}</span>}
+                  {ctaTitle && <h2 style="font-size:28px;font-weight:800;color:#fff;margin-bottom:12px" set:html={sanitizeRichText(replaceLogoToken(ctaTitle))} />}
+                  {raw.subtitle && <p style="font-size:16px;color:#CBD5E1;max-width:640px;margin:0 auto 20px" set:html={sanitizeRichText(replaceLogoToken(raw.subtitle))} />}
+                  {Array.isArray(raw.list) && raw.list.length > 0 && (
+                    <ul style="list-style:none;padding:0;margin:0 auto 20px;max-width:640px;color:#E2E8F0;font-size:14px;line-height:1.8">{raw.list.map((li: string) => <li>✓ {li}</li>)}</ul>
+                  )}
+                  {ctaList.length > 0 && (
+                    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                      {ctaList.map((cta: any) => (
+                        <a class={`btn ${cta.variant === 'secondary' || cta.variant === 'outline' ? 'btn-ghost' : 'btn-accent'}`} href={cta.url || '/'} style={cta.variant === 'secondary' || cta.variant === 'outline' ? 'color:#fff;border-color:rgba(255,255,255,.4)' : undefined}>{cta.label}</a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        case 'timeline': {
+          // No invented fallback milestones (ZT-041).
+          const milestones = Array.isArray(raw.milestones || raw.items) ? (raw.milestones || raw.items) : [];
+          if (!milestones.length) return null;
+          return (
+            <section class="block-timeline" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                {raw.title && <h2 class="h2" style="margin-bottom:8px">{raw.title}</h2>}
+                {raw.heading && !raw.title && <h2 class="h2" style="margin-bottom:8px">{raw.heading}</h2>}
+                {raw.subtitle && <p class="lede" style="margin-bottom:24px">{raw.subtitle}</p>}
+                <div class="timeline-list" style="border-left:2px solid #E6EBF1;padding-left:24px;margin-left:12px">
+                  {milestones.map((it: any) => (
+                    <div class="timeline-item" style="margin-bottom:28px;position:relative">
+                      <div class="timeline-bullet" style="position:absolute;left:-31px;top:4px;width:12px;height:12px;border-radius:50%;background:#1DBF9F;border:2px solid #fff"></div>
+                      <div style="display:flex;align-items:center;gap:8px">
+                        <strong style="color:#08705C;font-size:16px">{it.year || it.date}</strong>
+                        {it.badge && <span class="badge" style="font-size:11px;padding:2px 8px;background:#EEF2F6;border-radius:12px">{it.badge}</span>}
+                      </div>
+                      <h4 class="h4" style="margin:6px 0 4px;font-size:17px">{it.title}</h4>
+                      <p style="color:var(--body);line-height:1.6;font-size:14px">{it.description || it.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        case 'rich-text':
+        case 'richText':
+        case 'textMedia':
+        case 'rich-text+factfile':
+        case 'text-columns': {
+          const isMediaLeft = raw.mediaPosition === 'left';
+          return (
+            <section class="block-text-media" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap" style={`display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:start;${isMediaLeft ? 'direction:rtl;' : ''}`}>
+                <div class="text-col" style={isMediaLeft ? 'direction:ltr;' : ''}>
+                  {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                  {raw.title && <h2 class="h2">{raw.title}</h2>}
+                  {raw.heading && !raw.title && <h2 class="h2">{raw.heading}</h2>}
+                  {raw.body && <div style="color:var(--body);line-height:1.6;margin-top:16px" set:html={sanitizeRichText(replaceLogoToken(raw.body))} />}
+                  {raw.quote && (
+                    <blockquote style="margin-top:20px;border-left:3px solid #1DBF9F;padding-left:16px;font-style:italic;color:#1F2A37">
+                      <p>"{raw.quote.text}"</p>
+                      {raw.quote.author && <footer style="font-size:13px;color:var(--body);margin-top:4px;font-style:normal">— {raw.quote.author}</footer>}
+                    </blockquote>
+                  )}
+                </div>
+                {raw.media && (
+                  <div class="media-col" style={`text-align:center;${isMediaLeft ? 'direction:ltr;' : ''}`}>
+                    <img src={raw.media.key} alt={raw.media.alt || 'TwinMOS media'} style="max-width:100%;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.06)" loading="lazy" />
+                    {raw.media.caption && <figcaption style="font-size:12px;color:var(--body);margin-top:8px">{raw.media.caption}</figcaption>}
+                  </div>
+                )}
+                {raw.factfile && (
+                  <aside class="card card-pad factfile" style={`border:1px solid #E6EBF1;border-radius:12px;${isMediaLeft ? 'direction:ltr;' : ''}`}>
+                    <h3 class="h3" style="margin-bottom:12px">{raw.factfile.title || 'Fact File'}</h3>
+                    <dl>
+                      {Array.isArray(raw.factfile.facts) && raw.factfile.facts.map((f: any) => (
+                        <div style="margin-bottom:8px">
+                          <dt style="font-weight:700;color:var(--muted);font-size:13px">{f.label}</dt>
+                          <dd style="margin:0;font-size:14px;color:var(--body)">{f.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </aside>
+                )}
+              </div>
+            </section>
+          );
+        }
+
+        case 'faq':
+        case 'faqAccordion':
+        case 'tabbed-faq':
+        case 'faq-accordion': {
+          const faqItems = (Array.isArray(raw.items) && raw.items.length > 0)
+            ? raw.items
+            : (raw.groupKey
+                ? deliveryFaqs.filter((f: any) => f.groupKey === raw.groupKey)
+                : deliveryFaqs);
+          if (!faqItems.length) return null;
+          return (
+            <section class="block-faq" data-block-id={blockId} id={raw.sectionId || undefined} style="padding:48px 0">
+              <div class="wrap">
+                {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                {raw.title && <h2 class="h2" style="margin-bottom:20px">{raw.title}</h2>}
+                {raw.heading && !raw.title && <h2 class="h2" style="margin-bottom:20px">{raw.heading}</h2>}
+                {Array.isArray(raw.groups) && raw.groups.some((g: any) => Array.isArray(g?.items) && g.items.length) ? (
+                  <div class="faq-groups" style="display:flex;flex-direction:column;gap:12px">
+                    {raw.groups.filter((g: any) => Array.isArray(g?.items) && g.items.length).map((g: any, gi: number) => (
+                      <details class="faq-group card card-pad" open={gi === 0} style="border:1px solid #E6EBF1;border-radius:10px;padding:14px 16px">
+                        <summary style="font-weight:800;cursor:pointer;font-size:17px;color:#0A2540">{g.label} <span style="font-weight:600;color:#64748B;font-size:13px">({g.items.length})</span></summary>
+                        <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+                          {g.items.map((faq: any) => (
+                            <details class="faq-item" style="border-top:1px solid #F0F3F7;padding-top:10px">
+                              <summary style="font-weight:700;cursor:pointer;font-size:15px">{faq.question}</summary>
+                              <div class="faq-answer" style="margin-top:8px;color:var(--body);line-height:1.6" set:html={sanitizeRichText(String(faq.answer || '').replace(/\r?\n\r?\n/g, '<br/><br/>'))} />
+                            </details>
+                          ))}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                ) : (
+                <div class="faq-list" style="display:flex;flex-direction:column;gap:12px">
+                  {faqItems.map((faq: any) => {
+                    const rawAns = faq.answer || faq.a || '';
+                    const formattedAns = rawAns
+                      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:var(--accent,#0055FF);text-decoration:underline">$1</a>')
+                      .replace(/\r?\n\r?\n/g, '<br/><br/>');
+                    return (
+                      <details class="faq-item card card-pad" style="border:1px solid #E6EBF1;border-radius:8px;padding:16px">
+                        <summary style="font-weight:700;cursor:pointer;font-size:16px">{faq.question || faq.q}</summary>
+                        <div class="faq-answer" style="margin-top:12px;color:var(--body);line-height:1.6" set:html={sanitizeRichText(formattedAns)} />
+                      </details>
+                    );
+                  })}
+                </div>
+                )}
+              </div>
+            </section>
+          );
+        }
+
+        case 'table':
+        case 'specs-table':
+        case 'spec-table':
+          if (!Array.isArray(raw.rows) || raw.rows.length === 0) return null;
+          return (
+            <section class="block-table" data-block-id={blockId} id={raw.sectionId || undefined} style="padding:40px 0;overflow-x:auto">
+              <div class="wrap">
+                {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                {raw.title && <h2 class="h2" style="margin-bottom:16px">{raw.title}</h2>}
+                {raw.heading && !raw.title && <h3 class="h3" style="margin-bottom:16px">{raw.heading}</h3>}
+                <table style="width:100%;border-collapse:collapse;font-size:14px;color:inherit">
+                  {Array.isArray(raw.headers) && (
+                    <thead>
+                      <tr>
+                        {raw.headers.map((h: string) => (
+                          <th style="padding:10px 12px;border-bottom:2px solid rgba(125,125,125,0.25);text-align:left;background:rgba(125,125,125,0.08);color:inherit">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                  )}
+                  <tbody>
+                    {Array.isArray(raw.rows) && raw.rows.map((row: string[]) => (
+                      <tr>
+                        {row.map((cell: string) => (
+                          <td style="padding:10px 12px;border-bottom:1px solid rgba(125,125,125,0.15);color:inherit">{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          );
+
+        case 'productList':
+        case 'productCards':
+        case 'product-cards':
+        case 'productShowcase':
+        case 'product-rail': {
+          const isHomeFlagship =
+            raw.heading?.includes('Featured Flagship') ||
+            raw.title?.includes('Featured Flagship') ||
+            blockId?.includes('flagship') ||
+            raw.component?.includes('homeFlagshipGrid');
+
+          if (isHomeFlagship) {
+            const flagshipAllIds = [
+              'voltx-rgb-ddr5-u-dimm-for-desktop',
+              'corex-pro-m2-pcie-gen-5-0-nvme-ssd',
+              'portable-ssd-elite-drive-pro-usb-type-c',
+              'tornadox7-pro-ddr4-3200mhz-cl16-u-dimm-for-desktop'
+            ];
+            const flagshipItems = flagshipAllIds
+              .map((id) => deliveryProducts.find((p) => p.slug === id || p.id === id))
+              .filter(Boolean);
+            const displayList = flagshipItems.length > 0 ? flagshipItems : deliveryProducts.slice(0, 4);
+
+            return (
+              <section class="block-product-showcase" data-block-id={blockId} style="padding-top:0">
+                <div class="wrap">
+                  <div class="section-head">
+                    <div>
+                      {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                      <h2 class="h2">{raw.title || raw.heading || 'Featured Flagship Hardware'}</h2>
+                      <p class="lede">{raw.subtitle || 'High-performance components tested and verified for stability, low latency, and sustained endurance.'}</p>
+                    </div>
+                    <div class="flagship-tabs" id="flagshipTabs" role="tablist" aria-label="Flagship categories">
+                      <button class="ftab on" data-fseg="all" role="tab" aria-selected="true" type="button">🔥 All Flagships</button>
+                      <button class="ftab" data-fseg="nvme" role="tab" aria-selected="false" type="button">⚡ Gen 5 &amp; NVMe</button>
+                      <button class="ftab" data-fseg="gaming" role="tab" aria-selected="false" type="button">🎮 VOLTX Gaming</button>
+                      <button class="ftab" data-fseg="portable" role="tab" aria-selected="false" type="button">💼 Portable &amp; Flash</button>
+                    </div>
+                  </div>
+                  <div class="grid g4" id="homeFlagshipGrid">
+                    {displayList.map((p: any) => {
+                      const imgUrl = p.imageUrl || p.img || p.images?.[0]?.url || '/assets/img/card/corex-pro.webp';
+                      const badge = p.badge || (p.featured ? 'Featured' : '');
+                      const badgeClass = badge === 'Gen5' ? 'b-gen5' : badge === 'Gaming' ? 'b-gaming' : 'b-new';
+                      return (
+                        <article class="card pcard" data-id={p.slug || p.id}>
+                          <div class="pcard-img">
+                            {badge && <div class="badge"><span class={badgeClass}>{badge}</span></div>}
+                            <a href={`/products/${p.slug || p.id}`} aria-label={p.name}>
+                              <img src={imgUrl} alt={p.name} loading="lazy" />
+                            </a>
+                            <button class="qv-btn" data-qv={p.slug || p.id} aria-label={`Quick view ${p.name}`} type="button">Quick view</button>
+                          </div>
+                          <div class="pcard-body">
+                            <span class="pcard-cat">{p.categoryName || p.catLabel || 'Hardware'}</span>
+                            <h3 class="h3 pcard-title">
+                              <a class="pcard-name" href={`/products/${p.slug || p.id}`}>{p.name}</a>
+                            </h3>
+                            <span class="pcard-meta">{p.shortSpec || p.spec || p.description}</span>
+                            <div class="pcard-foot">
+                              <a class="btn btn-ghost btn-sm" href={`/products/${p.slug || p.id}`}>View details</a>
+                              <div class="pcard-actions">
+                                <button class="cmp-btn" data-id={p.slug || p.id} title="Add to compare" aria-label={`Add ${p.name} to compare`} type="button">⇄</button>
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+              </section>
+            );
+          }
+
+          const query = raw.query || {};
+          let list: any[] = deliveryProducts;
+          if (Array.isArray(query.skus) && query.skus.length > 0) {
+            list = list.filter((p) => query.skus.includes(p.slug) || query.skus.includes(p.sku));
+          }
+          if (query.categoryId) list = list.filter((p) => p.categoryId === query.categoryId);
+          if (query.brandId) list = list.filter((p) => p.brandId === query.brandId);
+          if (query.featured) list = list.filter((p) => p.featured === true || p.isFeatured === true);
+          list = list.slice(0, Number(query.limit) || 8);
+          return (
+            <section class="block-product-showcase" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2">{raw.title}</h2>}
+                {raw.heading && !raw.title && <h2 class="h2">{raw.heading}</h2>}
+                {raw.subtitle && <p class="lede">{raw.subtitle}</p>}
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:24px">
+                  {list.map((p: any) => (
+                    <a class="card card-pad" href={`/products/${p.slug}`} style="border:1px solid #E6EBF1;border-radius:12px;padding:20px;text-decoration:none;color:inherit">
+                      <h4 style="font-weight:700">{p.name}</h4>
+                      {(p.shortSpec || p.description) && (
+                        <p style="font-size:13px;color:var(--body);margin-top:6px">{p.shortSpec || p.description}</p>
+                      )}
+                    </a>
+                  ))}
+                  {list.length === 0 && <p class="form-note">No products match this selection.</p>}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        case 'whereToBuy': {
+          return (
+            <section class="block-where-to-buy" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2">{raw.title}</h2>}
+                {raw.heading && !raw.title && <h2 class="h2">{raw.heading}</h2>}
+                <div class="grid g3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:20px">
+                  {deliveryOffices.map((office: any) => (
+                    <div class="card card-pad" style="border:1px solid #E6EBF1;border-radius:12px">
+                      <span class="chip">{office.country || office.region}</span>
+                      <h3 class="h3" style="font-size:17px;margin:8px 0">{office.title || office.name || office.city}</h3>
+                      {office.address && <address style="font-style:normal;font-size:13.5px;color:var(--body)">{office.address}</address>}
+                      {office.phone && <p style="font-size:13px;margin-top:6px">{office.phone}</p>}
+                    </div>
+                  ))}
+                  {deliveryOffices.length === 0 && (
+                    <p class="form-note">Offices and channel partners are being verified — use the distributor locator below or contact sales.</p>
+                  )}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        case 'marketplace-cards': {
+          // Live registry first (admin partners module); block JSON is the offline fallback.
+          const fallbackList = Array.isArray(raw.marketplaces) ? raw.marketplaces : [];
+          const marketplaces = liveMarketplaces.length > 0 ? liveMarketplaces : fallbackList;
+          if (!marketplaces.length) return null; // nothing published and no fallback — omit the section
+          return (
+            <section class="block-marketplaces" data-block-id={blockId} style="padding:32px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2">{raw.title}</h2>}
+                {raw.heading && !raw.title && <h2 class="h2">{raw.heading}</h2>}
+                <div class="grid g2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:18px">
+                  {marketplaces.map((m: any) => (
+                    <a class="card card-pad" href={m.url || '#'} style="border:1px solid #E6EBF1;border-radius:12px;text-decoration:none;color:inherit">
+                      <h3 class="h3" style="font-size:16px">{m.platform || m.name}{m.verifiedAt && <span class="chip" style={{ marginLeft: 8 }}>✓ Verified store</span>}</h3>
+                      {m.description && <p style="font-size:13px;color:var(--body);margin-top:4px">{m.description}</p>}
+                      {m.country && <p style="font-size:12px;color:var(--body);margin-top:2px">{m.country}</p>}
+                    </a>
+                  ))}
+                  {marketplaces.length === 0 && <p class="form-note">Marketplace links are being verified.</p>}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        case 'downloadDatasheet':
+        case 'downloads-gallery': {
+          const renderFiles: any[] = Array.isArray(raw.files) && raw.files.length > 0
+            ? raw.files
+            : (() => {
+                const skus = Array.isArray(raw.skus) ? raw.skus : [];
+                const picked = skus.length
+                  ? deliveryProducts.filter((p) => skus.includes(p.sku) || skus.includes(p.slug))
+                  : deliveryProducts;
+                return picked.flatMap((p) =>
+                  (Array.isArray(p.datasheets) ? p.datasheets : []).map((ds: any) =>
+                    typeof ds === 'string'
+                      ? { title: `${p.name} datasheet`, sku: p.sku, url: ds }
+                      : { title: ds.title || `${p.name} datasheet`, sku: p.sku, url: ds.url || ds.href || (ds.fileKey ? `/api/v1/media/${ds.fileKey}` : '#') },
+                  ),
+                );
+              })();
+          return (
+            <section class="block-downloads" data-block-id={blockId} style="padding:40px 0">
+              <div class="wrap">
+                {raw.title && <h3 class="h3">{raw.title}</h3>}
+                {raw.heading && !raw.title && <h3 class="h3">{raw.heading}</h3>}
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+                  {renderFiles.map((f: any) => (
+                    <a class="download-link" href={f.url || f.href || '#'} target="_blank" rel="noopener noreferrer" style="color:#0A2540;font-weight:600" aria-label={`${f.title || f.label || f.name} (opens in a new tab)`}>
+                      📄 {f.title || f.label || f.name}{f.sku ? ` · ${f.sku}` : ''} ↗
+                    </a>
+                  ))}
+                  {renderFiles.length === 0 && <p class="form-note">Datasheets are being prepared for this selection.</p>}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        case 'quote-block':
+        case 'testimonial':
+        case 'testimonials': {
+          const items = (Array.isArray(raw.items) && raw.items.length > 0)
+            ? raw.items
+            : (raw.quote
+                ? [{ quote: raw.quote, author: raw.author, role: raw.role, context: raw.context }]
+                : deliveryTestimonials);
+          if (!items.length) return null; // only named, consented quotes are published
+          const testTitle = raw.title || raw.heading;
+          return (
+            <section class="block-testimonial" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {(raw.eyebrow || testTitle) && (
+                  <div class="section-head" style="margin-bottom:24px">
+                    <div>
+                      {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                      {testTitle && <h2 class="h2">{testTitle}</h2>}
+                    </div>
+                  </div>
+                )}
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px">
+                  {items.map((t: any) => (
+                    <blockquote class="card card-pad" style="border-left:4px solid #1DBF9F;background:#F8FAFC;padding:24px;border-radius:8px">
+                      <p style="font-size:17px;font-style:italic;color:#0F172A;line-height:1.6">"{t.quote || t.body}"</p>
+                      <footer style="margin-top:14px;font-size:14px;font-weight:700;color:#334155">
+                        — {t.author}{t.role ? `, ${t.role}` : ''}
+                        {t.context && <span style="display:block;font-size:12px;color:#64748B;font-weight:400;margin-top:2px">{t.context}</span>}
+                      </footer>
+                    </blockquote>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        case 'badgeStrip':
+        case 'badge-strip':
+        case 'trust-badges':
+          if (!Array.isArray(raw.badges) || raw.badges.length === 0) return null;
+          return (
+            <section class="block-badge-strip" data-block-id={blockId} style="padding:24px 0">
+              {(raw.title || raw.subtitle) && (
+                <div class="wrap" style="text-align:center;margin-bottom:12px">
+                  {raw.title && <h3 class="h3">{raw.title}</h3>}
+                  {raw.subtitle && <p style="color:var(--body);margin:4px auto 0;max-width:60ch">{raw.subtitle}</p>}
+                </div>
+              )}
+              <div class="wrap" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+                {Array.isArray(raw.badges) && raw.badges.map((b: any) => (
+                  <span class="badge" style="background:#EEF2F6;color:#0F172A;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600">
+                    {typeof b === 'string' ? b : b.label}
+                  </span>
+                ))}
+              </div>
+            </section>
+          );
+
+        case 'qvlCompatibility': {
+          const qvlRows = deliveryCompatibility.length > 0 ? deliveryCompatibility : (raw.items || raw.rows || []);
+          return (
+            <section class="block-qvl" data-block-id={blockId} style="padding:48px 0;overflow-x:auto">
+              <div class="wrap">
+                {raw.title && <h2 class="h2" style="margin-bottom:16px">{raw.title}</h2>}
+                {raw.heading && !raw.title && <h2 class="h2" style="margin-bottom:16px">{raw.heading}</h2>}
+                {raw.description && <p class="lede" style="margin-bottom:20px">{raw.description}</p>}
+                <table class="qvl-table" style="width:100%;border-collapse:collapse;font-size:14px">
+                  <thead>
+                    <tr style="background:#F8FAFC">
+                      <th style="padding:10px 12px;border-bottom:2px solid #E6EBF1;text-align:left">Device</th>
+                      <th style="padding:10px 12px;border-bottom:2px solid #E6EBF1;text-align:left">Memory / Form factor</th>
+                      <th style="padding:10px 12px;border-bottom:2px solid #E6EBF1;text-align:left">Speed / Profile</th>
+                      <th style="padding:10px 12px;border-bottom:2px solid #E6EBF1;text-align:left">Max capacity</th>
+                      <th style="padding:10px 12px;border-bottom:2px solid #E6EBF1;text-align:left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {qvlRows.map((row: any) => (
+                      <tr style="border-bottom:1px solid #F0F3F7">
+                        <td style="padding:10px 12px;font-weight:600">{row.deviceBrand ? `${row.deviceBrand} ${row.deviceModel ?? ''}` : (row.motherboard || row.board || row[0] || '')}</td>
+                        <td style="padding:10px 12px">{row.memoryGen || row.formFactor ? `${row.memoryGen ?? ''} ${row.formFactor ?? ''}`.trim() : (row.chipset || row[1] || '')}</td>
+                        <td style="padding:10px 12px">{row.speed || row[2] || ''}</td>
+                        <td style="padding:10px 12px">{row.maxGb ? `${row.maxGb} GB` : (row.bios || row[3] || '')}</td>
+                        <td style="padding:10px 12px;color:#08705C;font-weight:700">{row.qvlStatus || row.status || row[4] || ''}</td>
+                      </tr>
+                    ))}
+                    {qvlRows.length === 0 && (
+                      <tr><td colspan="5" style="padding:16px;color:var(--body)">Compatibility records are being verified.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          );
+        }
+
+        case 'kpiMeters':
+        case 'steps':
+        case 'kpi-meters+steps':
+          if (!(Array.isArray(raw.steps) && raw.steps.length) && !(Array.isArray(raw.meters || raw.items) && (raw.meters || raw.items).length)) return null;
+          return (
+            <section class="block-kpi-meters block-steps" data-block-id={blockId} id={raw.sectionId || undefined} style="padding:48px 0">
+              <div class="wrap">
+                {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                {raw.title && <h2 class="h2" style="margin-bottom:24px">{raw.title}</h2>}
+                {raw.heading && !raw.title && <h2 class="h2" style="margin-bottom:24px">{raw.heading}</h2>}
+                {Array.isArray(raw.meters || raw.items) && (
+                  <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-bottom:24px">
+                    {(raw.meters || raw.items).map((m: any) => (
+                      <div class="card card-pad kpi-cell" style="border:1px solid #E6EBF1;border-radius:10px;padding:20px">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                          <span style="font-weight:700;font-size:15px">{m.label || m.title}</span>
+                          <span style="font-weight:800;color:#08705C;font-size:18px">{m.value}</span>
+                        </div>
+                        {m.percent != null && (
+                          <div style="background:#E2E8F0;border-radius:4px;height:8px;overflow:hidden">
+                            <div style={`background:#08705C;height:100%;width:${m.percent}%`} />
+                          </div>
+                        )}
+                        {m.note && <div style="font-size:12px;color:var(--body);margin-top:6px">{m.note}</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {Array.isArray(raw.steps) && (
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px">
+                    {raw.steps.map((st: any, i: number) => (
+                      <div class="step-card" style="padding:20px;border:1px solid #E6EBF1;border-radius:10px">
+                        <div style="font-weight:800;color:#08705C;font-size:20px;margin-bottom:8px">Step {i + 1}</div>
+                        <h4>{st.title}</h4>
+                        <p style="color:var(--body);font-size:14px">{st.description || st.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+
+        case 'callout':
+          if (!(raw.message || raw.body)) return null;
+          return (
+            <aside class="block-callout" data-block-id={blockId} style="padding:24px 0">
+              <div class="wrap">
+                <div class="callout-box" style="border-left:4px solid #0A2540;background:#F8FAFC;padding:16px 20px;border-radius:4px">
+                  {raw.title && <strong>{raw.title}</strong>}
+                  <p style="margin-top:4px;color:var(--body)">{raw.message || raw.body}</p>
+                </div>
+              </div>
+            </aside>
+          );
+
+        case 'anchorNav':
+        case 'anchor-nav':
+          return (
+            <nav class={`block-anchor-nav ${raw.sticky !== false ? 'sticky-nav' : ''}`} data-block-id={blockId} aria-label={raw.title || 'In-page navigation'} style={raw.sticky !== false ? 'position:sticky;top:0;z-index:20;background:#F8FAFC;border-bottom:1px solid #E6EBF1;padding:12px 0' : 'background:#F8FAFC;border-bottom:1px solid #E6EBF1;padding:12px 0'}>
+              <div class="wrap" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                {raw.title && <span style="font-weight:700;font-size:13px;color:var(--muted);margin-right:8px">{raw.title}:</span>}
+                {Array.isArray(raw.links) && raw.links.map((link: any) => (
+                  <a href={`#${link.targetId}`} class="anchor-link" style="font-size:13px;font-weight:600;color:#0A2540;text-decoration:none;padding:6px 14px;border-radius:20px;background:#EEF2F6;transition:background .15s ease">
+                    {link.label}
+                    {link.badge && <span class="chip-badge" style="margin-left:6px;font-size:11px;background:#1DBF9F;color:#fff;padding:2px 6px;border-radius:10px">{link.badge}</span>}
+                  </a>
+                ))}
+              </div>
+            </nav>
+          );
+
+        case 'linkChips':
+        case 'link-chips':
+        case 'link-list':
+        case 'filter-chips': {
+          const isNewsFilter = Boolean(blockId?.includes('news') || raw.heading?.includes('Latest news'));
+          const defaultNewsChips = ['All', 'Article', 'Benchmark', 'Blog', 'Event', 'Explainer', 'Guide', 'Product News'];
+          const chips = Array.isArray(raw.chips) && raw.chips.length > 0 ? raw.chips : (isNewsFilter ? defaultNewsChips : []);
+          if (chips.length === 0) return null;
+          const chipHead = raw.heading || raw.title;
+          return (
+            <nav class="block-link-chips" data-block-id={blockId} style="padding:16px 0">
+              <div class="wrap">
+                {(raw.eyebrow || chipHead) && (
+                  <div class="section-head" style="margin-bottom:16px">
+                    <div>
+                      {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                      {chipHead && <h2 class="h2">{chipHead}</h2>}
+                    </div>
+                    {raw.headLink && <a class="link-arrow" href={raw.headLink.url}>{raw.headLink.label}</a>}
+                  </div>
+                )}
+                <div class={isNewsFilter ? "tabs" : undefined} id={isNewsFilter ? 'newsChips' : undefined} role={isNewsFilter ? "tablist" : undefined} aria-label={isNewsFilter ? "Filter by category" : undefined} style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                  {raw.title && !chipHead && <span style="font-weight:700;font-size:13px;color:var(--muted);margin-right:4px">{raw.title}:</span>}
+                  {chips.map((ch: any, idx: number) => {
+                    const label = typeof ch === 'string' ? ch : ch.label;
+                    const u = typeof ch === 'object' ? ch.url : null;
+                    if (u) {
+                      return <a href={u} class="chip-link" style="background:#F1F5F9;padding:6px 14px;border-radius:16px;text-decoration:none;font-size:13px;font-weight:600;color:#0A2540">{label}</a>;
+                    }
+                    if (isNewsFilter) {
+                      return <button class={`tab ${idx === 0 ? 'on' : ''}`} data-ncat={label === 'All' ? 'all' : label} role="tab">{label}</button>;
+                    }
+                    return <span class="chip">{label}</span>;
+                  })}
+                </div>
+              </div>
+            </nav>
+          );
+        }
+
+        case 'categoryTiles':
+        case 'category-tiles': {
+          const categoryCountMap = new Map((shopCategories || []).map((c: any) => [c.slug, c.count]));
+          const CATEGORY_IMAGES: Record<string, string> = {
+            'dram-gaming': '/assets/img/card/cat-dram.webp',
+            'ssd-nvme': '/assets/img/card/cat-nvme.webp',
+            'portable-ssd': '/assets/img/card/cat-portable.webp',
+            flash: '/assets/img/card/cat-usb.webp',
+            microsd: '/assets/img/card/cat-microsd.webp',
+            psu: '/assets/img/card/cat-psu.webp',
+            hub: '/assets/img/card/ezeehub.webp',
+            'ssd-sata': '/assets/img/card/cat-sata.webp',
+          };
+          const displayCategories = (Array.isArray(raw.categories) && raw.categories.length > 0)
+            ? raw.categories
+            : shopCategories.map((c: any) => ({ slug: c.slug, name: c.name, title: c.name, image: CATEGORY_IMAGES[c.slug] }));
+
+          return (
+            <section class="block-category-tiles" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                <div class="section-head" style="margin-bottom:24px">
+                  <div>
+                    <h2 class="h2">{raw.title || 'Product Ecosystem'}</h2>
+                    {raw.subtitle && <p class="lede">{raw.subtitle}</p>}
+                  </div>
+                  <a class="link-arrow" href="/shop">View all products in catalog</a>
+                </div>
+                <div class="grid g4" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px">
+                  {displayCategories.map((cat: any) => {
+                    const count = categoryCountMap.get(cat.slug) ?? 0;
+                    return (
+                      <a class="card cat-tile enhanced-tile" href={cat.url || `/shop?cat=${cat.slug}`} style="display:flex;flex-direction:column;padding:20px;text-decoration:none;color:inherit;border:1px solid #E6EBF1;border-radius:12px;background:#fff">
+                        {cat.pill && <div class="cat-pill" style="font-size:11px;font-weight:700;color:var(--accent-deep);margin-bottom:8px">{cat.pill}</div>}
+                        {cat.image && <div class="cat-img" style="text-align:center;margin:12px 0"><img src={cat.image} alt={cat.title || cat.name || ''} style="max-height:90px;width:auto" loading="lazy" /></div>}
+                        <div class="cat-body" style="margin-top:auto">
+                          <b style="display:block;font-size:16px;margin-bottom:4px">{cat.title || cat.name}</b>
+                          {cat.desc && <span class="cat-desc" style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">{cat.desc}</span>}
+                          {raw.showCounts !== false && (
+                            <span class="cat-count" style="font-size:12px;font-weight:700;color:var(--accent-deep,#08705C)">
+                              {count} {count === 1 ? 'product' : 'products'}
+                            </span>
+                          )}
+                          <div class="cat-cta" style="margin-top:8px;font-size:13px;font-weight:700;color:var(--accent-deep)">Explore line <span aria-hidden="true">→</span></div>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        case 'offices':
+        case 'officeCards':
+        case 'office-cards': {
+          let officesToRender = (Array.isArray(raw.offices) && raw.offices.length > 0) ? raw.offices : deliveryOffices;
+          if (Array.isArray(raw.rolesFilter) && raw.rolesFilter.length > 0) {
+            officesToRender = officesToRender.filter((o: any) => raw.rolesFilter.includes(o.role));
+          }
+          return (
+            <section class="block-office-cards" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2">{raw.title}</h2>}
+                {raw.subtitle && <p class="lede" style="color:#64748B;margin-top:4px">{raw.subtitle}</p>}
+                {officesToRender.length === 0 ? (
+                  <div class="empty-state" style="padding:32px;text-align:center;border:1px dashed #CBD5E1;border-radius:12px;background:#F8FAFC;margin-top:20px">
+                    <p class="lede" style="color:var(--muted);margin:0">No regional offices found for the selected criteria.</p>
+                  </div>
+                ) : (
+                  <div class="grid g3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:20px">
+                    {officesToRender.map((of: any) => (
+                      <div class="card office card-pad" style="border:1px solid #CBD5E1;border-radius:12px;background:#FFFFFF;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                          <span class="of-flag" style="font-size:24px">{of.flag}</span>
+                          <span class="of-role" style="font-size:12px;font-weight:700;color:#334155;letter-spacing:0.04em;text-transform:uppercase">{of.role || of.country}</span>
+                        </div>
+                        <b style="display:block;margin:6px 0;font-size:18px;color:#0F172A;font-weight:700">{of.title || of.name}</b>
+                        {of.entity && <span style="display:block;font-size:14px;color:#475569;font-weight:600;margin-bottom:8px">{of.entity}</span>}
+                        <address style="font-style:normal;font-size:14px;color:#1E293B;line-height:1.6">{of.address}</address>
+                        {of.note && <p style="font-size:13px;color:#475569;margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px;line-height:1.5">{of.note}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+        }
+
+        case 'articleList':
+        case 'article-cards':
+        case 'article-index':
+        case 'featured-articles':
+        case 'article-feed':
+        case 'learning-paths': {
+          let articlesToRender: any[] = [];
+          if (Array.isArray(raw.articles) && raw.articles.length > 0) {
+            articlesToRender = raw.articles;
+          } else {
+            articlesToRender = [...deliveryArticles];
+            const q = raw.query || {};
+            const filterCat = q.category || raw.category;
+            const filterTag = q.tag || raw.tag;
+            const limit = q.limit || raw.limit || 6;
+            const sort = q.sort || raw.sort || 'latest';
+
+            if (filterCat) {
+              const catLower = String(filterCat).toLowerCase();
+              articlesToRender = articlesToRender.filter((a: any) =>
+                a.category && a.category.toLowerCase() === catLower
+              );
+            }
+            if (filterTag) {
+              const tagLower = String(filterTag).toLowerCase();
+              articlesToRender = articlesToRender.filter((a: any) =>
+                Array.isArray(a.tags) && a.tags.some((t: string) => t.toLowerCase() === tagLower)
+              );
+            }
+            if (sort === 'title') {
+              articlesToRender.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+            } else {
+              articlesToRender.sort((a, b) => {
+                const dateA = new Date(a.publishedAt || a.createdAt || 0).getTime();
+                const dateB = new Date(b.publishedAt || b.createdAt || 0).getTime();
+                return dateB - dateA;
+              });
+            }
+            articlesToRender = articlesToRender.slice(0, limit);
+          }
+
+          const displayStyle = raw.displayStyle || 'grid';
+          return (
+            <section class={`block-article-list style-${displayStyle}`} data-block-id={blockId} id={raw.sectionId || undefined} style="padding:48px 0">
+              <div class="wrap">
+                {(raw.eyebrow || raw.title || raw.heading) && (
+                  <div class="section-head">
+                    <div>
+                      {raw.eyebrow && <span class="eyebrow">{raw.eyebrow}</span>}
+                      {(raw.title || raw.heading) && <h2 class="h2">{raw.title || raw.heading}</h2>}
+                    </div>
+                    {raw.headLink && <a class="link-arrow" href={raw.headLink.url}>{raw.headLink.label}</a>}
+                  </div>
+                )}
+                {articlesToRender.length === 0 ? (
+                  <div class="empty-state" style="padding:32px;text-align:center;border:1px dashed #CBD5E1;border-radius:12px;background:#F8FAFC;margin-top:20px">
+                    <p class="lede" style="color:var(--muted);margin:0">No articles found matching the query criteria.</p>
+                  </div>
+                ) : (
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:24px">
+                    {articlesToRender.map((art: any) => {
+                      const artDate = art.publishedAt
+                        ? new Date(art.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                        : null;
+                      return (
+                        <article class="card card-pad" style="border:1px solid #E6EBF1;border-radius:12px;background:#FFFFFF;color:#0F172A;display:flex;flex-direction:column">
+                          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+                            {(art.tag || (Array.isArray(art.tags) && art.tags[0]) || art.category) && (
+                              <span class="chip" style="font-size:12px;font-weight:700;color:var(--accent-deep);background:#EFF6FF">
+                                {art.tag || (Array.isArray(art.tags) && art.tags[0]) || art.category}
+                              </span>
+                            )}
+                            {raw.showDate !== false && artDate && (
+                              <span style="font-size:12px;color:#475569">{artDate}</span>
+                            )}
+                          </div>
+                          <h3 class="h3" style="font-size:18px;margin:8px 0;line-height:1.4">
+                            <a href={`/learn/${art.slug || art.id}`} style="color:#0F172A;text-decoration:none">
+                              {art.title}
+                            </a>
+                          </h3>
+                          {art.excerpt && <p style="color:#334155;font-size:14px;line-height:1.5;flex:1">{art.excerpt}</p>}
+                          {art.readingTime && raw.showReadingTime !== false && (
+                            <div style="margin-top:12px;font-size:12px;color:#64748B">
+                              ⏱ {art.readingTime} min read
+                            </div>
+                          )}
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+        }
+
+        case 'promo-card':
+          return (
+            <section style="padding:24px 0" data-block-id={blockId}>
+              <div class="wrap">
+                <a class="card card-pad learn-band" href={raw.href || '/learn'} style="text-decoration:none;display:block">
+                  <span class="sc-icon">🎓</span>
+                  <b>{raw.heading || raw.title || 'Knowledge hub'}</b>
+                  <span class="form-note">{raw.description || 'Buying guides, technology explainers and an A–Z glossary from the TwinMOS engineering team.'}</span>
+                  <span class="link-arrow" style="margin-top:auto">Open the Knowledge Hub →</span>
+                </a>
+              </div>
+            </section>
+          );
+
+        case 'widget:compare':
+          return (
+            <section style="padding-top:clamp(22px,3vw,36px)" data-block-id={blockId}>
+              <div class="wrap" id="cmpMount" />
+            </section>
+          );
+
+        case 'widget:compat-finder':
+          return (
+            <section style="padding-top:clamp(22px,3vw,36px)" data-block-id={blockId}>
+              <div class="wrap" id="compatRoot" style="max-width:1080px">
+                <div class="card card-pad">
+                  <div class="form-grid g3">
+                    <div class="fg"><label for="fType">Device type</label><select class="input" id="fType"></select></div>
+                    <div class="fg"><label for="fBrand">Brand</label><select class="input" id="fBrand" disabled></select></div>
+                    <div class="fg"><label for="fModel">Model / platform</label><select class="input" id="fModel" disabled></select></div>
+                  </div>
+                  <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                    <button class="btn btn-primary" id="fGo" type="button">Find compatible products</button>
+                    <span class="form-note">Results come from the published compatibility catalogue — always confirm with your device manual.</span>
+                  </div>
+                  <div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    <span class="form-note" style="font-weight:700">Popular:</span>
+                    <button class="btn btn-ghost btn-sm quick-pick" type="button" data-t="laptop" data-b="lenovo" data-m="thinkpad-t14-g4">ThinkPad T14 Gen 4 →</button>
+                    <button class="btn btn-ghost btn-sm quick-pick" type="button" data-t="diy" data-b="asus" data-m="rog-x670e">ROG Strix X670E →</button>
+                    <button class="btn btn-ghost btn-sm quick-pick" type="button" data-t="laptop" data-b="hp" data-m="omen-16">OMEN 16 →</button>
+                    <button class="btn btn-ghost btn-sm quick-pick" type="button" data-t="minipc" data-b="intel" data-m="nuc13-arena">NUC 13 Arena →</button>
+                  </div>
+                </div>
+                <div id="compatOut" style="margin-top:8px"></div>
+              </div>
+            </section>
+          );
+
+        case 'widget:rma-tracker+serial':
+          return (
+            <section id={raw.sectionId || undefined} style="padding-top:clamp(22px,3vw,36px)" data-block-id={blockId}>
+              <div class="wrap">
+                <div class="grid g2">
+                  <div class="card card-pad rma-track">
+                    <h3 class="h3" style="display:flex;align-items:center;gap:8px">Track your RMA <span class="chip ok">Live service status</span></h3>
+                    <p class="form-note" style="margin-top:4px">Enter the RMA number from your confirmation e-mail (e.g. TM-RMA-2026-123456) and the e-mail address you used.</p>
+                    <form id="rmaTrackForm" method="post" style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+                      <input class="input" id="rmaTrackInput" name="number" placeholder="TM-RMA-2026-123456" aria-label="RMA number" autocomplete="off" required style="flex:1;min-width:180px" />
+                      <input class="input" id="rmaTrackEmail" name="email" type="email" placeholder="you@example.com" aria-label="E-mail address used for the RMA" autocomplete="email" required style="flex:1;min-width:180px" />
+                      <button class="btn btn-primary" type="submit">Track</button>
+                    </form>
+                    <div id="rmaTrackOut" style="margin-top:14px" aria-live="polite"></div>
+                  </div>
+                  <div class="card card-pad" id="sn-check" style="background:var(--bg-tint)">
+                    <h3 class="h3" style="display:flex;align-items:center;gap:8px">Serial check <span class="chip ok">Live registry</span></h3>
+                    <p class="form-note" style="margin-top:4px">Verify a product is genuine TwinMOS hardware. The serial is printed on the module label and the retail packaging.</p>
+                    <form id="snForm" method="post" style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap" novalidate>
+                      <input class="input" id="snInput" name="serial" placeholder="Serial number" aria-label="Serial number" autocomplete="off" required style="flex:1;min-width:200px" />
+                      <button class="btn btn-primary" id="snBtn" type="submit">Verify</button>
+                    </form>
+                    <div id="snOut" style="margin-top:14px" aria-live="polite"></div>
+                    <p class="form-note" style="margin-top:10px">Registered your product? <a href="/support/warranty">Check or register your warranty →</a></p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'widget:rgb-lab':
+          return (
+            <section id={raw.sectionId || undefined} style="padding-top:clamp(22px,3vw,36px)" data-block-id={blockId}>
+              <div class="wrap">
+                <div class="card rgb-lab">
+                  <input type="radio" name="rgbfx" id="fx-static" checked />
+                  <input type="radio" name="rgbfx" id="fx-breathing" />
+                  <input type="radio" name="rgbfx" id="fx-rainbow" />
+                  <input type="radio" name="rgbfx" id="fx-wave" />
+                  <input type="radio" name="rgbfx" id="fx-meteor" />
+                  <div class="rgb-stage">
+                    <div class="rgb-module" role="img" aria-label="VOLTX DDR5 RGB module with the selected lighting effect">
+                      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                    </div>
+                  </div>
+                  <div class="fx-row" role="radiogroup" aria-label="Lighting effect">
+                    <label class="fx-chip" for="fx-static"><span>Static</span></label>
+                    <label class="fx-chip" for="fx-breathing"><span>Breathing</span></label>
+                    <label class="fx-chip" for="fx-rainbow"><span>Rainbow</span></label>
+                    <label class="fx-chip" for="fx-wave"><span>Wave</span></label>
+                    <label class="fx-chip" for="fx-meteor"><span>Meteor</span></label>
+                  </div>
+                  <p class="form-note" style="margin:14px 0 0;color:#8CA0B0">Effects render through your motherboard software — ASUS Aura Sync, Gigabyte RGB Fusion, MSI Mystic Light or ASRock Polychrome. This is a preview, not a driver.</p>
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'widget:upgrade-advisor':
+          return (
+            <section id={raw.sectionId || undefined} style="padding-top:clamp(22px,3vw,36px)" data-block-id={blockId}>
+              <div class="wrap">
+                <div class="upgrade-advisor-box">
+                  <div class="ua-header">
+                    <div>
+                      <span class="eyebrow" style="color:var(--accent-deep)"><span class="pulse-indicator"></span> {raw.eyebrow || 'Interactive Upgrade Advisor'}</span>
+                      <h2 class="h2" style="margin-bottom:6px">{raw.heading || raw.title || 'Find Your Hardware Upgrade in 2 Clicks'}</h2>
+                      <p class="form-note" style="font-size:14px;max-width:62ch;margin:0">Match your system and performance goal to validated TwinMOS memory modules and high-speed NVMe storage.</p>
+                    </div>
+                    <a class="btn btn-ghost btn-sm ua-deep-link" href="/compatibility">Full 3-Step Compatibility Finder →</a>
+                  </div>
+                  <div class="ua-controls">
+                    <div class="ua-group">
+                      <span class="ua-label">1. Choose Your Device Platform</span>
+                      <div class="ua-pill-row" id="uaDeviceRow" role="tablist">
+                        <button class="ua-pill on" data-dev="laptop" role="tab" aria-selected="true" type="button"><span class="ua-icon">💻</span> Laptop / Notebook</button>
+                        <button class="ua-pill" data-dev="desktop" role="tab" aria-selected="false" type="button"><span class="ua-icon">🖥️</span> Desktop PC</button>
+                        <button class="ua-pill" data-dev="gaming" role="tab" aria-selected="false" type="button"><span class="ua-icon">🎮</span> Gaming Rig / PS5</button>
+                        <button class="ua-pill" data-dev="creator" role="tab" aria-selected="false" type="button"><span class="ua-icon">💼</span> Mobile Creator &amp; Mac</button>
+                      </div>
+                    </div>
+                    <div class="ua-group">
+                      <span class="ua-label">2. Select Your Primary Goal</span>
+                      <div class="ua-pill-row" id="uaGoalRow" role="tablist"></div>
+                    </div>
+                  </div>
+                  <div class="ua-recommendation" id="uaRecommendation"></div>
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'widget:speed-visualizer':
+          return (
+            <section id={raw.sectionId || undefined} style="padding-top:clamp(22px,3vw,36px)" data-block-id={blockId}>
+              <div class="wrap">
+                <div class="speed-sim-container">
+                  <div class="speed-sim-header">
+                    <div>
+                      <span class="eyebrow" style="color:#00F0FF"><span class="pulse-indicator pulse-cyan"></span> {raw.eyebrow || 'Real-World Speed Visualizer'}</span>
+                      <h2 class="h2" style="color:#fff;margin-bottom:8px">{raw.heading || raw.title || 'Experience the 14,000 MB/s Gen 5.0 Velocity'}</h2>
+                      <p style="color:#A4B8CC;max-width:62ch;margin:0">Compare sequential throughput and actual loading times across storage generations. See why PCIe Gen 5.0 is a game-changer for creators and gamers.</p>
+                    </div>
+                    <div class="speed-workload-tabs" id="speedWorkloadTabs" role="tablist">
+                      <button class="sw-tab on" data-workload="directstorage" role="tab" aria-selected="true" type="button">🎮 50GB DirectStorage Game</button>
+                      <button class="sw-tab" data-workload="video8k" role="tab" aria-selected="false" type="button">🎬 100GB 8K ProRes Video</button>
+                      <button class="sw-tab" data-workload="boot" role="tab" aria-selected="false" type="button">⚡ OS Cold Boot &amp; Apps</button>
+                    </div>
+                  </div>
+                  <div class="speed-bars-wrap" id="speedBarsWrap"></div>
+                  <div class="speed-sim-footer">
+                    <div class="speed-takeaway"><b class="st-highlight">🚀 DirectStorage &amp; 3D TLC Architecture:</b> <span id="speedTakeawayText">TwinMOS CoreX Pro Gen 5 streams assets directly to GPU VRAM at up to 14,000 MB/s, cutting massive open-world texture load times from minutes on HDD down to just 3.6 seconds.</span></div>
+                    <div class="speed-ctas">
+                      <a class="btn btn-accent btn-sm" href="/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd">View CoreX Pro Gen 5.0</a>
+                      <a class="btn btn-ghost btn-sm" style="color:#DCE7F0;border-color:#3A5568" href="/learn/nvme-gen3-gen4-gen5-explained">Gen 3 vs 4 vs 5 Guide</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'widget:category-chips':
+          return (
+            <div class="tabs" id="catChips" role="tablist" aria-label="Product categories" style="margin-bottom:18px" data-block-id={blockId} />
+          );
+
+        case 'widget:product-listing':
+          return (
+            <section class="block-shop-listing" data-block-id={blockId} style="padding-top:12px">
+              <div class="wrap">
+                <div class="shop-layout">
+                  <aside class="filters" aria-label="Product filters">
+                    <h4>Category</h4>
+                    <label class="fcheck">
+                      <input type="radio" name="fcat" data-fcat="all" checked /> All products{' '}
+                      <span class="cnt">{facets?.total ?? 0}</span>
+                    </label>
+                    {shopCategories.map((category: any) => (
+                      <label class="fcheck">
+                        <input type="radio" name="fcat" data-fcat={category.slug} /> {category.name}
+                        <span class="cnt">{category.count}</span>
+                      </label>
+                    ))}
+                  </aside>
+                  <div>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+                      <input class="input" id="shopSearch" type="search" placeholder="Search products…" aria-label="Search products" style="max-width:260px" />
+                      <select class="input" id="sortSel" aria-label="Sort">
+                        <option value="featured">Sort: Featured</option>
+                        <option value="name">Sort: Name A–Z</option>
+                        <option value="cat">Sort: Category</option>
+                      </select>
+                      <button class="btn btn-ghost btn-sm" type="button" id="clearAll">Clear all</button>
+                      <span class="form-note" style="margin-left:auto">Showing <span id="resultCount"></span></span>
+                    </div>
+                    <div class="active-filters" id="activeFilters"></div>
+                    <div class="grid g3" id="shopGrid"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'widget:search-results': {
+          const rawQ = rawSearchQuery;
+          const safeQ = rawQ
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+          const results = ssrSearchResults?.results ?? [];
+          const prods = results.filter((r: any) => r.type === 'product');
+          const arts = results.filter((r: any) => r.type === 'article');
+          const terms = results.filter((r: any) => r.type === 'glossary');
+
+          return (
+            <section class="block-search-results" data-block-id={blockId} style="padding-top:12px">
+              <div class="wrap">
+                <p class="form-note" style="margin-bottom:12px">
+                  Results for “<span id="searchQ">{safeQ}</span>”
+                  {rawQ && <span class="chip" style="margin-left:8px">{ssrSearchResults?.total ?? results.length} matches</span>}
+                </p>
+
+                {rawQ && (
+                  <div class="search-facets" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+                    <a href={`/search?q=${encodeURIComponent(rawQ)}`} class={`btn btn-sm ${rawSearchType === 'all' || !rawSearchType ? 'btn-accent' : 'btn-ghost'}`}>
+                      All <span class="chip" style="margin-left:6px">{ssrSearchResults?.total ?? results.length}</span>
+                    </a>
+                    <a href={`/search?q=${encodeURIComponent(rawQ)}&type=product`} class={`btn btn-sm ${rawSearchType === 'product' ? 'btn-accent' : 'btn-ghost'}`}>
+                      Products <span class="chip" style="margin-left:6px">{ssrSearchResults?.facets?.product ?? prods.length}</span>
+                    </a>
+                    <a href={`/search?q=${encodeURIComponent(rawQ)}&type=article`} class={`btn btn-sm ${rawSearchType === 'article' ? 'btn-accent' : 'btn-ghost'}`}>
+                      Media &amp; Articles <span class="chip" style="margin-left:6px">{ssrSearchResults?.facets?.article ?? arts.length}</span>
+                    </a>
+                    <a href={`/search?q=${encodeURIComponent(rawQ)}&type=glossary`} class={`btn btn-sm ${rawSearchType === 'glossary' ? 'btn-accent' : 'btn-ghost'}`}>
+                      Glossary Terms <span class="chip" style="margin-left:6px">{ssrSearchResults?.facets?.glossary ?? terms.length}</span>
+                    </a>
+                  </div>
+                )}
+
+                <div id="searchMount" class="wrap" style="padding:0">
+                  {rawQ && results.length > 0 ? (
+                    <div class="ssr-search-results" style="display:flex;flex-direction:column;gap:28px">
+                      {(rawSearchType === 'all' || rawSearchType === 'product') && prods.length > 0 && (
+                        <section>
+                          <h2 class="h3" style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                            Products <span class="chip">{prods.length}</span>
+                          </h2>
+                          <div class="grid g4" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+                            {prods.map((p: any) => (
+                              <article class="card prod-card" style="border:1px solid #E6EBF1;border-radius:10px;padding:16px;background:#fff">
+                                <span class="chip" style="font-size:11px;font-weight:700">{p.badge || 'Product'}</span>
+                                <h3 class="h4" style="font-size:15px;margin:8px 0 4px">
+                                  <a href={p.url} style="color:inherit;text-decoration:none">{p.title}</a>
+                                </h3>
+                                {p.snippet && <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px">{p.snippet}</p>}
+                                <a href={p.url} class="link-arrow" style="font-size:12.5px;font-weight:700">View product →</a>
+                              </article>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {(rawSearchType === 'all' || rawSearchType === 'article') && arts.length > 0 && (
+                        <section>
+                          <h2 class="h3" style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                            Media &amp; Articles <span class="chip">{arts.length}</span>
+                          </h2>
+                          <div class="grid g3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+                            {arts.map((a: any) => (
+                              <a class="card card-pad article-card" href={a.url} style="border:1px solid #E6EBF1;border-radius:10px;text-decoration:none;color:inherit;display:block">
+                                <span class="chip" style="font-size:11px;font-weight:700">{a.badge || a.category || 'Article'}</span>
+                                <b style="display:block;margin:8px 0 4px;font-size:15px">{a.title}</b>
+                                {a.snippet && <p style="font-size:12.5px;color:var(--muted);margin:0">{a.snippet}…</p>}
+                              </a>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {(rawSearchType === 'all' || rawSearchType === 'glossary') && terms.length > 0 && (
+                        <section>
+                          <h2 class="h3" style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                            Glossary Terms <span class="chip">{terms.length}</span>
+                          </h2>
+                          <div class="grid g3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+                            {terms.map((t: any) => (
+                              <a class="card card-pad" href={t.url} style="border:1px solid #E6EBF1;border-radius:10px;text-decoration:none;color:inherit;display:block">
+                                <span class="chip" style="font-size:11px;font-weight:700">Glossary</span>
+                                <b style="display:block;margin:8px 0 4px;font-size:15px">{t.title}</b>
+                                {t.snippet && <p style="font-size:12.5px;color:var(--muted);margin:0">{t.snippet}…</p>}
+                              </a>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+                    </div>
+                  ) : rawQ ? (
+                    <div class="empty-state" style="padding:40px 20px;text-align:center;border:1px dashed #CBD5E1;border-radius:12px;background:#F8FAFC">
+                      <h3 class="h3" style="margin-bottom:6px">No results found for “{safeQ}”</h3>
+                      <p style="color:var(--muted);margin:0">Try searching for DDR5, NVMe, VOLTX, warranty, or another keyword.</p>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        case 'widget:locator-controls': {
+          const component = String(raw.component || '');
+          if (component.includes('geoBar')) {
+            return <div class="geo-bar" id="geoBar" hidden data-block-id={blockId} />;
+          }
+          if (component.includes('locChips')) {
+            return (
+              <div class="loc-chips" id="locChips" role="group" aria-label="Filter by region" data-block-id={blockId}>
+                {locatorRegions.map((region: any) => (
+                  <button
+                    class={`lchip ${region.on ? 'on' : ''}`}
+                    data-rg={region.code}
+                    aria-pressed={region.on ? 'true' : 'false'}
+                    type="button"
+                  >
+                    {region.label} <span>{region.count}</span>
+                  </button>
+                ))}
+              </div>
+            );
+          }
+          if (component.includes('loc-meta')) {
+            return (
+              <div class="loc-meta" data-block-id={blockId}>
+                <span id="locCount" aria-live="polite">Showing {locatorCards.length} markets</span>
+                <span class="loc-hint">Named partners are shared on inquiry — TwinMOS publishes only verified channels.</span>
+              </div>
+            );
+          }
+          if (component.includes('locEmpty')) {
+            return (
+              <div class="loc-empty" id="locEmpty" hidden data-block-id={blockId}>
+                <h3 class="h3">No markets match</h3>
+                <p class="form-note">Try another region or clear the search.</p>
+              </div>
+            );
+          }
+          return (
+            <div class="loc-controls" data-block-id={blockId}>
+              <div class="loc-search">
+                <input
+                  type="search"
+                  id="locSearch"
+                  class="input"
+                  placeholder="Search country or city — e.g. Kenya, Dubai, Lagos…"
+                  aria-label="Search distributor by country or city"
+                />
+              </div>
+              <select id="locStatus" class="input" aria-label="Filter by channel status">
+                <option value="all">All channel types</option>
+                <option value="authorized">Authorized distribution</option>
+                <option value="expanding">Expanding coverage</option>
+                <option value="seeking">Seeking distributors</option>
+                <option value="hub">TwinMOS hubs</option>
+              </select>
+            </div>
+          );
+        }
+
+        case 'distributor-locator':
+          return (
+            <div class="grid g3 dgrid" id="locGrid" data-block-id={blockId}>
+              {locatorCards.map((card: any) => (
+                <div
+                  class="dcard"
+                  data-cc={card.cc}
+                  data-region={card.region}
+                  data-status={card.status}
+                  data-search={card.search}
+                >
+                  <div class="dc-head">
+                    <span class="dc-flag" aria-hidden="true">{card.cc}</span>
+                    <div class="dc-title">
+                      <b>{card.name}</b>
+                      <span class="dc-region">{card.regionLabel}</span>
+                    </div>
+                  </div>
+                  <span class={`chip ${card.chipClass === 'ok' ? 'ok' : card.chipClass === 'warn' ? 'warn' : ''} dc-chip`}>
+                    {card.chip}
+                  </span>
+                  <p class="dc-tag">{card.tag}</p>
+                  <p class="dc-note">{card.note}</p>
+                  <div class="dc-cities">
+                    {card.cities.map((city: string) => <span>{city}</span>)}
+                  </div>
+                  <div class="dc-actions">
+                    {card.actions.map((action: any) => (
+                      <a class={`btn ${action.primary ? 'btn-primary' : 'btn-ghost'} btn-sm`} href={action.href}>
+                        {action.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+
+        case 'widget:glossary-filter':
+          return (
+            <section style="padding-top:clamp(22px,3vw,36px)" data-block-id={blockId}>
+              <div class="wrap">
+                <div class="lidx-bar">
+                  <nav class="lidx" aria-label="Glossary letters">
+                    {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => (
+                      <a class="lidx-a" href={`#gL${letter}`} data-letter={letter}>
+                        {letter}
+                      </a>
+                    ))}
+                  </nav>
+                  <div class="lsearch lsearch-sm">
+                    <input
+                      type="search"
+                      id="glossQ"
+                      placeholder="Filter terms — try &quot;latency&quot;…"
+                      aria-label="Filter glossary terms"
+                    />
+                    <span class="chip" id="glossCount">
+                      {glossaryTerms.length} terms
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          );
+
+        case 'glossaryIndex':
+        case 'glossary-index': {
+          const showLetters = raw.showLettersFilter !== false;
+          const lettersWithTerms = Object.keys(termsByLetter).sort();
+          return (
+            <section class="block-glossary-index" data-block-id={blockId} style="padding:48px 0">
+              <div class="wrap">
+                {raw.title && <h2 class="h2" style="margin-bottom:20px">{raw.title}</h2>}
+                {showLetters && (
+                  <div class="lidx-bar" style="margin-bottom:28px">
+                    <nav class="lidx" aria-label="Glossary letters">
+                      {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => {
+                        const hasTerms = (termsByLetter[letter] || []).length > 0;
+                        return (
+                          <a
+                            class={`lidx-a ${hasTerms ? '' : 'disabled'}`}
+                            href={hasTerms ? `#gL${letter}` : undefined}
+                            data-letter={letter}
+                            style={hasTerms ? '' : 'opacity:0.4;pointer-events:none'}
+                          >
+                            {letter}
+                          </a>
+                        );
+                      })}
+                    </nav>
+                    <div class="lsearch lsearch-sm">
+                      <input
+                        type="search"
+                        id="glossQ"
+                        placeholder="Filter terms — try &quot;latency&quot;…"
+                        aria-label="Filter glossary terms"
+                      />
+                      <span class="chip" id="glossCount">
+                        {glossaryTerms.length} terms
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {glossaryTerms.length === 0 ? (
+                  <div class="empty-state" style="padding:48px 0;text-align:center">
+                    <p class="lede" style="color:var(--muted)">No glossary terms found.</p>
+                  </div>
+                ) : (
+                  <div class="glossary-sections">
+                    {lettersWithTerms.map((letter) => {
+                      const terms = termsByLetter[letter] || [];
+                      if (terms.length === 0) return null;
+                      return (
+                        <section class="lsec-letter" id={`gL${letter}`} data-letter={letter} style="margin-bottom:32px">
+                          <div class="lgrp-h" style="display:flex;align-items:center;gap:12px;margin-bottom:16px;border-bottom:2px solid #E2E8F0;padding-bottom:8px">
+                            <b style="font-size:24px;color:#0F172A">{letter}</b>
+                            <span class="chip">{terms.length} terms</span>
+                          </div>
+                          <dl class="lterms" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+                            {terms.map((term: any) => (
+                              <div
+                                class="lterm card card-pad"
+                                data-search={`${term.term} ${term.definition}`.toLowerCase()}
+                                style="border:1px solid #E2E8F0;border-radius:8px;background:#FFFFFF;padding:16px"
+                              >
+                                <dt style="margin-bottom:8px">
+                                  <b style="font-size:16px;color:#0F172A;display:block">{term.term}</b>
+                                  {term.explainerSlug && (
+                                    <a class="lterm-ref" href={`/learn/${term.explainerSlug}`} style="font-size:12px;color:#0066FF;text-decoration:none">
+                                      Read the explainer →
+                                    </a>
+                                  )}
+                                </dt>
+                                <dd style="margin:0;font-size:14px;color:#475569;line-height:1.5">{term.definition}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </section>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+        }
+
+        case 'glossary-letter': {
+          const letterIdx = idx - 2;
+          const letter = (letterIdx >= 0 && letterIdx < 26) ? String.fromCharCode(65 + letterIdx) : (raw.letter || 'A');
+          const terms = termsByLetter[letter] || [];
+          if (terms.length === 0) return null;
+
+          return (
+            <section class="lsec-letter" id={`gL${letter}`} data-letter={letter} data-block-id={blockId}>
+              <div class="wrap">
+                <div class="lgrp-h">
+                  <b>{letter}</b>
+                  <span class="chip">{terms.length} terms</span>
+                </div>
+                <dl class="lterms">
+                  {terms.map((term: any) => (
+                    <div
+                      class="lterm"
+                      data-search={`${term.term} ${term.definition}`.toLowerCase()}
+                    >
+                      <dt>
+                        <b>{term.term}</b>
+                        {term.explainerSlug && (
+                          <a class="lterm-ref" href={`/learn/${term.explainerSlug}`}>
+                            Read the explainer →
+                          </a>
+                        )}
+                      </dt>
+                      <dd>{term.definition}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </section>
+          );
+        }
+
+        case 'empty-state':
+          return (
+            <div
+              class="empty-state"
+              id="glossEmpty"
+              style="display:none;padding:48px 0;text-align:center"
+              data-block-id={blockId}
+            >
+              <div class="wrap">
+                <p class="lede" style="color:var(--muted)">
+                  {raw.message || 'No matching glossary terms found.'}
+                </p>
+              </div>
+            </div>
+          );
+
+        case 'form': {
+          const formType = raw.formType || (isQuotePage ? 'quote' : 'contact');
+          if (formType === 'partner-portal') {
+            // Partner portal sign-in (portal.js: Better Auth session → /partner/me
+            // → gated assets). Not a lead form, so no form token / Turnstile.
+            return (
+              <section class="block-form" data-block-id={blockId} id={raw.sectionId || undefined} style="padding:32px 0">
+                <div class="wrap">
+                  <div class="card card-pad" style="max-width:520px">
+                    <h2 class="h3">{raw.title || 'Partner sign-in'}</h2>
+                    <form id="partnerSignIn" method="post" novalidate>
+                      <div class="form-grid">
+                        <div class="fg full"><label for="partnerEmail">Partner email <span class="req">*</span></label><input class="input" id="partnerEmail" type="email" autocomplete="email" required /></div>
+                        <div class="fg full"><label for="partnerPassword">Password <span class="req">*</span></label><input class="input" id="partnerPassword" type="password" autocomplete="current-password" required /></div>
+                      </div>
+                      <button class="btn btn-primary" type="submit" style="margin-top:12px">{raw.submitButtonText || 'Sign in'}</button>
+                      <p class="form-note" style="margin-top:10px">Accounts are created by TwinMOS for approved partners. <a href="/admin/">Forgot your password?</a></p>
+                    </form>
+                  </div>
+                </div>
+              </section>
+            );
+          }
+          // axe autocomplete-valid: only WCAG/HTML autofill field tokens
+          // ('phone' is not one — the tel token covers type=tel inputs).
+          const AUTOCOMPLETE_TOKENS = new Set(['name','email','organization','tel','country-name','street-address','postal-code']);
+          const autocompleteFor = (f: any) => AUTOCOMPLETE_TOKENS.has(String(f.autocomplete || '')) ? f.autocomplete : (AUTOCOMPLETE_TOKENS.has(String(f.name || '')) ? f.name : undefined);
+          const formDef = formDefsByType[formType];
+          const formFields = ((formDef && Array.isArray(formDef.fields) && formDef.fields.length > 0)
+            ? formDef.fields
+            : (formType === 'quote' ? [
+                { name: 'company', label: 'Company / organization', type: 'text', required: true, autocomplete: 'organization', placeholder: 'Enterprise Name' },
+                { name: 'name', label: 'Contact name', type: 'text', required: true, autocomplete: 'name', placeholder: 'Your name' },
+                { name: 'email', label: 'Business email', type: 'email', required: true, autocomplete: 'email', placeholder: 'name@company.com' },
+                { name: 'country', label: 'Country', type: 'text', required: true, autocomplete: 'country-name', placeholder: 'e.g. United Arab Emirates' },
+                { name: 'productInterest', label: 'Product interest', type: 'select', required: false, options: quoteProducts.map((p: any) => p.name || p.slug) },
+                { name: 'quantity', label: 'Estimated quantity', type: 'number', required: true, placeholder: 'e.g. 250' },
+                { name: 'message', label: 'Requirement details', type: 'textarea', required: true, minLength: 10, placeholder: 'Platform, capacities, timeline…' },
+              ] : [
+                { name: 'name', label: 'Name', type: 'text', required: true, autocomplete: 'name', placeholder: 'Jane Doe' },
+                { name: 'email', label: 'Business email', type: 'email', required: true, autocomplete: 'email', placeholder: 'name@company.com' },
+                { name: 'message', label: 'Message', type: 'textarea', required: true, minLength: 10, placeholder: 'How can we help you?' },
+              ])).map((f: any) => (
+            // The select is data-bound: a stored form definition must not freeze
+            // the catalogue snapshot it was authored with.
+            f.name === 'productInterest' && f.type === 'select' && quoteProducts.length > 0
+              ? { ...f, options: quoteProducts.map((p: any) => p.name || p.slug) }
+              : f
+          ));
+
+          const formTitle = raw.title || formDef?.title;
+          const formDesc = raw.description || formDef?.description;
+          const submitBtn = raw.submitButtonText || (formType === 'quote' ? 'Request a quote' : 'Send message');
+          const successMsg = raw.successMessage || formDef?.successMessage || (formType === 'quote' ? 'Quote request received — your regional office will reply within one business day.' : 'Thank you — the TwinMOS team will reply within one business day.');
+
+          return (
+            <section class="block-form" data-block-id={blockId} data-form-type={formType} style="padding:32px 0">
+              <div class="wrap" style={formType === 'rma' ? undefined : "max-width:920px"}>
+                <div class={formType === 'rma' ? "wrap rma-cols" : undefined} style={formType === 'rma' ? "display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px" : undefined}>
+                  <div class="card card-pad" data-form-box>
+                    {formTitle && <h2 class="h2" style="margin-bottom:8px">{formTitle}</h2>}
+                    {formDesc && <p class="lede" style="margin-bottom:24px;color:#64748B">{formDesc}</p>}
+                    <form
+                      data-tm-form
+                      data-form-type={formType}
+                      action={`/api/v1/forms/${formType}`}
+                      method="POST"
+                      novalidate
+                      data-success={successMsg}
+                      data-loaded-at={Date.now()}
+                    >
+                      <input type="text" name="hp" tabindex="-1" style="position:absolute;left:-9999px;opacity:0;pointer-events:none" aria-hidden="true" />
+                      <input type="hidden" name="formToken" value={formToken} />
+                      <div class="form-grid">
+                        {formFields.map((f: any) => {
+                          const isFull = f.type === 'textarea' || f.name === 'message' || f.name === 'specifications';
+                          return (
+                            <div class={`fg ${isFull ? 'full' : ''}`} data-req={f.required ? 'true' : undefined} data-min={f.minLength || (f.type === 'textarea' ? 10 : undefined)}>
+                              <label>
+                                {f.label} {f.required && <span class="req">*</span>}
+                              </label>
+                              {f.type === 'textarea' ? (
+                                <textarea
+                                  class="input"
+                                  name={f.name}
+                                  rows={4}
+                                  placeholder={f.placeholder || ''}
+                                  required={f.required}
+                                ></textarea>
+                              ) : f.type === 'select' ? (
+                                <select
+                                  class="input"
+                                  name={f.name}
+                                  id={f.name === 'productInterest' ? 'qProduct' : `form-field-${f.name}`}
+                                  required={f.required}
+                                >
+                                  <option value="">Select an option…</option>
+                                  {(f.name === 'productInterest' && quoteProducts.length > 0
+                                    ? quoteProducts.map((p: any) => ({ value: p.name || p.slug, label: p.name || p.slug, slug: p.slug }))
+                                    : (Array.isArray(f.options) ? f.options : [])
+                                  ).map((opt: any) => (
+                                    <option value={typeof opt === 'string' ? opt : opt.value} data-slug={typeof opt === 'object' ? opt.slug : undefined}>
+                                      {typeof opt === 'string' ? opt : opt.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  class="input"
+                                  type={f.type || 'text'}
+                                  name={f.name}
+                                  placeholder={f.placeholder || ''}
+                                  autocomplete={autocompleteFor(f)}
+                                  required={f.required}
+                                />
+                              )}
+                              <span class="err">{f.placeholder ? `Please enter ${f.label.toLowerCase()}` : `Please fill out this field`}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div class="fg full" style="margin-top:16px">
+                        {formDef?.privacyNotice && (
+                          <p class="form-privacy-notice" style="font-size:12.5px;color:#475569;margin-bottom:10px;line-height:1.45" data-form-privacy-notice>
+                            {formDef.privacyNotice}
+                          </p>
+                        )}
+                        <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#334155;cursor:pointer">
+                          <input type="checkbox" name="consent" required style="margin-top:3px;accent-color:#0066FF" />
+                          <span>I agree to the processing of my contact and inquiry data pursuant to the <a href="/legal?tab=privacy" style="color:#0066FF;text-decoration:underline;font-weight:600">TwinMOS Privacy Policy</a>. We never sell or share personal data.</span>
+                        </label>
+                      </div>
+                      <button class="btn btn-primary btn-lg" type="submit" style="margin-top:18px">
+                        {submitBtn}
+                      </button>
+                    </form>
+                  </div>
+                  {formType === 'rma' && (
+                    <div class="card card-pad">
+                      <h2 class="h3">Track an RMA</h2>
+                      <p class="form-note">Enter the RMA number from your confirmation email. Demo IDs: TM-RMA-2026-0142 · TM-RMA-2026-0388 · TM-RMA-2026-0517</p>
+                      <div style="display:flex;gap:10px;flex-wrap:wrap">
+                        <input class="input" id="rmaId" placeholder="TM-RMA-2026-0142" style="flex:1;min-width:200px" />
+                        <button class="btn btn-accent" id="rmaTrackBtn">Track</button>
+                      </div>
+                      <div id="rmaOut"></div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+
+        case 'tabbed-rich-text':
+        case 'policyTabs':
+        case 'tabs': {
+          if (Array.isArray(raw.tabs) && raw.tabs.length > 0) {
+            return (
+              <section class="block-tabs block-policy-tabs" data-block-id={blockId} style="padding:48px 0">
+                <div class="wrap">
+                  {raw.title && <h2 class="h2">{raw.title}</h2>}
+                  {raw.description && <p class="lede">{raw.description}</p>}
+                  <div class="tabs" role="tablist" aria-label={raw.title || 'Tabs'}>
+                    {raw.tabs.map((tab: any, tIdx: number) => (
+                      <button class={`tab ${tIdx === 0 ? 'on' : ''}`} data-tab={tab.id || `tab-${blockId}-${tIdx}`} role="tab" type="button" aria-selected={tIdx === 0 ? 'true' : 'false'}>
+                        {tab.label || tab.title}
+                      </button>
+                    ))}
+                  </div>
+                  {raw.tabs.map((tab: any, tIdx: number) => (
+                    <div class={`tabpane ${tIdx === 0 ? 'on' : ''}`} id={tab.id || `tab-${blockId}-${tIdx}`} role="tabpanel" style="margin-top:20px">
+                      <div class="card card-pad article-body">
+                        {tab.content ? (
+                          <div set:html={sanitizeRichText(tab.content)} />
+                        ) : tab.body ? (
+                          <p style="color:var(--body);line-height:1.6">{tab.body}</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          }
+
+          // If publishedPolicies exists, dynamically bind tabs to live policies
+          if (publishedPolicies.length > 0) {
+            // ?tab=privacy|warranty|terms|cookies (footer, consent and warranty links) picks the tab
+            const TAB_ALIASES: Record<string, string> = { privacy: 'privacy-policy', cookies: 'privacy-policy', warranty: 'warranty-policy', terms: 'terms-of-service' };
+            const tabParam = (Astro.url.searchParams.get('tab') || '').toLowerCase();
+            const wanted = TAB_ALIASES[tabParam] || tabParam;
+            const defaultActiveSlug = (wanted && publishedPolicies.some((p: any) => p.slug === wanted) ? wanted : '') || raw.defaultSlug || publishedPolicies[0].slug;
+            const activeIndex = Math.max(0, publishedPolicies.findIndex((p: any) => p.slug === defaultActiveSlug));
+
+            return (
+              <section class="block-policy-tabs" style="padding-top:clamp(22px,3vw,36px)" data-block-id={blockId}>
+                <div class="wrap" style="max-width:900px">
+                  {raw.title && <h2 class="h2" style="margin-bottom:20px">{raw.title}</h2>}
+                  <div class="tabs" role="tablist" aria-label={raw.title || 'Legal & Policies'}>
+                    {publishedPolicies.map((pol: any, pIdx: number) => (
+                      <button
+                        class={`tab ${pIdx === activeIndex ? 'on' : ''}`}
+                        data-tab={`legal-${pol.slug}`}
+                        role="tab"
+                        aria-selected={pIdx === activeIndex ? 'true' : 'false'}
+                      >
+                        {pol.title || pol.name || pol.slug}
+                      </button>
+                    ))}
+                  </div>
+
+                  {publishedPolicies.map((pol: any, pIdx: number) => {
+                    const polDate = pol.effectiveDate
+                      ? new Date(pol.effectiveDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                      : (pol.updatedAt ? new Date(pol.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '');
+                    return (
+                      <div
+                        class={`tabpane ${pIdx === activeIndex ? 'on' : ''}`}
+                        id={`legal-${pol.slug}`}
+                        role="tabpanel"
+
+                      >
+                        <div class="card card-pad article-body">
+                          {raw.showLastUpdated !== false && (
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+                              <span class="chip ok" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0">Operative policy</span>
+                              {(pol.version || polDate) && <span class="chip" style="font-size:12px;color:var(--muted)">{pol.version ? `Version ${pol.version}` : ''}{pol.version && polDate ? ' · ' : ''}{polDate ? `Effective ${polDate}` : ''}</span>}
+                            </div>
+                          )}
+                          {pol.body ? (
+                            <div set:html={sanitizeRichText(pol.body)} />
+                          ) : (
+                            <p>{pol.summary || 'TwinMOS official policy terms and conditions.'}</p>
+                          )}
+                          {(pol.slug === 'warranty' || pol.slug === 'warranty-policy') && (
+                            <div style="margin-top:24px">
+                              <a class="btn btn-primary" href="/rma">Start an RMA →</a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          }
+
+          // Otherwise render empty state or prototype tabs
+          return (
+            <section style="padding-top:clamp(22px,3vw,36px)" data-block-id={blockId}>
+              <div class="wrap" style="max-width:900px">
+                <div class="empty-state" style="padding:32px;text-align:center;border:1px dashed #CBD5E1;border-radius:12px;background:#F8FAFC">
+                  <p class="lede" style="color:var(--muted);margin:0">No policies currently published.</p>
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        case 'anchorNav':
+          return (
+            <nav class="block-anchor-nav" data-block-id={blockId} aria-label={raw.title || 'In-page navigation'} style={raw.sticky !== false ? 'position:sticky;top:64px;z-index:30;background:#fff;border-bottom:1px solid #E6EBF1;padding:12px 0' : 'padding:12px 0;border-bottom:1px solid #E6EBF1'}>
+              <div class="wrap" style="display:flex;gap:16px;align-items:center;overflow-x:auto">
+                {raw.title && <span style="font-weight:700;font-size:13px;color:var(--body);text-transform:uppercase">{raw.title}</span>}
+                {Array.isArray(raw.links) && raw.links.map((link: any) => (
+                  <a href={`#${link.targetId}`} class="anchor-link" style="font-size:14px;color:#1F2A37;text-decoration:none;font-weight:600;padding:4px 8px;border-radius:6px">
+                    {link.label}
+                    {link.badge && <span class="badge" style="margin-left:6px;font-size:11px;background:#EEF2F6;padding:2px 6px;border-radius:10px">{link.badge}</span>}
+                  </a>
+                ))}
+              </div>
+            </nav>
+          );
+
+        case 'specComparison':
+          return (
+            <section class="block-spec-comparison" data-block-id={blockId} style="padding:48px 0;overflow-x:auto">
+              <div class="wrap">
+                {(raw.headline || raw.title) && <h2 class="h2" style="margin-bottom:24px">{raw.headline || raw.title}</h2>}
+                <table class="spec-table" style="width:100%;border-collapse:collapse;font-size:14px">
+                  {Array.isArray(raw.columns) && raw.columns.length > 0 && (
+                    <thead>
+                      <tr style="background:#F8FAFC">
+                        <th style="padding:10px 12px;border-bottom:2px solid #E6EBF1;text-align:left">Feature</th>
+                        {raw.columns.map((c: any) => (
+                          <th style="padding:10px 12px;border-bottom:2px solid #E6EBF1;text-align:left">{c.name || c}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                  )}
+                  <tbody>
+                    {Array.isArray(raw.rows) && raw.rows.map((r: any) => {
+                      const vals = typeof r.values === 'string' ? r.values.split('|').map((s: string) => s.trim()) : (Array.isArray(r.values) ? r.values : []);
+                      return (
+                        <tr style="border-bottom:1px solid #F0F3F7">
+                          <td style="padding:10px 12px;font-weight:600">{r.label || r.feature || ''}</td>
+                          {vals.map((v: string) => (
+                            <td style="padding:10px 12px">{v}</td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          );
+
+        case 'appEmbed': {
+          const wType = raw.widgetType || raw.widget || 'advisor';
+          const defaultCfg = (CANONICAL_CONFIGS as any)[wType] || {};
+          const cfg = (raw.config && Object.keys(raw.config).length > 0) ? raw.config : defaultCfg;
+          const micro = raw.microcopy || {};
+          return (
+            <div
+              class={`block-app-embed app-embed-${wType}`}
+              data-block-id={blockId}
+              data-widget={wType}
+              data-config={JSON.stringify(cfg)}
+              data-microcopy={JSON.stringify(micro)}
+            >
+              <div class="wrap">
+                {raw.title && <h3 class="h3" style="margin-bottom:16px">{raw.title}</h3>}
+                <div class="widget-mount" id={`widget-${wType}-${blockId}`} data-widget-type={wType}></div>
+              </div>
+            </div>
+          );
+        }
+
+        case 'html':
+          return (
+            <div class="block-html" data-block-id={blockId} set:html={sanitizeRichText(raw.content || raw.html || '')} />
+          );
+
+        case 'json-ld':
+          // Structured data authored in the CMS. JSON is serialised by us, with
+          // "<" escaped so it can never close the tag. FAQ schema types are
+          // excluded site-wide (roadmap Z-24).
+          if (!raw.jsonld || typeof raw.jsonld !== 'object') return null;
+          if (/faq/i.test(String(raw.jsonld['@type'] ?? ''))) return null;
+          return <script type="application/ld+json" set:html={JSON.stringify(raw.jsonld).replace(/</g, '\\u003c')} />;
+
+        case 'breadcrumb':
+          if (!Array.isArray(raw.crumbs) || raw.crumbs.length === 0) return null;
+          return (
+            <nav class="wrap breadcrumb" aria-label="Breadcrumb" data-block-id={blockId} style="padding-top:16px">
+              {raw.crumbs.map((c: any, i: number) => (
+                <Fragment>{i > 0 && <span aria-hidden="true"> / </span>}<a href={c.url}>{c.label}</a></Fragment>
+              ))}
+            </nav>
+          );
+
+        default:
+          // Unknown or route-owned blocks (PDP, article reader: those pages are
+          // rendered by /products/[slug] and /learn/[slug]) render nothing rather
+          // than a stray "Loading…" heading (ZT-040).
+          if (!raw.body) return null;
+          return (
+            <div class={`block-custom block-${type}`} data-block-id={blockId} style="padding:32px 0">
+              <div class="wrap">
+                {raw.title && <h3 class="h3">{raw.title}</h3>}
+                {raw.heading && !raw.title && <h3 class="h3">{raw.heading}</h3>}
+                <p style="color:var(--body);margin-top:8px">{raw.body}</p>
+              </div>
+            </div>
+          );
+      }
+    } catch (err) {
+      console.error(`[BlockDispatcher] Rendering error for block #${idx} (${(b as any)?.type}):`, err);
+      return (
+        <div class="block-error-boundary" data-block-id={`block-${idx}`} style="display:none" aria-hidden="true">
+          <!-- Block rendering suppressed safely -->
+        </div>
+      );
+    }
+  })}
+</div>

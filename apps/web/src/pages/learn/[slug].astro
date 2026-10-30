@@ -1,0 +1,325 @@
+---
+// learn/[slug].astro — Dynamic SSR Knowledge Hub Article Reader (Tasks D4, T5.4.3 / Z-05)
+// On-demand server-rendered from CMS Delivery API.
+import Layout from '../../layouts/Layout.astro';
+import BlockDispatcher from '../../components/blocks/BlockDispatcher.astro';
+import ResponsiveImage from '../../components/common/ResponsiveImage.astro';
+import { getDeliveryArticle, getDeliveryArticles, getDeliveryProducts, getDeliveryPage } from '../../lib/delivery';
+import { sanitizeRichText } from '@twinmos/shared';
+
+const { slug } = Astro.params;
+
+// T3.2.2: The .html twin must not return 200
+if (!slug || Astro.url.pathname.endsWith('.html')) {
+  return new Response('Not Found', { status: 404, statusText: 'Not Found' });
+}
+
+const preview = Astro.url.searchParams.get('preview') ?? undefined;
+const locale = 'en';
+let article = await getDeliveryArticle(slug, locale, preview);
+
+// No fixture fallback articles: unpublishing in the CMS must take the page down (ZT-043).
+if (!article) {
+  Astro.response.status = 404;
+  Astro.response.statusText = 'Not Found';
+} else {
+  Astro.response.headers.set('Cache-Tag', `articles, article-${slug}`);
+  Astro.response.headers.set('X-Cache-Tags', `articles, article-${slug}`);
+}
+
+const page = await getDeliveryPage('article');
+const blocks = (page?.blocks ?? []).filter((b: any) => b?.type !== 'widget:article-reader' && b?.type !== 'article-cards');
+const seoTitle = article?.seo?.title || article?.seoTitle || article?.title;
+const categoryHeroes: Record<string, string> = {
+  'Guides': '/assets/img/card/cat-nvme.webp',
+  'Storage': '/assets/img/card/cat-portable.webp',
+  'Memory': '/assets/img/card/cat-dram.webp',
+  'Gaming': '/assets/img/card/rgb-ram.webp',
+  'Explainer': '/assets/img/bn/home-1.webp',
+  'Benchmark': '/assets/img/bn/home-0.webp',
+};
+const defaultHero = (article?.category && categoryHeroes[article.category]) || '/assets/img/card/corex-pro.webp';
+const heroImg = article?.heroMedia?.key ? `/api/media/${article.heroMedia.id}` : (article?.seo?.ogImage || article?.coverImage || defaultHero);
+
+const seoDesc = article?.seo?.description || article?.seoDescription || article?.deck || article?.excerpt || 'TwinMOS Knowledge Hub article.';
+const title = article ? `${seoTitle} — TwinMOS Knowledge Hub` : 'Article Not Found — TwinMOS';
+const desc = seoDesc;
+const breadcrumbs = article
+  ? [
+      { label: 'Home', href: '/' },
+      { label: 'Knowledge Hub', href: '/learn' },
+      { label: article.title },
+    ]
+  : [
+      { label: 'Home', href: '/' },
+      { label: 'Knowledge Hub', href: '/learn' },
+      { label: '404 Not Found' },
+    ];
+
+// CMS articles store HTML in `body` and the summary in `deck`; older rows and
+// fixtures used `content`/`excerpt`. Accept both so every published article renders.
+const articleContent = article ? (article.content ?? article.body ?? '') : '';
+const articleExcerpt = article ? (article.excerpt ?? article.deck ?? '') : '';
+const articleDate = article?.publishedAt ?? article?.publishAt ?? article?.createdAt ?? null;
+const publishedDate = articleDate ? new Date(articleDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null;
+
+// Normalize structured sections
+interface StructuredSection {
+  h: string;
+  p: string;
+}
+let structuredSections: StructuredSection[] = [];
+if (article?.structuredBody && Array.isArray(article.structuredBody) && article.structuredBody.length > 0) {
+  structuredSections = article.structuredBody.map((sec: any) => ({
+    h: sec.h || sec.heading || '',
+    p: sec.p || sec.text || '',
+  }));
+}
+
+// Fetch related articles on the server
+let relatedArticles: any[] = article?.relatedArticles ?? [];
+if (article && (!relatedArticles || relatedArticles.length === 0)) {
+  const allArticles = await getDeliveryArticles(locale);
+  relatedArticles = allArticles
+    .filter((a: any) => a.slug !== article.slug)
+    .slice(0, 3)
+    .map((a: any) => ({
+      slug: a.slug,
+      title: a.title,
+      category: a.category || 'Article',
+      deck: a.deck || a.excerpt || '',
+    }));
+}
+
+// Fetch featured products for the topic
+let featuredProducts: any[] = [];
+if (article) {
+  const allProds = await getDeliveryProducts().catch(() => []);
+  const hay = `${article.title || ''} ${article.category || ''} ${article.deck || ''}`.toLowerCase();
+  const cats: string[] = [];
+  if (/gaming|rgb|voltx/.test(hay)) cats.push('dram-gaming', 'ssd-nvme');
+  else if (/ram|dram|ddr|memory/.test(hay)) cats.push('dram-gaming', 'dram-desktop', 'dram-notebook');
+  else if (/ssd|nvme|pcie|storage/.test(hay)) cats.push('ssd-nvme', 'ssd-sata', 'portable-ssd');
+  else cats.push('dram-gaming', 'ssd-nvme');
+
+  let picks = allProds.filter((p: any) => cats.some(c => p.slug?.includes(c) || p.cat === c || p.category?.slug === c));
+  if (picks.length === 0) picks = allProds;
+  featuredProducts = picks.slice(0, 4);
+}
+
+const siteOrigin = Astro.site || 'https://www.twinmos.com';
+const fullHeroImg = heroImg
+  ? (heroImg.startsWith('http') ? heroImg : new URL(heroImg, siteOrigin).toString())
+  : undefined;
+
+const ARTICLE_LD = article
+  ? JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: article.title,
+      description: desc,
+      image: fullHeroImg ? [fullHeroImg] : undefined,
+      author: {
+        '@type': 'Organization',
+        name: 'TwinMOS Technologies',
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'TwinMOS Technologies',
+        logo: {
+          '@type': 'ImageObject',
+          url: 'https://www.twinmos.com/assets/img/logo.webp',
+        },
+      },
+      datePublished: articleDate,
+      dateModified: article.updatedAt ?? articleDate,
+    })
+  : null;
+---
+
+<Layout
+  title={title}
+  desc={desc}
+  breadcrumbs={breadcrumbs}
+  noindex={!article}
+  ogImage={fullHeroImg}
+  preloadImage={heroImg}
+  customLd={ARTICLE_LD ? [ARTICLE_LD] : []}
+>
+  <main id="main">
+    {article ? (
+      <article class="article-container wrap" style="padding: 48px 16px; max-width: 860px; margin: 0 auto;">
+        <header class="article-header" style="margin-bottom: 36px; border-bottom: 1px solid #e2e8f0; padding-bottom: 24px;">
+          {article.category && (
+            <span class="article-category" style="color: #2563eb; font-weight: 600; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">
+              {article.category}
+            </span>
+          )}
+          <h1 class="h1 article-title" style="font-size: 2.5rem; margin-top: 8px; margin-bottom: 16px; line-height: 1.25; color: #0f172a;">
+            {article.title}
+          </h1>
+          <div class="article-meta" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; color: #64748b; font-size: 0.9rem;">
+            {publishedDate && <time datetime={articleDate}>{publishedDate}</time>}
+            {(article.readingTime ?? article.readingTimeMin) && <span class="reading-time-badge">· {article.readingTime ?? article.readingTimeMin} min read</span>}
+          </div>
+          {article.tags && Array.isArray(article.tags) && article.tags.length > 0 && (
+            <div class="article-tags" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;">
+              {article.tags.map((t: string) => (
+                <span class="badge" style="background: #f1f5f9; color: #334155; font-size: 0.8rem; padding: 4px 10px; border-radius: 9999px; font-weight: 500;">
+                  #{t}
+                </span>
+              ))}
+            </div>
+          )}
+          {heroImg && (
+            <div class="article-hero-media" style="margin-top: 24px; border-radius: 8px; overflow: hidden; min-height: 280px; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
+              <ResponsiveImage
+                src={heroImg}
+                alt={article.heroMedia?.alt || article.title}
+                mediaId={article.heroMedia?.id || article.heroMediaId}
+                width={860}
+                height={480}
+                aspectRatio="16/9"
+                loading="eager"
+              />
+            </div>
+          )}
+          {articleExcerpt && (
+            <p class="article-lead" style="font-size: 1.2rem; color: #334155; line-height: 1.6; margin-top: 20px;">
+              {articleExcerpt}
+            </p>
+          )}
+        </header>
+
+        {/* Structured Sections rendering (T5.4.3 / MS5.4: all 632 sections) */}
+        {structuredSections.length > 0 ? (
+          <div class="article-body article-structured-body structured-sections">
+            {structuredSections.map((sec) => (
+              <section class="article-section structured-section" style="margin-bottom: 28px;">
+                {sec.h && (
+                  <h2 class="h2 article-section-heading" style="font-size: 1.55rem; color: #0f172a; margin-top: 36px; margin-bottom: 12px; font-weight: 700; line-height: 1.3;">
+                    {sec.h}
+                  </h2>
+                )}
+                {sec.p && (
+                  <p class="article-section-text" style="line-height: 1.8; font-size: 1.05rem; color: #334155; margin-bottom: 16px;">
+                    {sec.p}
+                  </p>
+                )}
+              </section>
+            ))}
+          </div>
+        ) : articleContent ? (
+          <div class="article-body prose" style="line-height: 1.75; font-size: 1.05rem; color: #1e293b;" set:html={sanitizeRichText(String(articleContent ?? ''))} />
+        ) : null}
+
+        {/* Social Share Box */}
+        <section class="article-share" aria-label="Share article" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 40px 0 24px; padding: 16px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <span style="font-size: 0.9rem; font-weight: 600; color: #334155;">Share this article:</span>
+          <button type="button" id="copyLinkBtn" class="btn btn-sm" aria-label="Copy link to clipboard" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; color: #0f172a;">
+            🔗 Copy Link
+          </button>
+          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener noreferrer" class="btn btn-sm" aria-label="Share on X (opens in a new tab)" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; text-decoration: none; color: #0f172a;">
+            Share on X ↗
+          </a>
+          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener noreferrer" class="btn btn-sm" aria-label="Share on LinkedIn (opens in a new tab)" style="background: #fff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; text-decoration: none; color: #0f172a;">
+            LinkedIn ↗
+          </a>
+          <span id="copyFeedback" aria-live="polite" style="display: none; font-size: 0.85rem; color: #16a34a; font-weight: 600;">
+            ✓ Link copied to clipboard!
+          </span>
+        </section>
+
+        {/* Helpful Rating Widget (Zero PII, POST /articles/:slug/rating) */}
+        <section class="article-feedback" aria-labelledby="feedback-heading" style="margin-top: 36px; padding: 24px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center;">
+          <h3 id="feedback-heading" class="h3" style="font-size: 1.15rem; color: #0f172a; margin-bottom: 12px; font-weight: 600;">
+            Was this article helpful?
+          </h3>
+          <div class="feedback-actions" id="feedbackActions" style="display: flex; justify-content: center; gap: 14px;">
+            <button type="button" class="btn btn-helpful" data-vote="yes" data-slug={article.slug} aria-label="Yes, this article was helpful" style="padding: 8px 24px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
+              👍 Yes
+            </button>
+            <button type="button" class="btn btn-helpful" data-vote="no" data-slug={article.slug} aria-label="No, this article was not helpful" style="padding: 8px 24px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
+              👎 No
+            </button>
+          </div>
+          <p id="feedbackMsg" class="feedback-msg" aria-live="polite" style="display: none; margin-top: 12px; font-size: 0.9rem; color: #16a34a; font-weight: 600;"></p>
+        </section>
+
+        {/* Featured Products Section */}
+        {featuredProducts.length > 0 && (
+          <section class="article-featured-products" style="margin-top: clamp(26px,3vw,40px); border-top: 1px solid #e2e8f0; padding-top: 32px;">
+            <div class="section-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <div>
+                <span class="eyebrow" style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--accent-deep, #0A2540);">Shop the topic</span>
+                <h2 class="h2" style="font-size: 1.5rem; margin: 4px 0 0; color: #0f172a;">{article.category === 'Benchmark' ? 'Products tested' : 'Featured for this topic'}</h2>
+              </div>
+              <a class="link-arrow" href="/shop" style="font-weight: 600; text-decoration: none; color: #2563eb;">All products →</a>
+            </div>
+            <div class="grid g4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+              {featuredProducts.map((p: any) => (
+                <article class="card" style="border: 1px solid #E6EBF1; border-radius: 8px; padding: 16px; background: #fff; display: flex; flex-direction: column;">
+                  <a href={`/products/${p.slug}`} style="text-align: center; margin-bottom: 8px;">
+                    <img src={p.img || '/assets/img/card/corex-pro.webp'} alt={p.name} style="height: 100px; width: auto; object-fit: contain;" loading="lazy" />
+                  </a>
+                  <b style="font-size: 14px; margin-bottom: 4px;">
+                    <a href={`/products/${p.slug}`} style="color: inherit; text-decoration: none;">{p.name}</a>
+                  </b>
+                  <span style="font-size: 12px; color: var(--muted); margin-bottom: 12px; flex: 1;">{p.shortSpec || ''}</span>
+                  <a href={`/products/${p.slug}`} class="btn btn-ghost btn-sm" style="text-align: center;">View details</a>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Related Articles Section */}
+        {relatedArticles.length > 0 && (
+          <section class="related-articles" aria-labelledby="related-heading" style="margin-top: 56px; border-top: 1px solid #e2e8f0; padding-top: 36px;">
+            <h2 id="related-heading" class="h2" style="font-size: 1.5rem; margin-bottom: 20px; color: #0f172a;">
+              Related reading
+            </h2>
+            <div class="related-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+              {relatedArticles.map((rel: any) => (
+                <a href={`/learn/${rel.slug}`} class="card card-pad" style="text-decoration: none; display: flex; flex-direction: column; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; background: #fff; transition: box-shadow 0.2s ease, transform 0.2s ease;">
+                  <span style="font-size: 0.75rem; text-transform: uppercase; color: #2563eb; font-weight: 700; margin-bottom: 8px;">
+                    {rel.category || 'Article'}
+                  </span>
+                  <h3 class="h3" style="font-size: 1.1rem; color: #0f172a; margin-bottom: 8px; line-height: 1.4;">
+                    {rel.title}
+                  </h3>
+                  {rel.deck && (
+                    <p style="font-size: 0.875rem; color: #64748b; line-height: 1.5; margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                      {rel.deck}
+                    </p>
+                  )}
+                  <span class="link-arrow" style="margin-top: auto; font-size: 0.875rem; font-weight: 600; color: #2563eb;">
+                    Read article →
+                  </span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {blocks.length > 0 && (
+          <section class="article-blocks" style="margin-top: 48px;">
+            <BlockDispatcher blocks={blocks} />
+          </section>
+        )}
+      </article>
+    ) : (
+      <section class="article-not-found wrap" style="padding: 80px 16px; text-align: center;">
+        <h1 class="h1" style="font-size: 2.25rem; margin-bottom: 16px; color: #0f172a;">Article Not Found</h1>
+        <p style="font-size: 1.1rem; color: #64748b; margin-bottom: 24px;">
+          The requested article could not be located in our Knowledge Hub.
+        </p>
+        <a href="/learn" class="btn btn-primary" style="display: inline-block; background: #0A2540; color: #fff; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
+          Browse Knowledge Hub
+        </a>
+      </section>
+    )}
+  </main>
+
+  <script is:inline src="/assets/js/share-copy.js"></script>
+</Layout>

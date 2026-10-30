@@ -67,46 +67,16 @@ async function editorCookie() {
   return (r.headers.get('set-cookie') ?? '').split(',').map((c) => c.split(';')[0]).join('; ');
 }
 
-describe('P2.2: server-side bridge export (fresh while API is live)', () => {
-  it('rebuilds cms-content.js with counts that match the database', async () => {
+describe('P2.2: server-side bridge export retired in MS5.6', () => {
+  it('returns 410 Gone confirming the bridge endpoint is retired', async () => {
     const ck = await editorCookie();
-    // a second published product appears in DB → export must reflect it
-    await db.insert(product).values({
-      sku: 'P2PRICE-2', slug: 'p2-priced-probe-2', name: 'P2 Priced Probe 2',
-      brandId: (await db.select({ id: brand.id }).from(brand).limit(1))[0].id,
-      categoryId: (await db.select({ id: category.id }).from(category).limit(1))[0].id,
-      status: 'published', priceUsd: 9.99, currency: 'USD', specs: {}, badges: [], facets: {},
-    });
     const res = await app.request('/api/v1/admin/content/export', {
       method: 'POST', headers: { 'content-type': 'application/json', cookie: ck }, body: '{}',
     });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(410);
     const body = await res.json();
-    expect(body.ok).toBe(true);
-    // counts match the database (the two probes are the only published non-prototype products)
-    const dbPublished = await db.select({ id: product.id }).from(product).where(eq(product.slug, 'p2-priced-probe'));
-    expect(dbPublished.length).toBe(1);
-    expect(body.counts.products).toBeGreaterThanOrEqual(2); // probes present in the bundle
-    // the file was actually written and carries the priced probe with its price
-    expect(existsSync(body.out)).toBe(true);
-    const text = readFileSync(body.out, 'utf8');
-    expect(text).toContain('p2-priced-probe');
-    expect(text).toContain('123.45');
-  });
-
-  it('refuses non-editors (RBAC on the bridge)', async () => {
-    const origin = 'http://localhost:5173';
-    const pwViewer = 'T2v-' + crypto.randomUUID().replaceAll('-', '').slice(0, 14) + '!C3';
-    await auth.api.createUser({ body: { email: 'p2-viewer@twinmos.dev', password: pwViewer, name: 'V', role: 'viewer' } });
-    const r = await auth.handler(new Request(origin + '/api/v1/auth/sign-in/email', {
-      method: 'POST', headers: { 'content-type': 'application/json', origin },
-      body: JSON.stringify({ email: 'p2-viewer@twinmos.dev', password: pwViewer }),
-    }));
-    const ck = (r.headers.get('set-cookie') ?? '').split(',').map((c) => c.split(';')[0]).join('; ');
-    const res = await app.request('/api/v1/admin/content/export', {
-      method: 'POST', headers: { 'content-type': 'application/json', cookie: ck }, body: '{}',
-    });
-    expect(res.status).toBe(403);
+    expect(body.ok).toBe(false);
+    expect(body.error).toContain('Bridge retired');
   });
 });
 

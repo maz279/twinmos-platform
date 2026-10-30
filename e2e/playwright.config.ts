@@ -18,6 +18,7 @@ const REUSE = !process.env.CI;
 
 export default defineConfig({
   testDir: '.',
+  testMatch: /.*\.spec\.ts/,
   timeout: 60_000,
   retries: process.env.CI ? 1 : 0,
   workers: 1, // serial: one API + one site under test
@@ -27,8 +28,8 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
-    { name: 'public', testMatch: /public\.spec\.ts/ },
-    { name: 'admin', testMatch: /admin\.spec\.ts/ },
+    { name: 'public', testMatch: /(public|ms42-public|locale)\.spec\.ts/ },
+    { name: 'admin', testMatch: /(admin|ms42-admin)\.spec\.ts/ },
   ],
   webServer: [
     {

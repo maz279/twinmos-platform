@@ -1,0 +1,1006 @@
+{
+  "regions": [
+    {
+      "code": "all",
+      "label": "All regions",
+      "count": 35,
+      "on": true
+    },
+    {
+      "code": "me",
+      "label": "Middle East & GCC",
+      "count": 6,
+      "on": false
+    },
+    {
+      "code": "af",
+      "label": "Africa",
+      "count": 15,
+      "on": false
+    },
+    {
+      "code": "as",
+      "label": "Asia-Pacific",
+      "count": 8,
+      "on": false
+    },
+    {
+      "code": "eu",
+      "label": "Europe",
+      "count": 3,
+      "on": false
+    },
+    {
+      "code": "cis",
+      "label": "Russia & CIS",
+      "count": 2,
+      "on": false
+    },
+    {
+      "code": "am",
+      "label": "Americas",
+      "count": 1,
+      "on": false
+    }
+  ],
+  "cards": [
+    {
+      "cc": "AE",
+      "region": "me",
+      "status": "hub",
+      "search": "united arab emirates middle east & gcc regional hq — dubai (dafza) dubai",
+      "name": "United Arab Emirates",
+      "regionLabel": "Middle East & GCC",
+      "chip": "TwinMOS hub",
+      "chipClass": "ok",
+      "tag": "Regional HQ — Dubai (DAFZA)",
+      "note": "MEA/CIS headquarters since 2001 — free-zone logistics reach the GCC, Africa and South Asia within 48–72 hours.",
+      "cities": [
+        "Dubai"
+      ],
+      "actions": [
+        {
+          "label": "Contact the hub",
+          "href": "contact.html",
+          "primary": true
+        },
+        {
+          "label": "Email sales",
+          "href": "mailto:sales@twinmos.com?subject=United%20Arab%20Emirates%20sales%20inquiry",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "SA",
+      "region": "me",
+      "status": "authorized",
+      "search": "saudi arabia middle east & gcc nationwide authorized distribution riyadh jeddah dammam",
+      "name": "Saudi Arabia",
+      "regionLabel": "Middle East & GCC",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Nationwide authorized distribution",
+      "note": "Kingdom-wide coverage via the authorized regional distributor, spanning retail, SI and Vision 2030 government programs.",
+      "cities": [
+        "Riyadh",
+        "Jeddah",
+        "Dammam"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Saudi%20Arabia",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "QA",
+      "region": "me",
+      "status": "authorized",
+      "search": "qatar middle east & gcc established authorized distributor doha",
+      "name": "Qatar",
+      "regionLabel": "Middle East & GCC",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Established authorized distributor",
+      "note": "Full portfolio with bilingual support and GCC technical-regulation compliance.",
+      "cities": [
+        "Doha"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Qatar",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "KW",
+      "region": "me",
+      "status": "expanding",
+      "search": "kuwait middle east & gcc retail & si coverage expanding kuwait city",
+      "name": "Kuwait",
+      "regionLabel": "Middle East & GCC",
+      "chip": "Expanding coverage",
+      "chipClass": "warn",
+      "tag": "Retail & SI coverage expanding",
+      "note": "Served from the Dubai hub while local retail and system-integrator coverage grows.",
+      "cities": [
+        "Kuwait City"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Kuwait",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "BH",
+      "region": "me",
+      "status": "expanding",
+      "search": "bahrain middle east & gcc retail & si coverage expanding manama",
+      "name": "Bahrain",
+      "regionLabel": "Middle East & GCC",
+      "chip": "Expanding coverage",
+      "chipClass": "warn",
+      "tag": "Retail & SI coverage expanding",
+      "note": "Served from the Dubai hub while local retail and system-integrator coverage grows.",
+      "cities": [
+        "Manama"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Bahrain",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "OM",
+      "region": "me",
+      "status": "expanding",
+      "search": "oman middle east & gcc retail & si coverage expanding muscat",
+      "name": "Oman",
+      "regionLabel": "Middle East & GCC",
+      "chip": "Expanding coverage",
+      "chipClass": "warn",
+      "tag": "Retail & SI coverage expanding",
+      "note": "Served from the Dubai hub while local retail and system-integrator coverage grows.",
+      "cities": [
+        "Muscat"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Oman",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "EG",
+      "region": "af",
+      "status": "authorized",
+      "search": "egypt africa multi-distributor network cairo alexandria",
+      "name": "Egypt",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Multi-distributor network",
+      "note": "Robust authorized network supplying retail, e-commerce, system integrators and government channels.",
+      "cities": [
+        "Cairo",
+        "Alexandria"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Egypt",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "MA",
+      "region": "af",
+      "status": "authorized",
+      "search": "morocco africa authorized partner network casablanca rabat marrakech",
+      "name": "Morocco",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Authorized partner network",
+      "note": "Coverage across major cities — the gateway to Francophone Africa.",
+      "cities": [
+        "Casablanca",
+        "Rabat",
+        "Marrakech"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Morocco",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "DZ",
+      "region": "af",
+      "status": "authorized",
+      "search": "algeria africa diversified distributor network algiers oran",
+      "name": "Algeria",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Diversified distributor network",
+      "note": "Authorized distribution with consumer, SI and government reach.",
+      "cities": [
+        "Algiers",
+        "Oran"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Algeria",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "LY",
+      "region": "af",
+      "status": "authorized",
+      "search": "libya africa authorized local coverage tripoli benghazi",
+      "name": "Libya",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Authorized local coverage",
+      "note": "Authorized distributors provide local coverage with bilingual product labeling.",
+      "cities": [
+        "Tripoli",
+        "Benghazi"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Libya",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "NG",
+      "region": "af",
+      "status": "authorized",
+      "search": "nigeria africa multi-distributor network lagos abuja port harcourt",
+      "name": "Nigeria",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Multi-distributor network",
+      "note": "West Africa hub — authorized distributors based in Lagos with nationwide reach.",
+      "cities": [
+        "Lagos",
+        "Abuja",
+        "Port Harcourt"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Nigeria",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "GH",
+      "region": "af",
+      "status": "authorized",
+      "search": "ghana africa authorized distributors accra kumasi",
+      "name": "Ghana",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Authorized distributors",
+      "note": "Accra-based authorized distribution with regional coverage.",
+      "cities": [
+        "Accra",
+        "Kumasi"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Ghana",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "SN",
+      "region": "af",
+      "status": "seeking",
+      "search": "senegal africa partners being appointed dakar",
+      "name": "Senegal",
+      "regionLabel": "Africa",
+      "chip": "Seeking distributors",
+      "chipClass": "info",
+      "tag": "Partners being appointed",
+      "note": "UEMOA gateway — verified local partners are being appointed; ask sales for the current channel.",
+      "cities": [
+        "Dakar"
+      ],
+      "actions": [
+        {
+          "label": "Become a distributor",
+          "href": "partners.html",
+          "primary": true
+        },
+        {
+          "label": "Contact sales",
+          "href": "mailto:sales@twinmos.com?subject=Senegal%20distributor%20inquiry",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "CM",
+      "region": "af",
+      "status": "authorized",
+      "search": "cameroon africa authorized distributors",
+      "name": "Cameroon",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Authorized distributors",
+      "note": "Central Africa — CEMAC regional coverage through authorized distributors.",
+      "cities": [],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Cameroon",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "KE",
+      "region": "af",
+      "status": "authorized",
+      "search": "kenya africa distribution partners nairobi mombasa",
+      "name": "Kenya",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Distribution partners",
+      "note": "East Africa's technology hub — distribution partners with regional reach.",
+      "cities": [
+        "Nairobi",
+        "Mombasa"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Kenya",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "ET",
+      "region": "af",
+      "status": "authorized",
+      "search": "ethiopia africa authorized distributor network addis ababa",
+      "name": "Ethiopia",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Authorized distributor network",
+      "note": "Authorized distribution serving government, education and enterprise buyers.",
+      "cities": [
+        "Addis Ababa"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Ethiopia",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "RW",
+      "region": "af",
+      "status": "seeking",
+      "search": "rwanda africa partners being verified kigali",
+      "name": "Rwanda",
+      "regionLabel": "Africa",
+      "chip": "Seeking distributors",
+      "chipClass": "info",
+      "tag": "Partners being verified",
+      "note": "EAC market — distribution partners are being verified; contact regional sales.",
+      "cities": [
+        "Kigali"
+      ],
+      "actions": [
+        {
+          "label": "Become a distributor",
+          "href": "partners.html",
+          "primary": true
+        },
+        {
+          "label": "Contact sales",
+          "href": "mailto:sales@twinmos.com?subject=Rwanda%20distributor%20inquiry",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "ZA",
+      "region": "af",
+      "status": "authorized",
+      "search": "south africa africa nationwide distributor network johannesburg cape town durban",
+      "name": "South Africa",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Nationwide distributor network",
+      "note": "Southern Africa hub — the continent's most developed IT channel, SANS/ICASA compliant.",
+      "cities": [
+        "Johannesburg",
+        "Cape Town",
+        "Durban"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20South%20Africa",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "AO",
+      "region": "af",
+      "status": "authorized",
+      "search": "angola africa authorized regional distributor luanda",
+      "name": "Angola",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Authorized regional distributor",
+      "note": "Coverage from Luanda with Portuguese and English support.",
+      "cities": [
+        "Luanda"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Angola",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "NA",
+      "region": "af",
+      "status": "authorized",
+      "search": "namibia africa authorized distributors windhoek",
+      "name": "Namibia",
+      "regionLabel": "Africa",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Authorized distributors",
+      "note": "Local coverage with SACU market access.",
+      "cities": [
+        "Windhoek"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Namibia",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "BW",
+      "region": "af",
+      "status": "expanding",
+      "search": "botswana & lesotho africa regional-hub coverage gaborone maseru",
+      "name": "Botswana & Lesotho",
+      "regionLabel": "Africa",
+      "chip": "Expanding coverage",
+      "chipClass": "warn",
+      "tag": "Regional-hub coverage",
+      "note": "Served via South Africa and Namibia hub partners; local presence in progress.",
+      "cities": [
+        "Gaborone",
+        "Maseru"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Botswana%20%26%20Lesotho",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "TW",
+      "region": "as",
+      "status": "hub",
+      "search": "taiwan asia-pacific founding hq · r&d center taipei",
+      "name": "Taiwan",
+      "regionLabel": "Asia-Pacific",
+      "chip": "TwinMOS hub",
+      "chipClass": "ok",
+      "tag": "Founding HQ · R&D center",
+      "note": "Founding office since 1998 — R&D, BSMI certification and 100% pre-delivery testing.",
+      "cities": [
+        "Taipei"
+      ],
+      "actions": [
+        {
+          "label": "Contact the hub",
+          "href": "contact.html",
+          "primary": true
+        },
+        {
+          "label": "Email sales",
+          "href": "mailto:sales@twinmos.com?subject=Taiwan%20sales%20inquiry",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "IN",
+      "region": "as",
+      "status": "authorized",
+      "search": "india asia-pacific authorized distribution network",
+      "name": "India",
+      "regionLabel": "Asia-Pacific",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Authorized distribution network",
+      "note": "Strategic P0 market — nationwide authorized distribution coordinated from the Dubai office; BIS compliance planned for Phase 2.",
+      "cities": [],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20India",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "PK",
+      "region": "as",
+      "status": "expanding",
+      "search": "pakistan asia-pacific network being established karachi lahore islamabad",
+      "name": "Pakistan",
+      "regionLabel": "Asia-Pacific",
+      "chip": "Expanding coverage",
+      "chipClass": "warn",
+      "tag": "Network being established",
+      "note": "Phase 2 growth market — nationwide ICT distributors sought; regional sales run from Dubai.",
+      "cities": [
+        "Karachi",
+        "Lahore",
+        "Islamabad"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Pakistan",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "HK",
+      "region": "as",
+      "status": "authorized",
+      "search": "hong kong asia-pacific established local distributor hong kong",
+      "name": "Hong Kong",
+      "regionLabel": "Asia-Pacific",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Established local distributor",
+      "note": "Free-port logistics advantage and Greater Bay Area market access.",
+      "cities": [
+        "Hong Kong"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Hong%20Kong",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "SG",
+      "region": "as",
+      "status": "authorized",
+      "search": "singapore asia-pacific sea distribution hub singapore",
+      "name": "Singapore",
+      "regionLabel": "Asia-Pacific",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "SEA distribution hub",
+      "note": "Authorized local distributors anchoring ASEAN coverage.",
+      "cities": [
+        "Singapore"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Singapore",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "MY",
+      "region": "as",
+      "status": "authorized",
+      "search": "malaysia asia-pacific sea distribution hub kuala lumpur",
+      "name": "Malaysia",
+      "regionLabel": "Asia-Pacific",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "SEA distribution hub",
+      "note": "Established distributor coverage alongside the Singapore hub.",
+      "cities": [
+        "Kuala Lumpur"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Malaysia",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "SEA",
+      "region": "as",
+      "status": "expanding",
+      "search": "southeast asia (asean) asia-pacific expanding across asean thailand indonesia philippines vietnam",
+      "name": "Southeast Asia (ASEAN)",
+      "regionLabel": "Asia-Pacific",
+      "chip": "Expanding coverage",
+      "chipClass": "warn",
+      "tag": "Expanding across ASEAN",
+      "note": "Growth markets served from the Singapore and Malaysia hubs via regional e-commerce and retail channels.",
+      "cities": [
+        "Thailand",
+        "Indonesia",
+        "Philippines",
+        "Vietnam"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Southeast%20Asia%20%28ASEAN%29",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "CN",
+      "region": "as",
+      "status": "hub",
+      "search": "china asia-pacific manufacturing facility dongguan",
+      "name": "China",
+      "regionLabel": "Asia-Pacific",
+      "chip": "TwinMOS hub",
+      "chipClass": "ok",
+      "tag": "Manufacturing facility",
+      "note": "TwinMOS manufacturing facility — Greater China market and global supply.",
+      "cities": [
+        "Dongguan"
+      ],
+      "actions": [
+        {
+          "label": "Contact the hub",
+          "href": "contact.html",
+          "primary": true
+        },
+        {
+          "label": "Email sales",
+          "href": "mailto:sales@twinmos.com?subject=China%20sales%20inquiry",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "DE",
+      "region": "eu",
+      "status": "authorized",
+      "search": "germany europe european office + local distributors cologne",
+      "name": "Germany",
+      "regionLabel": "Europe",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "European office + local distributors",
+      "note": "DACH coverage from the Cologne office through authorized local distributors.",
+      "cities": [
+        "Cologne"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Germany",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "NL",
+      "region": "eu",
+      "status": "authorized",
+      "search": "netherlands europe authorized local distributors",
+      "name": "Netherlands",
+      "regionLabel": "Europe",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Authorized local distributors",
+      "note": "Benelux coverage — CE, REACH and GDPR compliant EU distribution.",
+      "cities": [],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Netherlands",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "GB",
+      "region": "eu",
+      "status": "authorized",
+      "search": "united kingdom europe european partner network",
+      "name": "United Kingdom",
+      "regionLabel": "Europe",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "European partner network",
+      "note": "UKCA-compliant products served through European distributor partners.",
+      "cities": [],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20United%20Kingdom",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "RU",
+      "region": "cis",
+      "status": "expanding",
+      "search": "russia & cis russia & cis eac-certified market moscow st. petersburg",
+      "name": "Russia & CIS",
+      "regionLabel": "Russia & CIS",
+      "chip": "Expanding coverage",
+      "chipClass": "warn",
+      "tag": "EAC-certified market",
+      "note": "Products carry EAC certification for the whole EAEU — national distribution is being appointed.",
+      "cities": [
+        "Moscow",
+        "St. Petersburg"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20Russia%20%26%20CIS",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "KZ",
+      "region": "cis",
+      "status": "seeking",
+      "search": "kazakhstan russia & cis regional distributor sought almaty astana",
+      "name": "Kazakhstan",
+      "regionLabel": "Russia & CIS",
+      "chip": "Seeking distributors",
+      "chipClass": "info",
+      "tag": "Regional distributor sought",
+      "note": "EAEU member market served under EAC certification; a regional distributor is being sought.",
+      "cities": [
+        "Almaty",
+        "Astana"
+      ],
+      "actions": [
+        {
+          "label": "Become a distributor",
+          "href": "partners.html",
+          "primary": true
+        },
+        {
+          "label": "Contact sales",
+          "href": "mailto:sales@twinmos.com?subject=Kazakhstan%20distributor%20inquiry",
+          "primary": false
+        }
+      ]
+    },
+    {
+      "cc": "US",
+      "region": "am",
+      "status": "authorized",
+      "search": "united states & canada americas selective distribution san jose",
+      "name": "United States & Canada",
+      "regionLabel": "Americas",
+      "chip": "Authorized distribution",
+      "chipClass": "ok",
+      "tag": "Selective distribution",
+      "note": "American office plus selective channel partnerships and the Newegg storefront.",
+      "cities": [
+        "San Jose"
+      ],
+      "actions": [
+        {
+          "label": "Connect with the distributor",
+          "href": "mailto:sales@twinmos.com?subject=Authorized%20distributor%20in%20United%20States%20%26%20Canada",
+          "primary": true
+        },
+        {
+          "label": "Become a partner",
+          "href": "partners.html",
+          "primary": false
+        }
+      ]
+    }
+  ]
+}

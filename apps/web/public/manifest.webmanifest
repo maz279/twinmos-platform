@@ -1,7 +1,7 @@
 {
  "name": "TwinMOS Technologies",
  "short_name": "TwinMOS",
- "description": "Memory & storage solutions since 1998 — TwinMOS corporate site prototype",
+ "description": "Memory & storage solutions since 1998 — TwinMOS corporate website",
  "start_url": "index.html",
  "display": "standalone",
  "background_color": "#FFFFFF",

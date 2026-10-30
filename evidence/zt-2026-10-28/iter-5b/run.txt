@@ -1,0 +1,6 @@
+build rc=0
+ Container twinmos-lab-content-run-a81ce63f741b Creating 
+ Container twinmos-lab-content-run-a81ce63f741b Created 
+[content] page blocks updated: 28/28
+crawl rc=1
+crawl: 251 pages crawled, 0 status-only; 1 bad status, 5 pages with errors, 0 link issues

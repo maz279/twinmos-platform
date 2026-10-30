@@ -27,6 +27,8 @@ test.describe('public site', () => {
     });
   }
 
+  // MS5.2 page conversion: the CMS where-to-buy/quote/shop/search pages mount
+  // the prototype widgets (locator, product select, shop grid, search results).
   test('?region=africa activates the Africa chip (P2.5)', async ({ page }) => {
     await page.goto('where-to-buy.html?region=africa');
     await expect(page.locator('[data-rg="af"]')).toHaveClass(/on/);
@@ -38,8 +40,12 @@ test.describe('public site', () => {
   });
 
   test('?product=<db-slug> prefills the quote select (P2.5)', async ({ page }) => {
-    await page.goto('quote.html?product=voltx-ddr5-udimm-16gb');
-    await expect(page.locator('#qProduct')).toHaveValue(/VOLTX DDR5/i);
+    // Corpus-reconciled product (old udimm-16gb fixture removed by the MS6
+    // importer reconciliation back to the 39-item corpus).
+    await page.goto('quote.html?product=voltx-ddr5-u-dimm-for-desktop');
+    // The prefill runs from the lazily-loaded app layer (requestIdleCallback),
+    // so give the assertion the same budget the interaction allows.
+    await expect(page.locator('#qProduct')).toHaveValue(/VOLTX DDR5/i, { timeout: 15_000 });
   });
 
   test('?cat=dram-gaming filters the shop grid', async ({ page }) => {
@@ -51,14 +57,19 @@ test.describe('public site', () => {
   });
 
   test('?q=DDR5 returns search results', async ({ page }) => {
-    await page.goto('search.html?q=DDR5');
-    await page.waitForSelector('#main a[href*="product.html"], #main a[href*="article.html"]', { timeout: 10_000 });
-    const results = page.locator('#main a[href*="product.html"], #main a[href*="article.html"]');
+    // T5.6.3: /search is server-rendered from Delivery /search with clean
+    // result URLs; the legacy search.html alias 301s here.
+    const res = await page.goto('search?q=DDR5');
+    expect(res?.status()).toBe(200);
+    await page.waitForSelector('#main a[href*="/products/"], #main a[href*="/learn/"]', { timeout: 10_000 });
+    const results = page.locator('#main a[href*="/products/"], #main a[href*="/learn/"]');
     expect(await results.count()).toBeGreaterThan(0);
   });
 
   test('PDP shows MSRP for a priced product and omits offers for a priceless one (P2.4)', async ({ page }) => {
-    await page.goto('product.html?id=voltx-ddr5-udimm-16gb');
+    // Corpus-reconciled priced product (the old udimm-16gb fixture row was
+    // removed by the MS6 importer reconciliation back to the 39-item corpus).
+    await page.goto('product.html?id=voltx-ddr5-u-dimm-for-desktop');
     await expect(page.locator('.pdp-info')).toContainText(/USD 89\.99/);
     await page.goto('product.html?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd');
     const ld = await page.evaluate(() => {
@@ -80,11 +91,12 @@ test.describe('public site', () => {
     expect(body).not.toMatch(/warranty\s+warranty/i);
   });
 
-  test('mega menu shows the live catalog count, not the baked 39 (P2.6)', async ({ page }) => {
+  test('mega menu states the CMS product count (MS4.2 T4.2.3)', async ({ page, request }) => {
+    const API = process.env.E2E_API_URL ?? 'http://127.0.0.1:8787';
+    const settings = await request.get(`${API}/api/v1/delivery/settings/site.figures`);
+    const figures = (await settings.json()).data;
     await page.goto('index.html', { waitUntil: 'load', timeout: 30_000 });
-    // poll for the patched text — the count patch runs at app boot; poll
-    // avoids coupling to any one marker element
-    await expect.poll(async () => page.evaluate(() => document.body.textContent ?? ''), { timeout: 15_000 })
-      .not.toMatch(/\b39 products\b/);
+    await expect.poll(async () => page.locator('.mega-all').first().textContent(), { timeout: 15_000 })
+      .toContain(`${figures.productCount} products`);
   });
 });

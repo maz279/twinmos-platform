@@ -1,0 +1,7 @@
+Contact: mailto:security@twinmos.com
+Expires: 2027-10-25T23:59:59.000Z
+Preferred-Languages: en, ar, zh
+Canonical: https://www.twinmos.com/.well-known/security.txt
+Policy: https://www.twinmos.com/legal#security
+Hiring: https://www.twinmos.com/careers
+Acknowledgments: https://www.twinmos.com/legal#security

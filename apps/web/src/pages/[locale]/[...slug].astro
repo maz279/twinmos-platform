@@ -1,0 +1,66 @@
+---
+// Localised CMS page (T4.7.5 / rule D-8).
+// Middleware only allows this route through when a published variant exists;
+// everything else 301s to the English URL.
+import Layout from '../../layouts/Layout.astro';
+import BlockDispatcher from '../../components/blocks/BlockDispatcher.astro';
+import { getDeliveryPage, getDeliveryPageByPath } from '../../lib/delivery';
+import { LOCALES } from '@twinmos/shared';
+
+export const prerender = false;
+
+const { locale, slug } = Astro.params;
+if (locale === 'en') {
+  return Astro.redirect(slug ? `/${slug}` : '/', 301);
+}
+if (!locale || !LOCALES.includes(locale as any)) {
+  // Not a locale prefix at all — an ordinary unknown page: branded 404 (T5.2.2).
+  return Astro.rewrite('/404');
+}
+
+// T3.2.2: Refuse .html twins under clean route paths
+if (Astro.url.pathname.endsWith('.html')) {
+  return new Response('Not Found', { status: 404, statusText: 'Not Found' });
+}
+
+const preview = Astro.url.searchParams.get('preview') ?? undefined;
+const pageSlug = String(slug ?? 'index').replace(/\.html$/i, '').replace(/\/+$/, '') || 'index';
+const pagePath = `/${pageSlug}`;
+
+// Resolve page by exact path first, then by slug (T5.2.1)
+let page = await getDeliveryPageByPath(pagePath, locale, preview);
+if (!page) {
+  page = await getDeliveryPage(pageSlug, locale, preview);
+}
+
+if (!page) {
+  // Middleware 301s untranslated locale paths; reaching here means a missing
+  // page under a real locale prefix — serve the branded 404 (T5.2.2).
+  return Astro.rewrite('/404');
+}
+
+// T5.2.1: Cache tags and preview headers per page for localized delivery
+if (preview) {
+  Astro.response.headers.set('Cache-Control', 'private, no-store, must-revalidate');
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+} else {
+  const cacheTags = page.cacheTags || ['pages', `page:${page.slug}`, `locale:${locale}`];
+  Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+  Astro.response.headers.set('Cache-Tag', cacheTags.join(', '));
+  Astro.response.headers.set('X-Cache-Tags', cacheTags.join(', '));
+}
+
+const title = page.title ?? 'TwinMOS';
+const desc = page.seoDescription ?? page.description ?? '';
+const blocks = page.blocks ?? [];
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: title },
+];
+---
+
+<Layout title={title} desc={desc} locale={locale} breadcrumbs={breadcrumbs} noindex={Boolean(page.noindex)} hreflangGrid={true}>
+  <main id="main">
+    <BlockDispatcher blocks={blocks} />
+  </main>
+</Layout>

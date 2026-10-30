@@ -1,0 +1,3 @@
+#!/bin/sh
+# TwinMOS Pre-commit hook (T3.6.4 / REPO-01)
+node tooling/verify/pre-commit-check.mjs

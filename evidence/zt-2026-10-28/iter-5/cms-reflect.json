@@ -1,0 +1,57 @@
+{
+  "name": "cms-reflect",
+  "at": "2026-10-28T17:39:31.751Z",
+  "total": 9,
+  "failed": 0,
+  "items": [
+    {
+      "id": "CMS-01 editor lists seeded pages",
+      "ok": true,
+      "n": 28
+    },
+    {
+      "id": "CMS-02 seeded page saves through the block contract",
+      "ok": true,
+      "status": 200,
+      "body": "{\"id\":2,\"slug\":\"about\",\"locale\":\"en\",\"title\":\"About TwinMOS — Since 1998\",\"blocks\":[{\"id\":\"about-block-1\",\"lede\":\"TwinMOS Technologies designs, manufactures and markets memory and storage — under its own brand and as an OEM provider — for customers in more than 93 countries across five continents. Z"
+    },
+    {
+      "id": "CMS-03 G-REFLECT: published edit visible to visitors within 5 s",
+      "ok": true,
+      "seenMs": 226
+    },
+    {
+      "id": "CMS-04 script URL rejected by the block contract",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "CMS-05 unpublished page no longer served",
+      "ok": true,
+      "unpub": 200,
+      "status": 200
+    },
+    {
+      "id": "CMS-06 author cannot publish",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "CMS-07a republish refused without an approver (provenance rule)",
+      "ok": true,
+      "status": 422,
+      "title": "Missing provenance"
+    },
+    {
+      "id": "CMS-07 editor records an approver and republishes",
+      "ok": true,
+      "prov": 200,
+      "status": 200,
+      "body": "{\"id\":2,\"slug\":\"about\",\"locale\":\"en\",\"title\":\"About TwinMOS — Since 1998\",\"blocks\":[{\"id\":\"about-block-1\",\"lede\":\"TwinMOS Technologies designs, manufactures and markets memory and storage — under its "
+    },
+    {
+      "id": "CMS-08 page edits and transitions are audited",
+      "ok": true
+    }
+  ]
+}

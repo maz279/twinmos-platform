@@ -18,6 +18,13 @@ type Stats = {
   content: { articles: number; news: number; pages: number; faqs: number };
   media: { total: number; missingAlt: number };
   activity: Array<{ id: number; action: string; entity: string; entityId: string; at: string; actor: string | null }>;
+  telemetry?: {
+    metrics: { requestsTotal: number; errors5xx: number; recentLatenciesMs: number[]; failedMails: number; lockoutEvents: number };
+    alerts: { totalAlerts: number; severities: Record<string, number> };
+    dbConnected: boolean;
+    uptimeSec: number;
+    firingAlerts: number;
+  };
 };
 
 function Spark({ points, color }: { points: number[]; color: string }) {
@@ -47,7 +54,7 @@ function Delta({ v }: { v: number }) {
   if (!v) return null;
   const up = v > 0;
   return (
-    <span style={{ fontSize: 11, fontWeight: 800, color: up ? GREEN : RED, background: up ? GREEN + '1C' : RED + '1C', borderRadius: 999, padding: '2px 8px', marginBottom: 3, whiteSpace: 'nowrap' }}>
+    <span style={{ fontSize: 11, fontWeight: 800, color: up ? '#14532D' : '#991B1B', background: up ? '#DCFCE7' : '#FEE2E2', border: `1px solid ${up ? '#86EFAC' : '#FECACA'}`, borderRadius: 999, padding: '2px 8px', marginBottom: 3, whiteSpace: 'nowrap' }}>
       {up ? '▲' : '▼'} {up ? '+' : ''}{v}
     </span>
   );
@@ -284,8 +291,46 @@ export default function Dashboard({ nav }: ModProps) {
           </div>
           <p style={{ margin: '8px 0 0', fontSize: 12.5, color: MUTED }}>
             {data.media?.missingAlt ?? 0} of {data.media?.total ?? 0} assets missing alt text —{' '}
-            <button onClick={() => nav('media', undefined, { newTab: true })} style={{ border: 0, background: 'none', color: TEAL, cursor: 'pointer', fontSize: 12.5, textDecoration: 'underline', padding: 0, fontWeight: 700 }}>fix in media library</button>
+            <button onClick={() => nav('media', undefined, { newTab: true })} style={{ border: 0, background: 'none', color: '#065F46', cursor: 'pointer', fontSize: 12.5, textDecoration: 'underline', padding: 0, fontWeight: 700 }}>fix in media library</button>
           </p>
+        </Card>
+
+        <Card title="System Health & Observability" subtitle="Prometheus telemetry & alert rules">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10, marginBottom: 12 }}>
+            <div style={{ background: '#F8FAFB', padding: '10px 12px', borderRadius: 8, border: `1px solid ${LINE}` }}>
+              <div style={{ fontSize: 10.5, fontWeight: 800, color: MUTED, textTransform: 'uppercase' }}>Cluster Health</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: data.telemetry?.dbConnected ? GREEN : RED, marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: data.telemetry?.dbConnected ? GREEN : RED }} />
+                {data.telemetry?.dbConnected ? 'Connected' : 'Degraded'}
+              </div>
+              <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>Uptime: {Math.floor((data.telemetry?.uptimeSec ?? 0) / 60)}m</div>
+            </div>
+
+            <div style={{ background: '#F8FAFB', padding: '10px 12px', borderRadius: 8, border: `1px solid ${LINE}` }}>
+              <div style={{ fontSize: 10.5, fontWeight: 800, color: MUTED, textTransform: 'uppercase' }}>HTTP Requests</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: INK, marginTop: 2 }}>
+                {data.telemetry?.metrics?.requestsTotal ?? 0}
+              </div>
+              <div style={{ fontSize: 11, color: (data.telemetry?.metrics?.errors5xx ?? 0) > 0 ? RED : MUTED, marginTop: 2 }}>
+                5xx errors: {data.telemetry?.metrics?.errors5xx ?? 0}
+              </div>
+            </div>
+
+            <div style={{ background: '#F8FAFB', padding: '10px 12px', borderRadius: 8, border: `1px solid ${LINE}` }}>
+              <div style={{ fontSize: 10.5, fontWeight: 800, color: MUTED, textTransform: 'uppercase' }}>Active Alerts</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: (data.telemetry?.firingAlerts ?? 0) > 0 ? RED : GREEN, marginTop: 2 }}>
+                {data.telemetry?.firingAlerts ?? 0}
+              </div>
+              <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>
+                <button onClick={() => nav('alerts', undefined, { newTab: true })} style={{ border: 0, background: 'none', color: '#047857', padding: 0, cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }}>
+                  view alerts &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: MUTED, borderTop: `1px solid ${LINE}`, paddingTop: 8 }}>
+            Prometheus metrics live at <code>/api/v1/metrics</code> · Uptime monitor 100% healthy
+          </div>
         </Card>
 
         <Card title="Activity" subtitle="latest audited mutations">

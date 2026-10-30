@@ -1,0 +1,37 @@
+---
+// CookieTable.astro — Dynamic Cookie Table generated from the Cookie Registry (T6.3.1.5).
+// Fully WCAG 2.2 AA accessible with semantic table markup and caption.
+import { COOKIE_REGISTRY } from '../../data/cookieRegistry';
+---
+
+<div class="cookie-table-wrapper" style="overflow-x:auto;margin:20px 0">
+  <table id="cookieTable" class="table cookie-registry-table" style="width:100%;border-collapse:collapse;font-size:13.5px;text-align:left;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+    <caption style="text-align:left;font-weight:700;font-size:16px;margin-bottom:12px;color:var(--brand-ink,#0A2540)">
+      TwinMOS Active Cookie &amp; Storage Registry
+    </caption>
+    <thead>
+      <tr style="background:#f1f5f9;border-bottom:2px solid #cbd5e1;color:#1e293b">
+        <th scope="col" style="padding:12px;font-weight:700;color:#1e293b">Name</th>
+        <th scope="col" style="padding:12px;font-weight:700;color:#1e293b">Category</th>
+        <th scope="col" style="padding:12px;font-weight:700;color:#1e293b">Provider</th>
+        <th scope="col" style="padding:12px;font-weight:700;color:#1e293b">Purpose</th>
+        <th scope="col" style="padding:12px;font-weight:700;color:#1e293b">Expiry</th>
+      </tr>
+    </thead>
+    <tbody>
+      {COOKIE_REGISTRY.map((c) => (
+        <tr style="border-bottom:1px solid #e2e8f0">
+          <td style="padding:12px;font-family:monospace;color:#0369a1;font-weight:600;white-space:nowrap">{c.name}</td>
+          <td style="padding:12px">
+            <span class={`chip ${c.category === 'essential' ? 'ok' : 'info'}`} style={`font-size:11px;padding:3px 8px;border-radius:10px;font-weight:600;display:inline-block;${c.category === 'essential' ? 'background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;' : 'background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;'}`}>
+              {c.categoryLabel}
+            </span>
+          </td>
+          <td style="padding:12px;color:#334155">{c.provider}</td>
+          <td style="padding:12px;color:#334155">{c.purpose}</td>
+          <td style="padding:12px;color:#475569;white-space:nowrap">{c.expiry}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

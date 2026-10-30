@@ -2,7 +2,7 @@
 // RBAC (super_admin-only writes), the public i18n bundle endpoint, locale
 // activation, and hreflang/dir assertions against the BUILT site output.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { mkdtempSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -18,9 +18,12 @@ const { migrate } = await import('drizzle-orm/pglite/migrator');
 const { buildApp } = await import('../src/app.ts');
 const { eq } = await import('drizzle-orm');
 
+import { resolve } from 'node:path';
+const MIGRATIONS = resolve(import.meta.dirname, '../../../packages/db/migrations');
+
 const db = createDb();
 await db.$client.exec('CREATE SCHEMA IF NOT EXISTS drizzle');
-await migrate(db, { migrationsFolder: '../../packages/db/migrations' });
+await migrate(db, { migrationsFolder: MIGRATIONS });
 const app = buildApp(db);
 
 let superCookie = '';
@@ -160,55 +163,42 @@ describe('translation workflow', () => {
   });
 });
 
-describe('built-site hreflang and RTL (static output assertions)', () => {
-  const WEB = join(import.meta.dirname, '..', '..', '..', 'apps', 'web');
-  // These assertions read apps/web/dist — built by `npm run build -w @twinmos/web`
-  // (root `npm run test:ci` does this before vitest). On a bare `npm test` from a
-  // fresh checkout (no dist yet) we skip LOUDLY rather than false-fail; the
-  // CI ordering guarantees the build exists.
-  const hasDist = existsSync(join(WEB, 'dist', 'ar.html'));
-  const maybeIt = hasDist ? it : it.skip;
-  if (!hasDist) {
-    console.warn('[p4-i18n] apps/web/dist not built — built-site assertions SKIPPED. Run `npm run test:ci` (builds web first) to cover them.');
-  }
-
-  maybeIt('landing pages exist for all 8 non-EN locales with correct lang/dir', () => {
-    const rtl = new Set(['ar']);
+describe('localised routes and sitemap (SSR delivery API)', () => {
+  // The web app is SSR (output: 'server'), so there is no static dist HTML to
+  // read. Rendered lang/dir/hreflang output is covered by e2e/locale.spec.ts
+  // against the built server; here we assert the delivery contract it consumes.
+  it('sitemap advertises the 8 clean locale landings and no .html aliases', async () => {
+    const res = await app.request('/api/v1/delivery/sitemap');
+    expect(res.status).toBe(200);
+    const { data } = await res.json();
     for (const code of ['ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de']) {
-      const f = join(WEB, 'dist', `${code}.html`);
-      expect(existsSync(f), `${f} missing`).toBe(true);
-      const html = readFileSync(f, 'utf8');
-      // P5 audit: dir is emitted ONLY for RTL — the prototype ships LTR pages
-      // with no dir attribute (an explicit dir="ltr" shifted Chrome's text
-      // rasterization; parity). LTR landings: bare lang; ar keeps dir="rtl".
-      const want = rtl.has(code) ? `<html lang="${code}" dir="rtl">` : `<html lang="${code}">`;
-      expect(html).toContain(want);
-      expect(html).toContain('rtl.css'); // rtl stylesheet linked on ar
+      expect(data.some((e: any) => e.loc === `/${code}`), `sitemap missing /${code}`).toBe(true);
     }
+    expect(data.some((e: any) => /\.html($|\?)/.test(e.loc))).toBe(false);
   });
 
-  maybeIt('landing carries the full 9-locale hreflang grid with x-default → EN root', () => {
-    const html = readFileSync(join(WEB, 'dist', 'ar.html'), 'utf8');
-    for (const code of ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de']) {
-      expect(html).toContain(`hreflang="${code}"`);
-    }
-    expect(html).toContain('hreflang="x-default" href="https://www.twinmos.com/"');
-    expect(html).toContain('hreflang="en" href="https://www.twinmos.com/"');
+  it('per-locale sitemap returns only that locale, including its landing', async () => {
+    const res = await app.request('/api/v1/delivery/sitemap?locale=ar');
+    expect(res.status).toBe(200);
+    const { data } = await res.json();
+    expect(data.length).toBeGreaterThan(0);
+    expect(data.every((e: any) => e.loc === '/ar' || e.loc.startsWith('/ar/'))).toBe(true);
+    expect(data.some((e: any) => e.loc === '/ar')).toBe(true);
   });
 
-  maybeIt('EN pages keep plain en+x-default (no grid on prototype URLs)', () => {
-    const html = readFileSync(join(WEB, 'dist', 'index.html'), 'utf8');
-    expect(html).toContain('hreflang="en"');
-    expect(html).toContain('hreflang="x-default"');
-    expect(html).not.toContain('hreflang="de"'); // grid only on landings
-    expect(html).toContain('<html lang="en">'); // no dir on LTR — prototype contract (P5 audit)
-  });
-
-  maybeIt('sitemap lists all 8 locale landings', () => {
-    const xml = readFileSync(join(WEB, 'dist', 'sitemap.xml'), 'utf8');
-    for (const code of ['ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de']) {
-      expect(xml, `sitemap missing ${code}`).toContain(`/${code}.html`);
-    }
-    expect(xml).not.toContain('hreflang'); // sitemap is loc-only; hreflang lives in heads
+  it('published localised pages are advertised at /<locale>/<path>', async () => {
+    const { page }: any = await import('@twinmos/db');
+    await db.insert(page).values({
+      slug: 'fr-a-propos',
+      path: '/about',
+      locale: 'fr',
+      title: 'À propos',
+      status: 'published',
+      blocks: [],
+    } as any);
+    const res = await app.request('/api/v1/delivery/sitemap?locale=fr');
+    const { data } = await res.json();
+    expect(data.some((e: any) => e.loc === '/fr/about'), 'localised page URL missing').toBe(true);
+    expect(data.some((e: any) => e.loc === '/about'), 'English path leaked into fr sitemap').toBe(false);
   });
 });

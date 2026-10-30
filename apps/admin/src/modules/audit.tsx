@@ -2,7 +2,7 @@
 // Phase 1: Interactive filter bar (Entity selector, Actor dropdown, Action type, Date picker, Reset, Export CSV).
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { API, apiGet, fmtDate } from '../api';
-import { btn, btnGhost, card, Empty, Err, input, Table, td, useAsync } from '../ui';
+import { btn, btnGhost, card, Empty, Err, input, MUTED, Table, td, useAsync } from '../ui';
 import { useToast } from '../toast';
 import type { ModProps } from '../nav';
 
@@ -122,7 +122,6 @@ export default function AuditLog({ nav, me }: ModProps) {
       return [...data.items, ...older];
     });
     setCursor(data.cursor);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, data]);
 
   async function loadMore() {
@@ -188,7 +187,7 @@ export default function AuditLog({ nav, me }: ModProps) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Audit log</h1>
-          <p style={{ color: '#66748A', margin: '4px 0 0' }}>Comprehensive chronological trail of mutations across all platform surfaces.</p>
+          <p style={{ color: MUTED, margin: '4px 0 0' }}>Comprehensive chronological trail of mutations across all platform surfaces.</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button style={btnGhost} onClick={reload}>Refresh</button>
@@ -201,10 +200,7 @@ export default function AuditLog({ nav, me }: ModProps) {
       {/* Filter Bar */}
       <div style={{ ...card, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end', marginBottom: 16 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Entity</label>
-          <select
-            style={{ ...input, minWidth: 160 }}
-            value={entity}
+          <label htmlFor="audit-entity-select" style={{ fontSize: 12, fontWeight: 600, color: MUTED }}>Entity</label><select id="audit-entity-select" aria-label="Filter by entity" style={{ ...input, minWidth: 160 }} value={entity}
             onChange={(e) => setEntity(e.target.value)}
           >
             {ENTITIES.map((opt) => (
@@ -214,11 +210,7 @@ export default function AuditLog({ nav, me }: ModProps) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Actor</label>
-          {usersList.length > 0 ? (
-            <select
-              style={{ ...input, minWidth: 160 }}
-              value={actorId}
+          <label htmlFor="audit-actor-select" style={{ fontSize: 12, fontWeight: 600, color: MUTED }}>Actor</label>{usersList.length > 0 ? (<select id="audit-actor-select" aria-label="Filter by actor" style={{ ...input, minWidth: 160 }} value={actorId}
               onChange={(e) => setActorId(e.target.value)}
             >
               <option value="">All Actors</option>
@@ -237,9 +229,7 @@ export default function AuditLog({ nav, me }: ModProps) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Action</label>
-          <input
-            style={{ ...input, width: 140 }}
+          <label htmlFor="audit-action-input" style={{ fontSize: 12, fontWeight: 600, color: MUTED }}>Action</label><input id="audit-action-input" aria-label="Filter by action" style={{ ...input, width: 140 }}
             placeholder="e.g. create, update"
             value={action}
             onChange={(e) => setAction(e.target.value)}
@@ -247,20 +237,14 @@ export default function AuditLog({ nav, me }: ModProps) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>From Date</label>
-          <input
-            type="date"
-            style={input}
+          <label htmlFor="audit-from-date" style={{ fontSize: 12, fontWeight: 600, color: MUTED }}>From Date</label><input id="audit-from-date" type="date" aria-label="From date" style={input}
             value={from}
             onChange={(e) => setFrom(e.target.value)}
           />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>To Date</label>
-          <input
-            type="date"
-            style={input}
+          <label htmlFor="audit-to-date" style={{ fontSize: 12, fontWeight: 600, color: MUTED }}>To Date</label><input id="audit-to-date" type="date" aria-label="To date" style={input}
             value={to}
             onChange={(e) => setTo(e.target.value)}
           />
@@ -272,7 +256,7 @@ export default function AuditLog({ nav, me }: ModProps) {
       {error ? <Err error={error} /> : null}
 
       {loading && rows.length === 0 ? (
-        <p style={{ color: '#66748A', padding: '16px 0' }}>Loading audit records…</p>
+        <p style={{ color: MUTED, padding: '16px 0' }}>Loading audit records…</p>
       ) : rows.length > 0 ? (
         <>
           <Table head={['When', 'Action', 'Entity', 'Actor', 'IP & Request', '']}>
@@ -287,15 +271,15 @@ export default function AuditLog({ nav, me }: ModProps) {
                     {row.actorEmail ? (
                       <div>
                         <div>{row.actorEmail}</div>
-                        <span style={{ fontSize: 11, color: '#64748B' }}>{row.actorId}</span>
+                        <span style={{ fontSize: 11, color: MUTED }}>{row.actorId}</span>
                       </div>
                     ) : (
                       row.actorId ?? '—'
                     )}
                   </td>
-                  <td style={{ ...td, color: '#66748A', fontSize: 12 }}>
-                    <div>{row.ip ?? <span style={{ color: '#93A0B4' }}>no IP on record</span>}</div>
-                    {row.requestId && <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#93A0B4' }}>{row.requestId}</div>}
+                  <td style={{ ...td, color: MUTED, fontSize: 12 }}>
+                    <div>{row.ip ?? <span style={{ color: MUTED }}>no IP on record</span>}</div>
+                    {row.requestId && <div style={{ fontFamily: 'monospace', fontSize: 11, color: MUTED }}>{row.requestId}</div>}
                   </td>
                   <td style={{ ...td, width: 90 }}>
                     {target && (

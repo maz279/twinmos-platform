@@ -1,0 +1,11 @@
+/* TEAM */
+Engineering: TwinMOS Technologies Infrastructure & Web Team
+Location: Taipei, Taiwan & Dubai, UAE
+Website: https://www.twinmos.com
+Contact: webmaster@twinmos.com
+
+/* SITE */
+Standards: HTML5, CSS3, WCAG 2.2 AA
+Components: Astro, TypeScript, Node.js, PostgreSQL
+Security: RFC 9116 security.txt, CSP Level 3, HSTS
+Language: English, Arabic, Hindi, Russian, Simplified Chinese, French, Spanish, Portuguese, German

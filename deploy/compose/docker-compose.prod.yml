@@ -1,0 +1,76 @@
+# Production deployment overlay — Security Hardened (T7.3.4 / HARD-01)
+# Enforces non-root execution, read-only file systems, capability drops, and no Docker socket mounts
+services:
+  edge:
+    restart: always
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETGID
+      - SETUID
+    tmpfs:
+      - /var/run:rw,noexec,nosuid,size=16m
+      - /run:rw,noexec,nosuid,size=16m
+      - /tmp:rw,noexec,nosuid,size=64m
+    volumes:
+      # Mount ONLY the origin cert + key. Mounting a whole directory over
+      # /etc/nginx/certs hid the Cloudflare origin-pull CA baked into the image
+      # and nginx could not start (ZT-008).
+      - ${EDGE_TLS_CERT:?set EDGE_TLS_CERT to the origin certificate (PEM)}:/etc/nginx/certs/twinmos.pem:ro
+      - ${EDGE_TLS_KEY:?set EDGE_TLS_KEY to the origin private key (PEM)}:/etc/nginx/certs/twinmos.key:ro
+      - ssr_cache:/var/cache/nginx
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+
+  web:
+    restart: always
+    read_only: true
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+
+  api:
+    restart: always
+    read_only: true
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+
+  postgres:
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+volumes:
+  ssr_cache:

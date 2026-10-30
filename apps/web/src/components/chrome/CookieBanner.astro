@@ -1,0 +1,102 @@
+---
+// CookieBanner.astro — Accessible GDPR/ePrivacy compliant cookie banner with symmetric Accept, Reject, and Customize.
+// Tasks D1b, E5a, MS6.3 T6.3.1 / CONSENT-01 / CONSENT-CSP compliant.
+// Copy and policy target come from site.cookie (MS4.2 T4.2.2) instead of being hardcoded.
+interface Props {
+  settings?: { title?: string; description?: string; policyUrl?: string; essentialOnlyDefault?: boolean };
+}
+
+const { settings = {} } = Astro.props;
+const title = settings.title || 'Cookie Preferences';
+const description = settings.description || 'We use essential cookies to ensure site security and proper functionality.';
+const policyUrl = settings.policyUrl || '/legal.html#cookies';
+---
+
+<!-- First Layer: Symmetrical Cookie Bar with equal prominence for Customize, Decline, and Accept -->
+<div class="cookie-bar" id="cookieBar" role="region" aria-label={title}>
+  <span>
+    🍪 {description} <a href={policyUrl} style="text-decoration:underline;display:inline-block;padding:3px 6px">Learn more</a>.
+  </span>
+  <div class="cookie-actions" style="display:inline-flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap">
+    <button class="btn btn-ghost btn-sm cookie-customize" id="cookieCustomize" type="button" aria-expanded="false" aria-controls="cookieModal" style="color:#ffffff!important;border:1px solid rgba(255,255,255,0.7)!important;background:rgba(255,255,255,0.1)!important">Customize</button>
+    <button class="btn btn-ghost btn-sm cookie-decline" id="cookieDecline" type="button" style="color:#ffffff!important;border:1px solid rgba(255,255,255,0.7)!important;background:rgba(255,255,255,0.1)!important">Decline</button>
+    <button class="btn btn-accent btn-sm cookie-accept" id="cookieAccept" type="button" style="border:1px solid transparent!important">Accept</button>
+  </div>
+</div>
+
+<!-- Second Layer: Accessible Granular Preferences Dialog (T6.3.1 / T6.3.2) -->
+<div class="cookie-modal-backdrop" id="cookieModalBackdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;backdrop-filter:blur(4px);justify-content:center;align-items:center;padding:16px" aria-hidden="true">
+  <div class="cookie-modal" id="cookieModal" role="dialog" aria-modal="true" aria-labelledby="cookieModalTitle" aria-describedby="cookieModalDesc" style="background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:24px;max-width:580px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,0.5);position:relative;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h2 id="cookieModalTitle" style="font-size:18px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px;color:#ffffff!important">🍪 Privacy &amp; Cookie Preferences</h2>
+      <button id="cookieModalClose" type="button" aria-label="Close cookie preferences dialog" style="background:none;border:none;color:#f1f5f9;font-size:24px;cursor:pointer;padding:6px 12px;line-height:1;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center">&times;</button>
+    </div>
+    <p id="cookieModalDesc" style="font-size:13.5px;color:#cbd5e1;line-height:1.5;margin-bottom:18px">
+      We value your privacy. Select which cookies and data processing categories you choose to enable. Strictly necessary cookies are required for site security, locale settings, and core platform functionality.
+    </p>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
+      <!-- Strictly Necessary -->
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <label for="cookieCatEssential" style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;cursor:not-allowed">
+            <input type="checkbox" id="cookieCatEssential" checked disabled style="cursor:not-allowed" />
+            Strictly Necessary
+          </label>
+          <span style="font-size:11px;background:#334155;color:#f8fafc;padding:2px 8px;border-radius:12px;font-weight:600;border:1px solid #475569">Always Active</span>
+        </div>
+        <p style="font-size:12px;color:#cbd5e1;margin:6px 0 0;line-height:1.4">
+          Required for site security, authentication sessions, locale storage, and consent preference recording.
+        </p>
+      </div>
+
+      <!-- Analytics -->
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <label for="cookieCatAnalytics" style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="cookieCatAnalytics" style="cursor:pointer" />
+            Analytics &amp; Usage
+          </label>
+          <span style="font-size:11px;background:#1e293b;border:1px solid #475569;color:#cbd5e1;padding:2px 8px;border-radius:12px">Optional</span>
+        </div>
+        <p style="font-size:12px;color:#cbd5e1;margin:6px 0 0;line-height:1.4">
+          Helps us understand website usage with privacy-first metrics to optimize page load speeds and feature discovery.
+        </p>
+      </div>
+
+      <!-- Marketing -->
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <label for="cookieCatMarketing" style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="cookieCatMarketing" style="cursor:pointer" />
+            Marketing &amp; Campaigns
+          </label>
+          <span style="font-size:11px;background:#1e293b;border:1px solid #475569;color:#cbd5e1;padding:2px 8px;border-radius:12px">Optional</span>
+        </div>
+        <p style="font-size:12px;color:#cbd5e1;margin:6px 0 0;line-height:1.4">
+          Measures partner referral effectiveness and distributor marketplace links.
+        </p>
+      </div>
+
+      <!-- Preferences -->
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <label for="cookieCatPreferences" style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="cookieCatPreferences" style="cursor:pointer" />
+            Preferences
+          </label>
+          <span style="font-size:11px;background:#1e293b;border:1px solid #475569;color:#cbd5e1;padding:2px 8px;border-radius:12px">Optional</span>
+        </div>
+        <p style="font-size:12px;color:#cbd5e1;margin:6px 0 0;line-height:1.4">
+          Saves client UI state such as product comparison tray and filtered views across visits.
+        </p>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;align-items:center;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,0.1);padding-top:16px">
+      <button id="cookieRejectAll" type="button" class="btn btn-ghost btn-sm" style="color:#ffffff!important;border:1px solid rgba(255,255,255,0.7)!important;background:rgba(255,255,255,0.1)!important">Reject Non-Essential</button>
+      <button id="cookieSavePreferences" type="button" class="btn btn-ghost btn-sm" style="color:#ffffff!important;border:1px solid rgba(255,255,255,0.7)!important;background:rgba(255,255,255,0.1)!important">Save Preferences</button>
+      <button id="cookieAcceptAll" type="button" class="btn btn-accent btn-sm" style="border:1px solid transparent!important">Accept All</button>
+    </div>
+  </div>
+</div>

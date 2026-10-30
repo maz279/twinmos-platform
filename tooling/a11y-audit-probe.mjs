@@ -13,7 +13,7 @@ const PAGES = [
 ];
 
 async function run() {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ channel: 'chrome', headless: true });
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
 
@@ -88,8 +88,8 @@ async function run() {
   }
 
   // Admin Console A11Y Audit
-  console.log('--- Auditing Admin Console: http://localhost:4173/#/m/products ---');
-  await page.goto('http://localhost:4173/#/m/products', { waitUntil: 'domcontentloaded' });
+  console.log('--- Auditing Admin Console: http://localhost:5173/#/m/products ---');
+  await page.goto('http://localhost:5173/#/m/products', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1000);
 
   // Check if sign-in is required

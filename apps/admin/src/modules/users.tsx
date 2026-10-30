@@ -5,8 +5,9 @@
 // audited actions — the IAM access-review visibility loop).
 import React, { useMemo, useState } from 'react';
 import { apiGet, apiSend, fmtDate } from '../api';
-import { btn, btnGhost, card, Empty, Err, input, Table, td, useAsync, usePanelScroll } from '../ui';
+import { btn, btnGhost, card, Empty, Err, input, MUTED, Table, td, useAsync, usePanelScroll } from '../ui';
 import type { ModProps } from '../nav';
+import { useDialogA11y } from '../dialog-a11y';
 
 type UserRole = 'super_admin' | 'admin' | 'editor' | 'author' | 'viewer';
 
@@ -120,7 +121,7 @@ export default function UsersModule({ me }: ModProps) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Users & Roles</h1>
-          <p style={{ color: '#66748A', margin: '4px 0 0' }}>
+          <p style={{ color: MUTED, margin: "4px 0 0" }}>
             Platform staff directory, role governance, MFA enforcement, and active session management.
             {data?.total != null ? ` (${data.total} registered staff account${data.total === 1 ? '' : 's'})` : ''}
           </p>
@@ -137,13 +138,10 @@ export default function UsersModule({ me }: ModProps) {
       <div style={{ ...card, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 16 }}>
         <input
           style={{ ...input, flex: '1 1 200px' }}
-          placeholder="Search by name or email…"
-          value={q}
+          placeholder="Search by name or email…" aria-label="Search staff by name or email" value={q}
           onChange={(e) => { setQ(e.target.value); setPage(1); }}
         />
-        <select
-          style={{ ...input, width: 160 }}
-          value={roleFilter}
+        <select style={{ ...input, width: 160 }} aria-label="Filter by staff role" value={roleFilter}
           onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
         >
           <option value="">All Roles</option>
@@ -168,7 +166,7 @@ export default function UsersModule({ me }: ModProps) {
       {error ? <Err error={error} /> : null}
 
       {loading ? (
-        <p style={{ color: '#66748A', padding: '16px 0' }}>Loading user directory…</p>
+        <p style={{ color: MUTED, padding: "16px 0" }}>Loading user directory…</p>
       ) : data ? (
         <Table head={['Staff Member', 'Role', 'Status', 'MFA / 2FA', 'Email Verified', 'Last Active', 'Joined', 'Actions']}>
           {data.items.map((u) => {
@@ -185,15 +183,13 @@ export default function UsersModule({ me }: ModProps) {
                       <div style={{ fontWeight: 600, color: '#0F172A' }}>
                         {u.name} {isMe && <span style={{ fontSize: 11, color: '#2563EB', fontWeight: 400 }}>(You)</span>}
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748B' }}>{u.email}</div>
+                      <div style={{ fontSize: 12, color: MUTED }}>{u.email}</div>
                     </div>
                   </div>
                 </td>
 
                 <td style={td}>
-                  <select
-                    disabled={isMe}
-                    value={u.role}
+                  <select disabled={isMe} value={u.role} aria-label={`Change role for ${u.name || u.email}`}
                     onChange={(e) => handleRoleChange(u.id, e.target.value as UserRole)}
                     style={{
                       background: roleStyle.bg,
@@ -244,7 +240,7 @@ export default function UsersModule({ me }: ModProps) {
                       ✓ Enabled
                     </span>
                   ) : (
-                    <span style={{ background: '#F1F5F9', color: '#64748B', border: '1px solid #D9E0E8', borderRadius: 99, padding: '2px 8px', fontSize: 11 }}>
+                    <span style={{ background: '#F1F5F9', color: MUTED, border: '1px solid #D9E0E8', borderRadius: 99, padding: '2px 8px', fontSize: 11 }}>
                       Disabled
                     </span>
                   )}
@@ -254,15 +250,15 @@ export default function UsersModule({ me }: ModProps) {
                   {u.emailVerified ? (
                     <span style={{ color: '#047857', fontSize: 12, fontWeight: 600 }}>✓ Verified</span>
                   ) : (
-                    <span style={{ color: '#94A3B8', fontSize: 12 }}>Unverified</span>
+                    <span style={{ color: MUTED, fontSize: 12 }}>Unverified</span>
                   )}
                 </td>
 
-                <td style={{ ...td, color: '#66748A', fontSize: 12 }}>
+                <td style={{ ...td, color: MUTED, fontSize: 12 }}>
                   {u.lastActiveAt ? fmtDate(u.lastActiveAt) : 'Never'}
                 </td>
 
-                <td style={{ ...td, color: '#64748B', fontSize: 12 }}>
+                <td style={{ ...td, color: MUTED, fontSize: 12 }}>
                   {fmtDate(u.createdAt)}
                 </td>
 
@@ -309,7 +305,7 @@ export default function UsersModule({ me }: ModProps) {
 
       {data && data.total != null && data.total > pageSize && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, flexWrap: 'wrap', gap: 12 }}>
-          <span style={{ fontSize: 13, color: '#66748A' }}>
+          <span style={{ fontSize: 13, color: MUTED }}>
             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, data.total)} of {data.total} staff accounts
           </span>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -372,8 +368,8 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const [createdInfo, setCreatedInfo] = useState<{ email: string; role: string; tempPass?: string } | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [createdInfo] = useState<{ email: string; role: string } | null>(null);
+  const dialogRef = useDialogA11y({ isOpen: true, onClose });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -387,12 +383,18 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
       };
       if (password.trim()) payload.password = password.trim();
 
-      const res = await apiSend<{ user: UserAccount; temporaryPassword?: string }>('POST', '/admin/users/invite', payload);
-      if (res.temporaryPassword) {
-        setCreatedInfo({ email: res.user.email, role: res.user.role, tempPass: res.temporaryPassword });
-      } else {
-        onSuccess(`Staff account invited successfully for ${res.user.email} (${res.user.role}).`);
+      // Credentials are never returned to the console (ZT-014): without a chosen
+      // password the invitee receives a single-use set-password link by e-mail.
+      const res = await apiSend<{ user: UserAccount; setPasswordLinkSent?: boolean; emailSent?: boolean }>('POST', '/admin/users/invite', payload);
+      // Without a chosen password the invitee can only get in through the e-mailed
+      // link: if that mail failed, say so instead of reporting success.
+      if (!payload.password && !res.setPasswordLinkSent) {
+        setError(new Error(`Account created for ${res.user.email}, but the set-password e-mail could not be sent. Use "Forgot password" on the sign-in page for this address, or check the mail service.`));
+        return;
       }
+      onSuccess(res.setPasswordLinkSent
+        ? `Invitation sent to ${res.user.email} (${res.user.role}) with a single-use link to set their password.`
+        : `Staff account invited for ${res.user.email} (${res.user.role}).${res.emailSent === false ? ' The invitation e-mail could not be sent.' : ''}`);
     } catch (err) {
       setError(err);
     } finally {
@@ -402,10 +404,10 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-      <div style={{ ...card, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="invite-title" style={{ ...card, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h2 style={{ margin: 0, fontSize: 18 }}>Invite Staff Member</h2>
-          <button onClick={onClose} style={{ border: 0, background: 'transparent', fontSize: 18, cursor: 'pointer' }}>✕</button>
+          <h2 id="invite-title" style={{ margin: 0, fontSize: 18 }}>Invite Staff Member</h2>
+          <button type="button" onClick={onClose} aria-label="Close" style={{ border: 0, background: 'transparent', fontSize: 18, cursor: 'pointer' }}>✕</button>
         </div>
 
         {error ? <div style={{ marginBottom: 12 }}><Err error={error} /></div> : null}
@@ -418,39 +420,6 @@ function InviteModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
                 Email: <b>{createdInfo.email}</b><br />
                 Role: <b>{createdInfo.role}</b>
               </p>
-              {createdInfo.tempPass && (
-                <div style={{ marginTop: 12 }}>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#065F46' }}>Generated Temporary Password:</label>
-                  <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                    <input
-                      readOnly
-                      value={createdInfo.tempPass}
-                      style={{ ...input, fontFamily: 'monospace', fontWeight: 700, flex: 1, background: '#fff' }}
-                    />
-                    <button
-                      type="button"
-                      style={{ ...btn, minWidth: 80 }}
-                      onClick={() => {
-                        if (navigator.clipboard?.writeText) {
-                          navigator.clipboard.writeText(createdInfo.tempPass || '').then(() => {
-                            setCopied(true);
-                            setTimeout(() => setCopied(false), 2000);
-                          }).catch(() => {
-                            alert('Password: ' + createdInfo.tempPass);
-                          });
-                        } else {
-                          alert('Password: ' + createdInfo.tempPass);
-                        }
-                      }}
-                    >
-                      {copied ? 'Copied! ✓' : 'Copy'}
-                    </button>
-                  </div>
-                  <span style={{ fontSize: 11, color: '#047857', display: 'block', marginTop: 4 }}>
-                    An invitation email containing login instructions has been dispatched. You may also copy the temporary password directly:
-                  </span>
-                </div>
-              )}
             </div>
             <button style={{ ...btn, width: '100%' }} onClick={() => onSuccess(`Staff account created for ${createdInfo.email}.`)}>
               Done
@@ -530,6 +499,7 @@ function BanModal({ user, onClose, onSuccess }: { user: UserAccount; onClose: ()
   const [duration, setDuration] = useState('0');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const dialogRef = useDialogA11y({ isOpen: true, onClose });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -551,8 +521,8 @@ function BanModal({ user, onClose, onSuccess }: { user: UserAccount; onClose: ()
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-      <div style={{ ...card, width: '100%', maxWidth: 440 }}>
-        <h2 style={{ margin: '0 0 8px', fontSize: 18, color: '#9C3230' }}>Suspend Account</h2>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="ban-title" style={{ ...card, width: '100%', maxWidth: 440 }}>
+        <h2 id="ban-title" style={{ margin: '0 0 8px', fontSize: 18, color: '#9C3230' }}>Suspend Account</h2>
         <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748B' }}>
           Suspending <b>{user.name || user.email}</b> will immediately terminate all active sessions and block sign-in until reactivated.
         </p>
@@ -609,14 +579,14 @@ function SecurityAnalyticsStrip() {
     <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, background: '#fff', padding: '10px 14px' }}>
       <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4' }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 800, color: tone, marginTop: 2 }}>{value}</div>
-      <div style={{ fontSize: 11.5, color: '#66748A' }}>{sub}</div>
+      <div style={{ fontSize: 11.5, color: MUTED }}>{sub}</div>
     </div>
   );
   const maxJoins = Math.max(1, ...data.series.map((x) => x.n));
   return (
     <details style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
       <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#1F2A37', userSelect: 'none' }}>
-        Security — <span style={{ color: '#66748A', fontWeight: 400 }}>
+        Security — <span style={{ color: MUTED, fontWeight: 400 }}>
           {data.total} staff · {data.mfaCoverage}% MFA · {data.activeSessions} active session{data.activeSessions === 1 ? '' : 's'}{data.suspended ? ` · ${data.suspended} suspended` : ''}
         </span>
       </summary>
@@ -631,7 +601,7 @@ function SecurityAnalyticsStrip() {
           <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 6 }}>Role distribution</div>
           {data.byRole.map((r) => (
             <div key={r.role} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 30px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
-              <span style={{ fontSize: 12, color: '#66748A' }}>{r.role}</span>
+              <span style={{ fontSize: 12, color: MUTED }}>{r.role}</span>
               <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
                 <span style={{ display: 'block', width: (r.n / Math.max(1, data.total)) * 100 + '%', height: '100%', background: '#1DBF9F', borderRadius: 999 }} />
               </span>
@@ -669,7 +639,7 @@ function UserProfileDrawer({ id, onClose }: { id: string; onClose: () => void })
       {error ? <div style={{ marginTop: 10 }}><Err error={error} /></div> : loading ? <p style={{ marginTop: 10 }}>Loading…</p> : data ? (
         <>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '10px 0' }}>
-            <span style={{ fontSize: 12, color: '#66748A', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+            <span style={{ fontSize: 12, color: MUTED, background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
               {data.name || data.email} · <b>{data.role}</b>
             </span>
             <span style={{ fontSize: 12, color: data.twoFactorEnabled ? '#047857' : '#B45309', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
@@ -678,10 +648,10 @@ function UserProfileDrawer({ id, onClose }: { id: string; onClose: () => void })
             <span style={{ fontSize: 12, color: data.banned ? '#9C3230' : '#047857', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
               {data.banned ? 'Suspended' + (data.banReason ? ' — ' + data.banReason : '') : 'Active'}
             </span>
-            <span style={{ fontSize: 12, color: '#66748A', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+            <span style={{ fontSize: 12, color: MUTED, background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
               <b>{data.activeSessions}</b> active session{data.activeSessions === 1 ? '' : 's'}
             </span>
-            <span style={{ fontSize: 12, color: '#66748A', background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+            <span style={{ fontSize: 12, color: MUTED, background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
               joined {fmtDate(data.createdAt)}
             </span>
           </div>
@@ -689,13 +659,13 @@ function UserProfileDrawer({ id, onClose }: { id: string; onClose: () => void })
             Recent audited actions ({data.activity.length})
           </div>
           {data.activity.length === 0 ? (
-            <span style={{ fontSize: 12.5, color: '#66748A' }}>No audited activity recorded for this account.</span>
+            <span style={{ fontSize: 12.5, color: MUTED }}>No audited activity recorded for this account.</span>
           ) : (
             <Table head={['Action', 'Entity', 'IP', 'When']}>
               {data.activity.map((a) => (
                 <tr key={a.id}>
                   <td style={td}><b style={{ color: '#1F2A37' }}>{a.action}</b></td>
-                  <td style={{ ...td, color: '#66748A', fontSize: 12 }}>{a.entity}{a.entityId ? ' #' + a.entityId : ''}</td>
+                  <td style={{ ...td, color: MUTED, fontSize: 12 }}>{a.entity}{a.entityId ? ' #' + a.entityId : ''}</td>
                   <td style={{ ...td, fontFamily: 'ui-monospace, monospace', fontSize: 12 }}>{a.ip ?? '—'}</td>
                   <td style={td}>{fmtDate(a.at)}</td>
                 </tr>

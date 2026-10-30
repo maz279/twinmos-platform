@@ -1,0 +1,112 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
+import { previewTokenPayloadSchema, type PreviewTokenPayload, type DeliveryEntity } from '@twinmos/shared';
+
+function getSecret(): string {
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.PREVIEW_SIGNING_KEY || process.env.PREVIEW_SIGNING_KEY === 'dev-insecure-secret-twinmos-platform' || process.env.PREVIEW_SIGNING_KEY.length < 32) {
+      throw new Error('PREVIEW_SIGNING_KEY must be configured in production (>= 32 chars)');
+    }
+    return process.env.PREVIEW_SIGNING_KEY;
+  }
+  return process.env.PREVIEW_SIGNING_KEY || process.env.BETTER_AUTH_SECRET || 'dev-insecure-secret-twinmos-platform';
+}
+
+function base64UrlEncode(str: string): string {
+  return Buffer.from(str, 'utf8').toString('base64url');
+}
+
+function base64UrlDecode(str: string): string {
+  return Buffer.from(str, 'base64url').toString('utf8');
+}
+
+/**
+ * Creates a signed, short-lived preview token scoped to an entity and optional locale.
+ * Default and maximum TTL: 1 hour (3600 seconds).
+ */
+export function createPreviewToken(
+  entityType: DeliveryEntity,
+  entityId: string | number,
+  slug?: string,
+  ttlSeconds = 3600,
+  locale?: string
+): string {
+  const now = Math.floor(Date.now() / 1000);
+  // Cap the TTL at 3,600 s (Roadmap R0.3 / Z-01)
+  const maxTtl = Math.min(3600, Number(ttlSeconds ?? 3600));
+  const payload: PreviewTokenPayload = {
+    entityType,
+    entityId,
+    slug,
+    locale,
+    iat: now,
+    exp: now + maxTtl,
+  };
+
+  const payloadEncoded = base64UrlEncode(JSON.stringify(payload));
+  const signature = createHmac('sha256', getSecret())
+    .update(payloadEncoded)
+    .digest('base64url');
+
+  return `${payloadEncoded}.${signature}`;
+}
+
+/**
+ * Verifies a preview token. Checks HMAC signature, schema, expiry, entity type, id/slug, and locale scope.
+ */
+export function verifyPreviewToken(
+  token: string | undefined | null,
+  expectedEntityType?: DeliveryEntity,
+  expectedEntityIdOrSlug?: string | number,
+  expectedLocale?: string
+): PreviewTokenPayload | null {
+  if (!token || typeof token !== 'string') return null;
+
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+
+  const [payloadEncoded, signature] = parts;
+
+  // Verify HMAC signature timing-safely
+  const expectedSignature = createHmac('sha256', getSecret())
+    .update(payloadEncoded)
+    .digest('base64url');
+
+  const sigBuf = Buffer.from(signature, 'utf8');
+  const expectedSigBuf = Buffer.from(expectedSignature, 'utf8');
+
+  if (sigBuf.length !== expectedSigBuf.length) return null;
+  if (!timingSafeEqual(sigBuf, expectedSigBuf)) return null;
+
+  try {
+    const rawJson = JSON.parse(base64UrlDecode(payloadEncoded));
+    const parsed = previewTokenPayloadSchema.safeParse(rawJson);
+    if (!parsed.success) return null;
+
+    const payload = parsed.data;
+    const now = Math.floor(Date.now() / 1000);
+
+    // Enforce expiry
+    if (payload.exp < now) return null;
+
+    // Enforce scope if expected parameters provided
+    if (expectedEntityType && payload.entityType !== expectedEntityType) {
+      return null;
+    }
+
+    if (expectedEntityIdOrSlug !== undefined) {
+      const matchId = String(payload.entityId) === String(expectedEntityIdOrSlug);
+      const matchSlug = payload.slug && String(payload.slug) === String(expectedEntityIdOrSlug);
+      if (!matchId && !matchSlug) {
+        return null;
+      }
+    }
+
+    if (expectedLocale && payload.locale && payload.locale !== expectedLocale) {
+      return null;
+    }
+
+    return payload;
+  } catch {
+    return null;
+  }
+}

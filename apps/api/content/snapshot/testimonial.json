@@ -1,0 +1,50 @@
+[
+ {
+  "id": 1,
+  "quote": "The VOLTX DDR5 launch was a game-changer for our gaming customers — quality and steady supply we can build a shelf on.",
+  "author": "Ahmed Al-Mansoori",
+  "role": "Managing Director, Regional Distributor",
+  "context": "Middle East Channel",
+  "sort": 10,
+  "permission_flag": true,
+  "locale": "en",
+  "created_at": "2026-10-26T09:40:02.039Z",
+  "updated_at": "2026-10-26T09:40:02.039Z",
+  "status": "draft",
+  "source": null,
+  "approver": null,
+  "permission_evidence": null
+ },
+ {
+  "id": 2,
+  "quote": "We spec TwinMOS across our builds — the warranty tiers and regional stock make procurement simple.",
+  "author": "Vikram Mehta",
+  "role": "Procurement Lead, System Integrator",
+  "context": "Enterprise Solutions",
+  "sort": 20,
+  "permission_flag": true,
+  "locale": "en",
+  "created_at": "2026-10-26T09:40:02.051Z",
+  "updated_at": "2026-10-26T09:40:02.051Z",
+  "status": "draft",
+  "source": null,
+  "approver": null,
+  "permission_evidence": null
+ },
+ {
+  "id": 3,
+  "quote": "CoreX Pro takes 8K footage in stride, and the 5-year NVMe warranty closes the deal with our clients.",
+  "author": "Marcus Weber",
+  "role": "Studio Technical Director",
+  "context": "Creative Production",
+  "sort": 30,
+  "permission_flag": true,
+  "locale": "en",
+  "created_at": "2026-10-26T09:40:02.053Z",
+  "updated_at": "2026-10-26T09:40:02.053Z",
+  "status": "draft",
+  "source": null,
+  "approver": null,
+  "permission_evidence": null
+ }
+]

@@ -1,0 +1,119 @@
+{
+  "timestamp": "2026-10-23T14:42:24.862Z",
+  "milestone": "MS4.2",
+  "name": "Site settings and navigation (T4.2.1–T4.2.4)",
+  "status": "PASSED",
+  "gateStatus": {
+    "GREF-C": "CLEARED"
+  },
+  "results": [
+    {
+      "id": "CHK-01",
+      "title": "8 typed settings groups schemas defined in @twinmos/shared",
+      "passed": true,
+      "details": "Groups present: site.brand, site.contact, site.social, site.cookie, site.whatsapp, site.figures, seo.defaults, integrations"
+    },
+    {
+      "id": "CHK-02",
+      "title": "Dynamic founding year (\"N years\") computation helper logic",
+      "passed": true,
+      "details": "computeYearsInBusiness(1998) = 28, formatYearsString = \"28 years\""
+    },
+    {
+      "id": "CHK-03",
+      "title": "Delivery endpoint /api/v1/delivery/settings returns typed groups + emits \"site, settings\" cache tag",
+      "passed": "28 years",
+      "details": "Status: 200, Cache-Tag: \"settings, site\", Figures: {\"countriesCount\":\"93+\",\"foundingYear\":1998,\"productCount\":40,\"years\":28,\"yearsFormatted\":\"28 years\",\"yearsLabel\":\"28-year\"}"
+    },
+    {
+      "id": "CHK-04",
+      "title": "Integrations public payload redacts secrets (only public keys like turnstileSiteKey exposed)",
+      "passed": true,
+      "details": "Integrations exposed keys: turnstileSiteKey, analyticsEnabled, googleAnalyticsId"
+    },
+    {
+      "id": "CHK-05",
+      "title": "Admin settings PUT /admin/settings refuses schema violations with HTTP 422",
+      "passed": true,
+      "details": "Invalid whatsapp PUT response code: 422"
+    },
+    {
+      "id": "CHK-06",
+      "title": "Delivery endpoint /api/v1/delivery/navigation returns menus + emits \"nav, menus\" cache tag",
+      "passed": true,
+      "details": "Status: 200, Cache-Tag: \"nav, menus, nav:en\", Menus present: header, drawer, footer"
+    },
+    {
+      "id": "CHK-07",
+      "title": "179 authentic prototype anchors imported (84 header links, 56 drawer rows, 39 footer links; 0 invented)",
+      "passed": true,
+      "details": "Header: 84/84 links, Drawer: 56/56 rows (50 links + 6 toggles), Footer: 39/39 links, Anchors: 179/179"
+    },
+    {
+      "id": "CHK-08",
+      "title": "Zero raw spaces in navigation link targets across all imported menus",
+      "passed": true,
+      "details": "Checked 173 targets, found 0 with spaces."
+    },
+    {
+      "id": "CHK-09",
+      "title": "Per-locale menus: compound unique constraint on (code, locale) in schema & migration 0025",
+      "passed": true,
+      "details": "Schema definition and migration 0025 verified."
+    },
+    {
+      "id": "CHK-10",
+      "title": "Drawer drift documented in docs/DRAWER_DRIFT_REPORT.md (13 missing, 9 relabelled)",
+      "passed": true,
+      "details": "File exists at C:\\Software_Project\\TwinMOS_Corporate_Website\\TwinMOS_Corporate_Website\\twinmso_codebase\\docs\\DRAWER_DRIFT_REPORT.md"
+    },
+    {
+      "id": "CHK-11",
+      "title": "Admin Settings editor in apps/admin/src/modules/settings.tsx with live preview, tabbed UI and a11y labels",
+      "passed": true,
+      "details": "8 groups, live N-years preview and accessible aria-labels verified."
+    },
+    {
+      "id": "CHK-12",
+      "title": "Visual and axe-core a11y inspection passed with 0 critical/serious violations",
+      "passed": true,
+      "details": "Status: PASSED, fresh: true, public violations: 0, admin violations: 0"
+    },
+    {
+      "id": "CHK-13",
+      "title": "G-REFLECT: every typed settings group saves, delivers anonymously and restores",
+      "passed": true,
+      "details": "8/8 groups round-tripped"
+    },
+    {
+      "id": "CHK-14",
+      "title": "GET /delivery/settings/:group returns the group with its tag and 404s unknown groups",
+      "passed": true,
+      "details": "figures 200, tag \"settings, site, settings:site.figures\", years 28, unknown 404"
+    },
+    {
+      "id": "CHK-15",
+      "title": "Menu trees cover mega columns, drawer groups, footer columns and the legal bar",
+      "passed": true,
+      "details": "header 6/84 links; drawer 9/56 rows; footer 6/45 rows; legal 3"
+    },
+    {
+      "id": "CHK-16",
+      "title": "Nav labels use the computed product count and article targets are typed references",
+      "passed": true,
+      "details": "count \"Browse the full catalog — 40 products →\", article ref what-is-xmp"
+    },
+    {
+      "id": "CHK-17",
+      "title": "Every delivered navigation target resolves to a live page",
+      "passed": true,
+      "details": "63 unique internal targets returned 2xx/3xx"
+    },
+    {
+      "id": "CHK-18",
+      "title": "G-REFLECT (web): a settings save reaches the anonymous page within 5 s and restores",
+      "passed": true,
+      "details": "changed: true, restored: true"
+    }
+  ]
+}

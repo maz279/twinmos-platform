@@ -9,13 +9,17 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const MIGRATIONS = resolve(dirname(fileURLToPath(import.meta.url)), '../../../packages/db/migrations');
 
 const TMP = mkdtempSync(join(tmpdir(), 'twinmos-route-inv-'));
 process.env.PGLITE_DATA = join(TMP, 'db');
 process.env.MAIL_OUTBOX_DIR = join(TMP, 'outbox');
 process.env.API_ALLOW_NO_TURNSTILE = '1';
 process.env.NODE_ENV = 'test';
+process.env.TRUST_PROXY = '1';
 
 const { createDb, user, formSubmission, rmaRequest }: any = await import('@twinmos/db');
 const { migrate } = await import('drizzle-orm/pglite/migrator');
@@ -25,7 +29,7 @@ mkdirSync(process.env.MAIL_OUTBOX_DIR!, { recursive: true });
 
 const db = createDb();
 await db.$client.exec('CREATE SCHEMA IF NOT EXISTS drizzle');
-await migrate(db, { migrationsFolder: '../../packages/db/migrations' });
+await migrate(db, { migrationsFolder: MIGRATIONS });
 const app = buildApp(db);
 
 let memberCookie = '';
@@ -41,12 +45,15 @@ async function createAndSignIn(email: string, role: string) {
     body: JSON.stringify({ email, password, name: `Test ${role}` }),
   });
   const { eq } = await import('drizzle-orm');
-  await db.update(user).set({ role }).where(eq(user.email, email));
+  await db.update(user).set({ role, emailVerified: true, twoFactorEnabled: false }).where(eq(user.email, email));
   const res = await app.request('/api/v1/auth/sign-in/email', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
+  if (role === 'editor' || role === 'admin' || role === 'super_admin') {
+    await db.update(user).set({ twoFactorEnabled: true }).where(eq(user.email, email));
+  }
   return res.headers.getSetCookie().map((c: string) => c.split(';')[0]).join('; ');
 }
 

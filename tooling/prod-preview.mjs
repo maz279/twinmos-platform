@@ -14,7 +14,8 @@ import { fileURLToPath } from 'node:url';
 
 const PORT = Number(process.argv[2] ?? 4321);
 const API_PORT = Number(process.argv[3] ?? 8787);
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'apps', 'web', 'dist');
+const rawDist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'apps', 'web', 'dist');
+const ROOT = existsSync(join(rawDist, 'client')) ? join(rawDist, 'client') : rawDist;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript',

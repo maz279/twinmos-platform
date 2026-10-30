@@ -12,10 +12,15 @@
 (function () {
   'use strict';
 
+  // Same-origin /api/v1 always works: the SSR proxy forwards to the API (and
+  // the edge routes /api/ to the API backend in production), so no hardcoded
+  // dev fallback URL ships in the public bundle (CONTENT-03).
   var API = window.TWINMOS_API || '/api/v1';
   if (API.charAt(API.length - 1) === '/') API = API.slice(0, -1);
 
-  var PAGE_TYPE = { '/contact.html': 'contact', '/quote.html': 'quote', '/careers.html': 'job-application', '/partners.html': 'partner-inquiry' };
+  // Clean URLs are canonical; .html aliases are 301s. Normalise both.
+  var PAGE_TYPE = { '/contact': 'contact', '/quote': 'quote', '/careers': 'job-application', '/partners': 'partner-inquiry' };
+  function cleanPath(p) { return String(p || '/').replace(/\.html$/i, '').replace(/\/$/, '') || '/'; }
   /** RMA intake field names (shared rmaIntakeSchema) mapped from form labels. */
   var KEY_ALIASES = {
     'full name': 'name', 'email': 'email', 'e-mail': 'email', 'email address': 'email',
@@ -55,7 +60,9 @@
     if (form.id === 'nlForm') return 'newsletter';
     var success = form.getAttribute('data-success') || '';
     if (success.indexOf('Demo sign-in') !== -1) return null; // portal demo — leave to prototype
-    if (form.hasAttribute('data-tm-form')) return PAGE_TYPE[location.pathname] || null;
+    var explicit = form.getAttribute('data-form-type');
+    if (explicit) return explicit;
+    if (form.hasAttribute('data-tm-form')) return PAGE_TYPE[cleanPath(location.pathname)] || null;
     return null;
   }
 
@@ -68,13 +75,30 @@
       var label = fg.querySelector('label');
       var ctl = fg.querySelector('input, select, textarea');
       if (!ctl) return;
-      var key = keyFor(label ? label.textContent : '');
+      // Prefer the explicit name attribute (CMS form definitions); fall back to
+      // the legacy prototype label mapping.
+      var key = ctl.name ? (ctl.name === 'consent' ? '_consent' : ctl.name) : keyFor(label ? label.textContent : '');
       var value = ctl.type === 'checkbox' ? (ctl.checked ? 'yes' : '') : String(ctl.value || '').trim();
       if (key === '_consent') { consentChecked = ctl.checked; return; }
       if (!value) return;
       payload[key] = value.slice(0, 4000);
-      if (key === 'email') email = value;
-      if (key === 'name') name = value;
+      if (key === 'email' || key === 'customerEmail' || key === 'emailAddress' || (!email && ctl.type === 'email')) {
+        email = value;
+        payload.email = value;
+      }
+      if (key === 'name' || key === 'customerName' || key === 'fullName') {
+        name = value;
+        payload.name = value;
+      }
+      if (key === 'productModel' || key === 'model') {
+        payload.product = value;
+      }
+      if (key === 'defectDescription' || key === 'faultDescription') {
+        payload.issue = value;
+      }
+      if (key === 'serialNumber') {
+        payload.serial = value;
+      }
     });
     // footer/newsletter inline form
     var nl = form.querySelector('#nlEmail');
@@ -82,7 +106,43 @@
     return { payload: payload, email: email, name: name, consentChecked: consentChecked };
   }
 
+  var errSeq = 0;
+
+  function ensurePrivacyNotice(form) {
+    if (form.querySelector('.form-privacy-notice, [data-form-privacy-notice], [data-newsletter-notice]')) return;
+    var p = document.createElement('p');
+    p.className = 'form-privacy-notice form-note';
+    p.setAttribute('data-form-privacy-notice', '1');
+    p.style.cssText = 'font-size:12px;color:#4E6579;margin-top:10px;line-height:1.4';
+    p.innerHTML = 'By submitting, you agree to the <a href="/legal?tab=privacy" style="color:#00729C;text-decoration:underline">TwinMOS Privacy Policy</a>. Your data is protected.';
+    var submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn && submitBtn.parentElement) {
+      submitBtn.parentElement.insertBefore(p, submitBtn);
+    } else {
+      form.appendChild(p);
+    }
+  }
+
+  var errSeq = 0;
+
+  function ensurePrivacyNotice(form) {
+    if (form.querySelector('.form-privacy-notice, [data-form-privacy-notice], [data-newsletter-notice]')) return;
+    var p = document.createElement('p');
+    p.className = 'form-privacy-notice form-note';
+    p.setAttribute('data-form-privacy-notice', '1');
+    p.style.cssText = 'font-size:12px;color:#4E6579;margin-top:10px;line-height:1.4';
+    p.innerHTML = 'By submitting, you agree to the <a href="/legal?tab=privacy" style="color:#00729C;text-decoration:underline">TwinMOS Privacy Policy</a>. Your data is protected.';
+    var submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn && submitBtn.parentElement) {
+      submitBtn.parentElement.insertBefore(p, submitBtn);
+    } else {
+      form.appendChild(p);
+    }
+  }
+
   function validate(form) {
+    ensurePrivacyNotice(form);
+    ensurePrivacyNotice(form);
     var ok = true;
     Array.prototype.forEach.call(form.querySelectorAll('.fg[data-req]'), function (fg) {
       var ctl = fg.querySelector('input, select, textarea');
@@ -92,8 +152,20 @@
       var min = fg.getAttribute('data-min');
       if (!bad && min && v.length < Number(min)) bad = true;
       fg.classList.toggle('invalid', bad);
+      if (ctl) {
+        if (bad) {
+          ctl.setAttribute('aria-invalid', 'true');
+        } else {
+          ctl.removeAttribute('aria-invalid');
+        }
+      }
       if (bad) ok = false;
     });
+    var consent = form.querySelector('input[name="consent"]');
+    if (consent && !consent.checked) {
+      showError(form, 'Please accept the privacy notice to continue.');
+      ok = false;
+    }
     return ok;
   }
 
@@ -113,8 +185,11 @@
     p.className = 'tm-api-error';
     p.setAttribute('role', 'alert');
     p.style.cssText = 'color:#B3261E;font-size:13.5px;margin:10px 0 0';
+    var errId = 'form-err-' + (++errSeq);
+    p.id = errId;
     p.textContent = message;
     form.appendChild(p);
+    form.setAttribute('aria-describedby', errId);
   }
 
   /* Turnstile (optional): when a site key is configured, render the widget into
@@ -122,7 +197,9 @@
   var turnstileReady = null;
   function ensureTurnstile(form) {
     var key = window.TURNSTILE_SITE_KEY;
-    if (!key || form.querySelector('.cf-turnstile')) return Promise.resolve(null);
+    // Skip the placeholder key shipped in the default settings; rendering it
+    // produces a Cloudflare 400020 error on every quote page.
+    if (!key || key === '0x4AAAAAAAx' || form.querySelector('.cf-turnstile')) return Promise.resolve(null);
     if (!turnstileReady) {
       turnstileReady = new Promise(function (resolve) {
         var s = document.createElement('script');
@@ -146,6 +223,52 @@
     return el ? el.value : undefined;
   }
 
+  var pageLoadedAt = Date.now();
+  function fetchFormToken() {
+    if (window.__TM_FORM_TOKEN__) return;
+    try {
+      fetch(API + '/forms/token').then(function (r) {
+        if (r && r.ok) return r.json();
+      }).then(function (data) {
+        if (data && data.token) {
+          window.__TM_FORM_TOKEN__ = data.token;
+          Array.prototype.forEach.call(document.querySelectorAll('form'), function (f) {
+            // the fresh token always wins: a cached page may carry an expired SSR one
+            var inp = f.querySelector('[name="formToken"]');
+            if (inp) inp.value = data.token;
+          });
+        }
+      }).catch(function () {});
+    } catch (_) {}
+  }
+  function tagForms() {
+    Array.prototype.forEach.call(document.querySelectorAll('form'), function (f) {
+      if (!f.hasAttribute('data-loaded-at')) f.setAttribute('data-loaded-at', String(Date.now()));
+    });
+    fetchFormToken();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tagForms);
+  else tagForms();
+
+  function getUtmParams() {
+    var utm = {};
+    try {
+      var sp = new URLSearchParams(window.location.search);
+      var keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+      keys.forEach(function (k) {
+        var v = sp.get(k);
+        if (v) utm[k] = v.slice(0, 200);
+      });
+      if (Object.keys(utm).length > 0) {
+        sessionStorage.setItem('tm_utm', JSON.stringify(utm));
+      } else {
+        var saved = sessionStorage.getItem('tm_utm');
+        if (saved) utm = JSON.parse(saved);
+      }
+    } catch (_) {}
+    return utm;
+  }
+
   document.addEventListener('submit', function (e) {
     var form = e.target;
     if (!form || form.nodeName !== 'FORM') return;
@@ -167,8 +290,17 @@
     var body = {
       type: type === 'job-application' ? careersType(data.payload) : type,
       email: data.email,
-      payload: data.payload,
-      consent: true, // UI carries an explicit checkbox where the prototype provides one; documented for forms whose prototype UI lacks it
+      payload: Object.assign({}, data.payload, (typeof getUtmParams === 'function' ? getUtmParams() : {})),
+      leadSource: (function () {
+        var u = typeof getUtmParams === 'function' ? getUtmParams() : {};
+        return u.utm_source ? (u.utm_source + (u.utm_medium ? ' / ' + u.utm_medium : '')) : (document.referrer ? 'referrer: ' + document.referrer.slice(0, 100) : 'direct');
+      })(),
+      utm: typeof getUtmParams === 'function' ? getUtmParams() : {},
+      fillTimeMs: Math.max(0, Date.now() - (form.getAttribute('data-loaded-at') ? Number(form.getAttribute('data-loaded-at')) : (pageLoadedAt || Date.now()))),
+      ...(((form.querySelector('[name="hp"]') || form.querySelector('[name="website"]') || {}).value) ? { hp: (form.querySelector('[name="hp"]') || form.querySelector('[name="website"]')).value } : {}),
+      ...(((form.querySelector('[name="formToken"]') || {}).value || window.__TM_FORM_TOKEN__) ? { formToken: (form.querySelector('[name="formToken"]') || {}).value || window.__TM_FORM_TOKEN__ } : {}),
+      // Z-19 Fix: NEVER send consent: true on a form that has no consent checkbox.
+      consent: data.consentChecked === true,
       ...(turnstileToken(form) ? { turnstileToken: turnstileToken(form) } : {}),
     };
 
@@ -197,49 +329,44 @@
         form.innerHTML = '';
         var chip = document.createElement('span');
         chip.className = 'chip ok';
-        chip.textContent = '✓ Subscribed — welcome aboard';
+        chip.textContent = '✓ Almost done — check your inbox to confirm';
         form.appendChild(chip);
         return;
       }
       showSuccess(form, msg);
     }).catch(function (err) {
       if (btn) { btn.disabled = false; btn.textContent = busy; }
+      // Turnstile tokens are single-use: a failed attempt needs a fresh challenge
+      var ts = form.querySelector('.cf-turnstile');
+      if (ts && window.turnstile) { try { window.turnstile.reset(ts); } catch (_) {} }
       showError(form, 'We could not send your submission (' + (err && err.message ? err.message : 'network error') + '). Please try again in a moment.');
     });
   }, true); // capture: runs before the prototype's bubble-phase handlers
 
-  /* RMA tracker: synchronous interception (async stopImmediatePropagation is
-   * impossible) — if the API answers, render the real timeline; if not, re-click
-   * through to the prototype's demo handler unchanged. */
-  var trackBtn = document.getElementById('rmaTrackBtn');
-  if (trackBtn) {
-    trackBtn.addEventListener('click', function (e) {
-      if (trackBtn.getAttribute('data-tm-native') === '1') return; // fallback pass-through
-      var id = (document.getElementById('rmaId').value || '').trim().toUpperCase();
-      if (!id) return; // let the prototype validate the empty field
-      e.preventDefault();
-      e.stopImmediatePropagation(); // claim the click BEFORE the prototype handler
-      fetch(API + '/rma/' + encodeURIComponent(id)).then(function (res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      }).then(function (rma) {
-        var out = document.getElementById('rmaOut');
-        if (!out) return;
-        var html = '<div class="form-success show" style="text-align:left"><div class="tick">✓</div><h3>' + rma.number + ' — ' + String(rma.status).replace(/_/g, ' ') + '</h3>';
-        html += '<p>Requested for ' + (rma.maskedInfo && rma.maskedInfo.product ? String(rma.maskedInfo.product) : 'your product') + '</p><ol style="margin:8px 0 0;padding-left:18px;font-size:13.5px">';
-        (rma.timeline || []).forEach(function (ev) {
-          html += '<li>' + (ev.from === ev.to ? 'Case created — ' + String(ev.to).replace(/_/g, ' ') : String(ev.from).replace(/_/g, ' ') + ' → <b>' + String(ev.to).replace(/_/g, ' ') + '</b>') + (ev.note ? ' · ' + ev.note : '') + '</li>';
-        });
-        html += '</ol></div>';
-        out.innerHTML = html;
+  /* "Was this helpful?" (learn/news detail pages): votes are stored for real by
+   * POST /forms/content-feedback (ZT-034). RMA tracking lives in portal.js. */
+  Array.prototype.forEach.call(document.querySelectorAll('.btn-helpful[data-slug]'), function (b) {
+    b.addEventListener('click', function () {
+      // article and news templates use different ids: resolve within this widget
+      var scope = b.closest('section') || document;
+      var box = scope.querySelector('[id$="eedbackActions"]');
+      var msg = scope.querySelector('[id$="eedbackMsg"]');
+      var entity = /^\/news\//.test(location.pathname) ? 'news' : 'article';
+      Array.prototype.forEach.call(document.querySelectorAll('.btn-helpful'), function (x) { x.disabled = true; });
+      fetch(API + '/forms/content-feedback', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ entity: entity, slug: b.getAttribute('data-slug'), helpful: b.getAttribute('data-vote') === 'yes', locale: document.documentElement.lang || 'en', formToken: window.__TM_FORM_TOKEN__ || '' }),
+      }).then(function (r) {
+        if (msg) { msg.style.display = 'block'; msg.style.color = r.ok ? '#16a34a' : '#B3261E'; msg.textContent = r.ok ? 'Thank you for your feedback.' : 'Your feedback could not be recorded — please try again later.'; }
+        if (r.ok && box) box.style.display = 'none';
+        if (!r.ok) Array.prototype.forEach.call(document.querySelectorAll('.btn-helpful'), function (x) { x.disabled = false; });
       }).catch(function () {
-        // API unavailable → hand the click to the prototype's demo tracker
-        trackBtn.setAttribute('data-tm-native', '1');
-        trackBtn.click();
-        trackBtn.removeAttribute('data-tm-native');
+        if (msg) { msg.style.display = 'block'; msg.style.color = '#B3261E'; msg.textContent = 'Your feedback could not be recorded — please try again later.'; }
+        Array.prototype.forEach.call(document.querySelectorAll('.btn-helpful'), function (x) { x.disabled = false; });
       });
-    }, true);
-  }
+    });
+  });
 
   // Pre-render Turnstile widgets when a site key is configured (production).
   if (window.TURNSTILE_SITE_KEY) {

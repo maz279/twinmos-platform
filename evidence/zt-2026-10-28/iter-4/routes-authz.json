@@ -1,0 +1,3408 @@
+{
+  "name": "routes-authz",
+  "at": "2026-10-28T17:03:03.694Z",
+  "total": 680,
+  "failed": 0,
+  "items": [
+    {
+      "id": "session:viewer",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "id": "session:partner",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "id": "anon GET /api/v1/admin/products",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/products",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/taxonomy",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/taxonomy",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/products/export.csv",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/products/export.csv",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/products/import-template.csv",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/products/import-template.csv",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/products/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/products/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/products",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/products",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/products",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/products/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/products/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/products/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/products/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/products/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/products/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/products/:id/transition",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/products/:id/transition",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/products/:id/transition",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/products/:id/variants",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/products/:id/variants",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/products/:id/variants",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/products/:id/variants",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/products/:id/variants",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/products/:id/variants/:varId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/products/:id/variants/:varId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/products/:id/variants/:varId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/products/:id/variants/:varId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/products/:id/variants/:varId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/products/:id/variants/:varId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/products/:id/variants/:varId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/products/:id/variants/:varId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/products/:id/variants/:varId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/compatibility",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/compatibility",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/compatibility",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/compatibility",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/compatibility",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/compatibility/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/compatibility/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/compatibility/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/compatibility/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/compatibility/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/compatibility/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/compatibility/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/compatibility/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/compatibility/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/compatibility/import",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/compatibility/import",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/compatibility/import",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/products/import",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/products/import",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/products/import",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/audit/actors",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/audit/actors",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/audit",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/audit",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/audit.csv",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/audit.csv",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/stats",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/stats",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/search",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/search",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/submissions",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/submissions",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/staff-options",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/staff-options",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/submissions.csv",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/submissions.csv",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/submissions/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/submissions/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/submissions/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/submissions/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/submissions/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/submissions/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/submissions/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/submissions/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/submissions/:id/notes",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/submissions/:id/notes",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/submissions/:id/notes",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/submissions/:id/reply",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/submissions/:id/reply",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/submissions/:id/reply",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/rma",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/rma",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/rma/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/rma/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/rma/:id/serial-check",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/rma/:id/serial-check",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/rma/:id/reply",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/rma/:id/reply",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/rma/:id/reply",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/rma/:id/assign",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/rma/:id/assign",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/rma/:id/assign",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/rma/:id/transition",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/rma/:id/transition",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/rma/:id/transition",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/job-postings",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/job-postings",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/job-analytics",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/job-analytics",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/job-postings",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/job-postings",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/job-postings",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/job-postings/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/job-postings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/job-postings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/job-postings/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/job-postings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/job-postings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/job-postings/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/job-postings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/job-postings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/job-applications",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/job-applications",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/job-applications/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/job-applications/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/job-applications/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/job-applications/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/job-applications/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/job-applications/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/job-applications/:id/reply",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/job-applications/:id/reply",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/job-applications/:id/reply",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/spec-dictionary",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/spec-dictionary",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/spec-dictionary",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/spec-dictionary",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/spec-dictionary",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/spec-dictionary/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/spec-dictionary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/spec-dictionary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/spec-dictionary/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/spec-dictionary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/spec-dictionary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/spec-templates",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/spec-templates",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/spec-templates",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/spec-templates",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/spec-templates",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/spec-templates/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/spec-templates/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/spec-templates/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/spec-templates/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/spec-templates/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/spec-templates/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/analytics/leads",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/analytics/leads",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/analytics/rma",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/analytics/rma",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/analytics/content",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/analytics/content",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/users/me/password-state",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "anon POST /api/v1/admin/users/me/accept-password",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "anon GET /api/v1/admin/users",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/users",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/users/analytics",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/users/analytics",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/users/:id/activity",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/users/:id/activity",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/users/invite",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/users/invite",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/users/invite",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/users/:id/role",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/users/:id/role",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/users/:id/role",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/users/:id/revoke-sessions",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/users/:id/revoke-sessions",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/users/:id/revoke-sessions",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/users/:id/ban",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/users/:id/ban",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/users/:id/ban",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/users/:id/unban",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/users/:id/unban",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/users/:id/unban",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/content/export",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/content/export",
+      "ok": true,
+      "status": 410
+    },
+    {
+      "id": "partner POST /api/v1/admin/content/export",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/content/:entity",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/content/:entity",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/content/:entity/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/content/:entity/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/content/:entity",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/content/:entity",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/content/:entity",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/content/:entity/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/content/:entity/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/content/:entity/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/content/:entity/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/content/:entity/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/content/:entity/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/content/:entity/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/content/:entity/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/content/:entity/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/content/:entity/:id/transition",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/content/:entity/:id/transition",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "id": "partner POST /api/v1/admin/content/:entity/:id/transition",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/content/:entity/:id/revisions",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/content/:entity/:id/revisions",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/content/:entity/:id/comments",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/content/:entity/:id/comments",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/content/:entity/:id/comments",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/content/:entity/:id/comments",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/content/:entity/:id/comments",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/content/:entity/:id/revert",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/content/:entity/:id/revert",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/content/:entity/:id/revert",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/content/:entity/:id/restore/:revisionId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/content/:entity/:id/restore/:revisionId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/content/:entity/:id/restore/:revisionId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/content/:entity/:id/revisions/:revisionId/diff",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/content/:entity/:id/revisions/:revisionId/diff",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/content/scheduled/sweep",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/content/scheduled/sweep",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/content/scheduled/sweep",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/content/:entity/:id/preview",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/content/:entity/:id/preview",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/content/:entity/:id/preview",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/media-folders",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/media-folders",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/media-folders",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/media-folders",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/media-folders",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/media-folders/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/media-folders/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/media-folders/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/media-folders/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/media-folders/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/media-folders/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/media",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/media",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/media-analytics",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/media-analytics",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/media",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/media",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/media",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/media/:id/file",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/media/:id/file",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/media/:id/usage",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/media/:id/usage",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/media/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/media/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/media/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/media/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/media/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/media/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/settings",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/settings",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/settings/:key",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/settings/:key",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/settings",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/settings",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/settings",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/settings/:key",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/settings/:key",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/settings/:key",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/redirects",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/redirects",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/redirects",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/redirects",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/redirects",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/redirects/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/redirects/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/redirects/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/redirects/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/redirects/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/redirects/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/redirects/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/redirects/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/redirects/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/locales",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/locales",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/locales/:code",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/locales/:code",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/locales/:code",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/navigation/menus",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/navigation/menus",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/menus",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/menus",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/navigation/menus/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/navigation/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/menus/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/navigation/menus",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/navigation/menus",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/navigation/menus",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/menus",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/menus",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/menus",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/navigation/menus/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/navigation/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/navigation/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/navigation/menus/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/navigation/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/navigation/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/menus/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/menus/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/navigation/menus/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/navigation/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/navigation/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/menus/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/menus/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/navigation/menus/:id/items",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/navigation/menus/:id/items",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/navigation/menus/:id/items",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/menus/:id/items",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/menus/:id/items",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/menus/:id/items",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/navigation/items/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/navigation/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/navigation/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/navigation/items/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/navigation/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/navigation/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/items/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/items/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/navigation/items/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/navigation/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/navigation/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/items/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/items/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/navigation/menus/:id/reorder",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/navigation/menus/:id/reorder",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/navigation/menus/:id/reorder",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/menus/:id/reorder",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/menus/:id/reorder",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/menus/:id/reorder",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/entities/glossary",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/entities/glossary",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/glossary",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/glossary",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/entities/glossary/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/entities/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/glossary/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/entities/glossary",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/entities/glossary",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/entities/glossary",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/glossary",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/glossary",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/glossary",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/entities/glossary/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/entities/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/entities/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/glossary/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/entities/glossary/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/entities/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/entities/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/glossary/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/entities/glossary/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/entities/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/entities/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/glossary/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/glossary/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/entities/offices",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/entities/offices",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/offices",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/offices",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/entities/offices",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/entities/offices",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/entities/offices",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/offices",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/offices",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/offices",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/entities/offices/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/entities/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/entities/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/offices/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/entities/offices/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/entities/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/entities/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/offices/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/entities/offices/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/entities/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/entities/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/offices/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/offices/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/entities/testimonials",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/entities/testimonials",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/testimonials",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/testimonials",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/entities/testimonials",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/entities/testimonials",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/entities/testimonials",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/testimonials",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/testimonials",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/testimonials",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/entities/testimonials/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/entities/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/entities/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/testimonials/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/entities/testimonials/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/entities/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/entities/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/testimonials/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/entities/testimonials/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/entities/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/entities/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/testimonials/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/testimonials/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/entities/policies",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/entities/policies",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/policies",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/policies",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/entities/policies/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/entities/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/policies/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/entities/policies",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/entities/policies",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/entities/policies",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/policies",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/policies",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/policies",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/entities/policies/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/entities/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/entities/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/policies/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/entities/policies/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/entities/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/entities/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/policies/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/entities/policies/:slug/versions",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/entities/policies/:slug/versions",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/policies/:slug/versions",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/policies/:slug/versions",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/entities/policies/:slug/versions/compare",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/entities/policies/:slug/versions/compare",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/policies/:slug/versions/compare",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/policies/:slug/versions/compare",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/entities/policies/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/entities/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/entities/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/policies/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/policies/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/entities/forms",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/entities/forms",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/forms",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/forms",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/entities/forms/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/entities/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/forms/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/entities/forms",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/entities/forms",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/entities/forms",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/forms",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/forms",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/forms",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/entities/forms/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/entities/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/entities/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/forms/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/entities/forms/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/entities/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/entities/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/forms/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/entities/forms/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/entities/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/entities/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/forms/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/forms/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/entities/forms/:id/fields",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/entities/forms/:id/fields",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/entities/forms/:id/fields",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/forms/:id/fields",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/forms/:id/fields",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/forms/:id/fields",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/entities/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/entities/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/entities/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/entities/forms/fields/:fieldId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/entities/forms/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/entities/forms/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/forms/fields/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/forms/fields/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/forms/fields/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/entities/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/entities/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/entities/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/entities/forms/fields/:fieldId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/entities/forms/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/entities/forms/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/forms/fields/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/forms/fields/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/forms/fields/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/entities/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/entities/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/entities/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/forms/:formId/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/entities/forms/fields/:fieldId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/entities/forms/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/entities/forms/fields/:fieldId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/forms/fields/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/forms/fields/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/forms/fields/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/translations",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/translations",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/translations/progress",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/translations/progress",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/translations/xliff",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/translations/xliff",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/translations/xliff",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/translations/xliff",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "partner POST /api/v1/admin/translations/xliff",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/translations/entities/xliff",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/translations/entities/xliff",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/translations/entities/status",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/translations/entities/status",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/translations/entities/xliff",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/translations/entities/xliff",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "partner POST /api/v1/admin/translations/entities/xliff",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/translations",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/translations",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "partner PUT /api/v1/admin/translations",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/translations/import",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/translations/import",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "partner POST /api/v1/admin/translations/import",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/translations",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/translations",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/translations",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/privacy/dsar-export",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/privacy/dsar-export",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/privacy/dsar-export",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/privacy/dsar-erase",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/privacy/dsar-erase",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/privacy/dsar-erase",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/privacy/retention-sweep",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/privacy/retention-sweep",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/privacy/retention-sweep",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/partner/me",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "anon GET /api/v1/partner/assets",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "anon GET /api/v1/partner/assets/:id/download",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "anon GET /api/v1/admin/partner-orgs",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/partner-orgs",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/partner-orgs",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/partner-orgs",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/partner-orgs",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/partner-orgs/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/partner-orgs/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/partner-orgs/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/partner-orgs/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/partner-orgs/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/partner-orgs/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/partner-orgs/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/partner-orgs/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/partner-orgs/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/partner-orgs/:id/members",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/partner-orgs/:id/members",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/partner-orgs/:id/members",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/partner-orgs/:id/members",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/partner-orgs/:id/members",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/partner-orgs/:id/members/:memberId",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/partner-orgs/:id/members/:memberId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/partner-orgs/:id/members/:memberId",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/partner-assets",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/partner-assets",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/partner-orgs/:id/assets",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/partner-orgs/:id/assets",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/partner-orgs/:id/assets",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/partner-assets/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/partner-assets/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/partner-assets/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/distributors",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/distributors",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/distributors",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/distributors",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/distributors",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/distributors/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/distributors/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/distributors/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/distributors/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/distributors/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/distributors/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/distributors/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/distributors/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/distributors/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/distributors/import",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/distributors/import",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/distributors/import",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/marketplace-listings",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/marketplace-listings",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/marketplace-listings",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/marketplace-listings",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/marketplace-listings",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PATCH /api/v1/admin/marketplace-listings/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PATCH /api/v1/admin/marketplace-listings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PATCH /api/v1/admin/marketplace-listings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon PUT /api/v1/admin/marketplace-listings/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer PUT /api/v1/admin/marketplace-listings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner PUT /api/v1/admin/marketplace-listings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/marketplace-listings/:id",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/marketplace-listings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/marketplace-listings/:id",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/warranty-registrations",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/warranty-registrations",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/warranty-registrations/:id/void",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/warranty-registrations/:id/void",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/warranty-registrations/:id/void",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/sn-checks",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/sn-checks",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/serials",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/serials",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/serials/analytics",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/serials/analytics",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/serials/export.csv",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/serials/export.csv",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/serials/import",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/serials/import",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/serials/import",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/serials/anomalies",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/serials/anomalies",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/serials/:serial",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/serials/:serial",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon DELETE /api/v1/admin/serials/:serial",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer DELETE /api/v1/admin/serials/:serial",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner DELETE /api/v1/admin/serials/:serial",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/cron/publish-due",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/cron/publish-due",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/cron/publish-due",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/cron/dispatch-outbox",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/cron/dispatch-outbox",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/cron/dispatch-outbox",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon GET /api/v1/admin/alerts",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "partner GET /api/v1/admin/alerts",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/alerts/test",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/alerts/test",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/alerts/test",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "anon POST /api/v1/admin/alerts/:id/resolve",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "viewer POST /api/v1/admin/alerts/:id/resolve",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "id": "partner POST /api/v1/admin/alerts/:id/resolve",
+      "ok": true,
+      "status": 403
+    }
+  ]
+}

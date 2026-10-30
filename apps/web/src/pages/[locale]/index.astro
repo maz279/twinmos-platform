@@ -1,55 +1,343 @@
 ---
 // P4 locale landings — /ar/, /hi/, /ru/, /zh-cn/, /fr/, /es/, /pt/, /de/.
-// Each landing reproduces the EN homepage shell (verbatim prototype body) with
-// lang/dir flipped and the i18n runtime active, so translated chrome strings
-// (nav, hero, CTAs) render from the CMS translation store. EN itself stays at
-// the prototype URLs (prefixDefaultLocale: false) — zero P1 parity impact.
+// Fully localized pages with Header, Navigation, Hero, Showcase, and Footer.
+// Closes Z-31 (T6.2.1 / T6.2.2 / LOC-02).
 import Layout from '../../layouts/Layout.astro';
-import { LOCALES, localeDir } from '@twinmos/shared';
+import BlockDispatcher from '../../components/blocks/BlockDispatcher.astro';
+import { LOCALES, localeDir, SETTINGS_GROUP_DEFAULTS, resolveComputedFigures } from '@twinmos/shared';
+import { getDeliverySettings, getDeliveryPage, getDeliveryActiveLocales } from '../../lib/delivery';
 
-export function getStaticPaths() {
-  return LOCALES.filter((l) => l !== 'en').map((locale) => ({ params: { locale } }));
-}
+export const prerender = false;
 
 const { locale } = Astro.params;
+if (locale === 'en') {
+  return Astro.redirect('/', 301);
+}
+const isKnownLocale = LOCALES.includes(locale as any);
+if (!isKnownLocale) {
+  return Astro.rewrite('/404');
+}
+// Locale activation gate (T4.7.5): a locale whose translations are not complete
+// and activated in the CMS is not served — its visitors get the English home.
+if (!(await getDeliveryActiveLocales()).includes(locale!)) {
+  return Astro.redirect('/', 302);
+}
+
 const dir = localeDir(locale!);
+const settings = await getDeliverySettings().catch(() => ({} as Record<string, any>));
+const figures = resolveComputedFigures({ ...SETTINGS_GROUP_DEFAULTS['site.figures'], ...(settings['site.figures'] || {}) });
 
 const LOCALE_NAMES: Record<string, string> = {
   ar: 'العربية', hi: 'हिन्दी', ru: 'Русский', 'zh-cn': '简体中文',
   fr: 'Français', es: 'Español', pt: 'Português', de: 'Deutsch',
 };
 
-// Same shell the EN homepage carries; the i18n runtime swaps [data-i18n]
-// strings once the locale bundle loads. Landing adds a locale banner.
+const DICT: Record<string, {
+  title: string;
+  desc: string;
+  eyebrow: string;
+  heroTitle: string;
+  heroLede: string;
+  ctaShop: string;
+  ctaBuy: string;
+  categoryHeading: string;
+  categoryLede: string;
+  dramTitle: string;
+  dramDesc: string;
+  ssdTitle: string;
+  ssdDesc: string;
+  flashTitle: string;
+  flashDesc: string;
+  accTitle: string;
+  accDesc: string;
+  trustHeading: string;
+  trustGlobal: string;
+  trustQuality: string;
+  trustEndurance: string;
+}> = {
+  ar: {
+    title: 'توين موس — حلول الذاكرة والتخزين الرائدة منذ 1998',
+    desc: 'وحدات ذاكرة DDR5 ومحركات أقراص الحالة الصلبة NVMe والتخزين المحمول — موثوق بها في أكثر من 93 دولة.',
+    eyebrow: `علامة ذاكرة رائدة منذ ${figures.foundingYear}`,
+    heroTitle: 'ذاكرة وتخزين مصممان ليدوم',
+    heroLede: `وحدات DDR5 ومحركات أقراص PCIe Gen 5 وتخزين محمول للبنائين والمبدعين والشركات — في أكثر من ${figures.countriesCount} دولة.`,
+    ctaShop: 'استكشف المنتجات',
+    ctaBuy: 'أين تشتري',
+    categoryHeading: 'حلول الذاكرة والتخزين المتطورة',
+    categoryLede: 'تم تصميمها وفقًا لأعلى معايير الجودة العالمية لتلبية متطلبات الأداء الفائق.',
+    dramTitle: 'وحدات الذاكرة العشوائية',
+    dramDesc: 'أداء فائق مع تقنيات DDR5 و DDR4 المتقدمة للألعاب ومحطات العمل.',
+    ssdTitle: 'محركات الأقراص الصلبة',
+    ssdDesc: 'سرعات فائقة مع منافذ PCIe Gen 5 و Gen 4 NVMe لنقل البيانات الفوري.',
+    flashTitle: 'التخزين المحمول والبطاقات',
+    flashDesc: 'بطاقات MicroSD وذاكرات فلاش موثوقة لحفظ البيانات وصناع المحتوى.',
+    accTitle: 'ملحقات الحاسوب المتطورة',
+    accDesc: 'محولات ومحطات توزيع مصممة لتحقيق اتصال مستقر وسريع.',
+    trustHeading: 'الهندسة الموثوقة عالميًا',
+    trustGlobal: `انتشار في أكثر من ${figures.countriesCount} دولة حول العالم`,
+    trustQuality: 'شهادات جودة وتصنيع ISO 9001',
+    trustEndurance: 'ضمان ممتد واختبارات تحمل صارمة',
+  },
+  hi: {
+    title: 'TwinMOS — 1998 से मेमोरी और स्टोरेज सॉल्यूशंस',
+    desc: 'DDR5 DRAM, NVMe SSDs और पोर्टेबल स्टोरेज — 93 से अधिक देशों में विश्वसनीय।',
+    eyebrow: `${figures.foundingYear} से प्रतिष्ठित मेमोरी ब्रांड`,
+    heroTitle: 'मेमोरी और स्टोरेज, विश्वसनीयता के लिए निर्मित',
+    heroLede: `निर्माताओं, रचनाकारों और उद्यमों के लिए DDR5 मॉड्यूल, PCIe Gen 5 SSD और पोर्टेबल स्टोरेज — ${figures.countriesCount} से अधिक देशों में।`,
+    ctaShop: 'उत्पाद देखें',
+    ctaBuy: 'कहाँ से खरीदें',
+    categoryHeading: 'अग्रणी मेमोरी और स्टोरेज तकनीक',
+    categoryLede: 'उच्चतम गुणवत्ता और विश्वसनीयता के साथ निर्मित समाधान।',
+    dramTitle: 'DRAM मेमोरी मॉड्यूल',
+    dramDesc: 'गेमिंग और वर्कस्टेशन के लिए अत्याधुनिक DDR5 और DDR4 स्पीड।',
+    ssdTitle: 'सॉलिड स्टेट ड्राइव्स (SSD)',
+    ssdDesc: 'PCIe 5.0 और NVMe तकनीक के साथ अल्ट्रा-फास्ट डेटा ट्रांसफर।',
+    flashTitle: 'पोर्टेबल और फ्लैश स्टोरेज',
+    flashDesc: 'निर्माताओं के लिए उच्च क्षमता वाले USB ड्राइव और मेमोरी कार्ड।',
+    accTitle: 'हब और सहायक उपकरण',
+    accDesc: 'पेशेवर वर्कफ़्लो के लिए विश्वसनीय कनेक्टिविटी सहायक उपकरण।',
+    trustHeading: 'विश्वसनीय इंजीनियरिंग',
+    trustGlobal: `${figures.countriesCount} से अधिक देशों में वैश्विक उपस्थिति`,
+    trustQuality: 'ISO 9001 प्रमाणित निर्माण प्रक्रियाएं',
+    trustEndurance: 'विस्तारित वारंटी और कठोर गुणवत्ता परीक्षण',
+  },
+  ru: {
+    title: 'TwinMOS — Память и накопители данных с 1998 года',
+    desc: 'Модули памяти DDR5, твердотельные накопители NVMe и портативные устройства хранения — выбор специалистов в 93+ странах.',
+    eyebrow: `Легендарный бренд памяти с ${figures.foundingYear} года`,
+    heroTitle: 'Память и накопители, созданные на века',
+    heroLede: `Модули DDR5, твердотельные накопители PCIe Gen 5 и портативные накопители для сборщиков, создателей контента и предприятий — в более чем ${figures.countriesCount} странах.`,
+    ctaShop: 'Смотреть продукты',
+    ctaBuy: 'Где купить',
+    categoryHeading: 'Высокопроизводительные решения для хранения данных',
+    categoryLede: 'Созданы по строгим стандартам надежности для требовательных рабочих нагрузок.',
+    dramTitle: 'Модули оперативной памяти',
+    dramDesc: 'Максимальная скорость DDR5 и DDR4 для гейминга и профессиональных рабочих станций.',
+    ssdTitle: 'Твердотельные накопители SSD',
+    ssdDesc: 'Невероятная скорость с интерфейсом PCIe Gen 5 и Gen 4 NVMe для мгновенной загрузки.',
+    flashTitle: 'Портативная память и карты',
+    flashDesc: 'Надежные карты памяти microSD и USB-накопители для мобильных создателей контента.',
+    accTitle: 'Аксессуары и переходники',
+    accDesc: 'Концентраторы и кабели для стабильного подключения любого оборудования.',
+    trustHeading: 'Инженерная надежность мирового уровня',
+    trustGlobal: `Присутствие в ${figures.countriesCount}+ странах мира`,
+    trustQuality: 'Сертификация производства ISO 9001',
+    trustEndurance: 'Длительная гарантия и строгий контроль качества',
+  },
+  'zh-cn': {
+    title: 'TwinMOS 勤茂 — 始于 1998 年的高性能内存与固态存储品牌',
+    desc: 'DDR5 内存、PCIe Gen 5 NVMe 固态硬盘与便携存储 — 畅销全球 93+ 国家与地区。',
+    eyebrow: `源自 ${figures.foundingYear} 年的传奇存储品牌`,
+    heroTitle: '精工打造，持久耐用的内存与存储解决方案',
+    heroLede: `为装机爱好者、创作者与企业打造的 DDR5 内存模组、PCIe Gen 5 固态硬盘与移动存储 — 畅销全球 ${figures.countriesCount}+ 国家与地区。`,
+    ctaShop: '探索产品',
+    ctaBuy: '购买渠道',
+    categoryHeading: '全方位专业存储矩阵',
+    categoryLede: '严格遵循国际品质认证标准，释放极致读写效能与稳定表现。',
+    dramTitle: 'DRAM 内存模组',
+    dramDesc: '高速低延迟 DDR5 / DDR4 系列，赋能专业电竞与重度创作。',
+    ssdTitle: '固态硬盘 (SSD)',
+    ssdDesc: '搭载 PCIe 5.0 与 Gen 4 高速主控，提供突破性的极速传输与严苛温控。',
+    flashTitle: '便携闪存与存储卡',
+    flashDesc: '高耐久度 MicroSD 卡与高速移动固态硬盘，安全守护重要数据。',
+    accTitle: '外设与扩展坞',
+    accDesc: '多功能扩展坞与高规格线材，搭建流畅全能工作站。',
+    trustHeading: '值得信赖的全球品质标准',
+    trustGlobal: `产品畅销全球 ${figures.countriesCount}+ 国家与地区`,
+    trustQuality: 'ISO 9001 权威质量体系认证',
+    trustEndurance: '长效质保承诺与严苛出厂应力测试',
+  },
+  fr: {
+    title: 'TwinMOS — Solutions de Mémoire et Stockage depuis 1998',
+    desc: 'Modules DDR5, SSD NVMe et stockage portable pour créateurs et entreprises — distribués dans 93+ pays.',
+    eyebrow: `Marque de mémoire légendaire depuis ${figures.foundingYear}`,
+    heroTitle: 'Mémoire et stockage conçus pour durer',
+    heroLede: `Modules DDR5, SSD PCIe Gen 5 et stockage portable pour assembleurs, créateurs et entreprises — dans plus de ${figures.countriesCount} pays.`,
+    ctaShop: 'Explorer les produits',
+    ctaBuy: 'Où acheter',
+    categoryHeading: 'Solutions de Mémoire et de Stockage Avancées',
+    categoryLede: 'Conçues selon les normes de qualité les plus strictes pour des performances durables.',
+    dramTitle: 'Modules de Mémoire Vive DRAM',
+    dramDesc: 'Hautes fréquences DDR5 et DDR4 pour le jeu intensif et les stations de travail.',
+    ssdTitle: 'Disques SSD Haute Vitesse',
+    ssdDesc: 'Débits ultra-rapides avec PCIe Gen 5 et NVMe pour des transferts instantanés.',
+    flashTitle: 'Stockage Portable & Cartes Flash',
+    flashDesc: 'Cartes MicroSD et clés USB haute endurance pour professionnels nomades.',
+    accTitle: 'Accessoires & Hubs USB-C',
+    accDesc: 'Connectivité robuste et stations d’accueil pour postes de travail modernes.',
+    trustHeading: 'Ingénierie Reconnue dans le Monde Entier',
+    trustGlobal: `Présence certifiée dans plus de ${figures.countriesCount} pays`,
+    trustQuality: 'Normes de fabrication certifiées ISO 9001',
+    trustEndurance: 'Garantie constructeur et tests d’endurance rigoureux',
+  },
+  es: {
+    title: 'TwinMOS — Soluciones de Memoria y Almacenamiento desde 1998',
+    desc: 'Módulos DDR5, unidades SSD NVMe y almacenamiento portátil — de confianza en más de 93 países.',
+    eyebrow: `Marca de memoria legendaria desde ${figures.foundingYear}`,
+    heroTitle: 'Memoria y almacenamiento diseñados para perdurar',
+    heroLede: `Módulos DDR5, SSD PCIe Gen 5 y almacenamiento portátil para constructores, creadores y empresas — en más de ${figures.countriesCount} países.`,
+    ctaShop: 'Explorar productos',
+    ctaBuy: 'Dónde comprar',
+    categoryHeading: 'Soluciones Avanzadas de Memoria y Almacenamiento',
+    categoryLede: 'Ingeniería de alta precisión desarrollada para cargas de trabajo exigentes y máxima velocidad.',
+    dramTitle: 'Módulos de Memoria DRAM',
+    dramDesc: 'Velocidades DDR5 y DDR4 optimizadas para gaming extremo y producción digital.',
+    ssdTitle: 'Unidades de Estado Sólido SSD',
+    ssdDesc: 'Rendimiento sin concesiones con PCIe Gen 5 y Gen 4 NVMe de respuesta inmediata.',
+    flashTitle: 'Memorias Flash y Portátiles',
+    flashDesc: 'Tarjetas microSD resistentes y unidades flash USB de gran capacidad.',
+    accTitle: 'Accesorios y Concentradores',
+    accDesc: 'Bases de conexión y adaptadores para configuraciones profesionales fiables.',
+    trustHeading: 'Garantía e Ingeniería de Alcance Global',
+    trustGlobal: `Presencia consolidada en más de ${figures.countriesCount} países`,
+    trustQuality: 'Procesos certificados bajo norma ISO 9001',
+    trustEndurance: 'Garantía extendida y pruebas exhaustivas de estrés',
+  },
+  pt: {
+    title: 'TwinMOS — Soluções de Memória e Armazenamento desde 1998',
+    desc: 'Módulos DDR5, SSDs NVMe e armazenamento portátil — confiança comprovada em mais de 93 países.',
+    eyebrow: `Marca lendária de memória desde ${figures.foundingYear}`,
+    heroTitle: 'Memória e armazenamento desenvolvidos para durar',
+    heroLede: `Módulos DDR5, SSDs PCIe Gen 5 e armazenamento portátil para integradores, criadores e empresas — em mais de ${figures.countriesCount} países.`,
+    ctaShop: 'Explorar produtos',
+    ctaBuy: 'Onde comprar',
+    categoryHeading: 'Linha Completa de Memória e Armazenamento',
+    categoryLede: 'Desenvolvidos com padrões internacionais para máxima velocidade, segurança e durabilidade.',
+    dramTitle: 'Módulos de Memória DRAM',
+    dramDesc: 'Velocidades extremas DDR5 e DDR4 para computadores de alta performance e servidores.',
+    ssdTitle: 'Unidades de Estado Sólido SSD',
+    ssdDesc: 'Velocidade impressionante com arquitetura PCIe Gen 5 e Gen 4 NVMe.',
+    flashTitle: 'Armazenamento Portátil e Cartões Flash',
+    flashDesc: 'Cartões MicroSD duráveis e pendrives rápidos para criadores em movimento.',
+    accTitle: 'Acessórios e Conectividade',
+    accDesc: 'Hubs e adaptadores projetados para estabilidade contínua de trabalho.',
+    trustHeading: 'Qualidade e Engenharia Reconhecidas Globalmente',
+    trustGlobal: `Presente em mais de ${figures.countriesCount} países ao redor do mundo`,
+    trustQuality: 'Certificação internacional de qualidade ISO 9001',
+    trustEndurance: 'Garantia abrangente e testes de estresse em fábrica',
+  },
+  de: {
+    title: 'TwinMOS — Speicher- und Storage-Lösungen seit 1998',
+    desc: 'DDR5-DRAM, NVMe-SSDs und mobiler Speicher — weltweit geschätzt in über 93 Ländern.',
+    eyebrow: `Legendäre Speichermarke seit ${figures.foundingYear}`,
+    heroTitle: 'Arbeitsspeicher & Storage, für Langlebigkeit entwickelt',
+    heroLede: `DDR5-Module, PCIe Gen 5 SSDs und portabler Speicher für Entwickler, Kreative und Unternehmen — in über ${figures.countriesCount} Ländern.`,
+    ctaShop: 'Produkte entdecken',
+    ctaBuy: 'Verkaufsstellen',
+    categoryHeading: 'Fortschrittliche Speicher- und Datentechnologie',
+    categoryLede: 'Entwickelt nach höchsten Industriestandards für maximale Zuverlässigkeit und Performance.',
+    dramTitle: 'DRAM-Speichermodule',
+    dramDesc: 'Spitzenleistung mit DDR5 und DDR4 für Gaming-Systeme und anspruchsvolle Workstations.',
+    ssdTitle: 'Solid-State-Drives (SSD)',
+    ssdDesc: 'Höchstgeschwindigkeiten mit PCIe Gen 5 und Gen 4 NVMe für verzögerungsfreie Datenübertragung.',
+    flashTitle: 'Flash- und mobiler Speicher',
+    flashDesc: 'Robuste MicroSD-Karten und USB-Laufwerke für Kreativschaffende unterwegs.',
+    accTitle: 'Zubehör und Docking-Stationen',
+    accDesc: 'Zuverlässige Hubs und Konnektivitätslösungen für professionelle Arbeitsumgebungen.',
+    trustHeading: 'Erstklassige Ingenieurskunst weltweit',
+    trustGlobal: `Vertreten in über ${figures.countriesCount} Ländern weltweit`,
+    trustQuality: 'Zertifizierte Fertigungsqualität nach ISO 9001',
+    trustEndurance: 'Erweiterte Herstellergarantie und strenge Belastungstests',
+  },
+};
+
+const cur = DICT[locale!] ?? DICT['ar'];
+const page = await getDeliveryPage('index', locale!).catch(() => null);
+const hasBlocks = Array.isArray(page?.blocks) && page.blocks.length > 0;
+const pageTitle = page?.title || cur.title;
+const pageDesc = page?.seoDescription || cur.desc;
 ---
 <Layout
-  title={`TwinMOS — ${LOCALE_NAMES[locale!]}`}
-  desc="TwinMOS memory and storage — DDR5, NVMe SSDs, portable storage."
+  title={pageTitle}
+  desc={pageDesc}
   locale={locale}
   hreflangGrid={true}
   bodyClass="page-home"
 >
   <main id="main">
-    <section class="page-hero" dir={dir}>
-      <div class="wrap">
-        <span class="eyebrow" data-i18n="hero.eyebrow">Legendary memory brand since 1998</span>
-        <h1 class="h1" data-i18n="hero.title">Memory &amp; storage, engineered to endure</h1>
-        <p class="lede" data-i18n="hero.lede">DDR5 modules, PCIe Gen 5 SSDs and portable storage for builders, creators and enterprises — in 93+ countries.</p>
-        <p style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
-          <a class="btn btn-accent" href="/shop.html" data-i18n="hero.ctaShop">Explore products</a>
-          <a class="btn btn-ghost" href="/where-to-buy.html" data-i18n="hero.ctaBuy">Where to buy</a>
-        </p>
-      </div>
-    </section>
-    <section style="padding-top:clamp(22px,3vw,36px)">
-      <div class="wrap">
-        <div class="card card-pad" style="text-align:start">
-          <span class="chip">{LOCALE_NAMES[locale!]}</span>
-          <h2 class="h3" style="margin:10px 0 6px" data-i18n="landing.localizedTitle">This page is being localized</h2>
-          <p class="form-note" data-i18n="landing.localizedBody">Product catalog, support and the knowledge hub remain in English today; full localization ships progressively from the CMS translation workflow.</p>
-          <p style="margin-top:12px"><a class="link-arrow" href="/" data-i18n="landing.backToEn">Continue in English</a></p>
-        </div>
-      </div>
-    </section>
+    {hasBlocks ? (
+      <BlockDispatcher blocks={page.blocks} />
+    ) : (
+      <>
+        <section class="page-hero hero" dir={dir}>
+          <div class="wrap">
+            <span class="eyebrow" data-i18n="hero.eyebrow">{cur.eyebrow}</span>
+            <h1 class="h1" data-i18n="hero.title">{cur.heroTitle}</h1>
+            <p class="lede" data-i18n="hero.lede">{cur.heroLede}</p>
+            <p style="margin-top:22px;display:flex;gap:12px;flex-wrap:wrap">
+              <a class="btn btn-accent btn-lg" href="/shop" data-i18n="hero.ctaShop">
+                {cur.ctaShop} <span aria-hidden="true">{dir === 'rtl' ? '←' : '→'}</span>
+              </a>
+              <a class="btn btn-ghost btn-lg" href="/where-to-buy" data-i18n="hero.ctaBuy">
+                {cur.ctaBuy}
+              </a>
+            </p>
+          </div>
+        </section>
+
+        <section style="padding:clamp(40px,6vw,72px) 0;background:var(--bg-subtle, #f8fafc)" dir={dir}>
+          <div class="wrap">
+            <div style="margin-bottom:clamp(24px,4vw,36px)">
+              <h2 class="h2" style="margin:0 0 10px">{cur.categoryHeading}</h2>
+              <p class="lede" style="margin:0;max-width:680px">{cur.categoryLede}</p>
+            </div>
+            <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px">
+              <div class="card card-pad" style="border:1px solid var(--border-color,#e2e8f0);border-radius:12px;background:#fff;padding:24px">
+                <span class="chip" style="font-size:12px;font-weight:700;color:var(--brand-ink,#0A2540);margin-bottom:12px;display:inline-block">DRAM</span>
+                <h3 class="h3" style="margin:0 0 8px;font-size:18px">{cur.dramTitle}</h3>
+                <p style="margin:0 0 16px;color:var(--text-muted,#64748b);font-size:14px;line-height:1.5">{cur.dramDesc}</p>
+                <a class="link-arrow" href="/shop?cat=dram" style="font-weight:700;font-size:14px">
+                  {cur.ctaShop}
+                </a>
+              </div>
+              <div class="card card-pad" style="border:1px solid var(--border-color,#e2e8f0);border-radius:12px;background:#fff;padding:24px">
+                <span class="chip" style="font-size:12px;font-weight:700;color:var(--brand-ink,#0A2540);margin-bottom:12px;display:inline-block">SSD</span>
+                <h3 class="h3" style="margin:0 0 8px;font-size:18px">{cur.ssdTitle}</h3>
+                <p style="margin:0 0 16px;color:var(--text-muted,#64748b);font-size:14px;line-height:1.5">{cur.ssdDesc}</p>
+                <a class="link-arrow" href="/shop?cat=ssd" style="font-weight:700;font-size:14px">
+                  {cur.ctaShop}
+                </a>
+              </div>
+              <div class="card card-pad" style="border:1px solid var(--border-color,#e2e8f0);border-radius:12px;background:#fff;padding:24px">
+                <span class="chip" style="font-size:12px;font-weight:700;color:var(--brand-ink,#0A2540);margin-bottom:12px;display:inline-block">FLASH</span>
+                <h3 class="h3" style="margin:0 0 8px;font-size:18px">{cur.flashTitle}</h3>
+                <p style="margin:0 0 16px;color:var(--text-muted,#64748b);font-size:14px;line-height:1.5">{cur.flashDesc}</p>
+                <a class="link-arrow" href="/shop?cat=flash" style="font-weight:700;font-size:14px">
+                  {cur.ctaShop}
+                </a>
+              </div>
+              <div class="card card-pad" style="border:1px solid var(--border-color,#e2e8f0);border-radius:12px;background:#fff;padding:24px">
+                <span class="chip" style="font-size:12px;font-weight:700;color:var(--brand-ink,#0A2540);margin-bottom:12px;display:inline-block">ACCESSORIES</span>
+                <h3 class="h3" style="margin:0 0 8px;font-size:18px">{cur.accTitle}</h3>
+                <p style="margin:0 0 16px;color:var(--text-muted,#64748b);font-size:14px;line-height:1.5">{cur.accDesc}</p>
+                <a class="link-arrow" href="/shop?cat=accessories" style="font-weight:700;font-size:14px">
+                  {cur.ctaShop}
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section style="padding:clamp(36px,5vw,60px) 0;background:#0A2540;color:#fff" dir={dir}>
+          <div class="wrap">
+            <h2 class="h2" style="margin:0 0 28px;text-align:center;color:#fff">{cur.trustHeading}</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;text-align:center">
+              <div style="padding:16px">
+                <div style="font-size:28px;font-weight:800;color:#1DBF9F;margin-bottom:6px">{figures.countriesCount}+</div>
+                <div style="font-size:14px;color:#94a3b8">{cur.trustGlobal}</div>
+              </div>
+              <div style="padding:16px">
+                <div style="font-size:28px;font-weight:800;color:#1DBF9F;margin-bottom:6px">ISO 9001</div>
+                <div style="font-size:14px;color:#94a3b8">{cur.trustQuality}</div>
+              </div>
+              <div style="padding:16px">
+                <div style="font-size:28px;font-weight:800;color:#1DBF9F;margin-bottom:6px">100%</div>
+                <div style="font-size:14px;color:#94a3b8">{cur.trustEndurance}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </>
+    )}
   </main>
 </Layout>

@@ -127,6 +127,95 @@
     });
   }
 
+  /* T6.6.1 Keyboard Navigation Engine: Arrow keys in tabs & accordions */
+  function initKeyboardA11y(root) {
+    var scope = root || document;
+
+    // 1. Arrow-key support in tabs (WCAG 2.1.1 / ARIA Authoring Practices Tabs)
+    scope.querySelectorAll('[role="tablist"]').forEach(function (tablist) {
+      if (tablist.getAttribute('data-a11y-bound')) return;
+      setAttr(tablist, 'data-a11y-bound', '1');
+
+      tablist.addEventListener('keydown', function (e) {
+        var key = e.key;
+        if (key !== 'ArrowRight' && key !== 'ArrowLeft' && key !== 'Home' && key !== 'End') return;
+
+        var tabs = Array.prototype.slice.call(tablist.querySelectorAll('[role="tab"], button.tab'));
+        if (tabs.length < 2) return;
+
+        var activeEl = document.activeElement;
+        var idx = tabs.indexOf(activeEl);
+        if (idx === -1) return;
+
+        var isRtl = document.documentElement.getAttribute('dir') === 'rtl';
+        var nextIdx = idx;
+
+        if (key === 'ArrowRight') {
+          nextIdx = isRtl ? (idx - 1 + tabs.length) % tabs.length : (idx + 1) % tabs.length;
+        } else if (key === 'ArrowLeft') {
+          nextIdx = isRtl ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length;
+        } else if (key === 'Home') {
+          nextIdx = 0;
+        } else if (key === 'End') {
+          nextIdx = tabs.length - 1;
+        }
+
+        e.preventDefault();
+        var targetTab = tabs[nextIdx];
+        if (targetTab) {
+          tabs.forEach(function (t) { setAttr(t, 'tabindex', '-1'); });
+          setAttr(targetTab, 'tabindex', '0');
+          targetTab.focus();
+          targetTab.click();
+        }
+      });
+    });
+
+    // 2. Arrow-key support in accordions (WCAG 2.1.1 / ARIA Authoring Practices Accordion)
+    scope.querySelectorAll('.faq-accordion, .accordion, [data-accordion]').forEach(function (acc) {
+      if (acc.getAttribute('data-a11y-bound')) return;
+      setAttr(acc, 'data-a11y-bound', '1');
+
+      acc.addEventListener('keydown', function (e) {
+        var key = e.key;
+        if (key !== 'ArrowDown' && key !== 'ArrowUp' && key !== 'Home' && key !== 'End') return;
+
+        var triggers = Array.prototype.slice.call(
+          acc.querySelectorAll('.faq-item summary, .faq-item button, [aria-expanded], .accordion-trigger')
+        );
+        if (triggers.length < 2) return;
+
+        var activeEl = document.activeElement;
+        var idx = triggers.indexOf(activeEl);
+        if (idx === -1) return;
+
+        var nextIdx = idx;
+        if (key === 'ArrowDown') {
+          nextIdx = (idx + 1) % triggers.length;
+        } else if (key === 'ArrowUp') {
+          nextIdx = (idx - 1 + triggers.length) % triggers.length;
+        } else if (key === 'Home') {
+          nextIdx = 0;
+        } else if (key === 'End') {
+          nextIdx = triggers.length - 1;
+        }
+
+        e.preventDefault();
+        if (triggers[nextIdx]) {
+          triggers[nextIdx].focus();
+        }
+      });
+    });
+
+    // 3. Logo Accessible Naming (T6.6.1 item 2)
+    scope.querySelectorAll('a.logo, a.brand-logo, a[href="/"], a[href="index.html"]').forEach(function (a) {
+      var img = a.querySelector('img');
+      if (img && !a.getAttribute('aria-label')) {
+        setAttr(a, 'aria-label', (img.getAttribute('alt') || 'TwinMOS Technologies') + ' Home');
+      }
+    });
+  }
+
   function applyAll(root) {
     try {
       bindLabelledControls(root);
@@ -136,6 +225,7 @@
       fixImageDims(root);
       fixBreadcrumbRole(root);
       nameButtons(root);
+      initKeyboardA11y(root);
     } catch (e) { /* never break the page */ }
   }
 

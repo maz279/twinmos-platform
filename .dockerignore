@@ -1,0 +1,41 @@
+# Git and ide
+.git
+.github
+.gitignore
+.vscode
+.idea
+
+# Workspace untracked data and logs
+workspace/
+apps/api/data/
+*.log
+*.tmp
+.env
+.env.*
+!.env.example
+
+# Build artifacts and caches
+dist/
+build/
+.cache/
+.astro/
+coverage/
+node_modules/
+npm-debug.log*
+
+# Test fixtures and reports
+playwright-report/
+test-results/
+tooling/verify/evidence/
+
+# Build context hygiene: none of these are inputs to any image (the context was ~700 MB)
+evidence/
+docs/
+deliverables/
+deploy/baselines/
+deploy/sbom/
+e2e/
+tooling/
+prototype/
+!prototype/assets/js/app.js
+apps/web/public/admin/

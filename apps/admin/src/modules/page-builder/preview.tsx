@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { API } from '../../api';
 import type { PageBlock } from './blocks';
+import { useDialogA11y } from '../../dialog-a11y';
 
 const NAVY = '#1F2A37'; const CYAN = '#1DBF9F'; const GOLD = '#E8A33D';
 const S = (o: React.CSSProperties): React.CSSProperties => o;
@@ -16,6 +17,28 @@ function Media({ id, alt, style }: { id: unknown; alt?: string; style?: React.CS
 }
 const str = (v: unknown, d = '') => (v == null ? d : String(v));
 const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? (v as Record<string, unknown>[]) : []);
+
+function renderWithTokens(text: unknown, fallback = '') {
+  const s = str(text, fallback);
+  if (!s.includes('{logo}')) return s;
+  const parts = s.split('{logo}');
+  return (
+    <>
+      {parts.map((part, i) => (
+        <React.Fragment key={i}>
+          {part}
+          {i < parts.length - 1 && (
+            <img
+              src="/brand/logo.svg"
+              alt="TwinMOS"
+              style={{ height: '0.9em', display: 'inline-block', verticalAlign: 'middle', margin: '0 4px' }}
+            />
+          )}
+        </React.Fragment>
+      ))}
+    </>
+  );
+}
 
 /** Minimal markdown-ish render (bold/headings/lists) — enough for previews. */
 function Md({ text }: { text: unknown }) {
@@ -48,8 +71,8 @@ function BlockView({ block }: { block: PageBlock }) {
         {w('bgMediaId') != null && <Media id={w('bgMediaId')} alt={str(w('title'))} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.38 }} />}
         <div style={S({ position: 'relative', maxWidth: 620 })}>
           {str(w('eyebrow')) && <span style={S({ fontSize: 11.5, letterSpacing: 2, fontWeight: 800, color: GOLD, textTransform: 'uppercase' })}>{str(w('eyebrow'))}</span>}
-          <h1 style={S({ margin: '6px 0 8px', fontSize: 34, lineHeight: 1.15, color: '#fff' })}>{str(w('title'), 'Hero headline')}</h1>
-          {str(w('subdeck')) && <p style={S({ margin: 0, color: '#C6D2DE', fontSize: 15 })}>{str(w('subdeck'))}</p>}
+          <h1 style={S({ margin: '6px 0 8px', fontSize: 34, lineHeight: 1.15, color: '#fff' })}>{renderWithTokens(w('title') ?? w('headline'), 'Hero headline')}</h1>
+          {(str(w('lede')) || str(w('subdeck'))) && <p style={S({ margin: 0, color: '#C6D2DE', fontSize: 15 })}>{str(w('lede') || w('subdeck'))}</p>}
           <div style={S({ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' })}>
             {str(w('ctaLabel')) && <span style={S({ background: CYAN, color: '#fff', fontWeight: 800, padding: '9px 18px', borderRadius: 8, fontSize: 14 })}>{str(w('ctaLabel'))}</span>}
             {str(w('ctaSecondaryLabel')) && <span style={S({ border: '1px solid rgba(255,255,255,.5)', color: '#fff', fontWeight: 700, padding: '9px 18px', borderRadius: 8, fontSize: 14 })}>{str(w('ctaSecondaryLabel'))}</span>}
@@ -253,9 +276,10 @@ const VIEWPORTS: Array<[string, number]> = [['Desktop', 1200], ['Tablet', 768], 
 export function PreviewModal({ blocks, title, onClose }: { blocks: PageBlock[]; title: string; onClose: () => void }) {
   const [vp, setVp] = useState(0);
   const width = VIEWPORTS[vp][1];
+  const dialogRef = useDialogA11y({ isOpen: true, onClose });
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(10,22,40,.55)', zIndex: 70, display: 'grid', alignItems: 'start', justifyContent: 'center', padding: '3vh 16px' }}>
-      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Page preview"
+      <div ref={dialogRef} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Page preview"
         style={{ width: 'min(1280px, 96vw)', maxHeight: '92vh', display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: 14, boxShadow: '0 30px 80px rgba(2,12,28,.5)', overflow: 'hidden' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid #E6EBF1' }}>
           <b style={{ color: NAVY, flex: 1, fontSize: 14 }}>Preview — {title || 'Untitled page'}</b>

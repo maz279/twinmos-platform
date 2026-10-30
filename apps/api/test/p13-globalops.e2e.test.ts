@@ -17,6 +17,7 @@ process.env.FORMS_TO = 'ops@twinmos.dev';
 process.env.SERIAL_ALERT_TO = 'compliance@twinmos.dev';
 process.env.API_ALLOW_NO_TURNSTILE = '1';
 process.env.NODE_ENV = 'test';
+process.env.TRUST_PROXY = '1'; // anomaly IPs come from clientIp() (edge-stamped x-real-ip)
 
 const MIGRATIONS = join(dirname(dirname(process.cwd())), 'packages', 'db', 'migrations');
 
@@ -233,13 +234,13 @@ describe('P5.3: serial registry + counterfeit anomaly alerting', () => {
     // public checks: TM26A0001 from 6 distinct IPs; TM26A0002 from 2 (below threshold)
     for (let i = 1; i <= 6; i++) {
       await app.request('/api/v1/sn-check', {
-        method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': `203.0.113.${i}` },
+        method: 'POST', headers: { 'content-type': 'application/json', 'x-real-ip': `203.0.113.${i}` },
         body: JSON.stringify({ serial: 'TM26A0001' }),
       });
     }
     for (const ip of ['198.51.100.1', '198.51.100.2']) {
       await app.request('/api/v1/sn-check', {
-        method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': ip },
+        method: 'POST', headers: { 'content-type': 'application/json', 'x-real-ip': ip },
         body: JSON.stringify({ serial: 'TM26A0002' }),
       });
     }
@@ -247,7 +248,7 @@ describe('P5.3: serial registry + counterfeit anomaly alerting', () => {
     const countries = ['DE', 'AE', 'IN', 'BR', 'ZA', 'JP'];
     for (const c of countries) {
       await app.request('/api/v1/sn-check', {
-        method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': `192.0.2.${c.length}`, 'cf-ipcountry': c },
+        method: 'POST', headers: { 'content-type': 'application/json', 'x-real-ip': `192.0.2.${c.length}`, 'cf-ipcountry': c },
         body: JSON.stringify({ serial: 'TM26A0002' }),
       });
     }

@@ -9,7 +9,7 @@ import QRCode from 'qrcode';
 import { API } from './api';
 
 const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
-const LOGO = '/assets/img/logo.webp';
+const LOGO = `${import.meta.env.BASE_URL}assets/img/logo.webp`;
 const cardIn: React.CSSProperties = {
   width: '100%', padding: '11px 13px', border: '1px solid #D9E0E8', borderRadius: 8,
   fontSize: 14, marginBottom: 12, background: '#fff', boxSizing: 'border-box',
@@ -33,7 +33,15 @@ function QrCanvas({ text, size = 190 }: { text: string; size?: number }) {
   return <canvas ref={ref} style={{ width: size, height: size, borderRadius: 8, border: '1px solid #E6EBF1' }} />;
 }
 
-export default function MfaSetup({ onEnrolled, onSkip }: { onEnrolled: () => void; onSkip: () => void }) {
+export default function MfaSetup({
+  onEnrolled,
+  onSkip,
+  required = false,
+}: {
+  onEnrolled: () => void;
+  onSkip?: () => void;
+  required?: boolean;
+}) {
   const [phase, setPhase] = useState<'idle' | 'enroll' | 'done'>('idle');
   const [totpURI, setTotpURI] = useState(''); const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [pw, setPw] = useState(''); const [code, setCode] = useState('');
@@ -82,11 +90,11 @@ export default function MfaSetup({ onEnrolled, onSkip }: { onEnrolled: () => voi
 
       {phase === 'idle' && (
         <>
-          <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 5 }}>Confirm your password to begin</label>
-          <input autoFocus type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="••••••••••" style={cardIn} />
+          <label htmlFor="mfa-pw" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 5 }}>Confirm your password to begin</label>
+          <input id="mfa-pw" aria-label="Confirm password to enable MFA" autoFocus type="password" autoComplete="current-password" value={pw} onChange={e => setPw(e.target.value)} placeholder="••••••••••" style={cardIn} />
           <div style={{ display: 'flex', gap: 10 }}>
             <button disabled={busy || !pw} onClick={start} style={{ ...btnMain, opacity: busy || !pw ? 0.5 : 1 }}>{busy ? 'Starting…' : 'Begin setup'}</button>
-            <button onClick={onSkip} style={btnGhost}>Not now</button>
+            {!required && onSkip && <button onClick={onSkip} style={btnGhost}>Not now</button>}
           </div>
         </>
       )}
@@ -100,8 +108,8 @@ export default function MfaSetup({ onEnrolled, onSkip }: { onEnrolled: () => voi
           <div style={{ flex: 1, minWidth: 220 }}>
             <p style={{ fontSize: 12.5, color: '#66748A', margin: '0 0 6px' }}>Can't scan? Enter this key manually:</p>
             <code style={{ display: 'block', background: '#F1F6FB', borderRadius: 8, padding: '8px 10px', fontSize: 13, letterSpacing: 1, wordBreak: 'break-all', marginBottom: 14 }}>{secret || '—'}</code>
-            <label style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 5 }}>Enter the 6-digit code</label>
-            <input autoFocus value={code} onChange={e => setCode(e.target.value)} placeholder="123 456" inputMode="numeric" style={{ ...cardIn, letterSpacing: 4, fontWeight: 700, textAlign: 'center', fontSize: 18 }} />
+            <label htmlFor="mfa-code" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 5 }}>Enter the 6-digit code</label>
+            <input id="mfa-code" autoFocus value={code} onChange={e => setCode(e.target.value)} autoComplete="one-time-code" placeholder="123 456" inputMode="numeric" style={{ ...cardIn, letterSpacing: 4, fontWeight: 700, textAlign: 'center', fontSize: 18 }} />
             <button disabled={busy || code.trim().length < 6} onClick={confirm} style={{ ...btnMain, width: '100%', opacity: busy || code.trim().length < 6 ? 0.5 : 1 }}>{busy ? 'Verifying…' : 'Confirm & enable MFA'}</button>
           </div>
         </div>

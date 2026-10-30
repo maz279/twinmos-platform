@@ -1,0 +1,79 @@
+[
+ {
+  "id": 1,
+  "slug": "dram-gaming",
+  "name": "Gaming DRAM",
+  "parent_id": null,
+  "sort": 0
+ },
+ {
+  "id": 2,
+  "slug": "dram-desktop",
+  "name": "Desktop DRAM",
+  "parent_id": null,
+  "sort": 0
+ },
+ {
+  "id": 3,
+  "slug": "dram-notebook",
+  "name": "Notebook DRAM",
+  "parent_id": null,
+  "sort": 0
+ },
+ {
+  "id": 4,
+  "slug": "ssd-nvme",
+  "name": "NVMe SSD",
+  "parent_id": null,
+  "sort": 0
+ },
+ {
+  "id": 5,
+  "slug": "ssd-sata",
+  "name": "SATA SSD",
+  "parent_id": null,
+  "sort": 0
+ },
+ {
+  "id": 6,
+  "slug": "portable-ssd",
+  "name": "Portable SSD",
+  "parent_id": null,
+  "sort": 0
+ },
+ {
+  "id": 7,
+  "slug": "portable-hdd",
+  "name": "Portable HDD",
+  "parent_id": null,
+  "sort": 0
+ },
+ {
+  "id": 8,
+  "slug": "flash",
+  "name": "USB Flash Drive",
+  "parent_id": null,
+  "sort": 0
+ },
+ {
+  "id": 9,
+  "slug": "microsd",
+  "name": "MicroSD Card",
+  "parent_id": null,
+  "sort": 0
+ },
+ {
+  "id": 10,
+  "slug": "psu",
+  "name": "Power Supply",
+  "parent_id": null,
+  "sort": 0
+ },
+ {
+  "id": 11,
+  "slug": "hub",
+  "name": "USB HUB",
+  "parent_id": null,
+  "sort": 0
+ }
+]

@@ -33,14 +33,14 @@
     {
       "idx": 4,
       "version": "7",
-      "when": 1790611200000,
+      "when": 1790525000000,
       "tag": "0004_partner_portal",
       "breakpoints": true
     },
     {
       "idx": 5,
       "version": "7",
-      "when": 1790518908193,
+      "when": 1790526000000,
       "tag": "0005_lead_hardening",
       "breakpoints": true
     },
@@ -82,28 +82,28 @@
     {
       "idx": 11,
       "version": "7",
-      "when": 1790870000000,
+      "when": 1790800000000,
       "tag": "0011_media_folders",
       "breakpoints": true
     },
     {
       "idx": 12,
       "version": "7",
-      "when": 1790950000000,
+      "when": 1790810000000,
       "tag": "0012_job_posting_details",
       "breakpoints": true
     },
     {
       "idx": 13,
       "version": "7",
-      "when": 1791030000000,
+      "when": 1790820000000,
       "tag": "0013_serial_country_batch",
       "breakpoints": true
     },
     {
       "idx": 14,
       "version": "7",
-      "when": 1791110000000,
+      "when": 1790830000000,
       "tag": "0014_rma_assignee",
       "breakpoints": true
     },
@@ -147,6 +147,111 @@
       "version": "7",
       "when": 1791283300000,
       "tag": "0020_member_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791369600000,
+      "tag": "0021_phase_c_content_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791456000000,
+      "tag": "0022_phase_d_search_and_subscribers",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791456100000,
+      "tag": "0023_durable_lockout",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791542400000,
+      "tag": "0024_page_constraints",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791542500000,
+      "tag": "0025_nav_menu_locale_code",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791542600000,
+      "tag": "0026_policy_versions_glossary",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791542700000,
+      "tag": "0027_catalogue_directory_ms45",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791542800000,
+      "tag": "0028_editorial_workflow_scheduling",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791542900000,
+      "tag": "0029_truthful_entities_ms47",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1791543000000,
+      "tag": "0030_phase4_completion",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1791543100000,
+      "tag": "0031_page_sort",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791543200000,
+      "tag": "0032_zero_trust_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1791543300000,
+      "tag": "0033_warranty_registration",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791543400000,
+      "tag": "0034_registration_verification",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1791543500000,
+      "tag": "0035_rma_open_serial",
       "breakpoints": true
     }
   ]

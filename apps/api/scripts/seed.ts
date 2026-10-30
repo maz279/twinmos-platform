@@ -2,11 +2,21 @@
 // Credentials come from env: SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD. The dev-only
 // default password is refused when DATABASE_URL is set (see guard below).
 // Usage: npm run db:seed
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { betterAuth } from 'better-auth';
+import { hashPassword } from 'better-auth/crypto';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { createDb, brand, category, locale, product, user } from '@twinmos/db';
+import { createDb, brand, category, locale, product, user, account } from '@twinmos/db';
 import * as schema from '@twinmos/db';
+
+const args = process.argv.slice(2);
+const isDemo = args.includes('--demo') || process.env.SEED_MODE === 'demo';
+
+// SEED-01 & SEED-02: seed:demo refuses to run in production
+if (isDemo && process.env.NODE_ENV === 'production') {
+  console.error('[seed] Refusing to run demo seed in production environment (SEED-01, SEED-02)');
+  process.exit(1);
+}
 
 const db = createDb();
 
@@ -17,64 +27,109 @@ const auth = betterAuth({
   user: { additionalFields: { role: { type: 'string', defaultValue: 'viewer', input: false } } },
 });
 
-const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@twinmos.dev';
+const isBootstrap =
+  args.includes('--bootstrap') ||
+  process.env.BOOTSTRAP_SEED === '1' ||
+  process.env.BOOTSTRAP_SEED === 'true' ||
+  process.env.SEED_MODE === 'bootstrap' ||
+  (!isDemo && process.env.NODE_ENV === 'production');
+
+// Better Auth stores e-mails lowercased; match it or a mixed-case value breaks re-runs
+const email = (process.env.SEED_ADMIN_EMAIL ?? 'admin@twinmos.dev').trim().toLowerCase();
 // Credentials come from env (SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD). The
 // default password is ONLY for a local PGlite dev store; seeding a
 // DATABASE_URL-backed (production) store must pass the password explicitly
 // — a known default super-admin credential must never be creatable there.
 const hasExternalDb = !!process.env.DATABASE_URL;
-const password = process.env.SEED_ADMIN_PASSWORD ?? (hasExternalDb ? undefined : 'DevOnly-ChangeMe-2026!');
-if (!password) {
+// compose passes "" when the variable is unset: treat empty as absent
+const targetPassword = process.env.SEED_ADMIN_PASSWORD || (hasExternalDb ? undefined : 'DevOnly-ChangeMe-2026!');
+const existing = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
+
+// A password is needed only to CREATE the admin (or for an explicit reset).
+// Requiring it on every re-run kept operators from removing it from the
+// environment after the first deploy: the bootstrap job then failed and the
+// stack never started (ZT-081).
+const needsPassword = existing.length === 0 || process.env.SEED_RESET_ADMIN_PASSWORD === '1';
+if (needsPassword && !targetPassword) {
   console.error(
-    '[seed] SEED_ADMIN_PASSWORD is required when seeding a DATABASE_URL-backed store; ' +
-      'refusing to create a super admin with a default password.',
+    '[seed] SEED_ADMIN_PASSWORD is required to create (or reset) the super admin on a DATABASE_URL-backed store; ' +
+      'refusing to use a default password.',
   );
   process.exit(1);
 }
+// SEED-01 / AUTH-BOOT: super_admin created verified so staff sign-in is immediately unblocked
+if (needsPassword && targetPassword!.length < 12) {
+  console.error('[seed] SEED_ADMIN_PASSWORD must be at least 12 characters.');
+  process.exit(1);
+}
 
-// 1) first admin user — created through Better Auth so the password hash format is correct
-const existing = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
 if (existing.length === 0) {
-  await auth.api.signUpEmail({ body: { email, password, name: 'Platform Admin' } });
-  await db.update(user).set({ role: 'super_admin' }).where(eq(user.email, email));
-  console.log('[seed] admin user created: ' + email + ' (super_admin)');
+  await auth.api.signUpEmail({ body: { email, password: targetPassword!, name: 'Platform Admin' } });
+  await db.update(user).set({ role: 'super_admin', emailVerified: true }).where(eq(user.email, email));
+  console.log('[seed] admin user created: ' + email + ' (super_admin, verified; MFA enrolment is enforced at first console use)');
 } else {
-  console.log('[seed] admin user already present: ' + email);
+  // Re-runs happen on every deploy (compose bootstrap job). They must never
+  // weaken an existing account: the old code reset the password AND switched
+  // MFA off on each run (ZT-024). Password reset is an explicit recovery step.
+  if (process.env.SEED_RESET_ADMIN_PASSWORD === '1') {
+    const hash = await hashPassword(targetPassword!);
+    await db.update(account)
+      .set({ password: hash, updatedAt: new Date() })
+      .where(and(eq(account.userId, existing[0].id), eq(account.providerId, 'credential')));
+    console.log('[seed] admin password reset on explicit request (SEED_RESET_ADMIN_PASSWORD=1); MFA unchanged');
+  } else {
+    console.log('[seed] admin user already present: ' + email + ' (left unchanged)');
+  }
 }
 
-// 2) reference locale rows (Phase 4 activates more)
-const en = await db.select().from(locale).limit(1);
-if (en.length === 0) {
-  await db.insert(locale).values([
-    // 9-locale reconciled plan (BN removed per post-remediation fact base)
-    { code: 'en', name: 'English', dir: 'ltr', active: true },
-    { code: 'ar', name: 'العربية', dir: 'rtl', active: false },
-    { code: 'hi', name: 'हिन्दी', dir: 'ltr', active: false },
-    { code: 'ru', name: 'Русский', dir: 'ltr', active: false },
-    { code: 'zh-cn', name: '简体中文', dir: 'ltr', active: false },
-    { code: 'fr', name: 'Français', dir: 'ltr', active: false },
-    { code: 'es', name: 'Español', dir: 'ltr', active: false },
-    { code: 'pt', name: 'Português', dir: 'ltr', active: false },
-    { code: 'de', name: 'Deutsch', dir: 'ltr', active: false },
-  ]);
-  console.log('[seed] locale rows created');
+// 2) reference locale rows (idempotent, Phase 4 activates more)
+for (const loc of [
+  // 9-locale reconciled plan (BN removed per post-remediation fact base)
+  { code: 'en', name: 'English', dir: 'ltr', active: true },
+  { code: 'ar', name: 'العربية', dir: 'rtl', active: false },
+  { code: 'hi', name: 'हिन्दी', dir: 'ltr', active: false },
+  { code: 'ru', name: 'Русский', dir: 'ltr', active: false },
+  { code: 'zh-cn', name: '简体中文', dir: 'ltr', active: false },
+  { code: 'fr', name: 'Français', dir: 'ltr', active: false },
+  { code: 'es', name: 'Español', dir: 'ltr', active: false },
+  { code: 'pt', name: 'Português', dir: 'ltr', active: false },
+  { code: 'de', name: 'Deutsch', dir: 'ltr', active: false },
+]) {
+  await db.insert(locale).values(loc).onConflictDoNothing();
+}
+console.log('[seed] locale rows verified');
+
+// 2b) typed site setting defaults (MS4.2 / T4.2.1) — fill missing rows only so
+//     an operator's existing edits are never overwritten.
+{
+  const { setting } = schema;
+  const { SETTINGS_GROUP_DEFAULTS } = await import('@twinmos/shared');
+  for (const [key, value] of Object.entries(SETTINGS_GROUP_DEFAULTS)) {
+    await db.insert(setting).values({ key, value }).onConflictDoNothing();
+  }
+  console.log(`[seed] site settings defaults verified (${Object.keys(SETTINGS_GROUP_DEFAULTS).length} groups)`);
 }
 
-// 3) reference catalog rows (Phase 1 replaces with the full products.json import)
-const anyProduct = await db.select({ id: product.id }).from(product).limit(1);
-if (anyProduct.length === 0) {
-  const [b] = await db.insert(brand).values({ slug: 'voltx', name: 'VOLTX' }).returning({ id: brand.id });
-  const [c] = await db.insert(category).values({ slug: 'dram-gaming', name: 'Gaming DRAM' }).returning({ id: category.id });
-  await db.insert(product).values([
-    { sku: 'VLT-DDR5-16G', slug: 'voltx-ddr5-udimm-16gb', name: 'VOLTX DDR5 U-DIMM 16GB', brandId: b.id, categoryId: c.id, status: 'published', specs: { capacity: '16GB', speed: '6000MT/s' }, badges: ['XMP 3.0'] },
-    { sku: 'VLT-DDR5-32G', slug: 'voltx-ddr5-udimm-32gb', name: 'VOLTX DDR5 U-DIMM 32GB', brandId: b.id, categoryId: c.id, status: 'draft', specs: { capacity: '32GB', speed: '6000MT/s' }, badges: [] },
-  ]);
-  console.log('[seed] reference brand/category/products created');
+// 3) demo catalog rows — strictly skipped in bootstrap seed (SEED-01)
+if (isDemo) {
+  const anyProduct = await db.select({ id: product.id }).from(product).limit(1);
+  if (anyProduct.length === 0) {
+    const [b] = await db.insert(brand).values({ slug: 'voltx', name: 'VOLTX' }).onConflictDoNothing().returning({ id: brand.id });
+    const [c] = await db.insert(category).values({ slug: 'dram-gaming', name: 'Gaming DRAM' }).onConflictDoNothing().returning({ id: category.id });
+    if (b && c) {
+      await db.insert(product).values([
+        { sku: 'VLT-DDR5-16G', slug: 'voltx-ddr5-udimm-16gb', name: 'VOLTX DDR5 U-DIMM 16GB', brandId: b.id, categoryId: c.id, status: 'published', specs: { capacity: '16GB', speed: '6000MT/s' }, badges: ['XMP 3.0'] },
+        { sku: 'VLT-DDR5-32G', slug: 'voltx-ddr5-udimm-32gb', name: 'VOLTX DDR5 U-DIMM 32GB', brandId: b.id, categoryId: c.id, status: 'draft', specs: { capacity: '32GB', speed: '6000MT/s' }, badges: [] },
+      ]).onConflictDoNothing();
+      console.log('[seed] demo brand/category/products created');
+    }
+  }
+} else {
+  console.log('[seed] bootstrap mode: skipping demo products (SEED-01)');
 }
 
-// 4) P5 demo partner org + member + gated asset + registry serials (dev only).
-const isDevSeed = process.env.NODE_ENV !== 'production' && process.env.SEED_MODE !== 'bootstrap';
-if (isDevSeed) {
+// 4) P5 demo partner org + member + gated asset + registry serials (demo mode only).
+if (isDemo) {
   const { partnerOrg, partnerMember, partnerAsset, serialRegistry } = await import('@twinmos/db');
   const anyOrg = await db.select({ id: partnerOrg.id }).from(partnerOrg).limit(1);
   if (anyOrg.length === 0) {
@@ -102,7 +157,7 @@ if (isDevSeed) {
     console.log('[seed] demo partner org + member + price asset + 2 serials created');
   }
 
-  // 6) P6 demo leads (ADR-009) — one fresh QT lead + one OVERDUE lead so the
+  // 5) P6 demo leads (ADR-009) — one fresh QT lead + one OVERDUE lead so the
   // lead board, SLA badges and dashboard overdue counter demo out of the box.
   const { formSubmission } = schema;
   const existingLeads = await db.select({ id: formSubmission.id }).from(formSubmission).where(eq(formSubmission.refCode, 'QT-2026-DEMO0001')).limit(1);
@@ -123,13 +178,10 @@ if (isDevSeed) {
     console.log('[seed] P6 demo leads created (1 QT new/high + 1 overdue urgent)');
   }
 } else {
-  console.log('[seed] production/bootstrap mode: skipping demo partner and demo leads');
+  console.log('[seed] bootstrap mode: skipping demo products, partner, and leads (SEED-01, SEED-02)');
 }
 
-// 5) RTL demo strings — tooling/seed-ar.json (Arabic hero/landing) so a fresh
-// dev DB renders the /ar.html demo WITHOUT a manual admin import. Found in the
-// P5 audit iteration: the demo lived only in whatever DB the P4 loop used and
-// silently vanished on re-seed (i18n bundle returned strings:{}).
+// 6) Core RTL strings — tooling/seed-ar.json so /ar.html and /api/v1/i18n/ar are clean (DATA-01)
 {
   const { translation } = schema;
   const existing = await db.select({ k: translation.key }).from(translation).where(eq(translation.locale, 'ar')).limit(1);
@@ -144,12 +196,13 @@ if (isDevSeed) {
       const rows = Object.entries(ar.strings).map(([key, value]) => ({ locale: 'ar', ns, key, value }));
       if (rows.length) {
         await db.insert(translation).values(rows).onConflictDoNothing();
-        console.log(`[seed] ar demo translations imported (${rows.length} strings)`);
+        console.log(`[seed] ar translations seeded (${rows.length} strings)`);
       }
     } catch {
-      console.log('[seed] seed-ar.json not found or unreadable — skipping ar demo strings');
+      console.log('[seed] seed-ar.json not found or unreadable — skipping ar strings');
     }
   }
 }
+
 console.log('[seed] done');
 process.exit(0);

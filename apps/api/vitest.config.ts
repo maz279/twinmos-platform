@@ -7,5 +7,10 @@ export default defineConfig({
     testTimeout: 60_000,
     pool: 'forks', // PGlite + WASM need a real process per suite
     fileParallelism: false, // isolated temp DBs, sequential keeps output readable
+    env: {
+      FORCE_PGLITE: '1',
+      TRUST_PROXY: '1',
+      ENFORCE_MFA: '0',
+    },
   },
 });

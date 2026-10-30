@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-10-21T14:29:50.549Z",
+  "milestone": "MS4.3 · Glossary and versioned policies",
+  "status": "PASSED",
+  "totals": {
+    "glossaryTermsFound": 113,
+    "glossaryA11yViolations": 0,
+    "legalA11yViolations": 0,
+    "tabsTested": 4,
+    "failures": []
+  }
+}

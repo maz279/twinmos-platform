@@ -114,9 +114,18 @@ export const productBaseSchema = z.object({
   gallery: z.array(z.number().int().positive()).max(12),
   datasheets: z.array(z.object({ label: z.string().trim().min(1).max(80), url: z.url().max(500) })).max(6),
   badges: z.array(z.string().max(40)).max(8),
+  featured: z.boolean(),
+  launchDate: z.string().datetime().nullable().optional(),
+  isComingSoon: z.boolean(),
+  warrantyTier: z.enum(['standard', 'extended', 'lifetime', 'limited_lifetime', '1_year', '2_year', '3_year', '5_year', '10_year']).or(z.string()).nullable().optional(),
+  specsDictionary: z.record(z.string(), z.unknown()),
+  version: z.number().int().optional(),
 });
 
 export const productCreateSchema = productBaseSchema.extend({
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
+  translationGroup: z.string().trim().max(60).nullable().optional(),
   status: z.enum(CONTENT_STATUS).default('draft'),
   specs: z.record(z.string(), z.unknown()).default({}),
   description: z.string().trim().max(8000).default(''),
@@ -129,14 +138,29 @@ export const productCreateSchema = productBaseSchema.extend({
   gallery: z.array(z.number().int().positive()).max(12).default([]),
   datasheets: z.array(z.object({ label: z.string().trim().min(1).max(80), url: z.url().max(500) })).max(6).default([]),
   badges: z.array(z.string().max(40)).max(8).default([]),
+  featured: z.boolean().default(false),
+  launchDate: z.string().datetime().nullable().optional().default(null),
+  isComingSoon: z.boolean().default(false),
+  warrantyTier: z.enum(['standard', 'extended', 'lifetime', 'limited_lifetime', '1_year', '2_year', '3_year', '5_year', '10_year']).or(z.string()).nullable().optional().default(null),
+  specsDictionary: z.record(z.string(), z.unknown()).default({}),
+  version: z.number().int().default(1),
 });
-export const productUpdateSchema = productBaseSchema.partial();
+export const productUpdateSchema = productBaseSchema.partial().extend({
+  featured: z.boolean().optional(),
+  launchDate: z.string().datetime().nullable().optional(),
+  isComingSoon: z.boolean().optional(),
+  warrantyTier: z.string().trim().max(40).nullable().optional(),
+  specsDictionary: z.record(z.string(), z.unknown()).optional(),
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
+  translationGroup: z.string().trim().max(60).nullable().optional(),
+});
 
 // ---- Phase 3: catalog engineering contracts (TWN-ADMIN-CMS-AUDIT-PLAN-2026-001 §3) ----
 // 3.1 product variants — hardware attributes + per-variant pricing/inventory.
 // Pricing & stock live inside the variant's jsonb attrs (the table's designed
 // dumping ground), so no migration is required.
-export const variantCreateSchema = z.object({
+export const variantBaseSchema = z.object({
   attrs: z.object({
     capacity: z.string().trim().min(1).max(20),            // e.g. 16GB / 32GB / 1TB
     speed: z.string().trim().min(1).max(20).optional(),     // e.g. 6000MT/s
@@ -144,17 +168,22 @@ export const variantCreateSchema = z.object({
     lighting: z.enum(['RGB', 'Non-RGB']).optional(),
   }),
   sku: z.string().trim().regex(/^[A-Z0-9-]{3,40}$/),
+  priceUsd: z.number().nonnegative().max(9_999_999).nullable(),
+  status: z.enum(['active', 'discontinued']),
+  stock: z.number().int().min(0).max(9_999_999),
+});
+export const variantCreateSchema = variantBaseSchema.extend({
   priceUsd: z.number().nonnegative().max(9_999_999).nullable().default(null),
   status: z.enum(['active', 'discontinued']).default('active'),
   stock: z.number().int().min(0).max(9_999_999).default(0),
 });
 export const variantUpdateSchema = z.object({
   // partial INSIDE attrs too — a PATCH may touch only e.g. finish or stock
-  attrs: variantCreateSchema.shape.attrs.partial(),
-  sku: variantCreateSchema.shape.sku,
-  priceUsd: variantCreateSchema.shape.priceUsd,
-  status: variantCreateSchema.shape.status,
-  stock: variantCreateSchema.shape.stock,
+  attrs: variantBaseSchema.shape.attrs.partial(),
+  sku: variantBaseSchema.shape.sku,
+  priceUsd: variantBaseSchema.shape.priceUsd,
+  status: variantBaseSchema.shape.status,
+  stock: variantBaseSchema.shape.stock,
 }).partial();
 export type VariantInput = z.infer<typeof variantCreateSchema>;
 
@@ -164,22 +193,36 @@ export const COMPAT_MEMORY_GENS = ['DDR4', 'DDR5'] as const;
 export const COMPAT_FORM_FACTORS = ['U-DIMM', 'SO-DIMM', 'M.2 2280 NVMe'] as const;
 // 0017: finder hierarchy groups — the public compatibility page's type tabs.
 export const COMPAT_DEVICE_TYPES = ['laptop', 'desktop', 'diy', 'minipc'] as const;
-export const compatibilityCreateSchema = z.object({
+export const compatibilityBaseSchema = z.object({
   deviceBrand: z.string().trim().min(1).max(40),
   deviceModel: z.string().trim().min(1).max(80),
+  memoryGen: z.enum(COMPAT_MEMORY_GENS).nullable(),
+  formFactor: z.enum(COMPAT_FORM_FACTORS).nullable(),
+  maxGb: z.number().int().positive().max(1024).nullable(),
+  notes: z.string().trim().max(500).nullable(),
+  // 0017 finder contract — slots/speed/SSD upgrade + recommendation categories
+  deviceType: z.enum(COMPAT_DEVICE_TYPES),
+  slots: z.number().int().positive().max(16).nullable(),
+  speed: z.string().trim().max(30).nullable(),
+  cats: z.array(z.string().trim().min(1).max(40)).max(8),
+  ssdNote: z.string().trim().max(120).nullable(),
+  ssdCats: z.array(z.string().trim().min(1).max(40)).max(8),
+  qvlStatus: z.string().trim().max(30).default('certified'),
+});
+export const compatibilityCreateSchema = compatibilityBaseSchema.extend({
   memoryGen: z.enum(COMPAT_MEMORY_GENS).nullable().default(null),
   formFactor: z.enum(COMPAT_FORM_FACTORS).nullable().default(null),
   maxGb: z.number().int().positive().max(1024).nullable().default(null),
   notes: z.string().trim().max(500).nullable().default(null),
-  // 0017 finder contract — slots/speed/SSD upgrade + recommendation categories
   deviceType: z.enum(COMPAT_DEVICE_TYPES).default('laptop'),
   slots: z.number().int().positive().max(16).nullable().default(null),
   speed: z.string().trim().max(30).nullable().default(null),
   cats: z.array(z.string().trim().min(1).max(40)).max(8).default([]),
   ssdNote: z.string().trim().max(120).nullable().default(null),
   ssdCats: z.array(z.string().trim().min(1).max(40)).max(8).default([]),
+  qvlStatus: z.string().trim().max(30).default('certified'),
 });
-export const compatibilityUpdateSchema = compatibilityCreateSchema.partial();
+export const compatibilityUpdateSchema = compatibilityBaseSchema.partial();
 export type CompatibilityInput = z.infer<typeof compatibilityCreateSchema>;
 
 // ---- 0020: where-to-buy directory (public locator) ----
@@ -193,22 +236,79 @@ export const DISTRIBUTOR_STATUSES = ['hub', 'authorized', 'expanding', 'seeking'
 export const DISTRIBUTOR_STATUS_LABELS = {
   hub: 'TwinMOS hub', authorized: 'Authorized distribution', expanding: 'Expanding coverage', seeking: 'Seeking distributors',
 } as const;
-export const distributorCreateSchema = z.object({
+export const distributorBaseSchema = z.object({
   name: z.string().trim().min(2).max(120),            // country card title (e.g. "United Arab Emirates")
   country: z.string().trim().min(2).max(60),
   region: z.enum(DISTRIBUTOR_REGIONS),
+  status: z.enum(DISTRIBUTOR_STATUSES),
+  cities: z.array(z.string().trim().min(1).max(60)).max(20),
+  contact: z.record(z.string(), z.string().max(300)), // {email, phone, website, tag}
+  note: z.string().trim().max(1000).nullable(),
+  isoCountry: z.string().trim().length(2).nullable().optional(),
+  tagline: z.string().trim().max(300).nullable().optional(),
+  ctaConfig: z.record(z.string(), z.unknown()).optional(),
+  sort: z.number().int().default(0),
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
+});
+export const distributorCreateSchema = distributorBaseSchema.extend({
   status: z.enum(DISTRIBUTOR_STATUSES).default('authorized'),
   cities: z.array(z.string().trim().min(1).max(60)).max(20).default([]),
-  contact: z.record(z.string(), z.string().max(300)).default({}), // {email, phone, website, tag}
+  contact: z.record(z.string(), z.string().max(300)).default({}),
   note: z.string().trim().max(1000).nullable().default(null),
+  isoCountry: z.string().trim().length(2).nullable().optional().default(null),
+  tagline: z.string().trim().max(300).nullable().optional().default(null),
+  ctaConfig: z.record(z.string(), z.unknown()).optional().default({}),
+  sort: z.number().int().default(0),
 });
-export const distributorUpdateSchema = distributorCreateSchema.partial();
-export const marketplaceListingCreateSchema = z.object({
+export const distributorUpdateSchema = distributorBaseSchema.partial();
+export const marketplaceListingBaseSchema = z.object({
   platform: z.string().trim().min(2).max(40),
   url: z.url().max(500),
-  country: z.string().trim().max(60).nullable().default(null),
+  country: z.string().trim().max(60).nullable(),
+  description: z.string().trim().max(500).nullable().optional(),
+  ctaLabel: z.string().trim().max(60).nullable().optional(),
+  sort: z.number().int().default(0),
 });
-export const marketplaceListingUpdateSchema = marketplaceListingCreateSchema.partial();
+export const marketplaceListingCreateSchema = marketplaceListingBaseSchema.extend({
+  country: z.string().trim().max(60).nullable().default(null),
+  description: z.string().trim().max(500).nullable().optional().default(null),
+  ctaLabel: z.string().trim().max(60).nullable().optional().default(null),
+  sort: z.number().int().default(0),
+});
+export const marketplaceListingUpdateSchema = marketplaceListingBaseSchema.partial();
+
+// ---- MS4.5: Spec dictionary, Spec templates, Device type labels ----
+export const specDictionaryBaseSchema = z.object({
+  key: z.string().trim().min(1).max(80),
+  normalizedKey: z.string().trim().min(1).max(80),
+  categoryId: z.number().int().positive().nullable().optional(),
+  dataType: z.enum(['string', 'number', 'boolean', 'array']).default('string'),
+  unit: z.string().trim().max(20).nullable().optional(),
+  description: z.string().trim().max(500).nullable().optional(),
+});
+export const specDictionaryCreateSchema = specDictionaryBaseSchema;
+export const specDictionaryUpdateSchema = specDictionaryBaseSchema.partial();
+export type SpecDictionaryInput = z.infer<typeof specDictionaryCreateSchema>;
+
+export const specTemplateBaseSchema = z.object({
+  categoryId: z.number().int().positive(),
+  name: z.string().trim().min(1).max(80),
+  specKeys: z.array(z.string().trim().min(1).max(80)).default([]),
+  requiredKeys: z.array(z.string().trim().min(1).max(80)).default([]),
+});
+export const specTemplateCreateSchema = specTemplateBaseSchema;
+export const specTemplateUpdateSchema = specTemplateBaseSchema.partial();
+export type SpecTemplateInput = z.infer<typeof specTemplateCreateSchema>;
+
+export const deviceTypeLabelBaseSchema = z.object({
+  deviceType: z.string().trim().min(1).max(30),
+  label: z.string().trim().min(1).max(80),
+  sort: z.number().int().default(0),
+});
+export const deviceTypeLabelCreateSchema = deviceTypeLabelBaseSchema;
+export const deviceTypeLabelUpdateSchema = deviceTypeLabelBaseSchema.partial();
+export type DeviceTypeLabelInput = z.infer<typeof deviceTypeLabelCreateSchema>;
 
 // 3.3 bulk import envelope — the CSV text is parsed/validated server-side.
 export const productImportSchema = z.object({
@@ -233,7 +333,13 @@ export function sameInstant(headerVal: string | undefined | null, dbVal: Date | 
 
 // ---- RFC 9457 problem details helper ----
 export function problem(status: number, title: string, detail?: string, errors?: unknown) {
-  return { type: 'about:blank', status, title, ...(detail ? { detail } : {}), ...(errors ? { errors } : {}) };
+  return {
+    type: 'about:blank',
+    status,
+    title,
+    ...(detail ? { detail } : {}),
+    ...(errors ? { errors, invalid_params: errors } : {}),
+  };
 }
 
 // ---- P2: RMA intake (payload of POST /forms/rma; also creates the RMA case) ----
@@ -250,6 +356,70 @@ export const rmaIntakeSchema = z.object({
   issue: z.string().trim().min(10).max(4000),
 });
 export type RmaIntake = z.infer<typeof rmaIntakeSchema>;
+
+// ---- Warranty registration & lookup (BRD §F8.3, URD UR-6.x, BR-6.2) ----
+const serialField = z.string().trim().min(4).max(60).regex(/^[A-Za-z0-9._-]+$/, 'letters, digits, dot, dash, underscore')
+  .transform((s) => s.toUpperCase());
+// a real calendar day (2025-02-30 / 2025-13-01 are rejected, not turned into 500s)
+const isoDay = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD')
+  .refine((s) => { const d = new Date(`${s}T00:00:00Z`); return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s; }, 'not a valid calendar date');
+export const warrantyRegisterSchema = z.object({
+  serial: serialField,
+  email: z.string().trim().toLowerCase().email().max(254),
+  name: contactField,
+  country: z.string().trim().max(80).optional(),
+  purchaseDate: isoDay,
+  retailer: z.string().trim().max(120).optional(),
+  consent: z.literal(true),
+  turnstileToken: z.string().max(4096).optional(),
+  formToken: z.string().max(512).optional(),
+});
+export const warrantyLookupSchema = z.object({
+  serial: serialField,
+  email: z.string().trim().toLowerCase().email().max(254),
+});
+export const WARRANTY_STATUSES = ['active', 'expiring_soon', 'expired', 'lifetime', 'undetermined', 'not_registered'] as const;
+export type WarrantyStatusName = (typeof WARRANTY_STATUSES)[number];
+/** Days before expiry at which "Expiring soon" is shown (URD UR-6.1.7). */
+export const WARRANTY_EXPIRING_SOON_DAYS = 60;
+
+/** Parse a product's published warranty string ("5 Years", "Lifetime",
+ *  "Product lifetime warranty", "18 months"). null = cannot be determined. */
+export function parseWarrantyTerm(term: string | null | undefined): { kind: 'lifetime' } | { kind: 'months'; months: number } | null {
+  const t = String(term ?? '').trim().toLowerCase();
+  if (!t) return null;
+  if (/lifetime/.test(t)) return { kind: 'lifetime' };
+  // whole numbers only: "1.5 Years" must not read as 5 years
+  const y = /(?<![\d.])(\d{1,2})\s*-?\s*(year|yr)/.exec(t);
+  if (y) return { kind: 'months', months: Number(y[1]) * 12 };
+  const m = /(?<![\d.])(\d{1,3})\s*-?\s*month/.exec(t);
+  if (m) return { kind: 'months', months: Number(m[1]) };
+  return null;
+}
+
+/** Expiry instant for a purchase day under a parsed term (null = no expiry / unknown).
+ *  Month arithmetic clamps to the month's last day (2024-02-29 + 12 months = 2025-02-28). */
+export function warrantyExpiry(purchaseDate: string, term: ReturnType<typeof parseWarrantyTerm>): Date | null {
+  if (!term || term.kind === 'lifetime') return null;
+  const [y, mo, d] = purchaseDate.split('-').map(Number);
+  const target = (mo - 1) + term.months;
+  const ty = y + Math.floor(target / 12);
+  const tm = ((target % 12) + 12) % 12;
+  const last = new Date(Date.UTC(ty, tm + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(ty, tm, Math.min(d, last), 23, 59, 59));
+}
+
+export function warrantyStatusOf(reg: { warrantyTerm: string | null; warrantyExpiresAt: Date | string | null } | null, now = new Date()): WarrantyStatusName {
+  if (!reg) return 'not_registered';
+  const term = parseWarrantyTerm(reg.warrantyTerm);
+  if (!term) return 'undetermined';
+  if (term.kind === 'lifetime') return 'lifetime';
+  const exp = reg.warrantyExpiresAt ? new Date(reg.warrantyExpiresAt) : null;
+  if (!exp) return 'undetermined';
+  if (exp.getTime() < now.getTime()) return 'expired';
+  if (exp.getTime() - now.getTime() < WARRANTY_EXPIRING_SOON_DAYS * 86400_000) return 'expiring_soon';
+  return 'active';
+}
 
 // ---- P2: admin mutations ----
 export const submissionUpdateSchema = z.object({
@@ -275,7 +445,7 @@ export const CONTENT_TRANSITIONS: Record<(typeof CONTENT_STATUS)[number], (typeo
   draft: ['in_review', 'published', 'archived'],
   in_review: ['scheduled', 'published', 'draft', 'archived'],
   scheduled: ['published', 'draft', 'archived'],
-  published: ['archived'],
+  published: ['archived', 'draft'],
   archived: ['draft'],
 };
 
@@ -287,46 +457,101 @@ export const articleBaseSchema = z.object({
   slug: slugField.optional(), // derived from title when omitted
   title: z.string().trim().min(2).max(200),
   deck: z.string().trim().max(400).optional(),
+  heroMediaId: z.number().int().positive().nullable().optional(),
   body: bodyField,
   category: z.string().trim().max(40),
   tags: z.array(z.string().max(40)).max(12),
   locale: localeField,
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
+  structuredBody: z.array(z.record(z.string(), z.unknown())).nullable().optional(),
+  readingTimeMin: z.number().int().min(0).nullable().optional(),
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
+  translationGroup: z.string().trim().max(60).nullable().optional(),
+  version: z.number().int().optional(),
 });
 export const articleCreateSchema = articleBaseSchema.extend({
+  heroMediaId: z.number().int().positive().nullable().optional().default(null),
   body: bodyField.default(''),
   category: z.string().trim().max(40).default('Article'),
   tags: z.array(z.string().max(40)).max(12).default([]),
   locale: localeField.default('en'),
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
+  structuredBody: z.array(z.record(z.string(), z.unknown())).nullable().optional().default(null),
+  readingTimeMin: z.number().int().min(0).nullable().optional().default(null),
+  version: z.number().int().default(1),
 });
 export const articleUpdateSchema = articleBaseSchema.partial();
 
 export const newsBaseSchema = z.object({
   slug: slugField.optional(),
   title: z.string().trim().min(2).max(200),
+  heroMediaId: z.number().int().positive().nullable().optional(),
   body: bodyField,
   tag: z.string().trim().max(40).optional(),
   eventDate: z.string().datetime().optional(), // ISO — set for event-type posts
   locale: localeField,
+  seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(),
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
+  translationGroup: z.string().trim().max(60).nullable().optional(),
 });
 export const newsCreateSchema = newsBaseSchema.extend({
+  heroMediaId: z.number().int().positive().nullable().optional().default(null),
   body: bodyField.default(''),
   locale: localeField.default('en'),
 });
 export const newsUpdateSchema = newsBaseSchema.partial();
 
+export const RESERVED_PAGE_PATHS = ['/admin', '/api', '/internal'] as const;
+
+export function isReservedPagePath(path?: string | null): boolean {
+  if (!path) return false;
+  const norm = '/' + path.replace(/^\/+/, '').toLowerCase();
+  return RESERVED_PAGE_PATHS.some((res) => norm === res || norm.startsWith(res + '/'));
+}
+
+export const pagePathSchema = z.string().trim().regex(/^\/[a-zA-Z0-9_\-\/]*$/, 'Must start with /')
+  .refine((p) => !isReservedPagePath(p), {
+    message: 'Path cannot use reserved prefixes (/admin, /api, /internal)',
+  });
+
 export const pageBaseSchema = z.object({
   slug: slugField.optional(),
+  path: pagePathSchema.nullable().optional(),
+  template: z.enum(['default', 'landing', 'full_width', 'legal', 'category', 'product_detail', 'support_portal']),
+  parentId: z.number().int().positive().nullable().optional(),
+  translationGroup: z.string().trim().nullable().optional(),
   title: z.string().trim().min(2).max(200),
   blocks: z.array(z.record(z.string(), z.unknown())),
   locale: localeField,
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
+  seoTitle: z.string().trim().max(160).nullable().optional(),
+  seoDescription: z.string().trim().max(320).nullable().optional(),
+  ogMediaId: z.number().int().positive().nullable().optional(),
+  noindex: z.boolean(),
+  legacyPaths: z.array(z.string()),
+  sort: z.number().int().min(0).max(9999).optional(),
+  status: z.enum(CONTENT_STATUS),
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
+  version: z.number().int().optional(),
 });
 export const pageCreateSchema = pageBaseSchema.extend({
   blocks: z.array(z.record(z.string(), z.unknown())).default([]),
   locale: localeField.default('en'),
   seo: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
+  path: pagePathSchema.nullable().optional().default(null),
+  template: z.enum(['default', 'landing', 'full_width', 'legal', 'category', 'product_detail', 'support_portal']).default('default'),
+  parentId: z.number().int().positive().nullable().optional().default(null),
+  translationGroup: z.string().trim().nullable().optional().default(null),
+  seoTitle: z.string().trim().max(160).nullable().optional().default(null),
+  seoDescription: z.string().trim().max(320).nullable().optional().default(null),
+  ogMediaId: z.number().int().positive().nullable().optional().default(null),
+  noindex: z.boolean().default(false),
+  legacyPaths: z.array(z.string()).default([]),
+  status: z.enum(CONTENT_STATUS).default('draft'),
+  version: z.number().int().default(1),
 });
 export const pageUpdateSchema = pageBaseSchema.partial();
 
@@ -335,17 +560,23 @@ export const faqBaseSchema = z.object({
   question: z.string().trim().min(4).max(500),
   answer: z.string().trim().min(1).max(20_000),
   sort: z.number().int().min(0).max(9999),
+  label: z.string().trim().max(120).nullable().optional(),
   locale: localeField,
+  source: z.string().trim().max(300).nullable().optional(),
+  approver: z.string().trim().max(120).nullable().optional(),
+  version: z.number().int().optional(),
 });
 export const faqCreateSchema = faqBaseSchema.extend({
   sort: z.number().int().min(0).max(9999).default(0),
   locale: localeField.default('en'),
+  version: z.number().int().default(1),
 });
 export const faqUpdateSchema = faqBaseSchema.partial();
 
 export const contentTransitionSchema = z.object({
   to: z.enum(CONTENT_STATUS),
   publishAt: z.string().datetime().optional(), // required when to=scheduled
+  unpublishAt: z.string().datetime().optional(), // optional scheduled unpublish
 });
 export const contentRevertSchema = z.object({ revisionId: z.number().int().positive() });
 
@@ -407,10 +638,19 @@ export const JOB_LOCATIONS = ['Taipei', 'Dubai', 'Cologne', 'San Jose', 'Remote'
 export const JOB_TYPES = ['full-time', 'part-time', 'contract', 'internship'] as const;
 export const JOB_LEVELS = ['entry', 'mid', 'senior', 'lead', 'executive'] as const;
 export const JOB_POSTING_STATUSES = ['draft', 'published', 'closed', 'archived'] as const;
-export const jobPostingCreateSchema = z.object({
+export const jobPostingBaseSchema = z.object({
   title: z.string().trim().min(2).max(160),
   dept: z.enum(JOB_DEPARTMENTS),
   location: z.enum(JOB_LOCATIONS),
+  type: z.enum(JOB_TYPES),
+  level: z.enum(JOB_LEVELS),
+  status: z.enum(JOB_POSTING_STATUSES),
+  body: z.string().trim().max(20_000),
+  applyBy: z.string().datetime().nullable(),
+  salaryBand: z.string().trim().max(80).nullable(),
+  equalOpportunity: z.boolean(),
+});
+export const jobPostingCreateSchema = jobPostingBaseSchema.extend({
   type: z.enum(JOB_TYPES).default('full-time'),
   level: z.enum(JOB_LEVELS).default('mid'),
   status: z.enum(JOB_POSTING_STATUSES).default('draft'),
@@ -419,7 +659,7 @@ export const jobPostingCreateSchema = z.object({
   salaryBand: z.string().trim().max(80).nullable().default(null),
   equalOpportunity: z.boolean().default(true),
 });
-export const jobPostingUpdateSchema = jobPostingCreateSchema.partial();
+export const jobPostingUpdateSchema = jobPostingBaseSchema.partial();
 export type JobPostingInput = z.infer<typeof jobPostingCreateSchema>;
 
 // ---- P5: partner portal + anti-counterfeit ----
@@ -454,3 +694,10 @@ export const partnerAssetVisibilitySchema = z.array(PARTNER_TYPE_SCHEMA).min(1).
 export const snCheckSchema = z.object({
   serial: z.string().trim().min(4).max(60).regex(/^[A-Za-z0-9._-]+$/, 'letters, digits, dot, dash, underscore'),
 });
+
+export * from './delivery.ts';
+export * from './blocks.ts';
+export * from './widgets.ts';
+export * from './sanitize.ts';
+export * from './settings.ts';
+

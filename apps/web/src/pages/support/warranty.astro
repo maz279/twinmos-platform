@@ -1,0 +1,66 @@
+---
+// /support/warranty — product registration and warranty status lookup
+// (BRD §F8.3, URD UR-6.1.7 / UR-6.4.3, BR-6.2). An application page like
+// /compare and /compatibility: the forms post to /api/v1/warranty/* via
+// /assets/js/warranty.js; warranty terms come from each product's catalogue
+// record at registration time.
+import Layout from '../../layouts/Layout.astro';
+
+Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('Referrer-Policy', 'no-referrer'); // ?confirm= tokens land on this URL
+const title = 'Warranty registration & status — TwinMOS';
+const desc = 'Register your TwinMOS product and check its warranty status with the serial number and your e-mail address.';
+---
+
+<Layout title={title} desc={desc}>
+  <main id="main">
+    <div class="page-hero">
+      <div class="wrap">
+        <span class="eyebrow">Support</span>
+        <h1 class="h1">Warranty registration &amp; status</h1>
+        <p class="lede">Register your product once, then check its warranty status any time. A registration is needed before an RMA can be opened.</p>
+      </div>
+    </div>
+
+    <section style="padding-top:clamp(22px,3vw,36px)">
+      <div class="wrap">
+        <div class="grid g2">
+          <div class="card card-pad" id="register">
+            <h2 class="h3">Register a product</h2>
+            <p class="form-note" style="margin-top:4px">The serial number is printed on the product label and the retail packaging.</p>
+            <form id="wtyRegisterForm" method="post" novalidate style="margin-top:12px">
+              <div class="fg"><label for="wtySerial">Serial number *</label><input class="input" id="wtySerial" name="serial" autocomplete="off" required /></div>
+              <div class="fg"><label for="wtyName">Full name *</label><input class="input" id="wtyName" name="name" autocomplete="name" required /></div>
+              <div class="fg"><label for="wtyEmail">E-mail *</label><input class="input" id="wtyEmail" name="email" type="email" autocomplete="email" required /></div>
+              <div class="fg"><label for="wtyCountry">Country</label><input class="input" id="wtyCountry" name="country" autocomplete="country-name" /></div>
+              <div class="fg"><label for="wtyDate">Purchase date *</label><input class="input" id="wtyDate" name="purchaseDate" type="date" required /></div>
+              <div class="fg"><label for="wtyRetailer">Retailer</label><input class="input" id="wtyRetailer" name="retailer" /></div>
+              <div class="fg">
+                <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400">
+                  <input type="checkbox" name="consent" required />
+                  <span>I agree to the <a href="/legal?tab=privacy">Privacy Policy</a>; TwinMOS uses these details to provide warranty service.</span>
+                </label>
+              </div>
+              <div class="wty-turnstile"></div>
+              <button class="btn btn-primary" type="submit" style="margin-top:8px">Register product</button>
+            </form>
+            <div id="wtyRegisterOut" aria-live="polite" style="margin-top:14px"></div>
+          </div>
+
+          <div class="card card-pad" id="status" style="background:var(--bg-tint)">
+            <h2 class="h3">Check warranty status</h2>
+            <p class="form-note" style="margin-top:4px">Use the serial number and the e-mail address you registered with.</p>
+            <form id="wtyLookupForm" method="post" novalidate style="margin-top:12px">
+              <div class="fg"><label for="wtyLSerial">Serial number *</label><input class="input" id="wtyLSerial" name="serial" autocomplete="off" required /></div>
+              <div class="fg"><label for="wtyLEmail">E-mail *</label><input class="input" id="wtyLEmail" name="email" type="email" autocomplete="email" required /></div>
+              <button class="btn btn-primary" type="submit" style="margin-top:8px">Check status</button>
+            </form>
+            <div id="wtyLookupOut" aria-live="polite" style="margin-top:14px"></div>
+            <p class="form-note" style="margin-top:16px">Need a repair or replacement? <a href="/rma">Open an RMA</a> once your product is registered. <a href="/legal?tab=warranty">Warranty policy</a>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script is:inline src="/assets/js/warranty.js" defer></script>
+</Layout>

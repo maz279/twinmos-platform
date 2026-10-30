@@ -1,0 +1,288 @@
+{
+  "name": "tools-api",
+  "at": "2026-10-28T14:24:38.415Z",
+  "total": 48,
+  "failed": 0,
+  "items": [
+    {
+      "id": "FORM-01 captcha required",
+      "ok": true,
+      "status": 400
+    },
+    {
+      "id": "FORM-02 contact accepted",
+      "ok": true,
+      "status": 201,
+      "ref": "CT-2026-47e56f18"
+    },
+    {
+      "id": "FORM-03 customer auto-reply sent",
+      "ok": true,
+      "n": 1
+    },
+    {
+      "id": "FORM-04 form token mandatory",
+      "ok": true,
+      "status": 400
+    },
+    {
+      "id": "FORM-05 consent mandatory",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "FORM-06 idempotency key not replayable across bodies",
+      "ok": true,
+      "a": "CT-2026-ff684697",
+      "b": "CT-2026-0ca30091"
+    },
+    {
+      "id": "SN-01 registry CSV import",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "id": "WTY-01 register a registry serial",
+      "ok": true,
+      "status": 201,
+      "body": {
+        "serial": "ZTOKMVS7BUC0",
+        "sku": "COREX-M2-PCIE-GEN-4-0-NVME-SSD",
+        "product": "TwinMOS CoreX M.2 PCIe Gen 4.0 NVMe SSD",
+        "purchaseDate": "2026-01-15",
+        "warrantyTerm": "5 Years",
+        "expiresAt": "2031-01-15T23:59:59.000Z",
+        "status": "active",
+        "registeredAt": "2026-10-28T14:21:31.623Z"
+      }
+    },
+    {
+      "id": "WTY-02 second registration of the same serial refused",
+      "ok": true,
+      "status": 409
+    },
+    {
+      "id": "WTY-03 future purchase date refused",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "WTY-04 serial outside the factory registry refused",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "WTY-05 old purchase registers as expired",
+      "ok": true,
+      "status": 201,
+      "body": {
+        "serial": "ZTOLDMVS7BUC0",
+        "sku": "M2-2280-SSD-SATAIII",
+        "product": "TwinMOS M.2 2280 SSD SATAIII",
+        "purchaseDate": "2019-04-01",
+        "warrantyTerm": "3 Years",
+        "expiresAt": "2022-04-01T23:59:59.000Z",
+        "status": "expired",
+        "registeredAt": "2026-10-28T14:21:31.901Z"
+      }
+    },
+    {
+      "id": "WTY-06 owner lookup shows status",
+      "ok": true,
+      "body": {
+        "serial": "ZTOKMVS7BUC0",
+        "sku": "COREX-M2-PCIE-GEN-4-0-NVME-SSD",
+        "product": "TwinMOS CoreX M.2 PCIe Gen 4.0 NVMe SSD",
+        "purchaseDate": "2026-01-15",
+        "warrantyTerm": "5 Years",
+        "expiresAt": "2031-01-15T23:59:59.000Z",
+        "status": "active",
+        "registeredAt": "2026-10-28T14:21:31.623Z"
+      }
+    },
+    {
+      "id": "WTY-07 non-owner lookup reveals nothing",
+      "ok": true,
+      "body": {
+        "serial": "ZTOKMVS7BUC0",
+        "status": "not_registered"
+      }
+    },
+    {
+      "id": "SN-02 registered serial verified genuine",
+      "ok": true,
+      "result": "valid"
+    },
+    {
+      "id": "SN-04 verified result carries warranty status (URD UR-17.1.5)",
+      "ok": true,
+      "warranty": {
+        "status": "active",
+        "expiresAt": "2031-01-15T23:59:59.000Z"
+      }
+    },
+    {
+      "id": "SN-03 unknown serial not verified",
+      "ok": true,
+      "result": "unverified"
+    },
+    {
+      "id": "RMA-02 BR-6.2 unregistered serial refused",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "RMA-02b BR-6.2 expired warranty refused",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "RMA-01 intake creates case for a registered, in-warranty serial",
+      "ok": true,
+      "status": 201,
+      "body": {
+        "id": 4,
+        "reference": "RMA-2026-dffc4975",
+        "rmaNumber": "TM-RMA-2026-831362"
+      }
+    },
+    {
+      "id": "RMA-03 confirmation mail with number",
+      "ok": true
+    },
+    {
+      "id": "RMA-04 case visible to staff",
+      "ok": true
+    },
+    {
+      "id": "RMA-05 warranty tier set by the server from the registration",
+      "ok": true,
+      "warrantyTier": "5 Years"
+    },
+    {
+      "id": "RMA-06 staff reply sent",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "id": "RMA-07 legal transition",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "id": "RMA-08 illegal transition refused",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "RMA-09 number-only lookup no longer answers",
+      "ok": true,
+      "status": 410
+    },
+    {
+      "id": "RMA-09b wrong e-mail gets the not-found answer",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "id": "RMA-11 owner can track with number + e-mail",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "id": "RMA-10 tracking response carries no PII/staff notes",
+      "ok": true,
+      "leaks": []
+    },
+    {
+      "id": "RMA-12 lookup paths rate-limited",
+      "ok": true
+    },
+    {
+      "id": "COMPAT-01 finder returns rules",
+      "ok": true,
+      "n": 35
+    },
+    {
+      "id": "COMPAT-02 LIKE wildcards escaped",
+      "ok": true,
+      "n": 0
+    },
+    {
+      "id": "COMPAT-03 brand filter works",
+      "ok": true,
+      "n": 8
+    },
+    {
+      "id": "SEARCH-01 oversized query bounded",
+      "ok": true,
+      "status": 200,
+      "ms": 106
+    },
+    {
+      "id": "SEARCH-02 search finds CoreX",
+      "ok": true
+    },
+    {
+      "id": "NL-01 subscribe pending",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "id": "NL-02 separate confirm/unsubscribe tokens",
+      "ok": true
+    },
+    {
+      "id": "NL-02b unsubscribe token cannot confirm",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "id": "NL-03 confirm link works",
+      "ok": true,
+      "status": 303,
+      "location": "https://www.twinmos.com/newsletter?status=confirmed"
+    },
+    {
+      "id": "NL-04 confirm link lands on a real page",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "id": "NL-06 confirmation token is one-time",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "id": "NL-05 malformed email rejected",
+      "ok": true,
+      "status": 422
+    },
+    {
+      "id": "ART-01 \"Was this helpful?\" vote is stored",
+      "ok": true,
+      "status": 201,
+      "slug": "how-to-check-motherboard-ram-compatibility"
+    },
+    {
+      "id": "ART-02 vote for unknown content refused",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "id": "OPS-01 /metrics not public",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "id": "OPS-02 /health/deep not public",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "id": "PREV-01 author cannot mint preview tokens for pages they do not own",
+      "ok": true,
+      "status": 403
+    }
+  ]
+}

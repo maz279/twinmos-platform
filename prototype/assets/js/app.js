@@ -18,7 +18,12 @@ var TM = window.TM || {};
   function $(s, c) { return (c || document).querySelector(s); }
   function $$(s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); }
   // reuse the versioned logo URL the server already rendered (cache-busts with the build)
-  var LOGO = ($('.site-header .logo img') || {}).src || 'assets/img/logo.webp';
+  var LOGO = ($('.site-header .logo img') || {}).src || '/assets/img/logo.webp';
+  function rootImg(u) {
+    if (!u) return '';
+    if (/^(https?:|data:|\/)/.test(u)) return u;
+    return '/' + u.replace(/^\.?\//, '');
+  }
   function icon(name, size) {
     size = size || 17;
     var p = {
@@ -74,7 +79,16 @@ var TM = window.TM || {};
     var tray = $('#cmpTray');
     if (tray) {
       tray.classList.toggle('show', arr.length > 0);
+      tray.style.display = arr.length > 0 ? 'block' : 'none';
       var n = $('#cmpTrayN'); if (n) n.textContent = arr.length;
+      var clearBtn = $('#cmpClearBtn');
+      if (clearBtn && !clearBtn._bound) {
+        clearBtn._bound = true;
+        clearBtn.addEventListener('click', function () {
+          cmpSet([]);
+          toast('Compare tray cleared', 'ok');
+        });
+      }
     }
   }
   window.tmCmp = { get: cmpGet, toggle: cmpToggle };
@@ -87,28 +101,114 @@ var TM = window.TM || {};
       window.addEventListener('scroll', onScroll, { passive: true });
       onScroll();
     }
+
+    // Mega-menu keyboard & hover accessibility (T5.1.1)
+    var navItems = $$('.site-header .nav > li');
+    navItems.forEach(function (li) {
+      var trigger = li.querySelector(':scope > a[aria-haspopup="true"]') || li.querySelector('a[aria-haspopup="true"]');
+      var mega = li.querySelector('.mega');
+      if (!trigger || !mega) return;
+
+      function openMega() {
+        li.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+
+      function closeMega() {
+        li.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+
+      li.addEventListener('mouseenter', openMega);
+      li.addEventListener('mouseleave', closeMega);
+
+      trigger.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openMega();
+          var firstLink = mega.querySelector('a[role="menuitem"], a');
+          if (firstLink) firstLink.focus();
+        } else if (e.key === 'Escape') {
+          closeMega();
+          trigger.focus();
+        }
+      });
+
+      mega.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeMega();
+          trigger.focus();
+          return;
+        }
+        var links = $$('a[role="menuitem"], a', mega);
+        var idx = links.indexOf(document.activeElement);
+        if (idx >= 0) {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            var next = (idx + 1) % links.length;
+            links[next].focus();
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            var prev = (idx - 1 + links.length) % links.length;
+            links[prev].focus();
+          }
+        }
+      });
+
+      li.addEventListener('focusout', function (e) {
+        if (!li.contains(e.relatedTarget)) {
+          closeMega();
+        }
+      });
+    });
+
     var burger = $('#burger'), drawer = $('#drawer');
     if (burger && drawer) {
+      function closeDrawer() {
+        drawer.classList.remove('open');
+        burger.setAttribute('aria-expanded', 'false');
+        try { burger.focus(); } catch (e) {}
+      }
       burger.addEventListener('click', function () { drawer.classList.add('open'); burger.setAttribute('aria-expanded', 'true'); });
-      $$('.drawer-close', drawer).forEach(function (b) { b.addEventListener('click', function () { drawer.classList.remove('open'); }); });
-      $('.drawer-veil', drawer).addEventListener('click', function () { drawer.classList.remove('open'); });
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') drawer.classList.remove('open'); });
+      $$('.drawer-close', drawer).forEach(function (b) { b.addEventListener('click', closeDrawer); });
+      $('.drawer-veil', drawer).addEventListener('click', closeDrawer);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer();
+      });
       $$('.dlink[data-sub]', drawer).forEach(function (a) {
         a.addEventListener('click', function (e) {
           if (a.getAttribute('href') === '#') {
             e.preventDefault();
             var sub = document.getElementById(a.getAttribute('data-sub'));
-            if (sub) sub.classList.toggle('open');
+            if (sub) {
+              var isOpen = sub.classList.toggle('open');
+              a.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            }
           }
         });
       });
     }
+
     var sBtn = $('#searchBtn'), sOverlay = $('#searchOverlay');
     if (sBtn && sOverlay) {
-      sBtn.addEventListener('click', function () { sOverlay.classList.add('open'); var i = $('#searchInput'); if (i) setTimeout(function () { i.focus(); }, 40); });
-      $$('.search-close', sOverlay).forEach(function (b) { b.addEventListener('click', function () { sOverlay.classList.remove('open'); }); });
-      $('.drawer-veil', sOverlay) && $('.drawer-veil', sOverlay).addEventListener('click', function () { sOverlay.classList.remove('open'); });
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') sOverlay.classList.remove('open'); });
+      function closeSearch() {
+        sOverlay.classList.remove('open');
+        var sSug = $('#searchSuggestions');
+        if (sSug) { sSug.style.display = 'none'; sSug.innerHTML = ''; }
+        var sInp = $('#searchInput');
+        if (sInp) { sInp.setAttribute('aria-expanded', 'false'); sInp.removeAttribute('aria-activedescendant'); }
+      }
+      sBtn.addEventListener('click', function () {
+        sOverlay.classList.add('open');
+        var i = $('#searchInput');
+        if (i) setTimeout(function () { i.focus(); }, 40);
+      });
+      $$('.search-close', sOverlay).forEach(function (b) { b.addEventListener('click', closeSearch); });
+      $('.drawer-veil', sOverlay) && $('.drawer-veil', sOverlay).addEventListener('click', closeSearch);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && sOverlay.classList.contains('open')) closeSearch();
+      });
       // F1.5 — "/" opens search from anywhere (ignored while typing in a field)
       document.addEventListener('keydown', function (e) {
         if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -118,12 +218,164 @@ var TM = window.TM || {};
         sOverlay.classList.add('open');
         var i = $('#searchInput'); if (i) setTimeout(function () { i.focus(); }, 40);
       });
+
       var form = $('#searchForm');
       form && form.addEventListener('submit', function (e) {
         e.preventDefault();
         var q = ($('#searchInput').value || '').trim();
-        location.href = 'search.html?q=' + encodeURIComponent(q);
+        location.href = '/search?q=' + encodeURIComponent(q);
       });
+
+      // Public Delivery Search Suggestions with Debouncing & ARIA 1.2 Combobox (T5.1.2)
+      var sInput = $('#searchInput');
+      var sSuggestions = $('#searchSuggestions');
+      if (sInput && sSuggestions) {
+        var debounceTimer = null;
+        var abortCtrl = null;
+        var activeOptionIdx = -1;
+
+        function updateActiveOption(newIdx) {
+          var items = $$('.search-suggest-item', sSuggestions);
+          if (!items.length) {
+            activeOptionIdx = -1;
+            sInput.removeAttribute('aria-activedescendant');
+            return;
+          }
+          if (newIdx < 0) activeOptionIdx = -1;
+          else if (newIdx >= items.length) activeOptionIdx = items.length - 1;
+          else activeOptionIdx = newIdx;
+
+          items.forEach(function (item, idx) {
+            var selected = idx === activeOptionIdx;
+            item.setAttribute('aria-selected', selected ? 'true' : 'false');
+            item.classList.toggle('active', selected);
+            if (selected) {
+              item.style.backgroundColor = 'var(--bg-tint, #f0f7fc)';
+              sInput.setAttribute('aria-activedescendant', item.id);
+              item.scrollIntoView({ block: 'nearest' });
+            } else {
+              item.style.backgroundColor = '';
+            }
+          });
+
+          if (activeOptionIdx === -1) {
+            sInput.removeAttribute('aria-activedescendant');
+          }
+        }
+
+        function renderSuggestions(query, suggestions) {
+          sSuggestions.innerHTML = '';
+          activeOptionIdx = -1;
+          sInput.removeAttribute('aria-activedescendant');
+
+          if (!suggestions || !suggestions.length) {
+            sSuggestions.innerHTML = '<div style="padding:10px 14px;color:var(--muted);font-size:13px">No quick suggestions found. Press Enter to search all.</div>';
+            sSuggestions.style.display = 'block';
+            sInput.setAttribute('aria-expanded', 'true');
+            return;
+          }
+
+          suggestions.forEach(function (s, idx) {
+            var opt = document.createElement('div');
+            opt.className = 'search-suggest-item';
+            opt.id = 'suggest-opt-' + idx;
+            opt.setAttribute('role', 'option');
+            opt.setAttribute('aria-selected', 'false');
+            opt.setAttribute('data-url', s.url || '#');
+            opt.setAttribute('data-text', s.text || '');
+            opt.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border-light, #edf2f7);font-size:13.5px;transition:background .15s';
+
+            var textSpan = document.createElement('span');
+            textSpan.style.cssText = 'color:var(--ink, #0a2540);font-weight:600';
+            textSpan.textContent = s.text;
+
+            var badgeSpan = document.createElement('span');
+            badgeSpan.className = 'chip chip-sm';
+            badgeSpan.style.cssText = 'font-size:11px;text-transform:uppercase;color:var(--muted);background:var(--bg-subtle, #f4f7fa);padding:2px 8px;border-radius:4px';
+            badgeSpan.textContent = s.type;
+
+            opt.appendChild(textSpan);
+            opt.appendChild(badgeSpan);
+
+            opt.addEventListener('mouseenter', function () { updateActiveOption(idx); });
+            opt.addEventListener('click', function () {
+              if (s.url) location.href = s.url;
+            });
+
+            sSuggestions.appendChild(opt);
+          });
+
+          sSuggestions.style.display = 'block';
+          sInput.setAttribute('aria-expanded', 'true');
+        }
+
+        sInput.addEventListener('input', function () {
+          var val = (sInput.value || '').trim();
+          clearTimeout(debounceTimer);
+          if (abortCtrl) { abortCtrl.abort(); abortCtrl = null; }
+
+          if (val.length < 2) {
+            sSuggestions.style.display = 'none';
+            sSuggestions.innerHTML = '';
+            sInput.setAttribute('aria-expanded', 'false');
+            sInput.removeAttribute('aria-activedescendant');
+            return;
+          }
+
+          debounceTimer = setTimeout(function () {
+            abortCtrl = new AbortController();
+            // TWINMOS_API carries the full /api/v1 prefix (forms.js, rmaFetchCase);
+            // strip it here so this URL is built exactly once. Without it, use
+            // same-origin /api/v1 (the SSR proxy or the edge route to the API).
+            var rawBase = window.TWINMOS_API || '';
+            var apiBase = rawBase.replace(/\/api\/v1\/?$/, '');
+            var url = apiBase + '/api/v1/delivery/search/suggest?q=' + encodeURIComponent(val);
+            fetch(url, { signal: abortCtrl.signal })
+              .then(function (res) { return res.json(); })
+              .then(function (data) {
+                renderSuggestions(val, data && data.suggestions ? data.suggestions : []);
+              })
+              .catch(function (err) {
+                if (err.name === 'AbortError') return;
+                sSuggestions.style.display = 'none';
+              });
+          }, 200);
+        });
+
+        sInput.addEventListener('keydown', function (e) {
+          var isExpanded = sInput.getAttribute('aria-expanded') === 'true';
+          var items = $$('.search-suggest-item', sSuggestions);
+
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (!isExpanded && items.length) {
+              sSuggestions.style.display = 'block';
+              sInput.setAttribute('aria-expanded', 'true');
+              updateActiveOption(0);
+            } else if (items.length) {
+              updateActiveOption(activeOptionIdx + 1);
+            }
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (isExpanded && items.length) {
+              updateActiveOption(activeOptionIdx - 1);
+            }
+          } else if (e.key === 'Enter') {
+            if (isExpanded && activeOptionIdx >= 0 && items[activeOptionIdx]) {
+              e.preventDefault();
+              var targetUrl = items[activeOptionIdx].getAttribute('data-url');
+              if (targetUrl && targetUrl !== '#') location.href = targetUrl;
+            }
+          } else if (e.key === 'Escape') {
+            if (isExpanded) {
+              e.preventDefault();
+              sSuggestions.style.display = 'none';
+              sInput.setAttribute('aria-expanded', 'false');
+              sInput.removeAttribute('aria-activedescendant');
+            }
+          }
+        });
+      }
     }
     var langs = $$('.lang-sel');
     if (langs.length) {
@@ -134,11 +386,11 @@ var TM = window.TM || {};
           if (v === 'ar') {
             document.documentElement.setAttribute('dir', 'rtl');
             document.documentElement.setAttribute('lang', 'ar');
-            toast('Arabic (RTL) layout enabled — full localization ships with the production i18n pipeline', 'ok');
+            toast('Arabic (RTL) layout enabled', 'ok');
           } else {
             document.documentElement.setAttribute('dir', 'ltr');
             document.documentElement.setAttribute('lang', 'en');
-            if (v !== 'en') toast('Locale "' + v.toUpperCase() + '" stored — content stays on the English base in this prototype', 'ok');
+            if (v !== 'en') toast('Locale "' + v.toUpperCase() + '" stored', 'ok');
           }
           try { localStorage.setItem('tm_locale', v); } catch (e) {}
         });
@@ -185,20 +437,20 @@ var TM = window.TM || {};
   function productCard(p) {
     var badges = '';
     if (p.badge) badges += '<span class="' + (p.badge === 'Gen5' ? 'b-gen5' : p.badge === 'Gaming' ? 'b-gaming' : 'b-new') + '">' + esc(p.badge) + '</span>';
-    var ic = p.imgC || p.img;  // trimmed card variant: product sizes the box, not the canvas
+    var ic = rootImg(p.imgC || p.img);  // trimmed card variant: product sizes the box, not the canvas
     return '' +
       '<article class="card pcard" data-id="' + esc(p.id) + '">' +
       '  <div class="pcard-img">' + (badges ? '<div class="badge"><span>' + esc(p.badge) + '</span></div>' : '') +
-      '    <a href="product.html?id=' + encodeURIComponent(p.id) + '" aria-label="' + esc(p.name) + '"><img src="' + esc(ic) + '" alt="' + esc(p.name) + '" loading="lazy"></a>' +
+      '    <a href="/product?id=' + encodeURIComponent(p.id) + '" aria-label="' + esc(p.name) + '"><img src="' + esc(ic) + '" alt="' + esc(p.name) + '" loading="lazy"></a>' +
       '    <button class="qv-btn" data-qv="' + esc(p.id) + '" aria-label="Quick view ' + esc(p.name) + '">Quick view</button>' +
       '  </div>' +
       '  <div class="pcard-body">' +
       '    <span class="pcard-cat">' + esc(p.catLabel) + (p.brand && p.brand !== 'TwinMOS' ? ' · ' + esc(p.brand) : '') + '</span>' +
-      '    <a class="pcard-name" href="product.html?id=' + encodeURIComponent(p.id) + '">' + esc(p.name) + '</a>' +
+      '    <a class="pcard-name" href="/product?id=' + encodeURIComponent(p.id) + '">' + esc(p.name) + '</a>' +
       '    <span class="pcard-meta">' + esc(p.shortSpec || '') + '</span>' +
       warrantyChip(p) +
       '    <div class="pcard-foot">' +
-      '      <a class="btn btn-ghost btn-sm" href="product.html?id=' + encodeURIComponent(p.id) + '">View details</a>' +
+      '      <a class="btn btn-ghost btn-sm" href="/product?id=' + encodeURIComponent(p.id) + '">View details</a>' +
       '      <div class="pcard-actions"><button class="cmp-btn" data-id="' + esc(p.id) + '" title="Add to compare" aria-label="Add ' + esc(p.name) + ' to compare">⇄</button></div>' +
       '    </div>' +
       '  </div>' +
@@ -241,15 +493,15 @@ var TM = window.TM || {};
       '<div class="qv-veil" data-qv-close></div>' +
       '<div class="qv-box">' +
       '  <button class="icon-btn qv-close" data-qv-close aria-label="Close quick view">' + icon('close') + '</button>' +
-      '  <div class="qv-img"><img src="' + esc(p.imgC || p.img) + '" alt="' + esc(p.name) + '"></div>' +
+      '  <div class="qv-img"><img src="' + esc(rootImg(p.imgC || p.img)) + '" alt="' + esc(p.name) + '"></div>' +
       '  <div class="qv-body">' +
       '    <span class="pcard-cat">' + esc(p.catLabel) + (p.brand && p.brand !== 'TwinMOS' ? ' · ' + esc(p.brand) : '') + '</span>' +
       '    <h3>' + esc(p.name) + '</h3>' +
       '    <p class="form-note" style="margin:6px 0 12px">' + esc(p.shortSpec || '') + (p.warranty ? ' · ' + esc(wtyText(p.warranty)) : '') + '</p>' +
       (specKeys.length ? '<table class="spec-table"><tbody>' + specKeys.map(function (k) { return '<tr><th scope="row">' + esc(k) + '</th><td>' + esc(p.specs[k]) + '</td></tr>'; }).join('') + '</tbody></table>' : '') +
       '    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">' +
-      '      <a class="btn btn-primary btn-sm" href="product.html?id=' + encodeURIComponent(p.id) + '">Full details</a>' +
-      '      <a class="btn btn-ghost btn-sm" href="where-to-buy.html">Where to buy</a>' +
+      '      <a class="btn btn-primary btn-sm" href="/product?id=' + encodeURIComponent(p.id) + '">Full details</a>' +
+      '      <a class="btn btn-ghost btn-sm" href="/where-to-buy">Where to buy</a>' +
       '      <button class="btn btn-ghost btn-sm cmp-btn" data-id="' + esc(p.id) + '">⇄ Compare</button>' +
       '    </div>' +
       '  </div>' +
@@ -271,6 +523,11 @@ var TM = window.TM || {};
   function initShop() {
     var mount = $('#shopGrid');
     if (!mount || !TM.products) return;
+    if (mount.getAttribute('data-ssr') === 'true') {
+      bindQuickView(mount);
+      bindCardCompare(mount);
+      return;
+    }
     var products = TM.products;
     var state = { cat: param('cat') || 'all', q: param('q') || '', gens: [], caps: [], brands: [], sort: 'featured' };
     var brandParam = param('brand');
@@ -381,7 +638,7 @@ var TM = window.TM || {};
     var id = param('id');
     var p = TM.products.filter(function (x) { return x.id === id; })[0];
     if (!p) {
-      root.innerHTML = '<div class="empty-state"><h3>Product not found</h3><p>The product “' + esc(id) + '” does not exist in the catalog.</p><a class="btn btn-primary" href="shop.html">Browse all products</a></div>';
+      root.innerHTML = '<div class="empty-state"><h3>Product not found</h3><p>The product “' + esc(id) + '” does not exist in the catalog.</p><a class="btn btn-primary" href="/shop">Browse all products</a></div>';
       return;
     }
     document.title = p.name + ' — TwinMOS';
@@ -406,8 +663,8 @@ var TM = window.TM || {};
         { '@type': 'ListItem', position: 3, name: p.name, item: location.href }] });
     document.head.appendChild(bld);
     var bc = $('#bcName'); if (bc) bc.textContent = p.name;
-    var imgs = (p.gallery && p.gallery.length ? p.gallery : [p.img]);
-    var gimgs = (p.galleryC && p.galleryC.length ? p.galleryC : [p.imgC || p.img]);
+    var imgs = (p.gallery && p.gallery.length ? p.gallery : [p.img]).map(rootImg);
+    var gimgs = (p.galleryC && p.galleryC.length ? p.galleryC : [p.imgC || p.img]).map(rootImg);
     var variantHtml = (p.variants && p.variants.length)
       ? '<h3 class="h3" style="margin-top:26px">Available capacities</h3><div class="variant-row">' + p.variants.map(function (v, i) { return '<button class="variant' + (i === 0 ? ' on' : '') + '">' + esc(v) + '</button>'; }).join('') + '</div>'
       : '';
@@ -431,15 +688,15 @@ var TM = window.TM || {};
         ? '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px"><span style="font-size:26px;font-weight:800;color:var(--ink)">' + esc(p.currency || 'USD') + ' ' + esc(p.priceUsd.toFixed(2)) + '</span><span class="form-note">MSRP — where to buy shows local pricing</span></div>'
         : '') +
       '    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px">' +
-      '      <a class="btn btn-primary btn-lg" href="where-to-buy.html">Where to buy</a>' +
-      '      <a class="btn btn-ghost btn-lg" href="quote.html?product=' + encodeURIComponent(p.id) + '">Request a quote</a>' +
+      '      <a class="btn btn-primary btn-lg" href="/where-to-buy">Where to buy</a>' +
+      '      <a class="btn btn-ghost btn-lg" href="/quote?product=' + encodeURIComponent(p.id) + '">Request a quote</a>' +
       '      <button class="btn btn-ghost btn-lg cmp-btn" data-id="' + esc(p.id) + '">⇄ Compare</button>' +
       '    </div>' +
       shareRow(p) +
-      '    <div class="note-box" style="margin-bottom:24px"><b>OEM / volume orders —</b> ' + brandI(14) + ' manufactures and supplies under its own brand and as an OEM provider. <a href="solutions.html">Explore solutions</a> or <a href="quote.html?product=' + encodeURIComponent(p.id) + '">request a quotation</a>.</div>' +
+      '    <div class="note-box" style="margin-bottom:24px"><b>OEM / volume orders —</b> ' + brandI(14) + ' manufactures and supplies under its own brand and as an OEM provider. <a href="/solutions">Explore solutions</a> or <a href="/quote?product=' + encodeURIComponent(p.id) + '">request a quotation</a>.</div>' +
       variantHtml +
       '    <h3 class="h3" style="margin-top:30px">Specifications</h3>' +
-      (specRows ? '<div style="overflow-x:auto"><table class="spec-table"><tbody>' + specRows + '</tbody></table></div>' : '<p class="form-note">Detailed specifications for this SKU are being finalized — <a href="contact.html">contact us</a> for the datasheet.</p>') +
+      (specRows ? '<div style="overflow-x:auto"><table class="spec-table"><tbody>' + specRows + '</tbody></table></div>' : '<p class="form-note">Detailed specifications for this SKU are being finalized — <a href="/contact">contact us</a> for the datasheet.</p>') +
       (desc ? '<details style="margin-top:22px" class="acc"><summary>About this product</summary><div class="acc-body">' + esc(desc).replace(/\n+/g, '</p><p style="font-size:14.5px">') + '</div></details>' : '') +
       '  </div>' +
       '</div>';
@@ -490,9 +747,9 @@ var TM = window.TM || {};
       if (gArts.length) {
         gWrap.innerHTML = '<div class="learn-band" style="margin-top:clamp(18px,2.4vw,28px)"><b style="flex:none">Learn before you buy</b>' +
           gArts.map(function (g) {
-            return '<a href="article.html?id=' + encodeURIComponent(g.id) + '">' + esc(g.title) + '</a>';
+            return '<a href="/article?id=' + encodeURIComponent(g.id) + '">' + esc(g.title) + '</a>';
           }).join('') +
-          '<a href="learn.html" style="color:var(--accent-deep);font-weight:750">Knowledge hub →</a></div>';
+          '<a href="/learn" style="color:var(--accent-deep);font-weight:750">Knowledge hub →</a></div>';
       }
     }
   }
@@ -504,7 +761,7 @@ var TM = window.TM || {};
     var arr = cmpGet();
     var list = TM.products.filter(function (p) { return arr.indexOf(p.id) >= 0; });
     if (!list.length) {
-      mount.innerHTML = '<div class="empty-state"><h3>Nothing to compare yet</h3><p>Add up to 4 products from the <a href="shop.html">catalog</a> using the ⇄ button on any product card.</p><a class="btn btn-primary" href="shop.html">Browse products</a></div>';
+      mount.innerHTML = '<div class="empty-state"><h3>Nothing to compare yet</h3><p>Add up to 4 products from the <a href="/shop">catalog</a> using the ⇄ button on any product card.</p><a class="btn btn-primary" href="/shop">Browse products</a></div>';
       return;
     }
     var keys = ['catLabel', 'shortSpec', 'interface', 'gen', 'cap', 'warranty'];
@@ -521,7 +778,7 @@ var TM = window.TM || {};
     mount.innerHTML =
       '<div class="cmp-table-wrap"><table class="cmp"><thead><tr><th>Product</th>' +
       list.map(function (p) {
-        return '<th class="cmp-prod-head"><img src="' + esc(p.imgC || p.img) + '" alt=""><a href="product.html?id=' + encodeURIComponent(p.id) + '">' + esc(p.name) + '</a><br><button class="cmp-btn on" data-id="' + esc(p.id) + '" title="Remove">✕</button></th>';
+        return '<th class="cmp-prod-head"><img src="' + esc(rootImg(p.imgC || p.img)) + '" alt=""><a href="/product?id=' + encodeURIComponent(p.id) + '">' + esc(p.name) + '</a><br><button class="cmp-btn on" data-id="' + esc(p.id) + '" title="Remove">✕</button></th>';
       }).join('') +
       '</tr></thead><tbody>' +
       keys.map(function (k) { return row(k, null, false); }).join('') +
@@ -640,13 +897,13 @@ var TM = window.TM || {};
             '<div class="grid g3">' + portables.map(function (p) { return productCard(p); }).join('') + '</div>'
           : '') +
         (!mems.length && !ssds.length && !portables.length
-          ? '<div class="empty-state"><p>No catalog match for this platform in the prototype database \u2014 <a href="contact.html">ask support</a> and we will confirm compatibility.</p></div>'
+          ? '<div class="empty-state"><p>No catalog match for this platform in the database \u2014 <a href="/contact">ask support</a> and we will confirm compatibility.</p></div>'
           : '') +
         '<div class="card card-pad" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:20px;background:var(--bg-tint)">' +
         '<div><b>Can\u2019t find your device?</b><p class="form-note" style="margin:2px 0 0">Our support team verifies compatibility manually \u2014 send the exact model and we\u2019ll confirm the right upgrade.</p></div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-ghost btn-sm" href="contact.html">Ask support</a>' +
-        '<a class="btn btn-ghost btn-sm" href="where-to-buy.html">Where to buy</a></div></div>' +
-        '<p class="form-note" style="margin-top:14px">Demo compatibility database for the prototype \u2014 \u201cSpec-compatible\u201d never means incompatible. Always confirm against your device manual \u2014 see <a href="article.html?id=how-to-check-motherboard-ram-compatibility">How to check your motherboard and RAM compatibility</a>.</p>';
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-ghost btn-sm" href="/contact">Ask support</a>' +
+        '<a class="btn btn-ghost btn-sm" href="/where-to-buy">Where to buy</a></div></div>' +
+        '<p class="form-note" style="margin-top:14px">Compatibility guidance \u2014 \u201cSpec-compatible\u201d never means incompatible. Always confirm against your device manual \u2014 see <a href="/article?id=how-to-check-motherboard-ram-compatibility">How to check your motherboard and RAM compatibility</a>.</p>';
 
       // reason chips under memory cards
       $$('#compatOut [data-reason]').forEach(function (card) {
@@ -678,44 +935,6 @@ var TM = window.TM || {};
   }
 
   /* ---------- RMA ---------- */
-  // P1.3 (audit finding U-3): the trackers were deterministic string-hash demos
-  // that invented a status for ANY number while a chip claimed "Live in
-  // production". Both page widgets now read the real, PII-masked case record
-  // from the API (GET /api/v1/rma/:number) — 7 canonical states, truthful
-  // "not found" handling, no fabricated data.
-  var RMA_STAGES = [
-    ['submitted', 'Received & registered'],
-    ['under_review', 'Diagnosis & testing'],
-    ['approved', 'Approved — awaiting unit'],
-    ['in_repair', 'Repair / replacement'],
-    ['shipped', 'Replacement shipped'],
-    ['delivered', 'Delivered'],
-    ['closed', 'Closed']
-  ];
-  function rmaStageIndex(status) {
-    for (var i = 0; i < RMA_STAGES.length; i++) if (RMA_STAGES[i][0] === status) return i;
-    return 0;
-  }
-  function rmaWhen(iso) {
-    try {
-      var d = new Date(iso);
-      return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-    } catch (e) { return ''; }
-  }
-  function rmaFetchCase(id, render, fail) {
-    var api = String(window.TWINMOS_API || '/api/v1').replace(/\/+$/, '');
-    fetch(api + '/rma/' + encodeURIComponent(id))
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-      .then(render)
-      .catch(fail);
-  }
-  function rmaTrackFail(out, id, status) {
-    if (status === 404) {
-      out.innerHTML = '<div class="empty-state"><h3>Case not found</h3><p>No RMA exists with number <b>' + esc(id) + '</b>. Check the number in your confirmation email, or contact support with your proof of purchase.</p></div>';
-    } else {
-      out.innerHTML = '<div class="empty-state"><h3>Status unavailable</h3><p>The service centre could not be reached — please retry in a moment.</p></div>';
-    }
-  }
   function initRMA() {
     // "Start an RMA" form: wire it through the shared form pipeline even when
     // the page predates its data-tm-form attribute (audit fix 2026-09-25).
@@ -724,46 +943,9 @@ var TM = window.TM || {};
       rf.setAttribute('data-tm-form', '');
       rf.setAttribute('data-success', 'RMA request received — your RMA number and shipping instructions arrive by email within one business day.');
     }
-    var track = $('#rmaTrackBtn');
-    if (track) {
-      track.addEventListener('click', function () {
-        var id = ($('#rmaId').value || '').trim().toUpperCase();
-        var out = $('#rmaOut');
-        if (!/^TM-RMA-\d{4}-\d{3,8}$/.test(id)) {
-          out.innerHTML = '<div class="empty-state"><h3>Enter a valid RMA number</h3><p>Format: <span class="kbd">TM-RMA-2026-0142</span> — the full number from your confirmation email.</p></div>';
-          return;
-        }
-        out.innerHTML = '<p class="form-note" style="margin-top:14px">Checking live case status…</p>';
-        rmaFetchCase(id, function (d) {
-          var idx = rmaStageIndex(d.status);
-          var last = (d.timeline && d.timeline.length) ? d.timeline[d.timeline.length - 1] : null;
-          out.innerHTML =
-            '<div class="card card-pad" style="margin-top:18px">' +
-            '<h3 class="h3" style="margin-bottom:4px">RMA ' + esc(d.number || id) + '</h3>' +
-            '<p class="form-note">' + esc((d.maskedInfo && d.maskedInfo.product) || 'Registered product') +
-            (last && last.at ? ' · Updated ' + esc(rmaWhen(last.at)) : '') + '</p>' +
-            '<div class="rma-track">' + RMA_STAGES.map(function (s, i) {
-              return '<div class="rma-stage ' + (i < idx ? 'done' : i === idx ? 'now' : '') + '">' + s[1] + '</div>';
-            }).join('') + '</div>' +
-            (idx >= 5 ? '<span class="chip ok">Completed</span>' : '<span class="chip warn">Currently: ' + esc(RMA_STAGES[idx][1]) + '</span>') +
-            ' <span class="form-note">Live status from the TwinMOS service centre</span></div>';
-        }, function (status) { rmaTrackFail(out, id, status); });
-      });
-    }
-    var form = $('#rmaForm');
-    if (form) {
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (!validate(form)) return;
-        var demo = 'TM-RMA-2026-0' + (1000 + Math.floor(Math.random() * 8999));
-        var box = form.parentElement;
-        form.style.display = 'none';
-        var ok = document.createElement('div');
-        ok.className = 'form-success show';
-        ok.innerHTML = '<div class="tick">✓</div><h3>Request registered</h3><p>Your demo RMA number is <b class="kbd">' + demo + '</b>.<br>In production this is emailed to you and the tracker above goes live immediately.</p>';
-        box.appendChild(ok);
-      });
-    }
+    // Tracking and submission are handled by the live API layer (portal.js /
+    // forms.js). The prototype's demo tracker and the Math.random "demo RMA
+    // number" were removed in the zero-trust audit: they showed fake results.
   }
 
   /* ---------- forms (contact / quote / newsletter) ---------- */
@@ -782,30 +964,9 @@ var TM = window.TM || {};
     return ok;
   }
   function initForms() {
-    $$('form[data-tm-form]').forEach(function (form) {
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (!validate(form)) return;
-        var box = form.closest('[data-form-box]') || form.parentElement;
-        form.style.display = 'none';
-        var ok = document.createElement('div');
-        ok.className = 'form-success show';
-        var msg = form.getAttribute('data-success') || ('Thank you — the ' + brandI(14) + ' team will reply within one business day.');
-        ok.innerHTML = '<div class="tick">✓</div><h3>Submitted</h3><p>' + msg + '</p>';
-        box.appendChild(ok);
-        toast('Submitted successfully', 'ok');
-      });
-    });
-    var nl = $('#nlForm');
-    if (nl) {
-      nl.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var em = $('#nlEmail').value.trim();
-        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { toast('Enter a valid email address', 'err'); return; }
-        nl.innerHTML = '<span class="chip ok">✓ Subscribed — welcome aboard</span>';
-        toast('Subscribed to the TwinMOS newsletter', 'ok');
-      });
-    }
+    // Submissions go to the real API (forms.js, capture phase). The prototype's
+    // fake "Submitted" / "Subscribed" success handlers were removed (ZT audit):
+    // a failed or unrecognised submission must never look successful.
     var pre = param('product');
     if (pre && $('#qProduct')) {
       // P2.5 (audit U-8): hydrate the select from the LIVE catalog first —
@@ -832,6 +993,10 @@ var TM = window.TM || {};
   function initSearch() {
     var mount = $('#searchMount');
     if (!mount) return;
+    // T5.6.3: the server already rendered /search results into the mount with
+    // canonical clean URLs. The legacy client renderer only fills an EMPTY
+    // mount (progressive enhancement), never clobbers SSR output.
+    if (mount.querySelector('.ssr-search-results') || mount.children.length > 0) return;
     var q = param('q').trim();
     $('#searchQ').textContent = q;
     document.title = (q ? 'Search: ' + q : 'Search') + ' — TwinMOS';
@@ -841,25 +1006,27 @@ var TM = window.TM || {};
     }
     var need = q.toLowerCase().split(/\s+/).filter(Boolean);
     function hit(hay) { hay = hay.toLowerCase(); return need.every(function (n) { return hay.indexOf(n) >= 0; }); }
-    var prods = (TM.products || []).filter(function (p) { return hit(p.name + ' ' + (p.catLabel || '') + ' ' + (p.search || '') + ' ' + (p.shortSpec || '')); });
-    var arts = (TM.articles || []).filter(function (a) { return a.id !== 'glossary' && hit(a.title + ' ' + a.desc + ' ' + (a.tag || '')); });
-    var terms = (TM.glossary || []).filter(function (t) { return hit(t.t + ' ' + t.d); }).slice(0, 12);
+    var prods = (TM.products || []).filter(function (p) { return hit((p.name || '') + ' ' + (p.catLabel || '') + ' ' + (p.search || '') + ' ' + (p.shortSpec || '')); });
+    var arts = (TM.articles || []).filter(function (a) { return a.id !== 'glossary' && hit((a.title || '') + ' ' + (a.desc || a.excerpt || '') + ' ' + (a.tag || '')); });
+    var terms = (TM.glossary || []).filter(function (t) { return hit((t.t || '') + ' ' + (t.d || '')); }).slice(0, 12);
     var html = '';
     html += '<section><h2 class="h3">Products <span class="chip">' + prods.length + '</span></h2>';
     html += prods.length ? '<div class="grid g4" style="margin-top:14px">' + prods.map(productCard).join('') + '</div>' : '<p class="form-note">No product matches.</p></section>';
     html += '<section><h2 class="h3">Media & articles <span class="chip">' + arts.length + '</span></h2><div class="grid g3" style="margin-top:14px">';
     html += arts.length ? arts.map(function (a) {
-      return '<a class="card card-pad article-card" href="article.html?id=' + encodeURIComponent(a.id) + '"><span class="chip" style="align-self:flex-start">' + esc(a.cat) + '</span><b style="display:block;color:var(--ink);margin:8px 0 6px;font-size:15.5px">' + esc(a.title) + '</b><span class="form-note">' + esc(a.desc.slice(0, 110)) + '…</span></a>';
+      var aDesc = a.desc || a.excerpt || '';
+      return '<a class="card card-pad article-card" href="/article?id=' + encodeURIComponent(a.id) + '"><span class="chip" style="align-self:flex-start">' + esc(a.cat || a.category || '') + '</span><b style="display:block;color:var(--ink);margin:8px 0 6px;font-size:15.5px">' + esc(a.title || '') + '</b><span class="form-note">' + esc(aDesc.slice(0, 110)) + '…</span></a>';
     }).join('') : '<p class="form-note">No article matches.</p>';
     html += '</div></section>';
     if (terms.length) {
       html += '<section><h2 class="h3">Glossary terms <span class="chip">' + terms.length + '</span></h2>' +
-        '<p class="form-note">From the <a href="learn-glossary.html">A–Z glossary</a> — jump straight to the definition.</p>' +
+        '<p class="form-note">From the <a href="/learn-glossary">A–Z glossary</a> — jump straight to the definition.</p>' +
         '<div class="grid g3" style="margin-top:14px">' + terms.map(function (t) {
-          return '<a class="card card-pad" href="learn-glossary.html#gL' + encodeURIComponent(t.l) + '">' +
-            '<span class="chip">' + esc(t.l) + '</span>' +
-            '<b style="display:block;color:var(--ink);margin:8px 0 6px;font-size:15.5px">' + esc(t.t) + '</b>' +
-            '<span class="form-note">' + esc(t.d.slice(0, 110)) + '…</span></a>';
+          var tDesc = t.d || t.definition || '';
+          return '<a class="card card-pad" href="/learn-glossary#gL' + encodeURIComponent(t.l || '') + '">' +
+            '<span class="chip">' + esc(t.l || '') + '</span>' +
+            '<b style="display:block;color:var(--ink);margin:8px 0 6px;font-size:15.5px">' + esc(t.t || '') + '</b>' +
+            '<span class="form-note">' + esc(tDesc.slice(0, 110)) + '…</span></a>';
         }).join('') + '</div></section>';
     }
     mount.innerHTML = html;
@@ -868,18 +1035,18 @@ var TM = window.TM || {};
   }
 
   /* ---------- article page (knowledge-hub aware: TOC, reading time, prev/next, related) ---------- */
-  var HUB_BY_CAT = { Guide: ['learn-guides.html', 'Buying guides'], Explainer: ['learn-explained.html', 'Technology explainers'],
-                     Benchmark: ['learn-benchmarks.html', 'Benchmarks'], Blog: ['learn-blog.html', 'Tech insights'] };
+  var HUB_BY_CAT = { Guide: ['/learn-guides', 'Buying guides'], Explainer: ['/learn-explained', 'Technology explainers'],
+                     Benchmark: ['/learn-benchmarks', 'Benchmarks'], Blog: ['/learn-blog', 'Tech insights'] };
 
   function initArticle() {
     var root = $('#artRoot');
     if (!root || !TM.articles) return;
     // the glossary is a dedicated A-Z page now — redirect legacy article links
-    if (param('id') === 'glossary') { location.replace('learn-glossary.html'); return; }
+    if (param('id') === 'glossary') { location.replace('/learn-glossary'); return; }
     var id = param('id');
     var a = TM.articles.filter(function (x) { return x.id === id; })[0];
     if (!a) {
-      root.innerHTML = '<div class="empty-state"><h3>Article not found</h3><p>That piece isn\u2019t in the library — browse everything from ' + brandI(15) + ' instead.</p><a class="btn btn-primary" href="learn.html">Open the Knowledge hub</a></div>';
+      root.innerHTML = '<div class="empty-state"><h3>Article not found</h3><p>That piece isn\u2019t in the library — browse everything from ' + brandI(15) + ' instead.</p><a class="btn btn-primary" href="/learn">Open the Knowledge hub</a></div>';
       return;
     }
     document.title = a.title + ' — TwinMOS';
@@ -920,8 +1087,8 @@ var TM = window.TM || {};
     var backChip = hub
       ? '<a class="chip" href="' + hub[0] + '" style="text-decoration:none">↑ ' + hub[1] + '</a>'
       : (a.cat === 'KB'
-          ? '<a class="chip" href="support.html" style="text-decoration:none">↑ Support center</a>'
-          : '<a class="chip" href="news.html" style="text-decoration:none">↑ Newsroom</a>');
+          ? '<a class="chip" href="/support" style="text-decoration:none">↑ Support center</a>'
+          : '<a class="chip" href="/news" style="text-decoration:none">↑ Newsroom</a>');
     var metaChips = '<span class="chip">' + esc(a.date) + '</span>' +
       (a.mins ? '<span class="chip">' + esc(a.mins) + ' min read</span>' : '') +
       (a.tag ? '<span class="chip">' + esc(a.tag) + '</span>' : '') +
@@ -935,8 +1102,8 @@ var TM = window.TM || {};
       var prev = idx > 0 ? seq[idx - 1] : null;
       var next = idx >= 0 && idx < seq.length - 1 ? seq[idx + 1] : null;
       pn = '<div class="art-pn">' +
-        (prev ? '<a href="article.html?id=' + encodeURIComponent(prev.id) + '"><span>← Previous</span><b>' + esc(prev.title) + '</b></a>' : '') +
-        (next ? '<a href="article.html?id=' + encodeURIComponent(next.id) + '" style="text-align:right"><span>Next →</span><b>' + esc(next.title) + '</b></a>' : '') +
+        (prev ? '<a href="/article?id=' + encodeURIComponent(prev.id) + '"><span>← Previous</span><b>' + esc(prev.title) + '</b></a>' : '') +
+        (next ? '<a href="/article?id=' + encodeURIComponent(next.id) + '" style="text-align:right"><span>Next →</span><b>' + esc(next.title) + '</b></a>' : '') +
         '</div>';
     }
 
@@ -953,7 +1120,7 @@ var TM = window.TM || {};
     var relChips = relIds.length
       ? '<div class="art-rel-chips">' + relIds.slice(0, 6).map(function (rid) {
           var r = TM.articles.filter(function (x) { return x.id === rid; })[0];
-          return r ? '<a href="article.html?id=' + encodeURIComponent(r.id) + '">' + esc(r.title) + '</a>' : '';
+          return r ? '<a href="/article?id=' + encodeURIComponent(r.id) + '">' + esc(r.title) + '</a>' : '';
         }).join('') + '</div>'
       : '';
 
@@ -971,7 +1138,7 @@ var TM = window.TM || {};
       if (picks.length) {
         prodsHtml = '<div class="section-head" style="margin-top:clamp(26px,3vw,40px)"><div><span class="eyebrow">Shop the topic</span>' +
           '<h2 class="h2">' + (a.cat === 'Benchmark' ? 'Products tested' : 'Featured for this topic') + '</h2></div>' +
-          '<a class="link-arrow" href="shop.html">All products</a></div><div class="grid g4" id="artProds">' +
+          '<a class="link-arrow" href="/shop">All products</a></div><div class="grid g4" id="artProds">' +
           picks.map(productCard).join('') + '</div>';
       }
     }
@@ -981,7 +1148,7 @@ var TM = window.TM || {};
       '<span class="eyebrow">' + esc(a.cat) + '</span>' +
       '<h1 class="h1" style="margin-bottom:10px">' + esc(a.title) + '</h1>' +
       '<div class="article-meta">' + metaChips + '</div>' +
-      (a.img ? '<figure class="article-hero"><img src="' + esc(a.img) + '" alt="' + esc(a.title) + '"></figure>' : '') +
+      (a.img ? '<figure class="article-hero"><img src="' + esc(rootImg(a.img)) + '" alt="' + esc(a.title) + '"></figure>' : '') +
       '<p class="lede">' + esc(a.desc) + '</p>' +
       secs +
       pn + relChips +
@@ -1022,7 +1189,7 @@ var TM = window.TM || {};
       }).slice(0, 3);
       if (!others.length) others = TM.articles.filter(function (x) { return x.id !== id && x.cat !== 'KB'; }).slice(0, 3);
       rel.innerHTML = others.map(function (o) {
-        return '<a class="card card-pad" href="article.html?id=' + encodeURIComponent(o.id) + '"><span class="chip">' + esc(o.cat) + '</span><b style="display:block;color:var(--ink);margin:8px 0 4px">' + esc(o.title) + '</b><span class="form-note">' + esc(o.date) + '</span></a>';
+        return '<a class="card card-pad" href="/article?id=' + encodeURIComponent(o.id) + '"><span class="chip">' + esc(o.cat) + '</span><b style="display:block;color:var(--ink);margin:8px 0 4px">' + esc(o.title) + '</b><span class="form-note">' + esc(o.date) + '</span></a>';
       }).join('');
     }
     var prodGrid = $('#artProds');
@@ -1085,10 +1252,47 @@ var TM = window.TM || {};
       var dots = $$('[data-sl-dot]', root);
       var prev = $('[data-sl-prev]', root), next = $('[data-sl-next]', root);
       var i = Math.max(0, slides.findIndex(function (s) { return s.classList.contains('on'); }));
-      var timer = null, hover = false;
+      var timer = null, hover = false, userPaused = false;
       var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       var rtl = document.documentElement.getAttribute('dir') === 'rtl';
       var counter = $('.sl-count b', root);
+      var pauseBtn = $('.slider-pause, [data-sl-pause]', root);
+      var autoplayMs = parseInt(root.getAttribute('data-autoplay') || '0', 10);
+
+      // WCAG 2.2.2: Ensure auto-rotating sliders have an accessible pause control
+      if (!pauseBtn && autoplayMs > 0) {
+        pauseBtn = document.createElement('button');
+        pauseBtn.type = 'button';
+        pauseBtn.className = 'slider-pause sl-pause';
+        pauseBtn.setAttribute('data-sl-pause', '');
+        pauseBtn.setAttribute('aria-label', 'Pause slide auto-rotation');
+        pauseBtn.setAttribute('aria-pressed', 'false');
+        pauseBtn.innerHTML = '<span class="pause-icon" aria-hidden="true">⏸</span> <span class="pause-text">Pause</span>';
+        root.appendChild(pauseBtn);
+      }
+
+      function updatePauseBtn() {
+        if (!pauseBtn) return;
+        pauseBtn.setAttribute('aria-pressed', userPaused ? 'true' : 'false');
+        pauseBtn.setAttribute('aria-label', userPaused ? 'Resume slide auto-rotation' : 'Pause slide auto-rotation');
+        var pIcon = $('.pause-icon', pauseBtn);
+        var pText = $('.pause-text', pauseBtn);
+        if (pIcon) pIcon.textContent = userPaused ? '▶' : '⏸';
+        if (pText) pText.textContent = userPaused ? 'Play' : 'Pause';
+      }
+
+      if (pauseBtn) {
+        pauseBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          userPaused = !userPaused;
+          updatePauseBtn();
+          if (userPaused) {
+            if (timer) clearInterval(timer);
+          } else {
+            restart();
+          }
+        });
+      }
 
       function show(n) {
         i = (n + slides.length) % slides.length;
@@ -1106,9 +1310,10 @@ var TM = window.TM || {};
       function step(d) { show(i + d); restart(); }
       function restart() {
         if (timer) clearInterval(timer);
-        if (reduce || hover) return;
+        if (userPaused || reduce || hover) return;
         var ms = parseInt(root.getAttribute('data-autoplay') || '6000', 10);
-        timer = setInterval(function () { if (!hover) show(i + 1); }, ms);
+        if (!ms) return;
+        timer = setInterval(function () { if (!hover && !userPaused) show(i + 1); }, ms);
       }
 
       if (prev) prev.addEventListener('click', function () { step(rtl ? 1 : -1); });
@@ -1156,27 +1361,15 @@ var TM = window.TM || {};
     var recBox = $('#uaRecommendation');
     
     if (devRow && goalRow && recBox && TM.products) {
-      var advisors = {
-        laptop: [
-          { id: 'ram', label: '⚡ Fast Laptop Memory (SO-DIMM)', prodId: 'voltx-ddr5-so-dimm-for-laptop', tag: 'DDR5 · 5600MHz · MTCD Thermal', desc: 'High-density DDR5 SODIMM to eradicate multitasking lag in modern laptops.' },
-          { id: 'ssd', label: '🚀 M.2 NVMe SSD Expansion', prodId: 'alphapro-nvme-m2-2280-new-ssd', tag: 'PCIe Gen 3/4 · M.2 2280', desc: 'High-speed NVMe SSD with low power consumption and high endurance for slim laptops.' }
-        ],
-        desktop: [
-          { id: 'gen5', label: '🔥 Flagship PCIe Gen 5.0 SSD', prodId: 'corex-pro-m2-pcie-gen-5-0-nvme-ssd', tag: '14,000 MB/s · Graphene Foil', desc: 'Next-generation NVMe 2.0 throughput for uncompromising PC rigs and heavy workloads.' },
-          { id: 'ddr5', label: '⚡ VOLTX DDR5 RGB RAM', prodId: 'voltx-rgb-ddr5-u-dimm-for-desktop', tag: 'DDR5-6000 · Intel XMP 3.0', desc: 'Board-synced addressable RGB lighting, on-die ECC, and lifetime warranty.' },
-          { id: 'psu', label: '🔌 80 PLUS Bronze Power', prodId: 'smartx-rgb-80-plus-bronze-power-supply-550w', tag: '550W · 80 PLUS Bronze · RGB', desc: 'Clean, reliable 12V single rail power delivery with hydraulic silent fan.' }
-        ],
-        gaming: [
-          { id: 'gen5_direct', label: '🎮 DirectStorage Gen 5.0 SSD', prodId: 'corex-pro-m2-pcie-gen-5-0-nvme-ssd', tag: 'DirectStorage Ready · 14,000 MB/s', desc: 'Streams game assets directly to GPU VRAM for instant open-world transitions.' },
-          { id: 'rgb_ram', label: '⚡ VOLTX RGB 6000MHz Memory', prodId: 'voltx-rgb-ddr5-u-dimm-for-desktop', tag: 'Low Latency · Sync Lighting', desc: 'Engineered for overclocking headroom and high FPS stability in demanding titles.' },
-          { id: 'ps5_ssd', label: '🕹️ PS5 Compatible Gen 4 NVMe', prodId: 'xtreme-gen4x4-nvme-pro-m2-2280-ssd', tag: 'PCIe Gen 4x4 · Up to 7,400 MB/s', desc: 'Meets and exceeds PlayStation 5 internal expansion requirements with heatsink.' }
-        ],
-        creator: [
-          { id: 'portable', label: '💼 1,100 MB/s Portable USB-C SSD', prodId: 'portable-ssd-elite-drive-pro-usb-type-c', tag: 'USB 3.2 Gen 2 · Rugged Pocket', desc: 'Shock-resistant pocket storage for on-set 4K video scrubbing and high-speed backups.' },
-          { id: 'nvme_2tb', label: '🎬 High-Endurance 2TB NVMe', prodId: 'corex-pro-m2-pcie-gen-5-0-nvme-ssd', tag: '1,400 TBW · 3D TLC NAND', desc: 'Endurance and speed tuned for massive ProRes renders and uncompressed video timelines.' },
-          { id: 'microsd_v30', label: '📹 4K V30 MicroSD Card', prodId: 'microsdxc-class-10-v30-uhs-3', tag: 'V30 · UHS-I U3 · 4K UHD Video', desc: 'Validated for 4K action cameras, drones, and handheld gaming consoles.' }
-        ]
-      };
+      var widgetContainer = devRow.closest('[data-config]') || devRow.closest('.block-app-embed');
+      var customAdvisorConfig = null;
+      try {
+        if (widgetContainer && widgetContainer.getAttribute('data-config')) {
+          customAdvisorConfig = JSON.parse(widgetContainer.getAttribute('data-config'));
+        }
+      } catch (e) {}
+
+      var advisors = customAdvisorConfig || (window.TWINMOS_WIDGET_CONFIGS && window.TWINMOS_WIDGET_CONFIGS.advisor) || {};
 
       var curDev = 'laptop';
       var curGoal = 'ram';
@@ -1204,7 +1397,7 @@ var TM = window.TM || {};
         var p = (TM.products || []).filter(function (x) { return x.id === activeGoalObj.prodId; })[0];
         if (!p) p = TM.products[0];
 
-        var img = p.imgC || p.img || 'assets/img/card/corex-pro.webp';
+        var img = rootImg(p.imgC || p.img || '/assets/img/card/corex-pro.webp');
         recBox.innerHTML =
           '<div class="ua-rec-img">' +
           '  <img src="' + esc(img) + '" alt="' + esc(p.name) + '">' +
@@ -1215,8 +1408,8 @@ var TM = window.TM || {};
           '  <div class="ua-rec-specs">' + esc(activeGoalObj.desc) + '</div>' +
           '</div>' +
           '<div class="ua-rec-actions">' +
-          '  <a class="btn btn-accent btn-sm" href="product.html?id=' + encodeURIComponent(p.id) + '">View Product Details →</a>' +
-          '  <a class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)" href="compatibility.html">Check Compatibility</a>' +
+          '  <a class="btn btn-accent btn-sm" href="/product?id=' + encodeURIComponent(p.id) + '">View Product Details →</a>' +
+          '  <a class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)" href="/compatibility">Check Compatibility</a>' +
           '</div>';
       }
 
@@ -1242,38 +1435,15 @@ var TM = window.TM || {};
     var sTakeaway = $('#speedTakeawayText');
 
     if (swTabs && sBarsWrap && sTakeaway) {
-      var workloads = {
-        directstorage: {
-          takeaway: 'TwinMOS CoreX Pro Gen 5 streams assets directly to GPU VRAM at up to 14,000 MB/s, cutting massive open-world texture load times from minutes on HDD down to just 3.6 seconds.',
-          rows: [
-            { name: 'TwinMOS CoreX Pro', badge: 'Gen 5', bCls: 'sbg-g5', fCls: 'sbf-g5', pct: 100, speed: '14,000 MB/s', eta: '3.6 sec' },
-            { name: 'PCIe Gen 4.0 NVMe', badge: 'Gen 4', bCls: 'sbg-g4', fCls: 'sbf-g4', pct: 53, speed: '7,400 MB/s', eta: '6.8 sec' },
-            { name: 'PCIe Gen 3.0 NVMe', badge: 'Gen 3', bCls: 'sbg-g3', fCls: 'sbf-g3', pct: 25, speed: '3,500 MB/s', eta: '14.3 sec' },
-            { name: 'SATA III 2.5″ SSD', badge: 'SATA', bCls: 'sbg-sata', fCls: 'sbf-sata', pct: 14, speed: '550 MB/s', eta: '1m 31s' },
-            { name: 'Mechanical 7.2K HDD', badge: 'HDD', bCls: 'sbg-hdd', fCls: 'sbf-hdd', pct: 8, speed: '120 MB/s', eta: '6m 56s' }
-          ]
-        },
-        video8k: {
-          takeaway: 'Exporting or scrubbing 100GB of ProRes 8K video streams saturates interface bandwidth. CoreX Pro Gen 5.0 with graphene cooling handles sustained workloads without throttling.',
-          rows: [
-            { name: 'TwinMOS CoreX Pro', badge: 'Gen 5', bCls: 'sbg-g5', fCls: 'sbf-g5', pct: 100, speed: '14,000 MB/s', eta: '7.1 sec' },
-            { name: 'PCIe Gen 4.0 NVMe', badge: 'Gen 4', bCls: 'sbg-g4', fCls: 'sbf-g4', pct: 53, speed: '7,400 MB/s', eta: '13.5 sec' },
-            { name: 'PCIe Gen 3.0 NVMe', badge: 'Gen 3', bCls: 'sbg-g3', fCls: 'sbf-g3', pct: 25, speed: '3,500 MB/s', eta: '28.6 sec' },
-            { name: 'SATA III 2.5″ SSD', badge: 'SATA', bCls: 'sbg-sata', fCls: 'sbf-sata', pct: 14, speed: '550 MB/s', eta: '3m 02s' },
-            { name: 'Mechanical 7.2K HDD', badge: 'HDD', bCls: 'sbg-hdd', fCls: 'sbf-hdd', pct: 8, speed: '120 MB/s', eta: '13m 53s' }
-          ]
-        },
-        boot: {
-          takeaway: 'Instantaneous boot and application launch: 14,000 MB/s sequential combined with high 4K random IOPS launches the OS and creative suites almost instantaneously.',
-          rows: [
-            { name: 'TwinMOS CoreX Pro', badge: 'Gen 5', bCls: 'sbg-g5', fCls: 'sbf-g5', pct: 100, speed: '14,000 MB/s', eta: '4.2 sec' },
-            { name: 'PCIe Gen 4.0 NVMe', badge: 'Gen 4', bCls: 'sbg-g4', fCls: 'sbf-g4', pct: 60, speed: '7,400 MB/s', eta: '7.5 sec' },
-            { name: 'PCIe Gen 3.0 NVMe', badge: 'Gen 3', bCls: 'sbg-g3', fCls: 'sbf-g3', pct: 36, speed: '3,500 MB/s', eta: '12.0 sec' },
-            { name: 'SATA III 2.5″ SSD', badge: 'SATA', bCls: 'sbg-sata', fCls: 'sbf-sata', pct: 22, speed: '550 MB/s', eta: '26.0 sec' },
-            { name: 'Mechanical 7.2K HDD', badge: 'HDD', bCls: 'sbg-hdd', fCls: 'sbf-hdd', pct: 10, speed: '120 MB/s', eta: '85.0 sec' }
-          ]
+      var speedWidgetContainer = swTabs.closest('[data-config]') || swTabs.closest('.block-app-embed');
+      var customSpeedConfig = null;
+      try {
+        if (speedWidgetContainer && speedWidgetContainer.getAttribute('data-config')) {
+          customSpeedConfig = JSON.parse(speedWidgetContainer.getAttribute('data-config'));
         }
-      };
+      } catch (e) {}
+
+      var workloads = customSpeedConfig || (window.TWINMOS_WIDGET_CONFIGS && window.TWINMOS_WIDGET_CONFIGS.speed_visualizer) || {};
 
       function renderSpeedSim(wk) {
         var data = workloads[wk] || workloads.directstorage;
@@ -1311,12 +1481,15 @@ var TM = window.TM || {};
     var fTabs = $('#flagshipTabs');
     var fGrid = $('#homeFlagshipGrid');
     if (fTabs && fGrid && TM.products) {
-      var segments = {
-        all: ['voltx-rgb-ddr5-u-dimm-for-desktop', 'corex-pro-m2-pcie-gen-5-0-nvme-ssd', 'portable-ssd-elite-drive-pro-usb-type-c', 'tornadox7-pro-ddr4-3200mhz-cl16-u-dimm-for-desktop'],
-        nvme: ['corex-pro-m2-pcie-gen-5-0-nvme-ssd', 'corex-m2-pcie-gen-4-0-nvme-ssd', 'xtreme-gen4x4-nvme-pro-m2-2280-ssd', 'alphapro-nvme-m2-2280-new-ssd'],
-        gaming: ['voltx-rgb-ddr5-u-dimm-for-desktop', 'voltx-ddr5-u-dimm-for-desktop', 'tornadox7-pro-ddr4-3200mhz-cl16-u-dimm-for-desktop', 'smartx-rgb-80-plus-bronze-power-supply-550w'],
-        portable: ['portable-ssd-elite-drive-pro-usb-type-c', 'portable-ssd-elitedrive-usb-3-0-type-c', 'portable-hdd-prodrive-ultra-usb-3-0', 'x3-ultra-usb-3-2-flash-drive']
-      };
+      var flagshipWidgetContainer = fTabs.closest('[data-config]') || fTabs.closest('.block-app-embed');
+      var customFlagshipConfig = null;
+      try {
+        if (flagshipWidgetContainer && flagshipWidgetContainer.getAttribute('data-config')) {
+          customFlagshipConfig = JSON.parse(flagshipWidgetContainer.getAttribute('data-config'));
+        }
+      } catch (e) {}
+
+      var segments = customFlagshipConfig || (window.TWINMOS_WIDGET_CONFIGS && window.TWINMOS_WIDGET_CONFIGS.flagship) || {};
 
       function renderFlagships(segKey) {
         var ids = segments[segKey] || segments.all;
@@ -1518,56 +1691,22 @@ var TM = window.TM || {};
     initHeader(); initCookie(); initTabs(); initSlider(); initShop(); initPDP(); initCompare(); initCompat();
     initRMA(); initForms(); initSearch(); initArticle(); initRails(); initHomeEnhancements(); syncCmpUI();
     initLocator(); initGlossary();
-    // P2.6 (audit U-14): the mega menus and feature bands baked "39 products"
-    // into every page when the prototype shipped — the live catalog has since
-    // grown. cms-merge has already run (script order: data → cms-content →
-    // cms-merge → app), so TM.products is final here. Patch the literal so
-    // every page states the real catalog size.
-    var liveCount = (TM.products || []).length;
-    if (liveCount && liveCount !== 39) {
-      var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
-      var nodes = [];
-      while (walker.nextNode()) { if (/39 products/.test(walker.currentNode.nodeValue || '')) nodes.push(walker.currentNode); }
-      nodes.forEach(function (n) { n.nodeValue = String(n.nodeValue || '').replace(/39 products/g, liveCount + ' products'); });
-    }
+    // SSR-rendered cards (products grid, PDP header) live outside the mount
+    // scopes the inits bind — bind quick-view + compare document-wide; the
+    // _bound guard makes this idempotent with the scoped passes.
+    bindQuickView(document); bindCardCompare(document);
+    // MS4.2 T4.2.3: counts in labels are rendered from
+    // site.figures.productCount by the server. The legacy client patch that
+    // rewrote "39 products" to the local catalog length was removed so the CMS
+    // stays the single source of truth.
     // support page: search router + RMA tracker demo
     var supForm = $('#supSearch');
     if (supForm) supForm.addEventListener('submit', function (e) {
       e.preventDefault();
       var q = ($('#supSearchInput').value || '').trim();
-      if (q) location.href = 'search.html?q=' + encodeURIComponent(q);
+      if (q) location.href = '/search?q=' + encodeURIComponent(q);
     });
-    var rmaForm = $('#rmaTrackForm');
-    if (rmaForm) rmaForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var v = ($('#rmaTrackInput').value || '').trim().toUpperCase();
-      var out = $('#rmaTrackOut');
-      // accept both confirmation formats: RMA-2026-123456 and TM-RMA-2026-0142
-      if (!/^(TM-)?RMA-\d{4}-\d{3,8}$/.test(v)) {
-        out.innerHTML = '<p class="form-note" style="color:#B3261E;margin:0">Enter the full format from your email — e.g. RMA-2026-123456 or TM-RMA-2026-0142.</p>';
-        return;
-      }
-      // P1.3: live case record from the API — no invented states (was sum % 5)
-      out.innerHTML = '<p class="form-note" style="margin:8px 0 0">Checking live case status…</p>';
-      rmaFetchCase(v, function (d) {
-        var idx = rmaStageIndex(d.status);
-        var labels = RMA_STAGES.map(function (s) { return s[1]; });
-        var last = (d.timeline && d.timeline.length) ? d.timeline[d.timeline.length - 1] : null;
-        out.innerHTML =
-          '<div class="rma-status"><b>' + esc(d.number || v) + '</b><span class="chip ' + (idx >= 5 ? 'ok' : '') + '">' + esc(labels[idx]) + '</span></div>' +
-          '<div class="rma-timeline">' + labels.map(function (s, i) {
-            return '<span class="rt-step' + (i <= idx ? ' on' : '') + (i === idx ? ' now' : '') + '">' + s + '</span>';
-          }).join('<i>→</i>') + '</div>' +
-          '<p class="form-note" style="margin:8px 0 0">Live status from the TwinMOS service centre' +
-          (last && last.at ? ' · updated ' + esc(rmaWhen(last.at)) : '') + '.</p>';
-      }, function (status) {
-        if (status === 404) {
-          out.innerHTML = '<p class="form-note" style="color:#B3261E;margin:8px 0 0">No RMA case exists with that number — check your confirmation email, or contact support with your proof of purchase.</p>';
-        } else {
-          out.innerHTML = '<p class="form-note" style="color:#B3261E;margin:8px 0 0">The service centre could not be reached — please retry in a moment.</p>';
-        }
-      });
-    });
+    // RMA tracking lives in portal.js (single handler, number + e-mail).
     // F14.1 — news category filter chips
     var nch = $('#newsChips');
     if (nch) {
@@ -1581,9 +1720,11 @@ var TM = window.TM || {};
         });
       });
     }
-    // F1.7 — cookie preference save (legal tab)
+    // T6.3.1.3 — Real cookie preference interaction (legal tab) — closes Z-19
     var cps = $('#cookiePrefsSave');
-    if (cps) cps.addEventListener('click', function () { toast('Preferences saved — the production site stores granular consent', 'ok'); });
+    if (cps) cps.addEventListener('click', function () {
+      window.dispatchEvent(new CustomEvent('twinmos:open-consent'));
+    });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

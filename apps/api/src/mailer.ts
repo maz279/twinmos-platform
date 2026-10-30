@@ -11,10 +11,13 @@ export type MailInput = {
   subject: string;
   text: string;
   replyTo?: string;
+  headers?: Record<string, string>;
   meta?: Record<string, unknown>;
 };
 
-const OUTBOX = process.env.MAIL_OUTBOX_DIR ?? './data/outbox';
+function getOutbox(): string {
+  return process.env.MAIL_OUTBOX_DIR ?? './data/outbox';
+}
 
 /** Per-type routing: recipient comes from env (FORMS_TO or <TYPE>_TO); falls back to FORMS_TO. */
 export const FORM_MAIL_ROUTES: Record<string, { subject: string; body: string }> = {
@@ -51,7 +54,14 @@ async function sendViaResend(mail: MailInput): Promise<boolean> {
   const { Resend } = await import('resend');
   const client = new Resend(process.env.RESEND_API_KEY);
   const from = process.env.MAIL_FROM ?? 'TwinMOS Website <onboarding@resend.dev>';
-  const res = await client.emails.send({ from, to: mail.to, subject: mail.subject, text: mail.text, replyTo: mail.replyTo });
+  const res = await client.emails.send({
+    from,
+    to: mail.to,
+    subject: mail.subject,
+    text: mail.text,
+    replyTo: mail.replyTo,
+    headers: mail.headers,
+  });
   if (res.error) {
     console.error('[mailer] resend api error:', res.error);
     return false;
@@ -65,18 +75,19 @@ async function sendViaResend(mail: MailInput): Promise<boolean> {
 let outboxSeq = 0;
 
 function sendViaOutbox(mail: MailInput): void {
-  mkdirSync(OUTBOX, { recursive: true });
+  const outbox = getOutbox();
+  mkdirSync(outbox, { recursive: true });
   const name = `${Date.now()}-${String(outboxSeq++).padStart(6, '0')}.json`;
-  writeFileSync(join(OUTBOX, name), JSON.stringify({ ...mail, at: new Date().toISOString() }, null, 2));
+  writeFileSync(join(outbox, name), JSON.stringify({ ...mail, at: new Date().toISOString() }, null, 2));
 }
 
 /** Fire-and-forget semantics at call sites: never throws (delivery failure must not fail a submission). */
 export async function sendMail(mail: MailInput): Promise<boolean> {
   try {
-    if (process.env.RESEND_API_KEY) {
+    if (process.env.RESEND_API_KEY && process.env.NODE_ENV !== 'test' && !process.env.MAIL_OUTBOX_DIR) {
       return await sendViaResend(mail);
     }
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && !process.env.RESEND_API_KEY) {
       console.error('[mailer] RESEND_API_KEY is not set in production — refusing silent outbox write');
       return false;
     }
@@ -106,8 +117,15 @@ export async function sendFormRouting(type: string, refCode: string, email: stri
 }
 
 /** Confirmation email to the customer (used for RMA intake and on request). */
-export async function sendCustomerConfirmation(to: string, subject: string, text: string, meta?: Record<string, unknown>): Promise<boolean> {
-  return sendMail({ to, subject, text, meta: { kind: 'customer-confirmation', ...meta } });
+export async function sendCustomerConfirmation(
+  to: string,
+  subject: string,
+  text: string,
+  meta?: Record<string, unknown>,
+  headers?: Record<string, string>,
+): Promise<boolean> {
+  const mailHeaders = headers ?? (meta?.headers as Record<string, string> | undefined);
+  return sendMail({ to, subject, text, headers: mailHeaders, meta: { kind: 'customer-confirmation', ...meta } });
 }
 
 /** RMA status-change notification (opt-in per transition). */
@@ -115,36 +133,39 @@ export async function sendRmaStatusMail(to: string, number: string, from: string
   return sendMail({
     to,
     subject: `TwinMOS RMA ${number} — status updated to ${toStatus.replace('_', ' ')}`,
-    text: `Your RMA request ${number} moved from ${from.replace('_', ' ')} to ${toStatus.replace('_', ' ')}.${note ? `\n\nNote from our team: ${note}` : ''}\n\nTrack your request any time: https://www.twinmos.com/rma.html`,
+    text: `Your RMA request ${number} moved from ${from.replace(/_/g, ' ')} to ${toStatus.replace(/_/g, ' ')}.${note ? `\n\nNote from our team: ${note}` : ''}\n\nTrack your request any time at ${(process.env.PUBLIC_SITE_URL || 'https://www.twinmos.com').replace(/\/+$/, '')}/rma with your RMA number and e-mail address.`,
     meta: { kind: 'rma-status', number, from, toStatus },
   });
 }
 
 /** Staff invitation email containing login link and temporary credentials. */
+/** Public URL of the admin console. It is served by the same origin as the site
+ *  (nginx /admin/); the old default pointed at a non-existent admin.twinmos.com. */
+export function adminBaseUrl(): string {
+  return (process.env.ADMIN_PUBLIC_URL
+    || `${(process.env.PUBLIC_SITE_URL || 'https://www.twinmos.com').replace(/\/+$/, '')}/admin/`);
+}
+
+/** Staff invitation. Credentials are never mailed (ZT-014): when the inviter
+ *  did not set a password, the invitee gets a separate single-use set-password
+ *  link (Better Auth reset flow) and chooses their own. */
 export async function sendStaffInviteMail(
   to: string,
   name: string,
   role: string,
-  temporaryPassword?: string,
+  setPasswordLinkSent = false,
 ): Promise<boolean> {
-  const adminUrl = process.env.ADMIN_URL ?? 'https://admin.twinmos.com';
+  const adminUrl = adminBaseUrl();
   const text = [
     `Hello ${name},`,
     '',
     `You have been invited to join the TwinMOS Administration Portal with the role: ${role}.`,
     '',
-    ...(temporaryPassword
-      ? [
-          'Your temporary login credentials are provided below:',
-          `- Portal: ${adminUrl}`,
-          `- Email: ${to}`,
-          `- Temporary Password: ${temporaryPassword}`,
-          '',
-          'For security, you must sign in and change your password immediately or enroll in Two-Factor Authentication (TOTP).',
-        ]
-      : [
-          `Access the portal at: ${adminUrl}`,
-        ]),
+    `Portal: ${adminUrl}`,
+    ...(setPasswordLinkSent
+      ? ['A separate e-mail contains a single-use link to choose your password (valid for 1 hour).']
+      : ['Sign in with the password your administrator gave you.']),
+    'Verify your e-mail address with the link we sent, then enrol two-factor authentication at first sign-in.',
     '',
     'Regards,',
     'TwinMOS Security & Operations Team',

@@ -1,0 +1,341 @@
+{
+  "timestamp": "2026-10-21T11:47:18.285Z",
+  "apiBase": "http://127.0.0.1:8787",
+  "webBase": "http://127.0.0.1:4321",
+  "menus": [
+    "header",
+    "drawer",
+    "footer"
+  ],
+  "menuTargets": 173,
+  "groupNodes": 28,
+  "uniqueInternal": 63,
+  "uniqueExternal": 6,
+  "external": [
+    "https://www.facebook.com/twinmos.tech",
+    "https://instagram.com/twinmos.tech",
+    "https://www.linkedin.com/company/twinmos-technologies/",
+    "https://x.com/twinmos",
+    "https://www.youtube.com/c/TwinMOStech",
+    "https://www.pinterest.com/twinmos"
+  ],
+  "checks": [
+    {
+      "url": "/shop.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/shop.html?cat=dram-gaming",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/shop.html?cat=dram-desktop",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/shop.html?cat=dram-notebook",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/shop.html?cat=ssd-nvme",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/shop.html?cat=ssd-sata",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/shop.html?cat=portable-ssd",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/shop.html?cat=portable-hdd",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/shop.html?cat=flash",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/shop.html?cat=microsd",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/shop.html?cat=psu",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/shop.html?cat=hub",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/compare.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/compatibility.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/gaming.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/gaming.html#arsenal",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/gaming.html#sync",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/gaming.html#rgb",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/gaming.html#tuning",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/learn/what-is-xmp",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/learn/what-is-amd-expo",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/gaming.html#builds",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/gaming.html#downloads",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/gaming.html#stories",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/contact.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/learn/best-ram-for-gaming",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/learn/directstorage-gen5-gaming",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/solutions.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/solutions.html#dist",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/solutions.html#oem",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/solutions.html#fleet",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/solutions.html#workloads",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/quote.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/partners.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/solutions.html#process",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/solutions.html#footprint",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/where-to-buy.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/where-to-buy.html#marketplaces",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/where-to-buy.html#trust",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/where-to-buy.html#locator",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/where-to-buy.html#offices",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/support.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/rma.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/support.html#faq",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/support.html#downloads",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/learn.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/learn-guides.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/learn-explained.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/learn-benchmarks.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/learn-glossary.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/learn-blog.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/legal.html#warranty",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/about.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/technology.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/about.html#quality",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/news.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/careers.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/index.html",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/legal.html#terms",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/legal.html#privacy",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/legal.html#eol",
+      "status": 200,
+      "error": ""
+    },
+    {
+      "url": "/sitemap.html",
+      "status": 200,
+      "error": ""
+    }
+  ],
+  "problems": [],
+  "passed": true
+}

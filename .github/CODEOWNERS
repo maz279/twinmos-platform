@@ -1,0 +1,33 @@
+# TwinMOS Monorepo CODEOWNERS (PROC-01, T3.6.4, REPO-01)
+# Closes Z-36: Uses resolving owner handle @maz279 for personal repository context
+# (GitHub does not resolve @twinmos/* team handles on user-owned repositories).
+
+*                   @maz279
+
+# Auth critical paths (T3.6.4)
+/apps/api/src/auth.ts            @maz279
+/apps/api/src/routes/users.ts    @maz279
+/apps/admin/src/pages/Login.tsx  @maz279
+
+# Database schemas & migrations (T3.6.4)
+/packages/db/                    @maz279
+
+# Edge, CI & deployment infrastructure (T3.6.4)
+/deploy/nginx/                   @maz279
+/deploy/compose/                 @maz279
+/.github/workflows/              @maz279
+/deploy/                         @maz279
+/Dockerfile*                     @maz279
+/.dockerignore                   @maz279
+
+# Web frontend (Astro SSR)
+/apps/web/                       @maz279
+
+# Admin console SPA
+/apps/admin/                     @maz279
+
+# Core API backend
+/apps/api/                       @maz279
+
+# Shared contracts and schemas
+/packages/shared/                @maz279

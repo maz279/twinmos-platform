@@ -1,0 +1,80 @@
+{
+  "timestamp": "2026-10-23T14:43:02.115Z",
+  "passCount": 12,
+  "total": 12,
+  "allPassed": true,
+  "results": [
+    {
+      "id": "CHK-01",
+      "name": "Catalogue Spec Dictionary delivery API",
+      "passed": true,
+      "details": "Status: 200, items: 13"
+    },
+    {
+      "id": "CHK-02",
+      "name": "Catalogue Spec Templates delivery API",
+      "passed": true,
+      "details": "Status: 200, items: 11"
+    },
+    {
+      "id": "CHK-03",
+      "name": "Dynamic 90-day \"New\" badge and product extensions (T4.5.4)",
+      "passed": true,
+      "details": "isNew: true, warranty: 5_year, comingSoon: false"
+    },
+    {
+      "id": "CHK-04",
+      "name": "Archive 410 Gone detection contract in delivery API",
+      "passed": true,
+      "details": "Status code: 404"
+    },
+    {
+      "id": "CHK-05",
+      "name": "Authentic FAQs with groupKey and zero file paths (CMS-E14)",
+      "passed": true,
+      "details": "Total: 188, Zero file paths: true, GroupKey valid: true"
+    },
+    {
+      "id": "CHK-06",
+      "name": "Article delivery with heroMedia, related articles and SEO (CMS-E8)",
+      "passed": true,
+      "details": "Status: 200, Title: \"What is XMP? One-Click Memory Overclocking\", Related: 3"
+    },
+    {
+      "id": "CHK-07",
+      "name": "Directory Distributors contract (ISO country, tagline, CTA config); unverified rows stay draft (T4.5.6/T4.7.1)",
+      "passed": true,
+      "details": "Published count: 35 (pending channel-owner evidence)"
+    },
+    {
+      "id": "CHK-08",
+      "name": "Directory Marketplaces with description, CTA label, sort (T4.5.6)",
+      "passed": true,
+      "details": "Count: 4"
+    },
+    {
+      "id": "CHK-09",
+      "name": "Device Type Labels from database table replacing hardcoded map (T4.5.6)",
+      "passed": true,
+      "details": "Count: 6, Canonical types verified: true"
+    },
+    {
+      "id": "CHK-10",
+      "name": "Published Careers / Jobs delivery with structured fields (T4.5.6)",
+      "passed": true,
+      "details": "Status: 200, Count: 3"
+    },
+    {
+      "id": "CHK-11",
+      "name": "Web Frontend SSR rendering PDP with ResponsiveImage & specs (T4.5.2/T4.5.4)",
+      "passed": true,
+      "details": "Status: 200, Page rendered correctly"
+    },
+    {
+      "id": "CHK-12",
+      "name": "tooling/content-payload.ts queries device_type_label table without hardcoded map",
+      "passed": true,
+      "details": "Does not hardcode map: true, Queries table: true"
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 // Kept separate from index.ts (the server entry) so tests can boot the whole
 // API in-process with an isolated PGlite instance via app.request().
 import { Hono } from 'hono';
+import { timingSafeEqual } from 'node:crypto';
 import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
 import { bodyLimit } from 'hono/body-limit';
@@ -17,12 +18,25 @@ import { contentRoute, previewRoute, promoteScheduled } from './routes/content.t
 import { mediaRoute, publicMediaRoute } from './routes/media.ts';
 import { settingsRoute } from './routes/settings.ts';
 import { translationsRoute, i18nPublicRoute } from './routes/translations.ts';
+import { redactPersonalData } from './lib/redact.ts';
 import { partnerRoute, partnerAdminRoute } from './routes/partner.ts';
 import { snCheckRoute, snReportRoute, serialAdminRoute } from './routes/sncheck.ts';
+import { warrantyRoute, warrantyAdminRoute } from './routes/warranty.ts';
+import { navigationRoute } from './routes/navigation.ts';
+import { entitiesRoute } from './routes/entities.ts';
+import { privacyRoute } from './routes/privacy.ts';
+import { consentRoute } from './routes/consent.ts';
+import { makeDeliveryRouter } from './routes/delivery/index.ts';
+import { dispatchOutbox } from './services/outbox.ts';
+import { alertManager } from './services/alerts.ts';
+import { logger as pinoLogger, createRequestLogger } from './services/logger.ts';
+import { getPrometheusMetrics } from './services/metrics.ts';
+import { errorTracker } from './services/sentry.ts';
 import { sendMail } from './mailer.ts';
 import { auditLog, user } from '@twinmos/db';
 import { eq } from 'drizzle-orm';
 import type { DB } from '@twinmos/db';
+
 import type { Context } from 'hono';
 
 /**
@@ -34,10 +48,17 @@ import type { Context } from 'hono';
  * fall back to the socket address, and tests keep working because they run
  * with TRUST_PROXY=1 (see p*-*.e2e.test.ts env blocks).
  */
+/**
+ * Real client IP resolution (T2.5.2 / S-10 / Z-28).
+ * When TRUST_PROXY=1 (behind edge reverse proxy), trusts ONLY the validated
+ * `x-real-ip` header written by nginx from trusted Cloudflare CIDRs.
+ * Drops all `cf-connecting-ip` and `x-forwarded-for` fallbacks so forged headers
+ * can never spoof the client key.
+ * In untrusted environments (TRUST_PROXY !== '1'), strictly uses TCP socket remote address.
+ */
 export function clientIp(c: Context): string {
-  const trustHeader = process.env.TRUST_PROXY === '1' || process.env.NODE_ENV !== 'production';
-  if (trustHeader) {
-    return c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'local';
+  if (process.env.TRUST_PROXY === '1') {
+    return c.req.header('x-real-ip') ?? 'local';
   }
   const addr = (c.env as { incoming?: { socket?: { remoteAddress?: string } } })?.incoming?.socket?.remoteAddress;
   return addr ?? 'unknown';
@@ -65,15 +86,18 @@ function startAuditRetention(db: DB): void {
 
 export function buildApp(db: DB) {
   const { auth, requireRole, sessionFromRequest } = initAuth(db);
-  const app = new Hono<{ Variables: { requestId: string } }>();
+  const app = new Hono<{ Variables: { requestId: string; logger: ReturnType<typeof createRequestLogger> } }>();
 
-  if (process.env.NODE_ENV !== 'test') app.use(logger());
+  if (process.env.NODE_ENV !== 'test') {
+    app.use(logger((str) => console.log(redactPersonalData(str))));
+  }
   // ---- P7: security headers on every API response (OWASP secure-headers) ----
   app.use('*', async (c, next) => {
     c.header('X-Content-Type-Options', 'nosniff');
     c.header('X-Frame-Options', 'DENY');
     c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
     c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+    c.header('X-Robots-Tag', 'noindex, nofollow');
     // API responses are JSON — a locked-down CSP also neutralises any future
     // HTML echo; frame-ancestors blocks clickjacking of any error pages.
     c.header('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
@@ -106,22 +130,38 @@ export function buildApp(db: DB) {
     })(c, next);
   });
   app.use('*', async (c, next) => {
-    const requestId = crypto.randomUUID();
+    const incomingReqId = c.req.header('x-request-id');
+    const requestId = incomingReqId && incomingReqId.trim().length > 0 ? incomingReqId.trim() : crypto.randomUUID();
     c.set('requestId', requestId);
     c.header('X-Request-Id', requestId);
+    const reqLogger = createRequestLogger(requestId);
+    c.set('logger', reqLogger);
+    const start = Date.now();
     await next();
+    const duration = Date.now() - start;
+    alertManager.recordRequest(c.res.status, duration);
+    reqLogger.info({
+      method: c.req.method,
+      path: c.req.path,
+      status: c.res.status,
+      durationMs: duration,
+      ip: clientIp(c),
+    }, `${c.req.method} ${c.req.path} ${c.res.status} in ${duration}ms`);
   });
 
-  // Tiered body limit middleware (NF-18, NEW-05)
+  // Tiered body limit middleware (NF-18, NEW-05, V-14, T2.5.5, Z-32)
+  // Ensures 3-layer tier agreement: nginx cap >= API tier >= handler limit.
+  // Handler limits: media 10 MB, serials 10 MB, partner assets 25 MB.
+  // API tiers provide headroom for multipart boundaries & headers.
   app.use('/api/v1/*', async (c, next) => {
     const p = c.req.path;
     let maxSize = 256 * 1024; // 256 KB default
     if (p.startsWith('/api/v1/admin/media') || p.startsWith('/api/v1/admin/serials/import')) {
-      maxSize = 10 * 1024 * 1024; // 10 MB media / serial CSV ingest
-    } else if (p.startsWith('/api/v1/partner')) {
-      maxSize = 25 * 1024 * 1024; // 25 MB partner assets
+      maxSize = 12 * 1024 * 1024; // 12 MB (handler 10 MB + multipart/CSV overhead; nginx cap 15 MB)
+    } else if (p.startsWith('/api/v1/admin/partner-orgs/') && p.endsWith('/assets')) {
+      maxSize = 28 * 1024 * 1024; // 28 MB (handler 25 MB + multipart overhead; nginx cap 30 MB)
     } else if (p.startsWith('/api/v1/auth')) {
-      maxSize = 64 * 1024; // 64 KB auth
+      maxSize = 64 * 1024; // 64 KB auth (nginx cap 1 MB)
     }
 
     return bodyLimit({
@@ -140,6 +180,10 @@ export function buildApp(db: DB) {
   const FORM_BUCKETS = new Map<string, { count: number; resetAt: number }>();
   let bucketSweepAt = 0;
   app.use('/api/v1/forms/*', async (c, next) => {
+    if (c.req.method !== 'POST' || c.req.path === '/api/v1/forms/token') return next();
+    // 256-bit single-purpose tokens: RFC 8058 one-click unsubscribes arrive from
+    // shared mailbox-provider IPs and must never be throttled away (ZT-048).
+    if (c.req.path === '/api/v1/forms/newsletter/unsubscribe' || c.req.path === '/api/v1/forms/newsletter/confirm') return next();
     const ip = clientIp(c);
     const now = Date.now();
     // periodic sweep: IPs that never return must not accumulate forever
@@ -164,6 +208,11 @@ export function buildApp(db: DB) {
 
   // ---- P5 SN-check rate limit: 10/min/IP (sweeping shared with forms buckets) ----
   app.use('/api/v1/sn-check', async (c, next) => {
+    // This public endpoint fronts Cloudflare, which stamps cf-connecting-ip;
+    // bucket on it when present so proxied clients get per-IP buckets while
+    // the spoofable header stays ignored everywhere else (T2.5 clientIp rule).
+    // clientIp() only (Z-28): a raw cf-connecting-ip header is client-forgeable
+    // whenever a request reaches the API without the edge rewriting it.
     const ip = clientIp(c);
     const now = Date.now();
     if (now > bucketSweepAt) {
@@ -184,6 +233,88 @@ export function buildApp(db: DB) {
       return c.json(problem(429, 'Too Many Requests', 'Limit is 10 serial checks per minute.'), 429, { 'Content-Type': 'application/problem+json' });
     }
     return next();
+  });
+
+  // ---- RMA status-check rate limit: 10/min/IP (zero-trust audit finding: GET
+  // /rma/:number is number-only, so an unthrottled client could sweep the
+  // TM-RMA-YYYY-NNNNNN keyspace and read the status/timeline/masked-customer
+  // projection of every live RMA. Same bucket scheme as sn-check.) ----
+  // Same 10/min/IP bucket scheme for the warranty lookup/registration endpoints
+  // (serial + e-mail pairs must not be guessable at speed).
+  const perMinute = (prefix: string, limit: number, what: string) => async (c: Context, next: () => Promise<void>) => {
+    const ip = clientIp(c);
+    const now = Date.now();
+    if (now > bucketSweepAt) {
+      bucketSweepAt = now + 60_000;
+      for (const [k, v] of FORM_BUCKETS) {
+        if (v.resetAt < now) FORM_BUCKETS.delete(k);
+      }
+    }
+    const key = prefix + ip;
+    const bucket = FORM_BUCKETS.get(key);
+    if (!bucket || bucket.resetAt < now) {
+      FORM_BUCKETS.set(key, { count: 1, resetAt: now + 60_000 });
+      return next();
+    }
+    bucket.count += 1;
+    if (bucket.count > limit) {
+      c.header('Retry-After', String(Math.ceil((bucket.resetAt - now) / 1000)));
+      return c.json(problem(429, 'Too Many Requests', `Limit is ${limit} ${what} per minute.`), 429, { 'Content-Type': 'application/problem+json' });
+    }
+    return next();
+  };
+  app.use('/api/v1/rma/*', perMinute('rma:', 10, 'RMA status checks'));
+  app.use('/api/v1/forms/rma/*', perMinute('rma:', 10, 'RMA status checks')); // legacy alias shares the bucket (ZT-026)
+  app.use('/api/v1/warranty/*', perMinute('warranty:', 10, 'warranty requests'));
+
+  // Reject non-JSON content types on /api/v1/auth/* POST routes (415) to eliminate lockout bypass
+  app.post('/api/v1/auth/*', async (c, next) => {
+    const contentType = c.req.header('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return c.json(
+        problem(415, 'Unsupported Media Type', 'Content-Type must be application/json'),
+        415,
+        { 'Content-Type': 'application/problem+json' }
+      );
+    }
+    return next();
+  });
+
+  // ---- Sign-in rate limit: 3-5 requests / minute / client IP (S-09, S-10, T2.5.3, T2.5.4) ----
+  const SIGNIN_BUCKETS = new Map<string, { count: number; resetAt: number }>();
+  app.use('/api/v1/auth/sign-in/*', async (c, next) => {
+    const ip = clientIp(c);
+    const now = Date.now();
+    if (now > bucketSweepAt) {
+      bucketSweepAt = now + 60_000;
+      for (const [k, v] of SIGNIN_BUCKETS) {
+        if (v.resetAt < now) SIGNIN_BUCKETS.delete(k);
+      }
+    }
+    const limit = Number(process.env.AUTH_SIGNIN_LIMIT ?? 3);
+    const bucket = SIGNIN_BUCKETS.get(ip);
+    if (!bucket || bucket.resetAt < now) {
+      SIGNIN_BUCKETS.set(ip, { count: 1, resetAt: now + 60_000 });
+      await next();
+      if (c.res?.status === 200) {
+        SIGNIN_BUCKETS.delete(ip);
+      }
+      return;
+    }
+    bucket.count += 1;
+    if (bucket.count > limit) {
+      const waitSec = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
+      c.header('Retry-After', String(waitSec));
+      return c.json(
+        problem(429, 'Too Many Requests', `Sign-in limit exceeded. Limit is ${limit} attempts per minute.`),
+        429,
+        { 'Content-Type': 'application/problem+json' }
+      );
+    }
+    await next();
+    if (c.res?.status === 200) {
+      SIGNIN_BUCKETS.delete(ip);
+    }
   });
 
   // ---- error envelope: RFC 9457 problem+json on every API error ----
@@ -218,6 +349,226 @@ export function buildApp(db: DB) {
       );
     }
   });
+
+  // Operational endpoints (deep health, metrics) answer only the monitoring
+  // stack (x-internal-secret) or a signed-in staff member — never the public.
+  const opsAllowed = async (c: Context): Promise<boolean> => {
+    if (process.env.NODE_ENV === 'test') return true;
+    const internalSecret = c.req.header('x-internal-secret');
+    const internalExpected = process.env.REVALIDATE_SECRET || (process.env.NODE_ENV !== 'production' ? 'dev-revalidate-secret' : undefined);
+    if (internalSecret && internalExpected) {
+      const provBuf = Buffer.from(internalSecret, 'utf8');
+      const expBuf = Buffer.from(internalExpected, 'utf8');
+      if (provBuf.length === expBuf.length && timingSafeEqual(provBuf, expBuf)) return true;
+    }
+    const sess = await sessionFromRequest(c.req.raw);
+    return Boolean(sess?.user && ['super_admin', 'admin', 'editor', 'author', 'viewer'].includes(sess.user.role));
+  };
+
+  // Task F2 / OBS-01: Deep health inspection with component diagnostics & latency
+  app.get('/api/v1/health/deep', async (c) => {
+    if (!(await opsAllowed(c))) {
+      return c.json(problem(401, 'Unauthorized', 'Viewer+ session required'), 401, {
+        'Content-Type': 'application/problem+json',
+      });
+    }
+
+    const t0 = Date.now();
+    let dbStatus = 'connected';
+    let dbLatencyMs = 0;
+    let outboxQueueDepth = 0;
+    try {
+      await db.execute(sql`select 1`);
+      dbLatencyMs = Date.now() - t0;
+    } catch {
+      dbStatus = 'unreachable';
+    }
+
+    try {
+      const outboxRes: any = await db.execute(sql`SELECT count(*)::int as cnt FROM outbox WHERE processed_at IS NULL`);
+      const rows = Array.isArray(outboxRes) ? outboxRes : (outboxRes?.rows ?? []);
+      outboxQueueDepth = Number(rows[0]?.cnt ?? 0);
+    } catch {
+      // Outbox query optional if table uninitialized in non-outbox tests
+    }
+
+    const metrics = alertManager.getMetrics();
+    const firingAlerts = alertManager.getFiringCount();
+    const resourceStatus = alertManager.inspectSystemResources();
+    // Roadmap R0.3: never degrade health on alert count
+    const isDegraded = dbStatus !== 'connected';
+
+    return c.json({
+      status: isDegraded ? 'degraded' : 'ok',
+      service: 'twinmos-api',
+      version: '0.3.0',
+      uptimeSec: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
+      components: {
+        database: { status: dbStatus, latencyMs: dbLatencyMs },
+        outbox: { status: outboxQueueDepth > 100 ? 'backlogged' : 'healthy', pendingCount: outboxQueueDepth },
+        alerts: { firingCount: firingAlerts, metrics },
+        resources: {
+          disk: resourceStatus.diskOk ? 'healthy' : 'warning',
+          backups: resourceStatus.backupOk ? 'healthy' : 'stale',
+          tls: resourceStatus.certOk ? 'valid' : 'expiring',
+        },
+      },
+    }, isDegraded ? 503 : 200);
+  });
+
+  // Task F2 / T7.2.3 / OBS-01: Metrics endpoint (Prometheus exposition format + JSON fallback)
+  app.get('/api/v1/metrics', async (c) => {
+    // ZT-010: counters, DB state and uptime are reconnaissance data — not public.
+    if (!(await opsAllowed(c))) {
+      return c.json(problem(401, 'Unauthorized', 'Monitoring secret or staff session required'), 401, { 'Content-Type': 'application/problem+json' });
+    }
+    let dbStatus = true;
+    try {
+      await db.execute(sql`select 1`);
+    } catch {
+      dbStatus = false;
+    }
+    const accept = c.req.header('accept') || '';
+    if (accept.includes('application/json')) {
+      return c.json({
+        metrics: alertManager.getMetrics(),
+        firingAlerts: alertManager.getFiringCount(),
+        dbConnected: dbStatus,
+        uptimeSec: Math.floor(process.uptime()),
+      });
+    }
+    return c.text(getPrometheusMetrics(dbStatus), 200, {
+      'Content-Type': 'text/plain; version=0.0.4; charset=utf-8',
+    });
+  });
+
+  // Per-account login lockout guard (T2.4.5 / S-06 / LOCK-CT / A4a):
+  // Tracks consecutive failed login attempts by email address in PostgreSQL (`failed_login_count`,
+  // `locked_until` on `user` table), surviving API process restarts. Non-existent accounts fall back
+  // to in-memory tracking to throttle enumeration without DB write amplification.
+  const MEMORY_LOGIN_FAILURES = new Map<string, { count: number; lockedUntil: number }>();
+
+
+  app.post('/api/v1/auth/sign-in/email', async (c) => {
+    let email = '';
+    try {
+      const cloned = c.req.raw.clone();
+      const body = await cloned.json();
+      if (typeof body?.email === 'string') email = body.email.toLowerCase().trim();
+    } catch { /* proceed */ }
+
+    const now = Date.now();
+    let dbUser: { id: string; emailVerified: boolean; failedLoginCount: number; lockedUntil: Date | null } | undefined;
+    if (email) {
+      try {
+        const rows = await db.select({
+          id: user.id,
+          emailVerified: user.emailVerified,
+          failedLoginCount: user.failedLoginCount,
+          lockedUntil: user.lockedUntil,
+        }).from(user).where(eq(sql`lower(${user.email})`, email)).limit(1);
+        dbUser = rows[0];
+      } catch (err) {
+        console.warn('[auth.lockout] DB lookup error:', err);
+      }
+
+      const isDbLocked = dbUser?.lockedUntil && dbUser.lockedUntil.getTime() > now;
+      const memRec = MEMORY_LOGIN_FAILURES.get(email);
+      const isMemLocked = memRec && memRec.lockedUntil > now;
+
+      if (isDbLocked || isMemLocked) {
+        const lockExpiry = isDbLocked ? dbUser!.lockedUntil!.getTime() : memRec!.lockedUntil;
+        const waitSec = Math.max(1, Math.ceil((lockExpiry - now) / 1000));
+        c.header('Retry-After', String(waitSec));
+        return c.json(
+          problem(401, 'Account Locked', 'Account is temporarily locked due to too many failed attempts. Try again later.'),
+          401,
+          { 'Content-Type': 'application/problem+json' }
+        );
+      }
+    }
+
+    const res = await auth.handler(c.req.raw);
+    if (email) {
+      if (res.status === 200) {
+        // Successful sign-in: reset failure count and lockout in DB and memory
+        if (dbUser && (dbUser.failedLoginCount > 0 || dbUser.lockedUntil !== null)) {
+          try {
+            await db.update(user).set({
+              failedLoginCount: 0,
+              lockedUntil: null,
+              updatedAt: new Date(),
+            }).where(eq(user.id, dbUser.id));
+          } catch { /* non-fatal */ }
+        }
+        MEMORY_LOGIN_FAILURES.delete(email);
+
+        // Security (Roadmap MS2.4 / T2.4.1 / S-05): unverified sign-in rejection
+        const requireEmailVerification = process.env.NODE_ENV === 'production' || process.env.REQUIRE_EMAIL_VERIFICATION === '1';
+        if (requireEmailVerification && dbUser && !dbUser.emailVerified) {
+          return c.json(
+            {
+              ...problem(403, 'Email Not Verified', 'Your email address has not been verified. Please check your inbox for the verification link.'),
+              code: 'EMAIL_NOT_VERIFIED',
+            },
+            403,
+            { 'Content-Type': 'application/problem+json' }
+          );
+        }
+      } else if (res.status === 401) {
+        if (dbUser) {
+          const newCount = (dbUser.failedLoginCount ?? 0) + 1;
+          let newLockedUntil: Date | null = null;
+          if (newCount >= 5) {
+            newLockedUntil = new Date(now + 15 * 60_000);
+            console.warn(`[auth] Account locked for ${email} after ${newCount} failed attempts (persisted to DB)`);
+            alertManager.recordLockout(email, clientIp(c), newCount);
+          }
+          try {
+            await db.update(user).set({
+              failedLoginCount: newCount,
+              lockedUntil: newLockedUntil,
+              updatedAt: new Date(),
+            }).where(eq(user.id, dbUser.id));
+          } catch (err) {
+            console.warn('[auth.lockout] DB update error:', err);
+          }
+        } else {
+          const mem = MEMORY_LOGIN_FAILURES.get(email) ?? { count: 0, lockedUntil: 0 };
+          mem.count += 1;
+          if (mem.count >= 5) {
+            mem.lockedUntil = now + 15 * 60_000;
+            console.warn(`[auth] Non-existent account locked for ${email} after 5 failed attempts`);
+            alertManager.recordLockout(email, clientIp(c), mem.count);
+          }
+          MEMORY_LOGIN_FAILURES.set(email, mem);
+        }
+      }
+    }
+    return res;
+  });
+
+  // Password reset bridge: maps /forget-password to Better Auth /request-password-reset
+  app.post('/api/v1/auth/forget-password', async (c) => {
+    let bodyJson: any = {};
+    try {
+      bodyJson = await c.req.raw.clone().json();
+    } catch { /* empty */ }
+    const email = bodyJson?.email ?? '';
+    const redirectTo = bodyJson?.redirectTo ?? '';
+    const origin = (process.env.BETTER_AUTH_URL ?? 'http://127.0.0.1:8787').replace(/\/$/, '');
+    const resetReq = new Request(`${origin}/api/v1/auth/request-password-reset`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(c.req.header('x-real-ip') ? { 'x-real-ip': c.req.header('x-real-ip')! } : {}),
+      },
+      body: JSON.stringify({ email, redirectTo }),
+    });
+    return auth.handler(resetReq);
+  });
+
   app.all('/api/v1/auth/*', (c) => auth.handler(c.req.raw));
 
   // ---- dev-only auto-login (operator convenience during console iteration) ----
@@ -245,8 +596,10 @@ export function buildApp(db: DB) {
     return new Response(signIn.body, { status: signIn.status, headers: signIn.headers });
   });
 
-  app.route('/api/v1', formsRoute(db));
+  app.route('/api/v1', formsRoute(db, clientIp));
+  app.route('/api/v1/consent', consentRoute(db, clientIp)); // T6.3.2 / CONSENT-01 public consent collection
   app.route('/api/v1', previewRoute(db)); // public, token-gated draft previews
+  app.route('/api/v1/delivery', makeDeliveryRouter(db, sessionFromRequest)); // Phase B Task B3 Delivery API
   // ---- P1.4: forced password rotation guard + member role restriction ------
   // Accounts invited with a system-generated temporary credential are refused
   // by every /admin route until they set their own password.
@@ -267,13 +620,27 @@ export function buildApp(db: DB) {
         { 'Content-Type': 'application/problem+json' },
       );
     }
-    const row = (await db.select({ f: user.mustChangePassword }).from(user).where(eq(user.id, s.user.id)).limit(1))[0];
+    const row = (await db.select({ f: user.mustChangePassword, mfa: user.twoFactorEnabled }).from(user).where(eq(user.id, s.user.id)).limit(1))[0];
     if (row?.f) {
       return c.json(
         problem(403, 'Password change required', 'This account was invited with a temporary password — set a new password before using the console.'),
         403,
         { 'Content-Type': 'application/problem+json' },
       );
+    }
+    // S-07 / T2.4.6 / A4a: MFA enforcement on all /admin routes (including GET) for editor and above
+    const enforceMfa = process.env.NODE_ENV === 'production' || process.env.ENFORCE_MFA !== '0';
+    if (enforceMfa) {
+      if (!row?.mfa && ['super_admin', 'admin', 'editor'].includes(s.user.role)) {
+        return c.json(
+          {
+            ...problem(403, 'MFA Enrollment Required', 'Two-factor authentication must be enrolled before accessing the administrative console.'),
+            code: 'MFA_REQUIRED',
+          },
+          403,
+          { 'Content-Type': 'application/problem+json' }
+        );
+      }
     }
     return next();
   });
@@ -283,12 +650,17 @@ export function buildApp(db: DB) {
   app.route('/api/v1/admin', contentRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', mediaRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', settingsRoute(db, { requireRole, sessionFromRequest }));
+  app.route('/api/v1/admin', navigationRoute(db, { requireRole, sessionFromRequest }));
+  app.route('/api/v1/admin', entitiesRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', translationsRoute(db, { requireRole, sessionFromRequest })); // P4
+  app.route('/api/v1/admin/privacy', privacyRoute(db, { requireRole, sessionFromRequest })); // Phase E DSAR & Retention Operations
   app.route('/api/v1', i18nPublicRoute(db)); // public i18n bundles (P4)
   app.route('/api/v1', publicMediaRoute(db)); // P8 imagery bridge — public read-only product imagery
   app.route('/api/v1', partnerRoute(db, { requireRole, sessionFromRequest })); // P5 portal (member)
-  app.route('/api/v1/admin', partnerAdminRoute(db, { requireRole, sessionFromRequest })); // P5 portal (admin)
-  app.route('/api/v1', snCheckRoute(db)); // P5 public anti-counterfeit check
+  app.route('/api/v1/admin', partnerAdminRoute(db, { requireRole, sessionFromRequest, auth })); // P5 portal (admin)
+  app.route('/api/v1', snCheckRoute(db, clientIp)); // P5 public anti-counterfeit check
+  app.route('/api/v1', warrantyRoute(db)); // BRD §F8.3 warranty registration & lookup
+  app.route('/api/v1/admin', warrantyAdminRoute(db, { requireRole, sessionFromRequest }));
   app.route('/api/v1/admin', snReportRoute(db, { requireRole, sessionFromRequest })); // P5 reporting
   // Phase 5.3: serial registry management — batch CSV ingest, search and the
   // >5-distinct-IPs/24h counterfeit anomaly scan. Ops alert recipient comes
@@ -313,5 +685,59 @@ export function buildApp(db: DB) {
     return c.json({ promoted });
   });
 
+  // Outbox revalidation dispatch endpoint (Phase B Task B7)
+  app.post('/api/v1/admin/cron/dispatch-outbox', async (c) => {
+    const s = await sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': 'application/problem+json' });
+    if (!(await requireRole('editor')(c.req.raw))) {
+      return c.json(problem(403, 'Requires editor role or above'), 403, { 'Content-Type': 'application/problem+json' });
+    }
+    const result = await dispatchOutbox(db);
+    return c.json(result);
+  });
+
+  // Task F2 / OBS-01: Admin Alert Management endpoints
+  app.get('/api/v1/admin/alerts', async (c) => {
+    const s = await sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': 'application/problem+json' });
+    if (!(await requireRole('viewer')(c.req.raw))) {
+      return c.json(problem(403, 'Forbidden', 'Requires viewer or above'), 403, { 'Content-Type': 'application/problem+json' });
+    }
+    // Task F2 / OBS-01 / Z-29: Redact emails and IPs for viewer role users
+    const isFullPrivilege = ['super_admin', 'admin'].includes(s.user.role);
+    const alerts = isFullPrivilege ? alertManager.getAlerts() : alertManager.getAlertsForViewer();
+    return c.json({
+      alerts,
+      summary: alertManager.getSummary(),
+    });
+  });
+
+  app.post('/api/v1/admin/alerts/test', async (c) => {
+    const s = await sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': 'application/problem+json' });
+    if (!(await requireRole('admin')(c.req.raw))) {
+      return c.json(problem(403, 'Forbidden', 'Requires admin role'), 403, { 'Content-Type': 'application/problem+json' });
+    }
+    const mode = c.req.query('mode');
+    if (mode === 'all' || mode === 'drill') {
+      const fired = alertManager.fireAllAlertRulesOnce({ triggeredBy: s.user.email });
+      return c.json({ triggered: true, count: fired.length, alerts: fired });
+    }
+    const alert = alertManager.recordAlert('manual.test', 'Manual Ops Alert Test', 'Verification ping from admin console', 'info', { triggeredBy: s.user.email });
+    return c.json({ triggered: true, alert });
+  });
+
+  app.post('/api/v1/admin/alerts/:id/resolve', async (c) => {
+    const s = await sessionFromRequest(c.req.raw);
+    if (!s) return c.json(problem(401, 'Unauthorized'), 401, { 'Content-Type': 'application/problem+json' });
+    if (!(await requireRole('admin')(c.req.raw))) {
+      return c.json(problem(403, 'Forbidden', 'Requires admin role'), 403, { 'Content-Type': 'application/problem+json' });
+    }
+    const id = c.req.param('id');
+    const resolved = alertManager.resolveAlert(id);
+    return c.json({ resolved, id });
+  });
+
   return app;
 }
+

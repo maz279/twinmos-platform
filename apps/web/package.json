@@ -4,24 +4,27 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && pagefind --site dist",
+    "typecheck": "astro check",
+    "build": "astro build",
+    "postbuild": "node ../../tooling/write-build-info.mjs dist",
     "build:only": "astro build",
     "preview": "astro preview",
-    "port": "python ../../tooling/port_pages.py",
-    "sitemap": "python ../../tooling/gen_sitemap.py",
-    "predev": "node ../../tooling/sync-prototype-assets.mjs",
-    "prebuild": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/export-content.mjs || node ../../tooling/export-fallback.mjs",
+    "sitemap": "node ../../tooling/gen_sitemap.mjs",
+    "catalog:build": "node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts",
+    "predev": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts",
+    "prebuild": "node ../../tooling/sync-prototype-assets.mjs && node --experimental-strip-types --no-warnings ../../tooling/build-catalog-data.ts && node ../../tooling/sync-admin-dist.mjs",
     "sync:proto": "node ../../tooling/sync-prototype-assets.mjs",
-    "import:corpus": "node --experimental-strip-types --no-warnings ../../tooling/import-corpus.ts",
-    "export:content": "node --experimental-strip-types --no-warnings ../../tooling/export-content.mjs"
+    "import:corpus": "node --experimental-strip-types --no-warnings ../../tooling/import-corpus.ts"
   },
   "dependencies": {
+    "@astrojs/check": "0.9.10",
+    "@astrojs/node": "11.1.7",
+    "@twinmos/shared": "0.1.0",
     "astro": "^7.3.5",
-    "@twinmos/shared": "0.1.0"
+    "isomorphic-dompurify": "^4.4.0"
   },
   "devDependencies": {
     "axe-core": "^4.13.0",
-    "lighthouse": "^12.0.0",
-    "pagefind": "^1.5.2"
+    "lighthouse": "^12.0.0"
   }
 }

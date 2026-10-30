@@ -1,0 +1,16 @@
+[
+  {
+    "route": "/planted-broken-probe-404.html",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "pageErrors": [],
+    "csp": [],
+    "failed": [
+      "404 http://localhost:4321/planted-broken-probe-404"
+    ],
+    "status": 404,
+    "title": "404 Not Found",
+    "hasTM": false
+  }
+]

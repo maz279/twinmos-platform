@@ -12,6 +12,7 @@ process.env.MAIL_OUTBOX_DIR = join(TMP, 'outbox');
 process.env.FORMS_TO = 'support@twinmos.dev';
 process.env.API_ALLOW_NO_TURNSTILE = '1';
 process.env.NODE_ENV = 'test';
+process.env.TRUST_PROXY = '1'; // the edge stamps x-real-ip; clientIp() reads it only behind the proxy
 process.env.PARTNER_FILES_DIR = join(TMP, 'partner-files');
 
 const { createDb, user, partnerOrg, partnerMember, partnerAsset, serialRegistry, snCheck }: any = await import('@twinmos/db');
@@ -53,7 +54,9 @@ afterAll(async () => {
   rmSync(TMP, { recursive: true, force: true });
 });
 
-const ip = (n: number) => ({ 'x-forwarded-for': `10.9.0.${n}` });
+// The public sn-check rate limiter and the anomaly signal both use clientIp():
+// x-real-ip set by the edge (TRUST_PROXY=1); raw client headers are untrusted (T2.5).
+const ip = (n: number) => ({ 'x-real-ip': `10.9.0.${n}` });
 
 describe('partner portal', () => {
   let orgId = 0;
@@ -121,12 +124,14 @@ describe('partner portal', () => {
       body: JSON.stringify({ email: 'p5-dist@twinmos.dev' }),
     });
     expect(dup.status).toBe(409);
+    // A1: staff invitation auto-provisions user account (role: member) when user does not exist yet
     const ghost = await app.request(`/api/v1/admin/partner-orgs/${orgId}/members`, {
       method: 'POST', headers: { 'content-type': 'application/json', cookie: adminCookie },
       body: JSON.stringify({ email: 'ghost@nowhere.dev' }),
     });
-    expect(ghost.status).toBe(404);
-    expect((await ghost.json()).detail).toContain('account');
+    expect(ghost.status).toBe(201);
+    const ghostBody = await ghost.json();
+    expect(ghostBody.userCreated).toBe(true);
   });
 
   it('/partner/me returns org + role for the active member', async () => {

@@ -1,0 +1,10 @@
+PASS CMS-01 editor lists seeded pages
+PASS CMS-02 seeded page saves through the block contract
+PASS CMS-03 G-REFLECT: published edit visible to visitors within 5 s
+PASS CMS-04 script URL rejected by the block contract
+PASS CMS-05 unpublished page no longer served
+PASS CMS-06 author cannot publish
+PASS CMS-07a republish refused without an approver (provenance rule)
+PASS CMS-07 editor records an approver and republishes
+PASS CMS-08 page edits and transitions are audited
+cms-reflect: 9 checks, 0 failed

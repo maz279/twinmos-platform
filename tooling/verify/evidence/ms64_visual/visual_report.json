@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-10-26T09:55:30.434Z",
+  "milestone": "MS6.4",
+  "status": "PASS",
+  "scenes": [
+    {
+      "name": "Corporate Redirect",
+      "from": "/about-us",
+      "to": "http://127.0.0.1:4321/about",
+      "status": 200
+    },
+    {
+      "name": "Product PDP Redirect",
+      "from": "/product/twinmos-hyper-ssd-h2-ultra",
+      "to": "http://127.0.0.1:4321/products/hyper-ssd-h2-ultra",
+      "status": 200
+    },
+    {
+      "name": "Category Facet Redirect",
+      "from": "/product-category/solid-state-drive/sata-ssd",
+      "to": "http://127.0.0.1:4321/shop?cat=ssd-sata",
+      "status": 200
+    },
+    {
+      "name": "Prototype HTML Redirect",
+      "from": "/contact.html",
+      "to": "http://127.0.0.1:4321/contact",
+      "status": 200
+    },
+    {
+      "name": "410 Gone Terminal Page",
+      "from": "/wp-login.php",
+      "landedUrl": "http://127.0.0.1:4321/wp-login.php",
+      "status": 410
+    }
+  ],
+  "a11yAudits": [
+    {
+      "context": "410-Gone-Page",
+      "violationsCount": 0,
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+---
+// maintenance.astro — Dynamic SSR Maintenance Page rendered from CMS Delivery API.
+// Tasks D2, D8b, T5.2.2 / GPROV-100 / WCAG 2.2 AA compliant.
+import Layout from '../layouts/Layout.astro';
+import BlockDispatcher from '../components/blocks/BlockDispatcher.astro';
+import { getDeliveryPage } from '../lib/delivery';
+
+Astro.response.status = 503;
+
+const page = await getDeliveryPage('maintenance');
+const title = page?.title ?? "Scheduled Maintenance — TwinMOS";
+const desc = page?.seoDescription ?? "503 — scheduled maintenance.";
+const blocks = page?.blocks ?? [];
+const hasCmsBlocks = Array.isArray(blocks) && blocks.length > 0;
+
+if (page?.cacheTags && Array.isArray(page.cacheTags)) {
+  const tags = page.cacheTags.join(', ');
+  Astro.response.headers.set('Cache-Tag', tags);
+  Astro.response.headers.set('X-Cache-Tags', tags);
+}
+---
+
+<Layout title={title} desc={desc} noindex={true}>
+  <main id="main">
+    {hasCmsBlocks ? (
+      <BlockDispatcher blocks={blocks} />
+    ) : (
+      <section class="page-hero block-hero" style="min-height:55vh;display:flex;align-items:center;text-align:center" data-fallback="offline-maintenance">
+        <div class="wrap" style="max-width:680px;margin:0 auto">
+          <span class="eyebrow" style="color:var(--accent,#E02B20);font-weight:700">System Maintenance</span>
+          <h1 class="h1" style="margin:12px 0 16px">We will be right back</h1>
+          <p class="lede" style="margin-bottom:28px">Our systems are undergoing scheduled maintenance and upgrades. We apologize for the inconvenience and expect to be back online shortly.</p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <a class="btn btn-accent" href="/support">Check status</a>
+            <a class="btn btn-ghost" href="mailto:support@twinmos.com">Emergency support</a>
+          </div>
+        </div>
+      </section>
+    )}
+  </main>
+</Layout>

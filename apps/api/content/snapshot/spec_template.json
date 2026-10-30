@@ -1,0 +1,256 @@
+[
+ {
+  "id": 1,
+  "category_id": 1,
+  "name": "Gaming DRAM standard template",
+  "spec_keys": [
+   "Speed",
+   "Dimensions",
+   "CAS Latency",
+   "Memory Size",
+   "Memory Type",
+   "Module Type",
+   "Memory Color",
+   "Heat Spreader",
+   "Tested Voltage",
+   "Extended Timing",
+   "Package Memory Pin",
+   "Memory Tested Speed"
+  ],
+  "required_keys": [
+   "Speed",
+   "Dimensions",
+   "CAS Latency",
+   "Memory Size"
+  ],
+  "created_at": "2026-10-26T15:22:35.014Z"
+ },
+ {
+  "id": 2,
+  "category_id": 2,
+  "name": "Desktop DRAM standard template",
+  "spec_keys": [
+   "Voltage",
+   "Capacity",
+   "Form Factor",
+   "Heat Sink",
+   "CAS Latency",
+   "Speed",
+   "Blue",
+   "Silver",
+   "No Heatsink",
+   "2 GB",
+   "4 GB",
+   "8 GB"
+  ],
+  "required_keys": [
+   "Voltage",
+   "Capacity",
+   "Form Factor"
+  ],
+  "created_at": "2026-10-26T15:22:35.032Z"
+ },
+ {
+  "id": 3,
+  "category_id": 3,
+  "name": "Notebook DRAM standard template",
+  "spec_keys": [
+   "Capacity",
+   "Speed",
+   "Voltage",
+   "Form Factor",
+   "CAS Latency",
+   "Brands",
+   "4 GB",
+   "8 GB",
+   "16 GB",
+   "Part No.",
+   "MDD32GB1600N",
+   "MDD34GB1600N"
+  ],
+  "required_keys": [
+   "Capacity"
+  ],
+  "created_at": "2026-10-26T15:22:35.035Z"
+ },
+ {
+  "id": 4,
+  "category_id": 4,
+  "name": "NVMe SSD standard template",
+  "spec_keys": [
+   "Color",
+   "Capacity",
+   "Warranty",
+   "Endurance",
+   "Interface",
+   "NAND Type",
+   "S.M.A.R.T",
+   "Form Factor",
+   "Compatible OS",
+   "Wear Leveling",
+   "NAND Flash Brand",
+   "Bad Block Management"
+  ],
+  "required_keys": [
+   "Color",
+   "Capacity",
+   "Warranty",
+   "Endurance"
+  ],
+  "created_at": "2026-10-26T15:22:35.041Z"
+ },
+ {
+  "id": 5,
+  "category_id": 5,
+  "name": "SATA SSD standard template",
+  "spec_keys": [
+   "1 TB",
+   "Color",
+   "128 GB",
+   "256 GB",
+   "512 GB",
+   "Capacity",
+   "Warranty",
+   "Endurance",
+   "Interface",
+   "NAND Type",
+   "S.M.A.R.T",
+   "Form Factor"
+  ],
+  "required_keys": [
+   "1 TB",
+   "Color",
+   "128 GB",
+   "256 GB"
+  ],
+  "created_at": "2026-10-26T15:22:35.044Z"
+ },
+ {
+  "id": 6,
+  "category_id": 6,
+  "name": "Portable SSD standard template",
+  "spec_keys": [
+   "1 TB",
+   "2 TB",
+   "Color",
+   "Brands",
+   "Capacity",
+   "Warranty",
+   "Endurance",
+   "Interface",
+   "NAND Type",
+   "S.M.A.R.T",
+   "Form Factor",
+   "Compatible OS"
+  ],
+  "required_keys": [
+   "1 TB",
+   "2 TB",
+   "Color",
+   "Brands"
+  ],
+  "created_at": "2026-10-26T15:22:35.046Z"
+ },
+ {
+  "id": 7,
+  "category_id": 7,
+  "name": "Portable HDD standard template",
+  "spec_keys": [
+   "Color",
+   "Capacity",
+   "Warranty",
+   "Interface",
+   "Compatible OS",
+   "1 TB",
+   "Weight",
+   "Dimensions",
+   "Case Material",
+   "RPM (Revolutions Per Minute):",
+   "Brands",
+   "Part No."
+  ],
+  "required_keys": [
+   "Color",
+   "Capacity",
+   "Warranty",
+   "Interface"
+  ],
+  "created_at": "2026-10-26T15:22:35.049Z"
+ },
+ {
+  "id": 8,
+  "category_id": 8,
+  "name": "USB Flash Drive standard template",
+  "spec_keys": [
+   "Brands",
+   "Weight",
+   "Capacity",
+   "Dimensions",
+   "Material",
+   "Voltage",
+   "Warranty",
+   "Interface",
+   "Sequential Read Speed"
+  ],
+  "required_keys": [
+   "Brands",
+   "Weight",
+   "Capacity",
+   "Dimensions"
+  ],
+  "created_at": "2026-10-26T15:22:35.051Z"
+ },
+ {
+  "id": 9,
+  "category_id": 9,
+  "name": "MicroSD Card standard template",
+  "spec_keys": [
+   "Warranty",
+   "Working voltage",
+   "Data transfer rate",
+   "Static temperature",
+   "Operation temperature"
+  ],
+  "required_keys": [
+   "Warranty",
+   "Working voltage",
+   "Data transfer rate",
+   "Static temperature"
+  ],
+  "created_at": "2026-10-26T15:22:35.056Z"
+ },
+ {
+  "id": 10,
+  "category_id": 10,
+  "name": "Power Supply standard template",
+  "spec_keys": [],
+  "required_keys": [],
+  "created_at": "2026-10-26T15:22:35.059Z"
+ },
+ {
+  "id": 11,
+  "category_id": 11,
+  "name": "USB HUB standard template",
+  "spec_keys": [
+   "LEDs",
+   "Model",
+   "Ports",
+   "Humidity",
+   "Cable Length",
+   "Housing Case",
+   "Power Adaptor",
+   "Transfer Rate",
+   "Power  Voltage",
+   "Cable Connections",
+   "USB Specification",
+   "Storage Temperature"
+  ],
+  "required_keys": [
+   "LEDs",
+   "Model",
+   "Ports",
+   "Humidity"
+  ],
+  "created_at": "2026-10-26T15:22:35.062Z"
+ }
+]

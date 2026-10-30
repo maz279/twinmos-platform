@@ -1,65 +1,178 @@
 ---
-// P1 layout — owns the document shell (head + body wrapper + runtime scripts).
-// Page bodies are ported verbatim from the audited prototype (see tooling/port_pages.py)
-// so visual parity holds by construction. Chrome componentization lands with islands (P2+).
+// Layout.astro — Document shell and server-rendered Site Chrome (Tasks D1a, D1b, VC-D/E).
+import Header from '../components/chrome/Header.astro';
+import Drawer from '../components/chrome/Drawer.astro';
+import SearchOverlay from '../components/chrome/SearchOverlay.astro';
+import Breadcrumb from '../components/chrome/Breadcrumb.astro';
+import Footer from '../components/chrome/Footer.astro';
+import CookieBanner from '../components/chrome/CookieBanner.astro';
+import CompareTray from '../components/chrome/CompareTray.astro';
+import { getDeliverySettings, getDeliveryNavMenu, getDeliveryActiveLocales } from '../lib/delivery';
+import { SETTINGS_GROUP_DEFAULTS, resolveComputedFigures, jsonForScript } from '@twinmos/shared';
+
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
 interface Props {
   title: string;
   desc: string;
   bodyClass?: string;
   noindex?: boolean;
-  /** P4: locale of THIS page (affects lang/dir + which hreflang is canonical). */
   locale?: string;
-  /** P4: when true, emit the full 9-locale hreflang grid (locale landings only). */
   hreflangGrid?: boolean;
+  breadcrumbs?: BreadcrumbItem[];
+  renderChrome?: boolean;
+  ogImage?: string;
+  preloadImage?: string;
+  canonical?: string;
+  customLd?: (string | null | undefined)[];
 }
-const { title, desc, bodyClass = '', noindex = false, locale = 'en', hreflangGrid = false } = Astro.props;
-/* Homepage canonical is the site root (not /index.html) to avoid signal
- * fragmentation; other pages keep their .html path (build.format = 'file'). */
-const path = Astro.url.pathname === '/index.html' ? '/' : Astro.url.pathname;
-const canonical = new URL(path, Astro.site);
 
-/* P4: hreflang — 9-locale grid for locale landings; plain en/x-default on EN.
- * build.format:'file' emits landings as /{code}.html (consistent with the
- * whole site's /page.html URL scheme). */
+const {
+  title,
+  desc,
+  bodyClass = '',
+  noindex = false,
+  locale = 'en',
+  hreflangGrid = false,
+  breadcrumbs = [],
+  renderChrome = true,
+  ogImage: customOgImage,
+  preloadImage,
+  canonical: customCanonical,
+  customLd,
+} = Astro.props;
+
+const path = Astro.url.pathname === '/index.html' ? '/' : Astro.url.pathname;
+const siteOrigin = Astro.site || 'https://www.twinmos.com';
+const canonical = customCanonical
+  ? (customCanonical.startsWith('http') ? new URL(customCanonical) : new URL(customCanonical, siteOrigin))
+  : new URL(path, siteOrigin);
+
+const isPreview = Astro.url.searchParams.get('preview') === 'true';
+const shouldNoindex = Boolean(noindex || isPreview);
+if (shouldNoindex) {
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+}
+
 const LOCALES = ['en', 'ar', 'hi', 'ru', 'zh-cn', 'fr', 'es', 'pt', 'de'];
 const RTL = ['ar'];
-// dir is emitted ONLY for RTL — the prototype ships LTR pages with no dir
-// attribute, and an explicit dir="ltr" measurably shifts Chrome's text
-// layout (parity @390 dropped ~4pp on every text line until this matched).
 const dir = RTL.includes(locale) ? 'rtl' : undefined;
-const localeUrl = (code: string) =>
-  code === 'en'
-    ? new URL(hreflangGrid ? '/' : (path === '/' ? '/' : path), Astro.site) // landings mirror the homepage
-    : new URL(`/${code}.html`, Astro.site);
+
+const localeUrl = (code: string) => {
+  const origin = Astro.site || 'https://www.twinmos.com';
+  if (hreflangGrid) return new URL(code === 'en' ? '/' : `/${code}`, origin);
+  // An English page is its own alternate; a localised page alternates to the
+  // locale-stripped English path and to the same path under each locale.
+  if (locale === 'en') return new URL(path, origin);
+  const rest = path.replace(new RegExp(`^/${locale}(?=/|$)`), '') || '/';
+  return new URL(
+    code === 'en' ? rest : `/${code}${rest === '/' ? '' : rest}`,
+    origin,
+  );
+};
+
+const [settings, headerMenu, drawerMenu, footerMenu, activeLocales] = await Promise.all([
+  getDeliverySettings(),
+  getDeliveryNavMenu('header', locale),
+  getDeliveryNavMenu('drawer', locale),
+  getDeliveryNavMenu('footer', locale),
+  getDeliveryActiveLocales().catch(() => ['en']),
+]);
+const brand = { ...SETTINGS_GROUP_DEFAULTS['site.brand'], ...(settings['site.brand'] || {}) };
+const contact = { ...SETTINGS_GROUP_DEFAULTS['site.contact'], ...(settings['site.contact'] || {}) };
+const social = { ...SETTINGS_GROUP_DEFAULTS['site.social'], ...(settings['site.social'] || {}) };
+const figures = resolveComputedFigures({ ...SETTINGS_GROUP_DEFAULTS['site.figures'], ...(settings['site.figures'] || {}) });
+const seo = { ...SETTINGS_GROUP_DEFAULTS['seo.defaults'], ...(settings['seo.defaults'] || {}) };
+const integrations = { ...SETTINGS_GROUP_DEFAULTS['integrations'], ...(settings['integrations'] || {}) };
+// CMS key wins when an editor set a real one; otherwise the deployment key, read at
+// request time (SSR) so the image needs no rebuild per environment.
+const TURNSTILE_PLACEHOLDER = '0x4AAAAAAAx';
+const cmsTurnstileKey = integrations.turnstileSiteKey && integrations.turnstileSiteKey !== TURNSTILE_PLACEHOLDER ? integrations.turnstileSiteKey : '';
+const turnstileSiteKey = cmsTurnstileKey || process.env.PUBLIC_TURNSTILE_SITE_KEY || import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || '';
+const cookieSettings = { ...SETTINGS_GROUP_DEFAULTS['site.cookie'], ...(settings['site.cookie'] || {}) };
+const whatsapp = { ...SETTINGS_GROUP_DEFAULTS['site.whatsapp'], ...(settings['site.whatsapp'] || {}) };
+
+function cleanSeoText(text: string): string {
+  if (!text) return '';
+  return String(text)
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
+// Copy authored against the original baseline ("since 1998", "93+ countries")
+// follows site.figures when the operator changes it. Other years (e.g. the
+// ISO 9001 "since 2002" certification) are deliberately left untouched.
+function applyLiveFigures(text: string): string {
+  return cleanSeoText(text)
+    .replace(/\b(since|founded)\s+1998\b/gi, (_m, word) => `${word} ${figures.foundingYear}`)
+    .replace(/\b93\+\s+countries\b/gi, `${figures.countriesCount} countries`);
+}
+
+const pageTitle = applyLiveFigures(title || seo.defaultTitle);
+const pageDesc = applyLiveFigures(desc || seo.defaultDescription);
+
+const ogImage = customOgImage
+  ? (customOgImage.startsWith('http') ? customOgImage : new URL(customOgImage, siteOrigin).toString())
+  : new URL(seo.defaultOgImage || '/assets/img/og-cover.png', siteOrigin).toString();
+
+const socialUrls = [
+  social.facebook,
+  social.instagram,
+  social.linkedin,
+  social.x,
+  social.youtube,
+  social.pinterest,
+].filter(Boolean);
 
 const ORG_LD = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'TwinMOS Technologies',
+  name: brand.name,
   url: 'https://www.twinmos.com/',
-  logo: 'https://www.twinmos.com/assets/img/logo.webp',
-  foundingDate: '1998',
-  address: { '@type': 'PostalAddress', addressLocality: 'Taipei', addressCountry: 'TW' },
-  sameAs: [
-    'https://www.facebook.com/twinmos.tech',
-    'https://www.instagram.com/twinmos.tech',
-    'https://www.linkedin.com/company/twinmos-technologies',
-    'https://x.com/twinmos',
-    'https://www.youtube.com/c/TwinMOStech',
-    'https://www.pinterest.com/twinmos',
-  ],
+  logo: new URL(brand.logoUrl || '/assets/img/logo.webp', siteOrigin).toString(),
+  foundingDate: String(figures.foundingYear || brand.foundingYear || 1998),
+  email: contact.email,
+  telephone: contact.phone,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: contact.address,
+    addressLocality: 'Taipei',
+    addressCountry: contact.country || 'TW',
+  },
+  sameAs: socialUrls,
 });
+
 const SITE_LD = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: 'TwinMOS',
+  name: brand.name,
   url: 'https://www.twinmos.com/',
   potentialAction: {
     '@type': 'SearchAction',
-    target: 'https://www.twinmos.com/search.html?q={q}',
+    target: 'https://www.twinmos.com/search?q={q}',
     'query-input': 'required name=q',
   },
 });
+const BREADCRUMB_LD = breadcrumbs && breadcrumbs.length > 0 ? JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbs.map((b: { label: string; href?: string }, idx: number) => ({
+    '@type': 'ListItem',
+    position: idx + 1,
+    name: cleanSeoText(b.label),
+    item: b.href ? new URL(b.href, Astro.site || 'https://www.twinmos.com').toString() : undefined,
+  })),
+}) : null;
+
+const OG_IMAGE = ogImage;
+const isHomepage = path === '/' || path === '';
+const OG_TYPE = isHomepage ? 'website' : (path.startsWith('/learn/') ? 'article' : 'website');
 ---
 <!doctype html>
 <html lang={locale} dir={dir}>
@@ -67,92 +180,84 @@ const SITE_LD = JSON.stringify({
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#0A2540" />
-    <meta name="description" content={desc} />
-    {noindex && <meta name="robots" content="noindex" />}
-    <title>{title}</title>
-    <link rel="canonical" href={canonical} />
-    {hreflangGrid ? (
-      LOCALES.map((code) => <link rel="alternate" hreflang={code} href={localeUrl(code)} />)
+    <meta name="description" content={pageDesc} />
+    {shouldNoindex ? (
+      <meta name="robots" content="noindex,nofollow" />
     ) : (
-      <link rel="alternate" hreflang={locale} href={canonical} />
+      <meta name="robots" content={seo.defaultRobots || 'index,follow'} />
+    )}
+    <title>{pageTitle}</title>
+    <link rel="canonical" href={canonical.toString()} />
+    {hreflangGrid ? (
+      LOCALES.map((code) => <link rel="alternate" hreflang={code === 'zh-cn' ? 'zh-CN' : code} href={localeUrl(code)} />)
+    ) : (
+      <link rel="alternate" hreflang={locale === 'zh-cn' ? 'zh-CN' : locale} href={canonical} />
     )}
     <link rel="alternate" hreflang="x-default" href={localeUrl('en')} />
-    <link rel="icon" type="image/png" href="assets/img/favicon.png" />
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="assets/css/main.css" />
-    <link rel="stylesheet" href="assets/css/a11y-overrides.css" />
-    {locale !== 'en' && <link rel="stylesheet" href="assets/css/rtl.css" />}
-    <script type="application/ld+json" set:html={ORG_LD} />
-    <script type="application/ld+json" set:html={SITE_LD} />
-    <script>if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js').catch(function(){});}</script>
+
+    <!-- Open Graph (Task E1 / SEO-01) -->
+    <meta property="og:site_name" content={brand.name} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDesc} />
+    <meta property="og:url" content={canonical.toString()} />
+    <meta property="og:type" content={OG_TYPE} />
+    <meta property="og:image" content={OG_IMAGE} />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDesc} />
+    <meta name="twitter:image" content={OG_IMAGE} />
+
+    <link rel="icon" href={brand.faviconUrl || '/favicon.ico'} />
+    {preloadImage && <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />}
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <link rel="stylesheet" href="/assets/css/a11y-overrides.css" />
+    {locale === 'ar' && <link rel="stylesheet" href="/assets/css/rtl.css" />}
+    <meta name="twinmos-api" content={import.meta.env.PUBLIC_API_URL ?? ''} />
+    <meta name="turnstile-site-key" content={turnstileSiteKey} />
+    <meta
+      name="twinmos-analytics"
+      content={integrations.analyticsEnabled && integrations.googleAnalyticsId ? integrations.googleAnalyticsId : ''}
+    />
+
+    {isHomepage && (
+      <>
+        <script type="application/ld+json" set:html={jsonForScript(ORG_LD)} />
+        <script type="application/ld+json" set:html={jsonForScript(SITE_LD)} />
+      </>
+    )}
+    {BREADCRUMB_LD && <script type="application/ld+json" set:html={jsonForScript(BREADCRUMB_LD)} />}
+    {customLd && customLd.filter(Boolean).map((ld) => (
+      <script type="application/ld+json" set:html={jsonForScript(String(ld))} />
+    ))}
   </head>
   <body class={bodyClass}>
-    <slot />
-    <script is:inline define:vars={{ apiUrl: import.meta.env.PUBLIC_API_URL ?? '', turnstileSiteKey: import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '' }}>
-      window.TWINMOS_API = apiUrl; // '' → same-origin /api/v1 (prod reverse proxy); set PUBLIC_API_URL for cross-origin dev
-      window.TURNSTILE_SITE_KEY = turnstileSiteKey; // '' → widget stays hidden (dev); set PUBLIC_TURNSTILE_SITE_KEY for production
-    </script>
-    <!-- PDP deep links: discover the hero image at parse-end (the app layer
-         renders it ~3s later). Map loaded async; preload is best-effort. -->
-    <script is:inline>
-      (function () {
-        try {
-          if (!/product\.html$/.test(location.pathname)) return;
-          var id = new URLSearchParams(location.search).get('id');
-          if (!id) return;
-          var s = document.createElement('script');
-          s.src = 'assets/js/pdp-hero.js';
-          s.onload = function () {
-            var src = window.PDP_HERO && window.PDP_HERO[id];
-            if (!src) return;
-            var l = document.createElement('link');
-            l.rel = 'preload';
-            l.as = 'image';
-            l.href = src;
-            document.head.appendChild(l);
-          };
-          document.body.appendChild(s);
-        } catch (e) { /* best-effort */ }
-      })();
-    </script>
-    <!-- App layer boots post-first-paint: the server-rendered hero (LCP) paints
-         while the heavy data.js/app.js parse+hydrate right after (measured LCP:
-         1.4s with this boot vs 4.5s with a load-event boot vs 7.1s on the
-         prototype's body-end scripts). Order-preserving (async=false). -->
-    <script is:inline>
-      (function () {
-        /* URL-param hygiene before the app layer parses them: app.js renders
-         * ?id/?cat/?q values into the DOM, so strip markup-significant bytes
-         * at the entry point. app.js itself stays byte-identical to the
-         * audited prototype; this wrapper is the port's sanitize boundary. */
-        try {
-          var s = location.search;
-          if (s && /[<>"'`]/.test(s)) {
-            var params = new URLSearchParams(s);
-            var clean = new URLSearchParams();
-            params.forEach(function (v, k) {
-              clean.set(k, v.replace(/[<>"'`]/g, ''));
-            });
-            var qs = clean.toString();
-            history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
-          }
-        } catch (e) { /* never block the page */ }
+    {renderChrome && (
+      <>
+        <a class="skip-link" href="#main">Skip to main content</a>
+        <Header activePath={path} currentLocale={locale} brand={brand} figures={figures} menu={headerMenu} locales={activeLocales} />
+        <Drawer currentLocale={locale} brand={brand} menu={drawerMenu} />
+        <SearchOverlay />
+        {breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
+      </>
+    )}
 
-        var files = ['assets/js/data.js', 'assets/js/cms-content.js', 'assets/js/cms-merge.js', 'assets/js/app.js', 'assets/js/img-dims.js', 'assets/js/a11y.js', 'assets/js/forms.js', 'assets/js/i18n.js', 'assets/js/portal.js'];
-        function boot() {
-          files.forEach(function (src) {
-            var s = document.createElement('script');
-            s.src = src;
-            s.async = false;
-            document.body.appendChild(s);
-          });
-        }
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(boot, { timeout: 300 });
-        } else {
-          setTimeout(boot, 300);
-        }
-      })();
-    </script>
+    <slot />
+
+    {renderChrome && (
+      <>
+        <Footer brand={brand} contact={contact} social={social} figures={figures} whatsapp={whatsapp} menu={footerMenu} />
+        <CookieBanner settings={cookieSettings} />
+        <CompareTray />
+      </>
+    )}
+
+    <!-- App layer boots post-first-paint via layout-init.js (eliminates unsafe-inline in script-src) -->
+    <script is:inline src="/assets/js/widgets-config.js"></script>
+    <script is:inline src="/assets/js/widgets-init.js"></script>
+    <script is:inline src="/assets/js/layout-init.js"></script>
+    <script is:inline src="/assets/js/analytics-init.js"></script>
   </body>
 </html>
