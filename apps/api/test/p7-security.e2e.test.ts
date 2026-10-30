@@ -14,6 +14,11 @@ process.env.MAIL_OUTBOX_DIR = join(TMP, 'outbox');
 process.env.FORMS_TO = 'security@twinmos.dev';
 process.env.API_ALLOW_NO_TURNSTILE = '1';
 process.env.NODE_ENV = 'test';
+// The CORS allow-list tests below assert the DEFAULT dev allow-list
+// (http://localhost:5173). CI exports ALLOWED_ORIGIN for the SSR proxy
+// (ci.yml build-and-verify job), which would leak in here and flip the
+// allow-list — drop it so app.ts falls back to its default before import.
+delete process.env.ALLOWED_ORIGIN;
 
 // Robust migration folder resolution independent of cwd
 const MIGRATIONS = resolve(dirname(fileURLToPath(import.meta.url)), '../../../packages/db/migrations');

@@ -2,7 +2,9 @@
 // Syncs the built admin SPA (apps/admin/dist) into apps/web/public/admin so the
 // web server serves the same admin bundle that was just built. Without this the
 // checked-in public/admin copy goes stale and the wire serves an old admin.
-// Fails loudly when apps/admin/dist is missing or has no index.html.
+// When apps/admin/dist is absent (web-only build contexts, e.g. CI Lighthouse
+// never builds admin), skip with a warning and keep the committed public/admin
+// copy. A dist that EXISTS but lacks provenance is still a hard failure.
 import { cpSync, existsSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -11,8 +13,12 @@ const src = resolve(root, 'apps/admin/dist');
 const dest = resolve(root, 'apps/web/public/admin');
 
 const indexFile = resolve(src, 'index.html');
-if (!existsSync(src) || !existsSync(indexFile)) {
-  console.error('[sync-admin-dist] apps/admin/dist is missing or has no index.html — build @twinmos/admin first.');
+if (!existsSync(src)) {
+  console.warn('[sync-admin-dist] apps/admin/dist not built — skipping sync, serving the committed apps/web/public/admin copy.');
+  process.exit(0);
+}
+if (!existsSync(indexFile)) {
+  console.error('[sync-admin-dist] apps/admin/dist exists but has no index.html — refusing to sync a broken build.');
   process.exit(1);
 }
 const srcInfo = JSON.parse(readFileSync(resolve(src, 'build-info.json'), 'utf8'));
