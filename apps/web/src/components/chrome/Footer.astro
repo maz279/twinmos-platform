@@ -22,7 +22,7 @@ interface Props {
 const { brand = {}, contact = {}, social = {}, figures = {}, whatsapp = {}, menu = null } = Astro.props;
 const currentYear = new Date().getFullYear();
 const brandName = brand.name || 'TwinMOS Technologies';
-const logoUrl = brand.logoUrl || '/assets/img/logo.webp';
+const logoUrl = brand.logoUrl || '/assets/img/logo-400.webp';
 const foundingYear = figures.foundingYear || brand.foundingYear || 1998;
 const countries = figures.countriesCount || '93+';
 const address = contact.address || 'Taipei, Taiwan';

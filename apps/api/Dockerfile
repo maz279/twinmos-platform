@@ -10,6 +10,10 @@ COPY apps/api/package.json ./apps/api/
 FROM base AS dependencies
 RUN npm ci --omit=dev && \
     rm -rf node_modules/drizzle-kit node_modules/esbuild node_modules/@esbuild-kit* node_modules/vitest
+# npm workspaces hoist most packages to the root but keep version-conflicted
+# ones (e.g. better-auth) in per-workspace node_modules — guarantee the dirs
+# exist so the runner stage below can COPY them unconditionally.
+RUN mkdir -p apps/api/node_modules packages/db/node_modules packages/shared/node_modules
 
 FROM base AS builder
 RUN npm ci
@@ -29,6 +33,12 @@ ENV PORT=8787
 RUN chown -R node:node /app
 
 COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules
+# Non-hoisted workspace dependencies are resolved from each workspace's own
+# node_modules — without these the runtime image cannot import them
+# (release-smoke bootstrap-1 ERR_MODULE_NOT_FOUND: better-auth).
+COPY --from=dependencies --chown=node:node /app/packages/db/node_modules ./packages/db/node_modules
+COPY --from=dependencies --chown=node:node /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=dependencies --chown=node:node /app/apps/api/node_modules ./apps/api/node_modules
 
 COPY --chown=node:node packages/ ./packages/
 COPY --chown=node:node apps/api/ ./apps/api/
