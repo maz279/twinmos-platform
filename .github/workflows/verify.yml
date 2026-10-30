@@ -106,8 +106,8 @@ jobs:
       - name: Start Web Preview
         run: |
           PORT=4321 HOST=127.0.0.1 npm run preview --workspace @twinmos/web &
-          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4321/ && break; sleep 2; done
-          curl -f http://127.0.0.1:4321/
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:4321/ && break; sleep 2; done
+          curl -f -o /dev/null http://127.0.0.1:4321/
 
       - name: WALK-PUB Public Routes Browser Walkthrough
         run: node tooling/verify/walk-public.mjs
