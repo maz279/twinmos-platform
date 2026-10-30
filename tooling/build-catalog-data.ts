@@ -201,8 +201,15 @@ async function main() {
 })();
 `;
 
-  writeFileSync(TARGET_JS, code, 'utf8');
-  console.log(`[build-catalog-data] Wrote ${mergedProducts.length} products to ${TARGET_JS}`);
+  // Only rewrite when the payload actually changed: rewriting a byte-identical
+  // file dirties the working tree and trips the BUILD-01 provenance check in
+  // pipelines that build with a live API (verify-kit).
+  if (existsSync(TARGET_JS) && readFileSync(TARGET_JS, 'utf8') === code) {
+    console.log(`[build-catalog-data] Catalogue unchanged (${mergedProducts.length} products) — keeping the committed file.`);
+  } else {
+    writeFileSync(TARGET_JS, code, 'utf8');
+    console.log(`[build-catalog-data] Wrote ${mergedProducts.length} products to ${TARGET_JS}`);
+  }
 }
 
 main().catch((err) => {
