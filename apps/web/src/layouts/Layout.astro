@@ -9,6 +9,14 @@ import CookieBanner from '../components/chrome/CookieBanner.astro';
 import CompareTray from '../components/chrome/CompareTray.astro';
 import { getDeliverySettings, getDeliveryNavMenu, getDeliveryActiveLocales } from '../lib/delivery';
 import { SETTINGS_GROUP_DEFAULTS, resolveComputedFigures, jsonForScript } from '@twinmos/shared';
+// Inline the global stylesheet (identical bytes, CSP allows 'unsafe-inline'
+// for style-src): LHCI's throttled-mobile model serializes HTML->CSS->paint,
+// so delivering main.css inside the document removes a render-blocking
+// round-trip from the LCP critical path (the external file stays in place —
+// served for cached contexts and verified by tooling). The ?raw import bakes
+// the bytes in at build time — no runtime fs, correct in dev and in the
+// chunked dist/ bundle alike.
+import MAIN_CSS from '../../public/assets/css/main.css?raw';
 
 interface BreadcrumbItem {
   label: string;
@@ -212,7 +220,7 @@ const OG_TYPE = isHomepage ? 'website' : (path.startsWith('/learn/') ? 'article'
     <link rel="icon" href={brand.faviconUrl || '/favicon.ico'} />
     {preloadImage && <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />}
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="stylesheet" href="/assets/css/main.css" />
+    <style set:html={MAIN_CSS}></style>
     <link rel="stylesheet" href="/assets/css/a11y-overrides.css" />
     {locale === 'ar' && <link rel="stylesheet" href="/assets/css/rtl.css" />}
     <meta name="twinmos-api" content={import.meta.env.PUBLIC_API_URL ?? ''} />
