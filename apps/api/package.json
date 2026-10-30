@@ -15,21 +15,21 @@
     "db:repair-translations": "node --env-file-if-exists=../../.env --experimental-strip-types --no-warnings scripts/repair-translations.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.14.0",
+    "@hono/node-server": "^2.1.5",
     "@twinmos/db": "0.1.0",
     "@twinmos/shared": "0.1.0",
     "better-auth": "^1.7.14",
-    "drizzle-orm": "^0.45.3",
+    "drizzle-orm": "^0.45.4",
     "hono": "^4.13.9",
-    "isomorphic-dompurify": "^4.4.0",
+    "isomorphic-dompurify": "^4.6.0",
     "jsdom": "^30.0.0",
-    "marked": "^18.0.14",
+    "marked": "^18.1.2",
     "pino": "^10.4.0",
-    "resend": "^6.30.0",
+    "resend": "^6.34.1",
     "sharp": "^0.35.5"
   },
   "devDependencies": {
-    "otplib": "12.0.1",
+    "otplib": "13.5.0",
     "vitest": "^5.0.2"
   }
 }
