@@ -1,5 +1,5 @@
 # Stage 1: Build Astro SSR bundle
-FROM mirror.gcr.io/library/node:24-alpine AS builder
+FROM mirror.gcr.io/library/node:26-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json ./
@@ -17,7 +17,7 @@ ENV NODE_ENV=production
 RUN npm run build:only
 
 # Stage 2: Dependencies for production runtime
-FROM mirror.gcr.io/library/node:24-alpine AS dependencies
+FROM mirror.gcr.io/library/node:26-alpine AS dependencies
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json ./
@@ -30,7 +30,7 @@ RUN npm ci --omit=dev --workspaces --include-workspace-root
 RUN mkdir -p apps/web/node_modules packages/shared/node_modules packages/db/node_modules
 
 # Stage 3: Runtime image (non-root per SEC-C1)
-FROM mirror.gcr.io/library/node:24-alpine AS runner
+FROM mirror.gcr.io/library/node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
