@@ -1,5 +1,5 @@
 # Stage 1: Pruning / Base dependencies
-FROM mirror.gcr.io/library/node:24-alpine AS base
+FROM mirror.gcr.io/library/node:26-alpine AS base
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json ./
@@ -24,7 +24,7 @@ COPY tsconfig.base.json ./
 RUN npx tsc -p apps/api/tsconfig.json
 
 # Stage 2: Production runtime (minimal & non-root per S-11 / SEC-C1)
-FROM mirror.gcr.io/library/node:24-alpine AS runner
+FROM mirror.gcr.io/library/node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8787
