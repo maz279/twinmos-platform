@@ -1,6 +1,6 @@
 # Stage 1: admin console bundle (vite base '/admin/'). The edge serves it from
 # /var/www/twinmos/admin — without this stage /admin/ answered 403 (ZT-011).
-FROM mirror.gcr.io/library/node:24-alpine AS admin
+FROM mirror.gcr.io/library/node:26-alpine AS admin
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/ ./packages/
