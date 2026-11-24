@@ -49,7 +49,7 @@ jobs:
           # runner is a throwaway smoke environment with no real mail or captcha.
           {
             echo "TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA"
-            echo "PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA"
+            echo "PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000BB"
             echo "RESEND_API_KEY=re_smoke_not_a_real_key"
             echo "MAIL_FROM=TwinMOS <no-reply@twinmos.com>"
             echo "FORMS_TO=smoke@twinmos.com"

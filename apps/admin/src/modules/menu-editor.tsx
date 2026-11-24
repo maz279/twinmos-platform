@@ -300,7 +300,7 @@ export default function MenuEditor({ canManage }: { canManage: boolean }) {
       {loading ? (
         <p>Loading menu…</p>
       ) : !menu ? (
-        <p style={{ fontSize: 13, color: '#66748A' }}>
+        <p style={{ fontSize: 13, color: '#6A6285' }}>
           No “{code}” menu exists for {locale} yet. {canManage ? 'Create it above, then add items.' : 'Ask a super admin to create it.'}
         </p>
       ) : (
@@ -314,10 +314,10 @@ export default function MenuEditor({ canManage }: { canManage: boolean }) {
               disabled={!canManage}
             />
             <button style={btnGhost} disabled={busy || !canManage} onClick={() => addItem(null)}>+ Add root item</button>
-            <span style={{ fontSize: 12, color: '#66748A' }}>{rows.length} items · {locale} · {menu.title}</span>
+            <span style={{ fontSize: 12, color: '#6A6285' }}>{rows.length} items · {locale} · {menu.title}</span>
           </div>
 
-          <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ border: '1px solid #E5E0F2', borderRadius: 10, overflow: 'hidden' }}>
             {rows.map(({ item, depth }) => {
               const draft = drafts[item.id] ?? {
                 title: item.title,
@@ -339,7 +339,7 @@ export default function MenuEditor({ canManage }: { canManage: boolean }) {
                     alignItems: 'center',
                     padding: '7px 10px',
                     paddingLeft: 10 + depth * 22,
-                    borderBottom: '1px solid #F0F3F7',
+                    borderBottom: '1px solid #F4F0FC',
                     background: dragId === item.id ? '#F0FDF4' : '#fff',
                   }}
                 >
@@ -386,7 +386,7 @@ export default function MenuEditor({ canManage }: { canManage: boolean }) {
                 </div>
               );
             })}
-            {rows.length === 0 && <p style={{ padding: 16, fontSize: 13, color: '#66748A' }}>This menu has no items yet.</p>}
+            {rows.length === 0 && <p style={{ padding: 16, fontSize: 13, color: '#6A6285' }}>This menu has no items yet.</p>}
           </div>
 
           <details style={{ fontSize: 13 }}>
@@ -395,7 +395,7 @@ export default function MenuEditor({ canManage }: { canManage: boolean }) {
               {rows.map(({ item, depth }) => (
                 <li key={item.id} style={{ marginLeft: depth * 20, listStyle: depth === 0 ? 'disc' : 'circle' }}>
                   {drafts[item.id]?.title ?? item.title}
-                  {item.targetUrl ? <span style={{ color: '#66748A' }}> → {item.targetUrl}</span> : null}
+                  {item.targetUrl ? <span style={{ color: '#6A6285' }}> → {item.targetUrl}</span> : null}
                 </li>
               ))}
             </ul>

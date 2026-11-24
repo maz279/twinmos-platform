@@ -186,7 +186,7 @@ export default function AuditLog({ nav, me }: ModProps) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Audit log</h1>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#241F3D', letterSpacing: -0.2 }}>Audit log</h1>
           <p style={{ color: MUTED, margin: '4px 0 0' }}>Comprehensive chronological trail of mutations across all platform surfaces.</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -285,7 +285,7 @@ export default function AuditLog({ nav, me }: ModProps) {
                     {target && (
                       <button
                         onClick={() => nav(target, { kind: row.entity, id: row.entityId, label: `${row.entity} #${row.entityId}` }, { newTab: true })}
-                        style={{ fontSize: 12, padding: '3px 8px', cursor: 'pointer', border: '1px solid #D9E0E8', borderRadius: 6, background: '#fff' }}>
+                        style={{ fontSize: 12, padding: '3px 8px', cursor: 'pointer', border: '1px solid #DED6F0', borderRadius: 6, background: '#fff' }}>
                         Open ↗
                       </button>
                     )}

@@ -7,6 +7,7 @@ import Layout from '../../layouts/Layout.astro';
 import Breadcrumb from '../../components/chrome/Breadcrumb.astro';
 import ResponsiveImage from '../../components/common/ResponsiveImage.astro';
 import { getDeliveryProducts, getDeliveryFacets, getDeliveryPage } from '../../lib/delivery';
+import { getProductAssets } from '../../lib/productAssets';
 
 const url = Astro.url;
 const cat = url.searchParams.get('cat') || 'all';
@@ -27,6 +28,7 @@ const [facets, products, page] = await Promise.all([
 
 const categories = facets?.categories ?? [];
 const brands = facets?.brands ?? [];
+const categoryNames = new Map((categories as any[]).map((c) => [c.id, c.name]));
 const totalProducts = facets?.total ?? products.length;
 
 const selectedCategory = categories.find((c: any) => c.slug === cat);
@@ -96,7 +98,7 @@ Astro.response.headers.set('X-Cache-Tags', cacheTags);
         <div class="shop-layout" style="display:grid;grid-template-columns:260px 1fr;gap:32px;align-items:start">
           
           <!-- Desktop Filter Rail (Live database facets) -->
-          <aside class="filters" aria-label="Product filters" style="background:#fff;border:1px solid #E6EBF1;border-radius:12px;padding:24px">
+          <aside class="filters" aria-label="Product filters" style="background:#fff;border:1px solid #E5E0F2;border-radius:12px;padding:24px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
               <h2 style="font-size:16px;font-weight:700;margin:0">Filters</h2>
               {(cat !== 'all' || brand || q) && (
@@ -106,7 +108,7 @@ Astro.response.headers.set('X-Cache-Tags', cacheTags);
 
             <!-- Category Axis -->
             <div class="filter-group" style="margin-bottom:24px">
-              <h3 style="font-size:14px;font-weight:700;margin:0 0 12px;color:var(--color-brand,#0A2540)">Category</h3>
+              <h3 style="font-size:14px;font-weight:700;margin:0 0 12px;color:var(--color-brand,#14123A)">Category</h3>
               <div style="display:flex;flex-direction:column;gap:8px">
                 <label class="fcheck" style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer">
                   <input
@@ -138,7 +140,7 @@ Astro.response.headers.set('X-Cache-Tags', cacheTags);
             <!-- Brand Line Axis -->
             {brands.length > 0 && (
               <div class="filter-group" style="margin-bottom:24px">
-                <h3 style="font-size:14px;font-weight:700;margin:0 0 12px;color:var(--color-brand,#0A2540)">Brand Line</h3>
+                <h3 style="font-size:14px;font-weight:700;margin:0 0 12px;color:var(--color-brand,#14123A)">Brand Line</h3>
                 <div style="display:flex;flex-direction:column;gap:8px">
                   {brands.map((b: any) => {
                     const isChecked = brand === b.slug;
@@ -165,8 +167,8 @@ Astro.response.headers.set('X-Cache-Tags', cacheTags);
             )}
 
             <!-- Warranty Guarantee Note -->
-            <div class="filter-group" style="margin-top:24px;border-top:1px solid #E6EBF1;padding-top:16px">
-              <h3 style="font-size:13px;font-weight:700;margin:0 0 6px;color:#08705C">TwinMOS Guarantee</h3>
+            <div class="filter-group" style="margin-top:24px;border-top:1px solid #E5E0F2;padding-top:16px">
+              <h3 style="font-size:13px;font-weight:700;margin:0 0 6px;color:#5B21B6">TwinMOS Guarantee</h3>
               <p style="font-size:12px;color:var(--muted);margin:0;line-height:1.5">
                 Lifetime on DRAM modules · 5-year on NVMe SSDs · 3-year on SATA SSDs & portable drives.
               </p>
@@ -176,7 +178,7 @@ Astro.response.headers.set('X-Cache-Tags', cacheTags);
           <!-- Main Listing Area -->
           <div class="shop-main">
             <!-- Toolbar: search, sort, count -->
-            <div class="toolbar" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px;padding:12px 16px;background:#F8FAFC;border-radius:10px;border:1px solid #E6EBF1">
+            <div class="toolbar" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px;padding:12px 16px;background:#F7F5FE;border-radius:10px;border:1px solid #E5E0F2">
               <form action={url.pathname} method="GET" style="display:flex;gap:8px;flex:1;max-width:320px">
                 {cat !== 'all' && <input type="hidden" name="cat" value={cat} />}
                 {brand && <input type="hidden" name="brand" value={brand} />}
@@ -217,7 +219,7 @@ Astro.response.headers.set('X-Cache-Tags', cacheTags);
                 </select>
               </div>
 
-              <span class="result-count" style="font-size:13px;font-weight:700;color:var(--color-brand,#0A2540)">
+              <span class="result-count" style="font-size:13px;font-weight:700;color:var(--color-brand,#14123A)">
                 {products.length} {products.length === 1 ? 'product' : 'products'}
               </span>
             </div>
@@ -266,90 +268,62 @@ Astro.response.headers.set('X-Cache-Tags', cacheTags);
             {products.length > 0 ? (
               <div class="grid g3" id="shopGrid" data-ssr="true" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px">
                 {products.map((p: any) => {
-                  const productImg = p.img || (p.gallery && p.gallery[0]) || '/assets/img/card/corex-pro.webp';
+                  const asset = getProductAssets(p.slug);
+                  const productImg = asset?.img || p.img || (p.gallery && p.gallery[0]) || '/assets/img/card/corex-pro.webp';
                   const badgesList = Array.isArray(p.badges) ? p.badges : [];
                   const isGen5 = p.shortSpec?.includes('Gen 5') || p.name?.includes('Gen 5') || p.name?.includes('Gen 5.0');
                   return (
-                    <article class="card prod-card" style="border:1px solid #E6EBF1;border-radius:12px;background:#fff;padding:20px;display:flex;flex-direction:column;position:relative">
-                      <!-- Badges row -->
-                      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
-                        {p.isNew && (
-                          <span class="badge" style="background:#1DBF9F;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">
-                            NEW
-                          </span>
+                    <article class="card pcard prod-card" data-id={p.slug}>
+                      <div class="pcard-img">
+                        {(p.isNew || isGen5 || badgesList.length > 0) && (
+                          <div class="badge">
+                            {p.isNew && <span class="b-new">NEW</span>}
+                            {isGen5 && <span class="b-gen5">GEN 5</span>}
+                            {badgesList.filter((b: string) => b !== 'New').map((b: string) => <span>{b}</span>)}
+                          </div>
                         )}
-                        {isGen5 && (
-                          <span class="badge" style="background:#0A2540;color:#00F0FF;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">
-                            GEN 5
-                          </span>
-                        )}
-                        {badgesList.filter((b: string) => b !== 'New').map((b: string) => (
-                          <span class="badge" style="background:#EEF2F6;color:#0A2540;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px">
-                            {b}
-                          </span>
-                        ))}
-                        {p.warranty && (
-                          <span class="badge" style="background:#F0FDF4;color:#166534;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;margin-left:auto">
-                            {p.warranty}
-                          </span>
-                        )}
+                        <a href={`/products/${p.slug}`} aria-label={p.name}>
+                          <img src={productImg} alt={p.name} loading="lazy" />
+                        </a>
+                        <button class="qv-btn" data-qv={p.slug} type="button" aria-label={`Quick view ${p.name}`}>
+                          Quick view
+                        </button>
                       </div>
 
-                      <!-- Thumbnail -->
-                      <a href={`/products/${p.slug}`} style="display:flex;align-items:center;justify-content:center;height:160px;margin:12px 0 16px;text-decoration:none">
-                        <img
-                          src={productImg}
-                          alt={p.name}
-                          width="240"
-                          height="160"
-                          style="max-height:160px;width:auto;max-width:100%;object-fit:contain;aspect-ratio:3/2;transition:transform .2s ease"
-                          loading="lazy"
-                        />
-                      </a>
-
-                      <!-- Product Info -->
-                      <h3 class="h3" style="font-size:16px;margin:0 0 6px;line-height:1.4">
-                        <a href={`/products/${p.slug}`} style="color:inherit;text-decoration:none">
-                          {p.name}
-                        </a>
-                      </h3>
-
-                      {(p.shortSpec || p.description) && (
-                        <p style="font-size:13px;color:var(--muted);margin:0 0 16px;line-height:1.5;flex:1">
-                          {p.shortSpec || p.description}
-                        </p>
-                      )}
-
-                      <!-- Actions Row: View Details & Quick View -->
-                      <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid #F1F5F9;align-items:center">
-                        <a href={`/products/${p.slug}`} class="btn btn-primary btn-sm" style="flex:1;text-align:center">
-                          View details
-                        </a>
-                        <button
-                          class="btn btn-ghost btn-sm qv-btn"
-                          data-qv={p.slug}
-                          type="button"
-                          aria-label={`Quick view ${p.name}`}
-                          title="Quick View"
-                        >
-                          👁️
-                        </button>
-                        <button
-                          class="btn btn-ghost btn-sm cmp-btn"
-                          data-id={p.slug}
-                          type="button"
-                          aria-label={`Add ${p.name} to compare tray`}
-                          title="Compare"
-                        >
-                          ⚖️
-                        </button>
+                      <div class="pcard-body">
+                        <span class="pcard-cat">{categoryNames.get(p.categoryId) || p.categoryName || 'Hardware'}</span>
+                        <h3 class="h3 pcard-title">
+                          <a class="pcard-name" href={`/products/${p.slug}`}>{p.name}</a>
+                        </h3>
+                        <span class="pcard-meta">{p.shortSpec || p.description}</span>
+                        <div class="pcard-warranty">
+                          {p.warranty && (
+                            <span class={`chip ${/lifetime/i.test(p.warranty) ? 'ok' : 'warn'}`}>
+                              {/warranty$/i.test(p.warranty) ? p.warranty : `${p.warranty} warranty`}
+                            </span>
+                          )}
+                        </div>
+                        <div class="pcard-foot">
+                          <a href={`/products/${p.slug}`} class="btn btn-ghost btn-sm">View details</a>
+                          <div class="pcard-actions">
+                            <button
+                              class="cmp-btn"
+                              data-id={p.slug}
+                              type="button"
+                              title="Add to compare"
+                              aria-label={`Add ${p.name} to compare`}
+                            >
+                              ⇄
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </article>
                   );
                 })}
               </div>
             ) : (
-              <div class="empty-state" style="padding:48px 24px;text-align:center;background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:12px">
+              <div class="empty-state" style="padding:48px 24px;text-align:center;background:#F7F5FE;border:1px dashed #CBC4DE;border-radius:12px">
                 <h3 class="h3" style="margin-bottom:8px">No products match this selection</h3>
                 <p style="color:var(--muted);margin-bottom:16px">
                   Try adjusting or clearing your filters, or search for a different memory module or drive.
@@ -371,18 +345,18 @@ Astro.response.headers.set('X-Cache-Tags', cacheTags);
       align-items: center;
       padding: 8px 16px;
       border-radius: 9999px;
-      background: #F1F5F9;
-      color: #0F172A !important;
+      background: #F3EFFC;
+      color: #191633 !important;
       font-weight: 600;
       font-size: 13.5px;
       transition: all .15s ease;
     }
     .tab:hover {
-      background: #E2E8F0;
-      color: #0F172A !important;
+      background: #E5E0F2;
+      color: #191633 !important;
     }
     .tab.on {
-      background: #0369A1 !important;
+      background: linear-gradient(120deg,#6D28D9,#1D4ED8) !important;
       color: #FFFFFF !important;
       font-weight: 700;
     }
@@ -390,7 +364,7 @@ Astro.response.headers.set('X-Cache-Tags', cacheTags);
       font-size: 11px;
       font-weight: 700;
       margin-left: 6px;
-      color: #334155;
+      color: #3E3859;
     }
     .tab.on .tab-cnt {
       color: #FFFFFF !important;

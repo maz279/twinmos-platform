@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { API, ApiError, apiSend } from './api';
 
-const CYAN = '#14A98B';
+const CYAN = '#2563EB';
 
 const card: React.CSSProperties = {
   width: 'min(430px, 92vw)', background: '#fff', borderRadius: 14, padding: '30px 28px',
@@ -18,7 +18,7 @@ const input: React.CSSProperties = {
 };
 const btn: React.CSSProperties = {
   width: '100%', padding: '12px 16px', border: 0, borderRadius: 8,
-  background: `linear-gradient(135deg, ${CYAN} 0%, #14A98B 100%)`,
+  background: `linear-gradient(135deg, ${CYAN} 0%, #2563EB 100%)`,
   color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer', letterSpacing: 0.3,
 };
 
@@ -53,7 +53,7 @@ export default function ForcePasswordChange({ onDone, email }: { onDone: () => v
     <div style={{ minHeight: '100vh', background: 'radial-gradient(1200px 500px at 70% -10%, #E8F6F1 0%, #F2F4F6 55%)', display: 'grid', placeItems: 'center', padding: 20 }}>
       <form style={card} onSubmit={submit}>
         <div style={{ fontSize: 13, fontWeight: 800, color: CYAN, letterSpacing: 2, marginBottom: 6 }}>SECURITY · REQUIRED</div>
-        <h1 style={{ fontSize: 23, margin: '0 0 8px', color: '#16222F' }}>Set your own password</h1>
+        <h1 style={{ fontSize: 23, margin: '0 0 8px', color: '#191338' }}>Set your own password</h1>
         <p style={{ fontSize: 13.5, color: '#5B6B7B', margin: '0 0 18px', lineHeight: 1.5 }}>
           The account <b>{email}</b> was invited with a temporary password. Choose a new one to unlock the console — every admin function stays disabled until then.
         </p>

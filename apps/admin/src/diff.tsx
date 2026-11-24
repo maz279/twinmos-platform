@@ -61,13 +61,13 @@ export function DiffView({ oldText, newText, labelOld = 'Published', labelNew = 
   return (
     <div>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 6, fontSize: 12.5 }}>
-        <span style={{ color: '#66748A' }}><b style={{ color: '#1F2A37' }}>{labelNew}</b> vs <b>{labelOld}</b></span>
+        <span style={{ color: '#6A6285' }}><b style={{ color: '#241F3D' }}>{labelNew}</b> vs <b>{labelOld}</b></span>
         <span style={{ background: '#E7F6EE', color: '#1F9D62', fontWeight: 800, borderRadius: 999, padding: '1px 9px' }}>+{stats.added}</span>
         <span style={{ background: '#FCECEB', color: '#C2453C', fontWeight: 800, borderRadius: 999, padding: '1px 9px' }}>−{stats.removed}</span>
       </div>
-      <div style={{ border: '1px solid #E6EBF1', borderRadius: 8, background: '#fff', fontFamily: 'ui-monospace, monospace', fontSize: 12.5, overflow: 'hidden' }}>
+      <div style={{ border: '1px solid #E5E0F2', borderRadius: 8, background: '#fff', fontFamily: 'ui-monospace, monospace', fontSize: 12.5, overflow: 'hidden' }}>
         {out.map((r, i) => r.kind === 'fold'
-          ? <div key={i} style={{ padding: '3px 10px', background: '#F8FAFB', color: '#93A0B4' }}>{r.text}</div>
+          ? <div key={i} style={{ padding: '3px 10px', background: '#FAF7FF', color: '#9A93B5' }}>{r.text}</div>
           : (
             <div key={i} style={{
               padding: '3px 10px', whiteSpace: 'pre-wrap', wordBreak: 'break-word',

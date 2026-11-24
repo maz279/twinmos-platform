@@ -248,7 +248,7 @@ function WarrantyRegistrations({ canWrite }: { canWrite: boolean }) {
         )
       ) : null}
       {voiding && (
-        <div style={{ marginTop: 12, border: `1px solid ${LINE}`, borderRadius: 10, padding: 14, background: '#F8FAFC' }}>
+        <div style={{ marginTop: 12, border: `1px solid ${LINE}`, borderRadius: 10, padding: 14, background: '#FAF7FF' }}>
           <b>Void registration {voiding.serial}</b>
           <p style={{ fontSize: 12.5, color: MUTED }}>Voiding ends warranty coverage for this registration (audited, reversible only by re-registration).</p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -368,7 +368,7 @@ const VERDICT: Record<SerialCheck['verdict'], { label: string; color: string; bg
   verified: { label: '✓ Serial verified', color: '#0F6B54', bg: '#E4F8F2', hint: 'Authentic unit — safe to approve warranty service.' },
   unknown: { label: '⚠ Serial not in registry', color: '#8A5A00', bg: '#FBF3E2', hint: 'No factory record — confirm the serial transcription and purchase proof before approving.' },
   suspicious: { label: '✗ Suspicious activity', color: '#C2453C', bg: '#FDECEA', hint: 'This serial was verified from many distinct sources in 24h — pattern of a leaked or counterfeit serial. Escalate before any service.' },
-  no_serial: { label: '— No serial on file', color: '#66748A', bg: '#F1F4F8', hint: 'Ask the customer for the module serial.' },
+  no_serial: { label: '— No serial on file', color: '#6A6285', bg: '#F5F1FD', hint: 'Ask the customer for the module serial.' },
 };
 
 function SerialCheckCard({ sc, onRecheck }: { sc: SerialCheck; onRecheck: () => void }) {
@@ -489,7 +489,7 @@ function RmaDetailPanel({ id, canWrite, onChanged }: { id: number; canWrite: boo
   if (!data) return null;
   const legal = RMA_TRANSITIONS[data.status] ?? [];
   return (
-    <div ref={panelRef} style={{ marginTop: 16, border: `1px solid ${LINE}`, borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
+    <div ref={panelRef} style={{ marginTop: 16, border: `1px solid ${LINE}`, borderRadius: 10, padding: 16, background: '#FAF7FF' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <b>{data.number}</b>
         <Badge value={data.status} />
@@ -603,7 +603,7 @@ function RmaAnalyticsStrip() {
           {data.byStatus.map((x) => (
             <div key={x.status} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 30px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
               <Badge value={x.status} />
-              <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+              <span style={{ background: '#F5F1FD', borderRadius: 999, height: 8, overflow: 'hidden' }}>
                 <span style={{ display: 'block', width: `${(x.n / Math.max(1, data.total)) * 100}%`, height: '100%', background: GOLD, borderRadius: 999 }} />
               </span>
               <b style={{ fontSize: 12.5, color: INK, textAlign: 'right' }}>{x.n}</b>
@@ -615,7 +615,7 @@ function RmaAnalyticsStrip() {
           {data.reasons.map((x) => (
             <div key={x.category} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 30px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
               <span style={{ fontSize: 12.5, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.category}</span>
-              <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+              <span style={{ background: '#F5F1FD', borderRadius: 999, height: 8, overflow: 'hidden' }}>
                 <span style={{ display: 'block', width: `${(x.n / maxReason) * 100}%`, height: '100%', background: TEAL, borderRadius: 999 }} />
               </span>
               <b style={{ fontSize: 12.5, color: INK, textAlign: 'right' }}>{x.n}</b>

@@ -11,7 +11,7 @@ import { AUTHORIZED_CURRENCIES } from '@twinmos/shared';
 import type { ModProps, TabCtx } from '../nav';
 import { useDialogA11y } from '../dialog-a11y';
 
-const NAVY = '#1F2A37'; const CYAN = '#1DBF9F';
+const NAVY = '#241F3D'; const CYAN = '#6D28D9';
 
 type Product = {
   id: number; sku: string; slug: string; name: string; brandId: number; categoryId: number;
@@ -275,7 +275,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
           <SectionCard title="Identity">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <span><label style={labelStyle}>Name *</label><input style={{ ...input, width: '100%' }} value={form.name} onChange={(e) => set('name', e.target.value)} /></span>
-              <span><label style={labelStyle}>SKU * <span style={{ color: '#93A0B4', fontWeight: 400 }}>(A-Z 0-9 -)</span></label><input style={{ ...input, width: '100%' }} value={form.sku} onChange={(e) => set('sku', e.target.value)} disabled={!isNew} /></span>
+              <span><label style={labelStyle}>SKU * <span style={{ color: '#9A93B5', fontWeight: 400 }}>(A-Z 0-9 -)</span></label><input style={{ ...input, width: '100%' }} value={form.sku} onChange={(e) => set('sku', e.target.value)} disabled={!isNew} /></span>
               <span><label style={labelStyle}>Slug</label><input style={{ ...input, width: '100%' }} value={form.slug} onChange={(e) => set('slug', e.target.value)} placeholder="auto from name" /></span>
               <span><label style={labelStyle}>Status (via transition)</label>
                 <input style={{ ...input, width: '100%' }} value={form.status} readOnly />
@@ -318,12 +318,12 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
           </SectionCard>
 
           <SectionCard title="Storefront card — what shoppers see">
-            <label style={labelStyle}>Catalog card line <span style={{ color: '#93A0B4', fontWeight: 400 }}>(one line under the product name — e.g. “USB 3.0 · 1TB”)</span></label>
+            <label style={labelStyle}>Catalog card line <span style={{ color: '#9A93B5', fontWeight: 400 }}>(one line under the product name — e.g. “USB 3.0 · 1TB”)</span></label>
             <input style={{ ...input, width: '100%' }} placeholder="e.g. DDR5 · 32GB · 6000 MT/s" value={form.shortSpec} onChange={(e) => set('shortSpec', e.target.value)} />
-            <label style={labelStyle}>Description <span style={{ color: '#93A0B4', fontWeight: 400 }}>(marketing copy shown on the product page)</span></label>
+            <label style={labelStyle}>Description <span style={{ color: '#9A93B5', fontWeight: 400 }}>(marketing copy shown on the product page)</span></label>
             <textarea style={{ ...input, width: '100%', minHeight: 120, fontFamily: 'inherit' }} placeholder="Flagship DDR5 U-DIMM for gaming builds…"
               value={form.description} onChange={(e) => set('description', e.target.value)} />
-            <label style={labelStyle}>Badges <span style={{ color: '#93A0B4', fontWeight: 400 }}>(comma separated, max 8 — shown as a pill on the card)</span></label>
+            <label style={labelStyle}>Badges <span style={{ color: '#9A93B5', fontWeight: 400 }}>(comma separated, max 8 — shown as a pill on the card)</span></label>
             <input style={{ ...input, width: '100%' }} placeholder="New, Best seller,…" value={form.badges} onChange={(e) => set('badges', e.target.value)} />
             {form.badges.split(',').map((s) => s.trim()).filter(Boolean).length > 0 && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
@@ -335,7 +335,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
           </SectionCard>
 
           <SectionCard title="Shop facets — drive the public filters">
-            <p style={{ color: '#66748A', fontSize: 12, margin: '0 0 8px' }}>
+            <p style={{ color: '#6A6285', fontSize: 12, margin: '0 0 8px' }}>
               These power the generation / capacity / interface / form-factor filters in the shop. Empty = the product
               only appears when that filter is unset.
             </p>
@@ -399,9 +399,9 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
                   {AUTHORIZED_CURRENCIES.map((c) => <option key={c}>{c}</option>)}
                 </select></span>
             </div>
-            <label style={labelStyle}>Warranty <span style={{ color: '#93A0B4', fontWeight: 400 }}>(shown on the product page, e.g. “Lifetime” / “3 Years”)</span></label>
+            <label style={labelStyle}>Warranty <span style={{ color: '#9A93B5', fontWeight: 400 }}>(shown on the product page, e.g. “Lifetime” / “3 Years”)</span></label>
             <input style={{ ...input, width: '100%' }} placeholder="e.g. 5 Years" value={form.warranty} onChange={(e) => set('warranty', e.target.value)} />
-            <label style={labelStyle}>Badges <span style={{ color: '#93A0B4', fontWeight: 400 }}>(comma separated, max 8)</span></label>
+            <label style={labelStyle}>Badges <span style={{ color: '#9A93B5', fontWeight: 400 }}>(comma separated, max 8)</span></label>
             <input style={{ ...input, width: '100%' }} placeholder="New, Best seller,…" value={form.badges} onChange={(e) => set('badges', e.target.value)} />
           </SectionCard>
 
@@ -414,14 +414,14 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
               <button style={btnGhost} onClick={() => setPicker('hero')}>{hero ? 'Change' : 'Choose'}</button>
               {hero && <button style={{ ...btnGhost, padding: '4px 8px' }} onClick={() => setHero(null)}>✕</button>}
             </div>
-            <label style={labelStyle}>Gallery ({gallery.length}/12) <span style={{ color: '#93A0B4', fontWeight: 400 }}>(first image follows the hero on the product page — ‹ › to reorder)</span></label>
+            <label style={labelStyle}>Gallery ({gallery.length}/12) <span style={{ color: '#9A93B5', fontWeight: 400 }}>(first image follows the hero on the product page — ‹ › to reorder)</span></label>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
               {gallery.map((g, i) => (
                 <span key={g} style={{ position: 'relative', width: 64, height: 48, borderRadius: 6, background: '#EEF1F5', overflow: 'hidden' }}>
                   <img src={API + '/admin/media/' + g + '/file?variant=thumb'} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   <button title="Remove" onClick={() => setGallery((s) => s.filter((x) => x !== g))}
                     style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, border: 0, borderRadius: 4, background: 'rgba(10,37,64,.75)', color: '#fff', fontSize: 10, cursor: 'pointer', lineHeight: 1 }}>✕</button>
-                  {i === 0 && gallery.length > 1 && <span title="Lead gallery image" style={{ position: 'absolute', bottom: 2, left: 2, fontSize: 9, background: 'rgba(29,191,159,.9)', color: '#fff', borderRadius: 4, padding: '0 4px', fontWeight: 700 }}>1st</span>}
+                  {i === 0 && gallery.length > 1 && <span title="Lead gallery image" style={{ position: 'absolute', bottom: 2, left: 2, fontSize: 9, background: 'rgba(109,40,217,.9)', color: '#fff', borderRadius: 4, padding: '0 4px', fontWeight: 700 }}>1st</span>}
                   <span style={{ position: 'absolute', bottom: 2, right: 2, display: 'flex', gap: 1 }}>
                     <button title="Move earlier" disabled={i === 0} onClick={() => setGallery((s) => { const n = [...s]; [n[i - 1], n[i]] = [n[i], n[i - 1]]; return n; })}
                       style={{ width: 14, height: 14, border: 0, borderRadius: 3, background: 'rgba(10,37,64,.65)', color: '#fff', fontSize: 9, cursor: i === 0 ? 'default' : 'pointer', lineHeight: 1, opacity: i === 0 ? 0.4 : 1 }}>‹</button>
@@ -435,7 +435,7 @@ function Editor({ id, taxonomy, canWrite, onDone, onCancel }: {
           </SectionCard>
 
           {!isNew && existing && (
-            <SectionCard title="Record" collapsible defaultOpen={false} titleStyle={{ color: NAVY }} style={{ color: '#93A0B4', fontSize: 12 }}>
+            <SectionCard title="Record" collapsible defaultOpen={false} titleStyle={{ color: NAVY }} style={{ color: '#9A93B5', fontSize: 12 }}>
               Created {fmtDate(existing.createdAt)} · Updated {fmtDate(existing.updatedAt)} · ID #{existing.id}
             </SectionCard>
           )}
@@ -463,10 +463,10 @@ function StorefrontPreview({ name, catLabel, shortSpec, warranty, badge, price, 
   name: string; catLabel: string; shortSpec: string; warranty: string; badge: string;
   price: string; currency: string; heroId: number | null; published: boolean;
 }) {
-  const INK = '#1F2A37'; const MUTED = '#66748A';
+  const INK = '#241F3D'; const MUTED = '#6A6285';
   return (
-    <div style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: 14 }}>
-      <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#93A0B4', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ border: '1px solid #E5E0F2', borderRadius: 12, background: '#fff', padding: 14 }}>
+      <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#9A93B5', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>Storefront preview</span>
         <span style={{ fontWeight: 700, letterSpacing: 0.2, textTransform: 'none', fontSize: 10.5, color: published ? '#0F6B54' : '#8A5A00', background: published ? '#E4F8F2' : '#FBF3E2', border: `1px solid ${published ? '#BFE8DC' : '#E8CE9A'}`, borderRadius: 999, padding: '1px 8px' }}>
           {published ? '● live on next export' : '● draft — not on site'}
@@ -480,7 +480,7 @@ function StorefrontPreview({ name, catLabel, shortSpec, warranty, badge, price, 
             ? <img src={API + '/admin/media/' + heroId + '/file?variant=card'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             : <span style={{ color: '#B7C2CF', fontSize: 12.5 }}>no hero image</span>}
           {badge && (
-            <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10.5, fontWeight: 800, color: '#fff', background: '#1DBF9F', borderRadius: 999, padding: '2px 9px' }}>{badge}</span>
+            <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10.5, fontWeight: 800, color: '#fff', background: '#6D28D9', borderRadius: 999, padding: '2px 9px' }}>{badge}</span>
           )}
         </div>
         <div style={{ fontWeight: 800, color: INK, fontSize: 14.5, lineHeight: 1.3 }}>{name}</div>
@@ -492,7 +492,7 @@ function StorefrontPreview({ name, catLabel, shortSpec, warranty, badge, price, 
           )}
         </div>
       </div>
-      <div style={{ color: '#93A0B4', fontSize: 11, marginTop: 8, lineHeight: 1.5 }}>
+      <div style={{ color: '#9A93B5', fontSize: 11, marginTop: 8, lineHeight: 1.5 }}>
         Mirrors the public shop card. Published products reach the site on the next content export (build prebuild, or the manual export tool).
       </div>
     </div>
@@ -601,7 +601,7 @@ function VariantsTab({ productId, baseSku, canWrite }: { productId: number; base
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
           {canWrite && <button style={btn} disabled={busy} onClick={submit}>{busy ? 'Saving…' : editId != null ? 'Save variant' : 'Add variant'}</button>}
           {editId != null && <button style={btnGhost} onClick={reset}>Cancel edit</button>}
-          {!canWrite && <span style={{ color: '#93A0B4', fontSize: 12.5, alignSelf: 'center' }}>Read-only — editor role required to manage variants.</span>}
+          {!canWrite && <span style={{ color: '#9A93B5', fontSize: 12.5, alignSelf: 'center' }}>Read-only — editor role required to manage variants.</span>}
         </div>
       </SectionCard>
 
@@ -616,11 +616,11 @@ function VariantsTab({ productId, baseSku, canWrite }: { productId: number; base
                 <td style={td}>
                   <span style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap' }}>
                     {[v.attrs.capacity, v.attrs.speed, v.attrs.finish, v.attrs.lighting].filter(Boolean).map((a, i) => (
-                      <span key={i} style={{ fontSize: 11, background: '#F1F4F8', color: '#475467', borderRadius: 5, padding: '1px 7px' }}>{a}</span>
+                      <span key={i} style={{ fontSize: 11, background: '#F5F1FD', color: '#475467', borderRadius: 5, padding: '1px 7px' }}>{a}</span>
                     ))}
                   </span>
                 </td>
-                <td style={td}>{v.attrs.priceUsd != null ? <b>${Number(v.attrs.priceUsd).toFixed(2)}</b> : <span style={{ color: '#93A0B4' }}>—</span>}</td>
+                <td style={td}>{v.attrs.priceUsd != null ? <b>${Number(v.attrs.priceUsd).toFixed(2)}</b> : <span style={{ color: '#9A93B5' }}>—</span>}</td>
                 <td style={td}>{v.attrs.stock ?? 0}</td>
                 <td style={td}><Badge value={v.attrs.status ?? 'active'} /></td>
                 <td style={{ ...td, width: 110 }}>
@@ -681,12 +681,12 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
     <div style={overlay} onClick={onClose}>
       <div ref={dialogRef} style={card} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Bulk import and export">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <b style={{ fontSize: 15, color: '#1F2A37', flex: 1 }}>Bulk import &amp; export</b>
+          <b style={{ fontSize: 15, color: '#241F3D', flex: 1 }}>Bulk import &amp; export</b>
           <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={onClose}>✕</button>
         </div>
         {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '8px 12px', whiteSpace: 'pre-wrap' }}>{err}</p>}
 
-        <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12, marginBottom: 12 }}>
+        <div style={{ border: '1px solid #E5E0F2', borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <b style={{ fontSize: 13 }}>1 · Get the data</b>
           <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: MUTED }}>
             Download the template to see the exact columns (sku, slug, name, brand, category, status, currency, priceUsd, description —
@@ -698,7 +698,7 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
           </div>
         </div>
 
-        <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12, marginBottom: 12 }}>
+        <div style={{ border: '1px solid #E5E0F2', borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <b style={{ fontSize: 13 }}>2 · Upload your CSV</b>
           <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: MUTED }}>Choose a .csv file, then validate it first — nothing is written during a dry-run.</p>
           <input type="file" accept=".csv,text/csv" aria-label="Upload CSV file" style={input} disabled={!canImport}
@@ -709,7 +709,7 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
           {csv && <p style={{ margin: '8px 0 0', fontSize: 12, color: '#065F46', fontWeight: 700 }}>✓ Loaded {csv.split(/\r?\n/).filter((l) => l.trim()).length - 1} data row(s)</p>}
         </div>
 
-        <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 12 }}>
+        <div style={{ border: '1px solid #E5E0F2', borderRadius: 10, padding: 12 }}>
           <b style={{ fontSize: 13 }}>3 · Validate, then import</b>
           <div style={{ display: 'flex', gap: 8, margin: '10px 0' }}>
             <button style={btnGhost} disabled={!canImport || !csv || busy} onClick={() => run(true)}>{busy ? 'Working…' : 'Validate (dry-run)'}</button>
@@ -721,7 +721,7 @@ function BulkModal({ canImport, onClose, onDone }: { canImport: boolean; onClose
           {report && (
             <div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 999, background: report.committed ? '#E7F6EE' : '#F1F4F8', color: report.committed ? '#1F9D62' : '#475467' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 999, background: report.committed ? '#E7F6EE' : '#F5F1FD', color: report.committed ? '#1F9D62' : '#475467' }}>
                   {report.committed ? `✓ Committed — ${report.createCount} created, ${report.updateCount} updated` : `Dry-run — ${report.validCount}/${report.total} valid (${report.createCount} new, ${report.updateCount} updates)`}
                 </span>
                 {report.errors.length > 0 && (

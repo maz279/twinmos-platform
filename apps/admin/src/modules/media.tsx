@@ -190,7 +190,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div>
-      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Media library</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#241F3D', letterSpacing: -0.2 }}>Media library</h1>
       <AnalyticsStrip />
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
         <input style={{ ...input, width: 220 }} placeholder="Search key or alt text…" aria-label="Search key or alt text" value={q}
@@ -202,7 +202,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
         <span style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 999, background: missing ? '#FCECEB' : '#E7F6EE', color: missing ? '#C2453C' : '#0F6B54' }}>
           {total - missing}/{total} alt-text compliant
         </span>
-        <button style={{ ...btnGhost, fontWeight: missingOnly ? 800 : 400, borderColor: missingOnly ? '#1DBF9F' : undefined, color: missingOnly ? '#0E9F7E' : undefined }}
+        <button style={{ ...btnGhost, fontWeight: missingOnly ? 800 : 400, borderColor: missingOnly ? '#6D28D9' : undefined, color: missingOnly ? '#5B21B6' : undefined }}
           onClick={() => setMissingOnly((v) => !v)}>
           {missingOnly ? `Showing missing alt only` : `Show missing alt`}
         </button>
@@ -220,7 +220,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
           Decorative
         </label>
         <button style={btn} disabled={busy} onClick={upload}>Upload{typeof folder === 'number' ? ` → ${folderName(folder)}` : ''}</button>
-        <span style={{ borderLeft: '1px solid #E6EBF1', paddingLeft: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <span style={{ borderLeft: '1px solid #E5E0F2', paddingLeft: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
           <input ref={bulkRef} type="file" multiple style={{ ...input, maxWidth: 240 }} accept=".png,.jpg,.jpeg,.webp,.gif,.avif,.pdf" aria-label="Bulk upload media files" title="Bulk upload — alt is derived from each filename" />
           <button style={btnGhost} disabled={busy} onClick={bulkUpload} title="Uploads each file with alt text derived from its filename">Bulk ↑</button>
         </span>
@@ -237,7 +237,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px,240px) 1fr', gap: 14, alignItems: 'start' }}>
         {/* ---- Phase 4.3 folder tree ---- */}
-        <aside style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: 12, position: 'sticky', top: 12 }}>
+        <aside style={{ border: '1px solid #E5E0F2', borderRadius: 12, background: '#fff', padding: 12, position: 'sticky', top: 12 }}>
           <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: MUTED, margin: '2px 0 8px' }}>Folders</div>
           <button onClick={() => setFolder('all')}
             style={{ display: 'flex', gap: 8, width: '100%', textAlign: 'left', border: 0, background: folder === 'all' ? '#E7F7F2' : 'none', color: folder === 'all' ? '#065F46' : MUTED, fontWeight: folder === 'all' ? 800 : 500, borderRadius: 7, padding: '5px 8px', cursor: 'pointer', fontSize: 13 }}>
@@ -285,18 +285,18 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                   const variants = Object.keys(m.meta?.variants ?? {});
                   const lowRes = m.kind === 'image' && m.width != null && m.width < 1200;
                   return (
-                    <div key={m.id} style={{ border: '1px solid #E6EBF1', borderRadius: 10, background: '#fff', overflow: 'hidden' }}>
+                    <div key={m.id} style={{ border: '1px solid #E5E0F2', borderRadius: 10, background: '#fff', overflow: 'hidden' }}>
                       <a href={fileUrl(m.id)} target="_blank" rel="noopener" style={{ display: 'block', aspectRatio: '4/3', background: '#EEF1F5' }}>
                         {m.kind === 'image'
                           ? <img src={thumbUrl(m)} alt={m.alt ?? ''} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                           : <span style={{ display: 'grid', placeItems: 'center', height: '100%', color: MUTED, fontSize: 12 }}>{m.kind}</span>}
                       </a>
                       <div style={{ padding: '8px 10px' }}>
-                        <b style={{ display: 'block', fontSize: 12, color: '#1F2A37', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.meta?.origName ?? m.key}>{m.meta?.origName ?? m.key}</b>
+                        <b style={{ display: 'block', fontSize: 12, color: '#241F3D', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.meta?.origName ?? m.key}>{m.meta?.origName ?? m.key}</b>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, margin: '4px 0 6px', flexWrap: 'wrap' }}>
                           <Badge value={m.kind} />
-                          {lowRes && chip('low-res', `Master is ${m.width}×${m.height}px — BR-1.2 wants ≥1200px masters`, '#E8A33D')}
-                          {variants.length > 0 && chip('T/C/H/F', `${variants.length} responsive variants (thumb/card/hero/full${m.meta?.variants?.heroAvif ? ' +AVIF' : ''})`, '#1DBF9F')}
+                          {lowRes && chip('low-res', `Master is ${m.width}×${m.height}px — BR-1.2 wants ≥1200px masters`, '#B45309')}
+                          {variants.length > 0 && chip('T/C/H/F', `${variants.length} responsive variants (thumb/card/hero/full${m.meta?.variants?.heroAvif ? ' +AVIF' : ''})`, '#6D28D9')}
                         </div>
                         {editing === m.id ? (
                           <span style={{ display: 'flex', gap: 6 }}>
@@ -305,7 +305,7 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                           </span>
                         ) : (
                           <span style={{ display: 'flex', gap: 6 }}>
-                            <span style={{ flex: 1, fontSize: 11, color: m.alt ? '#66748A' : '#C2453C', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.alt ?? ''}>{m.alt ?? '⚠ no alt'}</span>
+                            <span style={{ flex: 1, fontSize: 11, color: m.alt ? '#6A6285' : '#C2453C', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={m.alt ?? ''}>{m.alt ?? '⚠ no alt'}</span>
                             <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} onClick={() => { setEditing(m.id); setEditAlt(m.alt ?? ''); }}>Alt</button>
                             <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} onClick={() => copyUrl(fileUrl(m.id), m.id)}>{copied === m.id ? '✓' : 'URL'}</button>
                             <button style={{ ...btnGhost, padding: '2px 7px', fontSize: 11 }} title="Public URL (usable on the site)" onClick={() => copyUrl(publicUrl(m.id), m.id)}>Pub</button>
@@ -328,19 +328,19 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <thead><tr>{['File', 'Kind', 'Folder', 'Alt text', 'Variants', 'Size', 'Uploaded', ''].map((h, i) => (
-                  <th key={`${h || 'col'}-${i}`} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>
+                  <th key={`${h || 'col'}-${i}`} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E5E0F2' }}>{h}</th>
                 ))}</tr></thead>
                 <tbody>
                   {items.map((m) => (
                     <tr key={m.id}>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}>
                         <b>{m.meta?.origName ?? m.key}</b>
                         <div style={{ color: MUTED, fontSize: 12 }}>{m.key}{m.width != null ? ` · ${m.width}×${m.height}` : ''}</div>
                         <a href={fileUrl(m.id)} target="_blank" rel="noopener" style={{ fontSize: 12 }}>View file ↗</a>
                       </td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}><Badge value={m.kind} /></td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7', color: MUTED }}>{folderName(m.folderId)}</td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}><Badge value={m.kind} /></td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC', color: MUTED }}>{folderName(m.folderId)}</td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}>
                         {editing === m.id ? (
                           <span style={{ display: 'flex', gap: 6 }}>
                             <input style={input} value={editAlt} onChange={(e) => setEditAlt(e.target.value)} />
@@ -353,12 +353,12 @@ export default function Media({ isAdmin }: { isAdmin: boolean }) {
                           </span>
                         )}
                       </td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7', fontSize: 11.5, color: MUTED }}>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC', fontSize: 11.5, color: MUTED }}>
                         {Object.keys(m.meta?.variants ?? {}).join(', ') || (m.meta?.variantError ? '—' : '—')}
                       </td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{m.meta?.bytes ? Math.round(m.meta.bytes / 1024) + ' KB' : '—'}</td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{fmtDate(m.createdAt)}</td>
-                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}>{m.meta?.bytes ? Math.round(m.meta.bytes / 1024) + ' KB' : '—'}</td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}>{fmtDate(m.createdAt)}</td>
+                      <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}>
                         <button style={{ ...btnGhost, marginRight: 6 }} onClick={() => copyUrl(fileUrl(m.id), m.id)}>{copied === m.id ? 'Copied ✓' : 'Copy URL'}</button>
                         <button style={{ ...btnGhost, marginRight: 6 }} title="Public URL" onClick={() => copyUrl(publicUrl(m.id), m.id)}>Pub</button>
                         <button style={{ ...btnGhost, marginRight: 6 }} title="Usage & references" onClick={() => setUsageFor(usageFor === m.id ? null : m.id)}>ⓘ</button>
@@ -387,16 +387,16 @@ function AnalyticsStrip() {
   if (error || !data) return null;
   const fmtBytes = (b: number) => b > 1e9 ? (b / 1e9).toFixed(1) + ' GB' : b > 1e6 ? (b / 1e6).toFixed(1) + ' MB' : Math.round(b / 1e3) + ' KB';
   const maxArrivals = Math.max(1, ...data.series.map((x) => x.n));
-  const kpi = (label: string, value: string, sub: string, tone = '#1F2A37') => (
-    <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, background: '#fff', padding: '10px 14px' }}>
+  const kpi = (label: string, value: string, sub: string, tone = '#241F3D') => (
+    <div style={{ border: '1px solid #E5E0F2', borderRadius: 10, background: '#fff', padding: '10px 14px' }}>
       <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: MUTED }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 800, color: tone, marginTop: 2 }}>{value}</div>
       <div style={{ fontSize: 11.5, color: MUTED }}>{sub}</div>
     </div>
   );
   return (
-    <details style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
-      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#1F2A37', userSelect: 'none' }}>
+    <details style={{ border: '1px solid #E5E0F2', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#241F3D', userSelect: 'none' }}>
         Analytics — <span style={{ color: MUTED, fontWeight: 400 }}>
           {data.total} assets · {data.altCompliance}% alt compliance · {fmtBytes(data.storageBytes)} storage{data.lowRes ? ` · ${data.lowRes} low-res` : ''}
         </span>
@@ -410,10 +410,10 @@ function AnalyticsStrip() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 16, marginTop: 14 }}>
         <div>
           <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: MUTED, marginBottom: 6 }}>Uploads — last 14 days</div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60, borderBottom: '1px solid #E6EBF1' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 60, borderBottom: '1px solid #E5E0F2' }}>
             {data.series.map((x) => (
               <div key={x.d} title={x.d + ': ' + x.n} style={{ flex: 1, display: 'flex', alignItems: 'flex-end', height: '100%' }}>
-                <span style={{ width: '70%', borderRadius: '3px 3px 0 0', background: '#1DBF9F', height: Math.max((x.n / maxArrivals) * 100, x.n ? 6 : 0) + '%', display: 'block', margin: '0 auto' }} />
+                <span style={{ width: '70%', borderRadius: '3px 3px 0 0', background: '#6D28D9', height: Math.max((x.n / maxArrivals) * 100, x.n ? 6 : 0) + '%', display: 'block', margin: '0 auto' }} />
               </div>
             ))}
           </div>
@@ -423,7 +423,7 @@ function AnalyticsStrip() {
           {data.byKind.map((k) => (
             <div key={k.kind} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: MUTED, padding: '3px 0' }}>
               <span>{k.kind}</span>
-              <span><b style={{ color: '#1F2A37' }}>{k.n}</b> · {fmtBytes(k.bytes)}</span>
+              <span><b style={{ color: '#241F3D' }}>{k.n}</b> · {fmtBytes(k.bytes)}</span>
             </div>
           ))}
         </div>
@@ -443,9 +443,9 @@ function UsageDrawer({ id, onClose }: { id: number; onClose: () => void }) {
   }
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   return (
-    <div ref={panelRef} style={{ marginTop: 12, border: '1px solid #E6EBF1', borderRadius: 12, background: '#F8FAFC', padding: 14 }}>
+    <div ref={panelRef} style={{ marginTop: 12, border: '1px solid #E5E0F2', borderRadius: 12, background: '#FAF7FF', padding: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <b style={{ color: '#1F2A37' }}>Asset #{id} — usage &amp; URLs</b>
+        <b style={{ color: '#241F3D' }}>Asset #{id} — usage &amp; URLs</b>
         <span style={{ flex: 1 }} />
         <button style={{ ...btnGhost, padding: '4px 10px' }} onClick={onClose}>Close</button>
       </div>
@@ -472,7 +472,7 @@ function UsageDrawer({ id, onClose }: { id: number; onClose: () => void }) {
           ) : (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {data.usage.map((u) => (
-                <span key={u.entity + u.id} style={{ fontSize: 12, background: '#fff', border: '1px solid #E6EBF1', borderRadius: 8, padding: '4px 10px' }}>
+                <span key={u.entity + u.id} style={{ fontSize: 12, background: '#fff', border: '1px solid #E5E0F2', borderRadius: 8, padding: '4px 10px' }}>
                   <Badge value={u.entity} /> {u.label}
                 </span>
               ))}

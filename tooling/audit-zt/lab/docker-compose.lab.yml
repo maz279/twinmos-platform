@@ -18,6 +18,8 @@ services:
     # plus the lab CA standing in for Cloudflare's origin-pull CA.
     volumes:
       - ../../tooling/audit-zt/lab/.certs/ca.pem:/etc/nginx/certs/cloudflare-origin-pull-ca.pem:ro
+  web:
+    ports: !override []
   api:
     environment:
       - RESEND_BASE_URL=http://mailmock:3000

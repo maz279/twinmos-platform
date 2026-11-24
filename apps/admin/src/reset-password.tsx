@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { API } from './api';
 
-const NAVY = '#16222F';
-const CYAN = '#1DBF9F';
+const NAVY = '#191338';
+const CYAN = '#6D28D9';
 const LOGO = `${import.meta.env.BASE_URL}assets/img/logo.webp`;
 
 const cardIn: React.CSSProperties = {
-  width: '100%', padding: '12px 14px', border: '1px solid #D9E0E8', borderRadius: 8,
+  width: '100%', padding: '12px 14px', border: '1px solid #DED6F0', borderRadius: 8,
   fontSize: 14.5, marginBottom: 14, background: '#fff', boxSizing: 'border-box',
 };
 const btnMain: React.CSSProperties = {
@@ -68,7 +68,7 @@ export default function ResetPassword({
     }}>
       <img src={LOGO} alt="TwinMOS" style={{ height: 28, width: 'auto', display: 'block', margin: '0 auto 18px' }} />
       <h2 style={{ margin: '0 0 6px', fontSize: 20, color: NAVY, textAlign: 'center' }}>Choose new password</h2>
-      <p style={{ margin: '0 0 20px', color: '#66748A', fontSize: 13.5, textAlign: 'center' }}>
+      <p style={{ margin: '0 0 20px', color: '#6A6285', fontSize: 13.5, textAlign: 'center' }}>
         Enter a new secure password (minimum 10 characters).
       </p>
 
@@ -76,7 +76,7 @@ export default function ResetPassword({
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#E6F8F4', color: CYAN, fontSize: 24, display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>✓</div>
           <p style={{ color: NAVY, fontWeight: 700, margin: '0 0 8px' }}>Password Updated</p>
-          <p style={{ color: '#66748A', fontSize: 13, lineHeight: 1.5, margin: '0 0 24px' }}>
+          <p style={{ color: '#6A6285', fontSize: 13, lineHeight: 1.5, margin: '0 0 24px' }}>
             Your account password has been updated successfully. Active sessions have been revoked for your security.
           </p>
           <button type="button" onClick={onDone} style={{ ...btnMain, background: NAVY }}>Sign In Now</button>

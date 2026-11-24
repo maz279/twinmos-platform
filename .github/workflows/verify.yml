@@ -113,6 +113,12 @@ jobs:
           npm run build --workspace @twinmos/admin
           node tooling/verify/build-provenance.mjs
 
+      - name: BUILD-01 dirty-tree diagnostics
+        if: failure()
+        run: |
+          git status --porcelain=v1 | head -80
+          git diff --stat | tail -30
+
       - name: Start Web Preview
         run: |
           PORT=4321 HOST=127.0.0.1 npm run preview --workspace @twinmos/web &

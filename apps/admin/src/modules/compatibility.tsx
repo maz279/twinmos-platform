@@ -84,7 +84,7 @@ export default function Compatibility({ canWrite }: { canWrite: boolean }) {
         <span>{items.length} rule{items.length === 1 ? '' : 's'}</span>
         {COMPAT_DEVICE_TYPES.map((t) => (
           <span key={t} style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
-            · {TYPE_LABEL[t]}: <b style={{ color: '#1F2A37' }}>{coverage[t] ?? 0}</b>
+            · {TYPE_LABEL[t]}: <b style={{ color: '#241F3D' }}>{coverage[t] ?? 0}</b>
           </span>
         ))}
       </div>
@@ -108,7 +108,7 @@ export default function Compatibility({ canWrite }: { canWrite: boolean }) {
           {items.map((r) => (
             <tr key={r.id} onClick={() => setEditing(r)} style={{ cursor: 'pointer' }} title="Open editor">
               <td style={td}>
-                <b style={{ color: '#1F2A37' }}>{r.deviceBrand}</b>
+                <b style={{ color: '#241F3D' }}>{r.deviceBrand}</b>
                 <div style={{ color: MUTED, fontSize: 11.5 }}>{r.deviceModel}</div>
               </td>
               <td style={td}>{TYPE_LABEL[r.deviceType] ?? r.deviceType}</td>
@@ -163,7 +163,7 @@ function Editor({ rule, canWrite, brands, onDone, onCancel }: {
   const panelRef = usePanelScroll<HTMLDivElement>();
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) { setForm((f) => ({ ...f, [k]: v })); }
-  const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 700, color: '#1F2A37', display: 'block', margin: '12px 0 4px' };
+  const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 700, color: '#241F3D', display: 'block', margin: '12px 0 4px' };
 
   async function save() {
     setErr(null);
@@ -243,7 +243,7 @@ function Editor({ rule, canWrite, brands, onDone, onCancel }: {
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
         {canWrite && <button style={btn} disabled={busy} onClick={save}>{busy ? 'Saving…' : rule ? 'Save rule' : 'Add rule'}</button>}
         <button style={btnGhost} onClick={onCancel}>Cancel</button>
-        {!canWrite && <span style={{ color: '#93A0B4', fontSize: 12.5, alignSelf: 'center' }}>Read-only — editor role required.</span>}
+        {!canWrite && <span style={{ color: '#9A93B5', fontSize: 12.5, alignSelf: 'center' }}>Read-only — editor role required.</span>}
       </div>
     </SectionCard>
     </div>
@@ -275,7 +275,7 @@ function ImportCard({ canWrite, onDone, onClose }: { canWrite: boolean; onDone: 
   return (
     <SectionCard title="Batch CSV import" style={{ marginBottom: 12 }}>
       {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '6px 10px' }}>{err}</p>}
-      <p style={{ color: '#66748A', fontSize: 12.5, marginTop: 0 }}>
+      <p style={{ color: '#6A6285', fontSize: 12.5, marginTop: 0 }}>
         Header: <code>deviceType,deviceBrand,deviceModel,memoryGen,formFactor,maxGb,slots,speed,cats,ssdNote,ssdCats,notes</code> —
         cats/ssdCats are <b>;</b>-separated inside the cell. Rows upsert by type + brand + model + gen + form factor.
       </p>
@@ -288,7 +288,7 @@ function ImportCard({ canWrite, onDone, onClose }: { canWrite: boolean; onDone: 
           <button style={btn} disabled={busy || !csv.trim()} onClick={() => run(false)} title="Validates first; any row error aborts with no changes">
             {busy ? 'Working…' : 'Import batch'}
           </button>
-        </> : <span style={{ color: '#93A0B4', fontSize: 12.5, alignSelf: 'center' }}>Read-only — editor role required.</span>}
+        </> : <span style={{ color: '#9A93B5', fontSize: 12.5, alignSelf: 'center' }}>Read-only — editor role required.</span>}
         <span style={{ flex: 1 }} />
         <button style={btnGhost} onClick={onClose}>Close</button>
       </div>

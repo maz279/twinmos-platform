@@ -10,7 +10,7 @@ import { Badge, btn, btnGhost, CommandBar, Empty, Err, input, MUTED, PageHeader,
 import type { ModProps } from '../nav';
 
 const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: MUTED, display: 'block', margin: '10px 0 4px' };
-const card: React.CSSProperties = { border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 16px', background: '#fff' };
+const card: React.CSSProperties = { border: '1px solid #E5E0F2', borderRadius: 12, padding: '4px 16px 16px', background: '#fff' };
 
 type Policy = { id: number; slug: string; title: string; version: string; status: string; effectiveDate: string | null; publishedAt: string | null; legalApproved: boolean; approvedBy: string | null; changeSummary: string | null; summary: string | null; body: string; cookieCategories: unknown; locale: string; source: string | null; approver: string | null };
 type Office = { id: number; role: string; title: string; entity: string; address: string; flag: string | null; note: string | null; status: string; sort: number; source: string | null; approver: string | null };
@@ -253,11 +253,11 @@ function Policies({ canWrite }: { canWrite: boolean }) {
               <h4 style={{ fontSize: 13 }}>Compare v{compare.from} → v{compare.to}</h4>
               {compare.changes.length === 0 && <p style={{ color: '#08705C', fontSize: 12.5 }}>No differences in tracked fields.</p>}
               {compare.changes.map((c) => (
-                <div key={c.field} style={{ borderTop: '1px solid #E6EBF1', padding: '8px 0' }}>
+                <div key={c.field} style={{ borderTop: '1px solid #E5E0F2', padding: '8px 0' }}>
                   <b style={{ fontSize: 12 }}>{c.field}</b>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12.5, color: '#4A5568' }}>
-                    <div><span style={{ color: '#93A0B4' }}>v{compare.from}:</span> {typeof c.from === 'string' ? c.from.slice(0, 160) : JSON.stringify(c.from)}</div>
-                    <div><span style={{ color: '#93A0B4' }}>v{compare.to}:</span> {typeof c.to === 'string' ? c.to.slice(0, 160) : JSON.stringify(c.to)}</div>
+                    <div><span style={{ color: '#9A93B5' }}>v{compare.from}:</span> {typeof c.from === 'string' ? c.from.slice(0, 160) : JSON.stringify(c.from)}</div>
+                    <div><span style={{ color: '#9A93B5' }}>v{compare.to}:</span> {typeof c.to === 'string' ? c.to.slice(0, 160) : JSON.stringify(c.to)}</div>
                   </div>
                 </div>
               ))}
@@ -511,7 +511,7 @@ function Forms({ canWrite }: { canWrite: boolean }) {
           <h4 style={{ fontSize: 13, marginTop: 16 }}>Fields (label, help text, order, options)</h4>
           {fields === null && <p style={{ color: MUTED, fontSize: 12 }}>Loading fields…</p>}
           {fields?.map((f, i) => (
-            <div key={f.id} style={{ borderTop: '1px solid #E6EBF1', padding: '8px 0', display: 'grid', gridTemplateColumns: 'minmax(120px,1fr) minmax(120px,1fr) 60px 70px minmax(140px,1.4fr)', gap: 8, alignItems: 'center' }}>
+            <div key={f.id} style={{ borderTop: '1px solid #E5E0F2', padding: '8px 0', display: 'grid', gridTemplateColumns: 'minmax(120px,1fr) minmax(120px,1fr) 60px 70px minmax(140px,1.4fr)', gap: 8, alignItems: 'center' }}>
               <input style={{ ...input, width: '100%' }} aria-label="Field label" value={f.label} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, label: e.target.value }; setFields(next); }} />
               <input style={{ ...input, width: '100%' }} aria-label="Field help text" placeholder="help text" value={f.helpText ?? ''} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, helpText: e.target.value }; setFields(next); }} />
               <input style={{ ...input, width: '100%' }} aria-label="Sort order" type="number" value={f.sort} onChange={(e) => { const next = [...fields!]; next[i] = { ...f, sort: Number(e.target.value) }; setFields(next); }} />

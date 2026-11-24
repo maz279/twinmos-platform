@@ -21,7 +21,7 @@ export default function Partners({ canManage }: { canManage: boolean }) {
   const [tab, setTab] = useState<'orgs' | 'directory'>('orgs');
   return (
     <div>
-      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Partners &amp; channel</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#241F3D', letterSpacing: -0.2 }}>Partners &amp; channel</h1>
       <p style={{ color: MUTED, fontSize: 13, margin: "4px 0 0" }}>
         Portal organizations (approve/suspend, members, gated assets) and the public where-to-buy directory.
         Serial registry &amp; counterfeit anomaly scans live in <b>SN-check &amp; serials</b>.
@@ -178,7 +178,7 @@ function OrgDetail({ id, onChanged }: { id: number; onChanged: () => void }) {
   }
 
   return (
-    <div ref={panelRef} style={{ marginTop: 16, border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
+    <div ref={panelRef} style={{ marginTop: 16, border: '1px solid #E5E0F2', borderRadius: 10, padding: 16, background: '#FAF7FF' }}>
       <b>Members</b>
       {err ? <Err error={err} /> : null}
       {error ? <Err error={error} /> : loading ? <p>Loading…</p> : (
@@ -190,7 +190,7 @@ function OrgDetail({ id, onChanged }: { id: number; onChanged: () => void }) {
                 onClick={() => removeMember(m.id)}>Remove</button>
             </div>
           ))}
-          {data && data.items.length === 0 && <p style={{ color: '#66748A', fontSize: 13 }}>No members — add the partner's site account email.</p>}
+          {data && data.items.length === 0 && <p style={{ color: '#6A6285', fontSize: 13 }}>No members — add the partner's site account email.</p>}
         </>
       )}
       <div style={{ display: 'flex', gap: 8, margin: '8px 0 16px' }}>
@@ -314,9 +314,9 @@ function Directory({ canWrite }: { canWrite: boolean }) {
       )}
 
       {canWrite && (
-        <div style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: 12, marginTop: 14 }}>
+        <div style={{ border: '1px solid #E5E0F2', borderRadius: 12, background: '#fff', padding: 12, marginTop: 14 }}>
           <b style={{ fontSize: 13 }}>Batch CSV import</b>
-          <p style={{ margin: '6px 0 8px', fontSize: 12.5, color: '#66748A' }}>
+          <p style={{ margin: '6px 0 8px', fontSize: 12.5, color: '#6A6285' }}>
             Header: <code>name,country,region,status,cities,contactEmail,website,note</code> — cities are <b>;</b>-separated;
             upserts by name + country. Regions: {DISTRIBUTOR_REGIONS.join(', ')} · Statuses: {DISTRIBUTOR_STATUSES.join(', ')}.
           </p>
@@ -342,9 +342,9 @@ function Directory({ canWrite }: { canWrite: boolean }) {
         </div>
       )}
 
-      <div style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: 12, marginTop: 14 }}>
+      <div style={{ border: '1px solid #E5E0F2', borderRadius: 12, background: '#fff', padding: 12, marginTop: 14 }}>
         <b style={{ fontSize: 13 }}>Verified online marketplaces</b>
-        <p style={{ margin: '6px 0 8px', fontSize: 12.5, color: '#66748A' }}>Official store fronts — listed as verified channels on the site.</p>
+        <p style={{ margin: '6px 0 8px', fontSize: 12.5, color: '#6A6285' }}>Official store fronts — listed as verified channels on the site.</p>
         {listings.error ? <Err error={listings.error} /> : listings.loading ? <p>Loading…</p> : (
           <Table head={['Platform', 'URL', 'Country', 'Verified', '']}>
             {(listings.data?.items ?? []).map((m) => (
@@ -382,7 +382,7 @@ function DistributorEditor({ row, canWrite, onDone, onCancel }: {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const panelRef = usePanelScroll<HTMLDivElement>();
-  const label: React.CSSProperties = { fontSize: 12, fontWeight: 700, color: '#1F2A37', display: 'block', margin: '10px 0 4px' };
+  const label: React.CSSProperties = { fontSize: 12, fontWeight: 700, color: '#241F3D', display: 'block', margin: '10px 0 4px' };
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) { setForm((f) => ({ ...f, [k]: v })); }
 
   async function save() {
@@ -419,7 +419,7 @@ function DistributorEditor({ row, canWrite, onDone, onCancel }: {
   }
 
   return (
-    <div ref={panelRef} style={{ border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#F8FAFC', marginTop: 12 }}>
+    <div ref={panelRef} style={{ border: '1px solid #E5E0F2', borderRadius: 10, padding: 16, background: '#FAF7FF', marginTop: 12 }}>
       <b>{row ? `Edit — ${row.country}` : 'Add distributor'}</b>
       {err && <p role="alert" style={{ color: '#C2453C', background: '#FDECEA', borderRadius: 8, padding: '6px 10px' }}>{err}</p>}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
@@ -437,7 +437,7 @@ function DistributorEditor({ row, canWrite, onDone, onCancel }: {
           </select></span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-        <span><label style={label}>Cities <span style={{ color: '#93A0B4', fontWeight: 400 }}>(; separated)</span></label>
+        <span><label style={label}>Cities <span style={{ color: '#9A93B5', fontWeight: 400 }}>(; separated)</span></label>
           <input style={{ ...input, width: '100%' }} placeholder="Dubai; Abu Dhabi" value={form.cities} onChange={(e) => set('cities', e.target.value)} /></span>
         <span><label style={label}>Contact email</label>
           <input style={{ ...input, width: '100%' }} placeholder="sales@…" value={form.email} onChange={(e) => set('email', e.target.value)} /></span>

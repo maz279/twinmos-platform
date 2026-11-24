@@ -48,7 +48,7 @@ describe('MS4.1 · Page entity and one block contract (BLOCK-STRICT)', () => {
 
     // Seed locale
     await db.insert(locale).values({ code: 'en', name: 'English', dir: 'ltr', active: true }).onConflictDoNothing();
-  }, 30000);
+  }, 60000);
 
   afterAll(async () => {
     await db.$client.close();

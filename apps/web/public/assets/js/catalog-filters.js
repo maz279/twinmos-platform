@@ -19,16 +19,22 @@
     }
   });
 
-  // PDP gallery thumbnails (buttons carry data-full)
+  // PDP gallery thumbnails (buttons carry data-full); the page-level gallery
+  // script owns arrows/counter, this keeps the shared handler class-driven.
   document.addEventListener('click', function (e) {
     var btn = e.target && e.target.closest ? e.target.closest('.gallery-thumb') : null;
     if (!btn) return;
     var full = btn.getAttribute('data-full');
     var mainImg = document.querySelector('.pdp-main-image img');
-    if (full && mainImg) mainImg.src = full;
+    if (full && mainImg) {
+      mainImg.src = full;
+      mainImg.classList.toggle('is-scene', btn.getAttribute('data-scene') === 'true');
+    }
     document.querySelectorAll('.gallery-thumb').forEach(function (b) {
-      b.style.borderColor = '#E2E8F0';
+      b.classList.remove('on');
+      b.setAttribute('aria-selected', 'false');
     });
-    btn.style.borderColor = 'var(--accent-deep,#08705C)';
+    btn.classList.add('on');
+    btn.setAttribute('aria-selected', 'true');
   });
 })();

@@ -177,7 +177,7 @@ function Bars({ data, color }: { data: Array<[string, number]>; color: string })
       {data.map(([k, n]) => (
         <div key={k} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 30px', alignItems: 'center', gap: 10, padding: '5px 0' }}>
           <span style={{ fontSize: 12.5, color: MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{k}</span>
-          <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+          <span style={{ background: '#F5F1FD', borderRadius: 999, height: 8, overflow: 'hidden' }}>
             <span style={{ display: 'block', width: `${Math.max((n / max) * 100, n ? 4 : 0)}%`, height: '100%', background: `linear-gradient(90deg,${color},${color}C9)`, borderRadius: 999 }} />
           </span>
           <b style={{ fontSize: 12.5, color: INK, textAlign: 'right' }}>{n}</b>
@@ -255,7 +255,7 @@ export default function Dashboard({ nav }: ModProps) {
             <button key={st} onClick={() => nav('rma', undefined, { newTab: true })}
               style={{ display: 'grid', gridTemplateColumns: '110px 1fr 30px', alignItems: 'center', gap: 10, width: '100%', padding: '5px 0', border: 0, background: 'none', cursor: 'pointer', textAlign: 'left' }}>
               <Badge value={st} />
-              <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+              <span style={{ background: '#F5F1FD', borderRadius: 999, height: 8, overflow: 'hidden' }}>
                 <span style={{ display: 'block', width: `${(n / rmaMax) * 100}%`, height: '100%', background: `linear-gradient(90deg,${GOLD},${GOLD}C9)`, borderRadius: 999 }} />
               </span>
               <b style={{ fontSize: 12.5, color: INK, textAlign: 'right' }}>{n}</b>
@@ -285,7 +285,7 @@ export default function Dashboard({ nav }: ModProps) {
         <Card title="Media alt-text compliance" subtitle="accessibility of uploaded assets">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontSize: 24, fontWeight: 800, color: mediaPct >= 90 ? GREEN : mediaPct >= 70 ? GOLD : RED }}>{mediaPct}%</span>
-            <span style={{ flex: 1, background: '#F1F4F8', borderRadius: 999, height: 9, overflow: 'hidden' }}>
+            <span style={{ flex: 1, background: '#F5F1FD', borderRadius: 999, height: 9, overflow: 'hidden' }}>
               <span style={{ display: 'block', width: `${mediaPct}%`, height: '100%', background: mediaPct >= 90 ? GREEN : GOLD, borderRadius: 999, transition: 'width .3s' }} />
             </span>
           </div>
@@ -297,7 +297,7 @@ export default function Dashboard({ nav }: ModProps) {
 
         <Card title="System Health & Observability" subtitle="Prometheus telemetry & alert rules">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10, marginBottom: 12 }}>
-            <div style={{ background: '#F8FAFB', padding: '10px 12px', borderRadius: 8, border: `1px solid ${LINE}` }}>
+            <div style={{ background: '#FAF7FF', padding: '10px 12px', borderRadius: 8, border: `1px solid ${LINE}` }}>
               <div style={{ fontSize: 10.5, fontWeight: 800, color: MUTED, textTransform: 'uppercase' }}>Cluster Health</div>
               <div style={{ fontSize: 16, fontWeight: 800, color: data.telemetry?.dbConnected ? GREEN : RED, marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: data.telemetry?.dbConnected ? GREEN : RED }} />
@@ -306,7 +306,7 @@ export default function Dashboard({ nav }: ModProps) {
               <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>Uptime: {Math.floor((data.telemetry?.uptimeSec ?? 0) / 60)}m</div>
             </div>
 
-            <div style={{ background: '#F8FAFB', padding: '10px 12px', borderRadius: 8, border: `1px solid ${LINE}` }}>
+            <div style={{ background: '#FAF7FF', padding: '10px 12px', borderRadius: 8, border: `1px solid ${LINE}` }}>
               <div style={{ fontSize: 10.5, fontWeight: 800, color: MUTED, textTransform: 'uppercase' }}>HTTP Requests</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: INK, marginTop: 2 }}>
                 {data.telemetry?.metrics?.requestsTotal ?? 0}
@@ -316,7 +316,7 @@ export default function Dashboard({ nav }: ModProps) {
               </div>
             </div>
 
-            <div style={{ background: '#F8FAFB', padding: '10px 12px', borderRadius: 8, border: `1px solid ${LINE}` }}>
+            <div style={{ background: '#FAF7FF', padding: '10px 12px', borderRadius: 8, border: `1px solid ${LINE}` }}>
               <div style={{ fontSize: 10.5, fontWeight: 800, color: MUTED, textTransform: 'uppercase' }}>Active Alerts</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: (data.telemetry?.firingAlerts ?? 0) > 0 ? RED : GREEN, marginTop: 2 }}>
                 {data.telemetry?.firingAlerts ?? 0}
@@ -336,7 +336,7 @@ export default function Dashboard({ nav }: ModProps) {
         <Card title="Activity" subtitle="latest audited mutations">
           {(data.activity ?? []).length === 0 && <Empty text="No audit rows yet." />}
           {(data.activity ?? []).map((a) => (
-            <div key={a.id} style={{ display: 'flex', gap: 10, padding: '7px 0', borderBottom: '1px solid #F0F3F7', fontSize: 12.5, alignItems: 'flex-start' }}>
+            <div key={a.id} style={{ display: 'flex', gap: 10, padding: '7px 0', borderBottom: '1px solid #F4F0FC', fontSize: 12.5, alignItems: 'flex-start' }}>
               <span style={{ display: 'grid', placeItems: 'center', width: 22, height: 22, borderRadius: 7, background: TEAL + '1C', color: TEAL, flexShrink: 0, marginTop: 1 }}>
                 <Icon name="zap" size={11} />
               </span>
@@ -356,7 +356,7 @@ export default function Dashboard({ nav }: ModProps) {
 function Card({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <div style={{ ...card, padding: '14px 16px', minWidth: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 10, paddingBottom: 9, borderBottom: `1px solid #F0F3F7` }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 10, paddingBottom: 9, borderBottom: `1px solid #F4F0FC` }}>
         <h3 style={{ margin: 0, fontSize: 13.5, fontWeight: 800, color: INK }}>{title}</h3>
         {subtitle && <span style={{ fontSize: 11.5, color: FAINT }}>{subtitle}</span>}
       </div>

@@ -19,7 +19,7 @@ export function Funnel({ data }: { data: Array<{ stage: string; count: number }>
         return (
           <div key={d.stage} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 76px', alignItems: 'center', gap: 10, padding: '5px 0' }}>
             <span style={{ fontSize: 12.5, color: MUTED, textTransform: 'capitalize' }}>{d.stage.replace(/_/g, ' ')}</span>
-            <span style={{ background: '#F1F4F8', borderRadius: 6, height: 18, overflow: 'hidden' }}>
+            <span style={{ background: '#F5F1FD', borderRadius: 6, height: 18, overflow: 'hidden' }}>
               <span style={{ display: 'block', width: `${Math.max((d.count / max) * 100, d.count ? 4 : 0)}%`, height: '100%', background: `linear-gradient(90deg,${TEAL},${TEAL}C9)`, borderRadius: 6 }} />
             </span>
             <span style={{ fontSize: 12.5, textAlign: 'right' }}>

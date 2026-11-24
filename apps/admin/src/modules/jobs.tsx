@@ -33,7 +33,7 @@ export default function Jobs({ canWrite }: ModProps) {
   const [tab, setTab] = useState<'postings' | 'applications'>('postings');
   return (
     <div>
-      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Careers</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#241F3D', letterSpacing: -0.2 }}>Careers</h1>
       <AnalyticsStrip />
       <div style={{ display: 'flex', gap: 6, margin: '12px 0' }}>
         <button style={tab === 'postings' ? btn : btnGhost} onClick={() => setTab('postings')}>Postings</button>
@@ -63,15 +63,15 @@ function AnalyticsStrip() {
   const totalApps = data.applications.reduce((s, x) => s + x.n, 0);
   const maxArrivals = Math.max(1, ...data.series.map((x) => x.n));
   const kpi = (label: string, value: string, sub: string) => (
-    <div style={{ border: '1px solid #E6EBF1', borderRadius: 10, background: '#fff', padding: '10px 14px' }}>
+    <div style={{ border: '1px solid #E5E0F2', borderRadius: 10, background: '#fff', padding: '10px 14px' }}>
       <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: MUTED }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 800, color: '#1F2A37', marginTop: 2 }}>{value}</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#241F3D', marginTop: 2 }}>{value}</div>
       <div style={{ fontSize: 11.5, color: MUTED }}>{sub}</div>
     </div>
   );
   return (
-    <details style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
-      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#1F2A37', userSelect: 'none' }}>
+    <details style={{ border: '1px solid #E5E0F2', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#241F3D', userSelect: 'none' }}>
         Analytics — <span style={{ color: MUTED, fontWeight: 400 }}>{published} live postings · {newApps} new applications · {totalApps} total</span>
       </summary>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10, marginTop: 12 }}>
@@ -87,16 +87,16 @@ function AnalyticsStrip() {
           {data.topPostings.map((x) => (
             <div key={x.id} style={{ display: 'grid', gridTemplateColumns: '1fr 34px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
               <span style={{ fontSize: 12.5, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</span>
-              <b style={{ fontSize: 12.5, color: '#1F2A37', textAlign: 'right' }}>{x.n}</b>
+              <b style={{ fontSize: 12.5, color: '#241F3D', textAlign: 'right' }}>{x.n}</b>
             </div>
           ))}
         </div>
         <div>
           <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: MUTED, marginBottom: 6 }}>Applications — last 14 days</div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 70, borderBottom: '1px solid #E6EBF1' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 70, borderBottom: '1px solid #E5E0F2' }}>
             {data.series.map((x) => (
               <div key={x.d} title={x.d + ': ' + x.n} style={{ flex: 1, display: 'flex', alignItems: 'flex-end', height: '100%' }}>
-                <span style={{ width: '70%', borderRadius: '3px 3px 0 0', background: '#1DBF9F', height: Math.max((x.n / maxArrivals) * 100, x.n ? 6 : 0) + '%', display: 'block', margin: '0 auto' }} />
+                <span style={{ width: '70%', borderRadius: '3px 3px 0 0', background: '#6D28D9', height: Math.max((x.n / maxArrivals) * 100, x.n ? 6 : 0) + '%', display: 'block', margin: '0 auto' }} />
               </div>
             ))}
           </div>
@@ -168,9 +168,9 @@ function Postings({ canWrite }: { canWrite: boolean }) {
               const dl = deadline(p.applyBy);
               return (
                 <tr key={p.id}>
-                  <td style={td}><b style={{ color: '#1F2A37' }}>{p.title}</b>
+                  <td style={td}><b style={{ color: '#241F3D' }}>{p.title}</b>
                     {p.salaryBand && <div style={{ color: MUTED, fontSize: 11.5 }}>{p.salaryBand}</div>}
-                    {dl && <div style={{ color: dl.color, fontSize: 11.5, fontWeight: dl.color !== '#66748A' ? 700 : 400 }}>{dl.text}</div>}
+                    {dl && <div style={{ color: dl.color, fontSize: 11.5, fontWeight: dl.color !== '#6A6285' ? 700 : 400 }}>{dl.text}</div>}
                   </td>
                   <td style={td}>{p.dept}</td>
                   <td style={td}>{p.location}</td>
@@ -221,7 +221,7 @@ function PostingEditor({ id, canWrite, onDone, onCancel }: {
   if (!isNew && error) return <Err error={error} />;
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
   const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', color: MUTED, display: 'block', margin: '10px 0 4px' };
-  const card: React.CSSProperties = { border: '1px solid #E6EBF1', borderRadius: 12, padding: '4px 16px 16px', background: '#fff' };
+  const card: React.CSSProperties = { border: '1px solid #E5E0F2', borderRadius: 12, padding: '4px 16px 16px', background: '#fff' };
 
   async function save(publish?: boolean) {
     if (!canWrite) return;
@@ -248,7 +248,7 @@ function PostingEditor({ id, canWrite, onDone, onCancel }: {
       {/* §6.4 command bar — pins under the tab strip while the posting form scrolls */}
       <CommandBar style={{ gap: 10 }}>
         <button style={btnGhost} onClick={onCancel}>← Back to postings</button>
-        <h2 style={{ margin: 0, fontSize: 18, color: '#1F2A37' }}>{isNew ? 'New job posting' : `Edit: ${existing?.title ?? ''}`}</h2>
+        <h2 style={{ margin: 0, fontSize: 18, color: '#241F3D' }}>{isNew ? 'New job posting' : `Edit: ${existing?.title ?? ''}`}</h2>
         <span style={{ flex: 1 }} />
         {canWrite && !isNew && form.status !== 'published' && (
           <button style={btnGhost} disabled={busy} onClick={() => save(true)}>Publish</button>
@@ -399,7 +399,7 @@ function AppDetail({ id, canWrite, onChanged }: { id: number; canWrite: boolean;
   if (!data) return null;
 
   return (
-    <div ref={panelRef} style={{ marginTop: 14, border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
+    <div ref={panelRef} style={{ marginTop: 14, border: '1px solid #E5E0F2', borderRadius: 10, padding: 16, background: '#FAF7FF' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <b>{data.refCode} — {String(data.payload?.name ?? data.email)}</b>
         <Badge value={data.status} />

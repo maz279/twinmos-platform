@@ -286,7 +286,7 @@ var TM = window.TM || {};
             opt.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border-light, #edf2f7);font-size:13.5px;transition:background .15s';
 
             var textSpan = document.createElement('span');
-            textSpan.style.cssText = 'color:var(--ink, #0a2540);font-weight:600';
+            textSpan.style.cssText = 'color:var(--ink, #14123A);font-weight:600';
             textSpan.textContent = s.text;
 
             var badgeSpan = document.createElement('span');
@@ -448,7 +448,7 @@ var TM = window.TM || {};
       '    <span class="pcard-cat">' + esc(p.catLabel) + (p.brand && p.brand !== 'TwinMOS' ? ' · ' + esc(p.brand) : '') + '</span>' +
       '    <a class="pcard-name" href="/product?id=' + encodeURIComponent(p.id) + '">' + esc(p.name) + '</a>' +
       '    <span class="pcard-meta">' + esc(p.shortSpec || '') + '</span>' +
-      warrantyChip(p) +
+      '    <div class="pcard-warranty">' + warrantyChip(p) + '</div>' +
       '    <div class="pcard-foot">' +
       '      <a class="btn btn-ghost btn-sm" href="/product?id=' + encodeURIComponent(p.id) + '">View details</a>' +
       '      <div class="pcard-actions"><button class="cmp-btn" data-id="' + esc(p.id) + '" title="Add to compare" aria-label="Add ' + esc(p.name) + ' to compare">⇄</button></div>' +

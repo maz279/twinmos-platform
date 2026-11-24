@@ -56,7 +56,7 @@ class ModuleErrorBoundary extends React.Component<
     return (
       <div style={{ background: PAGE, padding: 40, textAlign: 'center' }}>
         <div style={{ maxWidth: 420, margin: '0 auto', border: `1px solid ${LINE}`, borderRadius: 12, background: '#fff', padding: 28 }}>
-          <h2 style={{ margin: '0 0 8px', fontSize: 17, color: '#1F2A37' }}>This module could not be loaded</h2>
+          <h2 style={{ margin: '0 0 8px', fontSize: 17, color: '#241F3D' }}>This module could not be loaded</h2>
           <p style={{ margin: '0 0 16px', fontSize: 13.5, color: MUTED, lineHeight: 1.6 }}>
             The console was updated since this tab opened (or the network dropped), so its code
             chunk is no longer available. Reload to pick up the current version — your other
@@ -195,7 +195,7 @@ function Workspace({ me, onSignOut, onMfaChange }: { me: Me; onSignOut: () => vo
       openTab={openTab} closeTab={closeTab} onSignOut={onSignOut} onMfaChange={onMfaChange}
       onMfaSetup={() => setMfaOpen(true)} onOpenSearch={() => setSearchOpen(true)}
       mfaPanel={mfaOpen ? (
-        <div style={{ minHeight: '100vh', background: '#F2F4F6' }}>
+        <div style={{ minHeight: '100vh', background: '#F6F4FB' }}>
           <MfaSetup onEnrolled={() => { setMfaOpen(false); onMfaChange(); }} onSkip={() => setMfaOpen(false)} />
         </div>
       ) : null}>
@@ -275,7 +275,7 @@ function App() {
 
   if (verifyToken) {
     return (
-      <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 32, background: '#0F1720' }}>
+      <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 32, background: '#120E2B' }}>
         <VerifyEmail token={verifyToken} onDone={() => { window.location.href = window.location.pathname; }} />
       </main>
     );
@@ -283,7 +283,7 @@ function App() {
 
   if (resetToken) {
     return (
-      <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 32, background: '#0F1720' }}>
+      <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 32, background: '#120E2B' }}>
         <ResetPassword token={resetToken} onDone={() => { window.location.href = window.location.pathname; }} />
       </main>
     );
@@ -295,7 +295,7 @@ function App() {
   if (state === 'mfa-setup') {
     const isMfaMandatory = me?.user?.role ? ['super_admin', 'admin', 'editor'].includes(me.user.role) : false;
     return (
-      <div style={{ minHeight: '100vh', background: '#F2F4F6' }}>
+      <div style={{ minHeight: '100vh', background: '#F6F4FB' }}>
         <MfaSetup
           required={isMfaMandatory}
           onEnrolled={refreshMe}

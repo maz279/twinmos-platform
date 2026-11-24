@@ -193,8 +193,11 @@
   }
 
   /* Turnstile (optional): when a site key is configured, render the widget into
-   * each wired form once; the token is read from the hidden response input. */
+   * each wired form once; the token is read from the hidden response input.
+   * Cloudflare's TEST site keys render a "For testing only" badge — use the
+   * invisible variant there so staging pages carry no test watermark. */
   var turnstileReady = null;
+  var isTestTurnstileKey = function (key) { return /^[123]x0{20,}[A-Z]{2}$/i.test(key); };
   function ensureTurnstile(form) {
     var key = window.TURNSTILE_SITE_KEY;
     // Skip the placeholder key shipped in the default settings; rendering it
@@ -212,11 +215,36 @@
     return turnstileReady.then(function (ts) {
       if (!ts) return null;
       var holder = document.createElement('div');
-      holder.className = 'cf-turnstile';
+      var testKey = isTestTurnstileKey(key);
+      holder.className = 'cf-turnstile' + (testKey ? ' cf-turnstile-test' : '');
       form.appendChild(holder);
-      ts.render(holder, { sitekey: key });
+      var options = { sitekey: key };
+      if (testKey) {
+        // Test keys render a visible "For testing only" card that ignores the
+        // invisible size option. The class keeps it off-screen and execute()
+        // issues the dummy token the test secret accepts.
+        options.size = 'invisible';
+        options.appearance = 'interaction-only';
+      }
+      var widgetId = ts.render(holder, options);
+      holder.setAttribute('data-ts-widget', widgetId);
+      if (testKey) {
+        // Defer: the first render registers the widget asynchronously, so an
+        // immediate execute() on a cold page is a no-op and no token is issued.
+        setTimeout(function () { try { ts.execute(widgetId); } catch (_) {} }, 50);
+      }
       return holder;
     });
+  }
+  function resetTurnstile(form) {
+    var holder = form.querySelector('.cf-turnstile');
+    if (!holder || !window.turnstile) return;
+    var widgetId = holder.getAttribute('data-ts-widget');
+    try { window.turnstile.reset(widgetId || holder); } catch (_) {}
+    if (holder.classList.contains('cf-turnstile-test')) {
+      // Invisible test widgets need a fresh execute() after every reset.
+      setTimeout(function () { try { window.turnstile.execute(widgetId); } catch (_) {} }, 50);
+    }
   }
   function turnstileToken(form) {
     var el = form.querySelector('[name="cf-turnstile-response"]');
@@ -337,8 +365,7 @@
     }).catch(function (err) {
       if (btn) { btn.disabled = false; btn.textContent = busy; }
       // Turnstile tokens are single-use: a failed attempt needs a fresh challenge
-      var ts = form.querySelector('.cf-turnstile');
-      if (ts && window.turnstile) { try { window.turnstile.reset(ts); } catch (_) {} }
+      resetTurnstile(form);
       showError(form, 'We could not send your submission (' + (err && err.message ? err.message : 'network error') + '). Please try again in a moment.');
     });
   }, true); // capture: runs before the prototype's bubble-phase handlers

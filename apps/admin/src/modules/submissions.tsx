@@ -42,7 +42,7 @@ function ageColor(iso: string): string {
   const h = (Date.now() - new Date(iso).getTime()) / 3600_000;
   if (h > 24) return '#C2453C';
   if (h > 4) return '#B45309';
-  return '#66748A';
+  return '#6A6285';
 }
 function waitHours(sub: { createdAt: string; firstRespondedAt: string | null }): number {
   return Math.round(((sub.firstRespondedAt ? new Date(sub.firstRespondedAt).getTime() : Date.now()) - new Date(sub.createdAt).getTime()) / 3600_000);
@@ -90,7 +90,7 @@ export default function Submissions({ canWrite, myId, ctx }: { canWrite: boolean
 
   return (
     <div>
-      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Leads &amp; quotes{selected ? <span style={{ color: MUTED, fontSize: 15 }}> — {selected.refCode ?? ctx?.label ?? `#${selected.id}`}</span> : null}</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#241F3D', letterSpacing: -0.2 }}>Leads &amp; quotes{selected ? <span style={{ color: MUTED, fontSize: 15 }}> — {selected.refCode ?? ctx?.label ?? `#${selected.id}`}</span> : null}</h1>
       <LeadsAnalyticsStrip />
       <div style={{ display: 'flex', gap: 8, margin: '12px 0', flexWrap: 'wrap', alignItems: 'center' }}>
         <input style={{ ...input, width: 210 }} placeholder="Search email, ref, content…" aria-label="Search email, ref, content" value={q}
@@ -208,7 +208,7 @@ function Detail({ id, canWrite, myId, staff, onSaved }: { id: number; canWrite: 
   const waiting = !replied && ['new', 'assigned', 'in_progress'].includes(sub.status);
 
   return (
-    <div ref={panelRef} style={{ marginTop: 16, border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#F8FAFC' }}>
+    <div ref={panelRef} style={{ marginTop: 16, border: '1px solid #E5E0F2', borderRadius: 10, padding: 16, background: '#FAF7FF' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <b>{sub.refCode} — {sub.type.replace(/-/g, ' ')}</b>
         <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -222,15 +222,15 @@ function Detail({ id, canWrite, myId, staff, onSaved }: { id: number; canWrite: 
       <div style={{ display: 'flex', gap: 4, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         {STAGES.map((s, i) => (
           <React.Fragment key={s}>
-            {i > 0 && <span style={{ color: i <= stageIdx ? '#1DBF9F' : '#D5DDE7' }}>→</span>}
+            {i > 0 && <span style={{ color: i <= stageIdx ? '#6D28D9' : '#D5DDE7' }}>→</span>}
             <span style={{
               fontSize: 11.5, fontWeight: 700, padding: '3px 10px', borderRadius: 999,
-              background: i === stageIdx ? '#1DBF9F' : i < stageIdx ? '#E4F8F2' : '#F1F4F8',
-              color: i === stageIdx ? '#fff' : i < stageIdx ? '#0F6B54' : '#93A0B4',
+              background: i === stageIdx ? '#6D28D9' : i < stageIdx ? '#E4F8F2' : '#F5F1FD',
+              color: i === stageIdx ? '#fff' : i < stageIdx ? '#0F6B54' : '#9A93B5',
             }}>{s.replace('_', ' ')}</span>
           </React.Fragment>
         ))}
-        <span style={{ marginLeft: 8, fontSize: 12.5, color: waiting ? '#B45309' : replied ? '#1F9D62' : '#66748A', fontWeight: waiting ? 700 : 400 }}>
+        <span style={{ marginLeft: 8, fontSize: 12.5, color: waiting ? '#B45309' : replied ? '#1F9D62' : '#6A6285', fontWeight: waiting ? 700 : 400 }}>
           {replied ? `first reply sent after ${waitHours(sub)}h` : waiting ? `⚠ no reply yet — customer waiting ${waitHours(sub)}h` : 'no reply sent (lead not open)'}
         </span>
       </div>
@@ -282,7 +282,7 @@ function Detail({ id, canWrite, myId, staff, onSaved }: { id: number; canWrite: 
       <h3 style={{ margin: '16px 0 6px' }}>Internal notes</h3>
       {(sub.notes ?? []).length === 0 && <p style={{ color: MUTED, fontSize: 13 }}>No notes yet.</p>}
       {(sub.notes ?? []).map((n) => (
-        <div key={n.id} style={{ borderTop: '1px solid #E6EBF1', padding: '6px 0', fontSize: 13.5, whiteSpace: 'pre-wrap' }}>
+        <div key={n.id} style={{ borderTop: '1px solid #E5E0F2', padding: '6px 0', fontSize: 13.5, whiteSpace: 'pre-wrap' }}>
           <span style={{ color: MUTED }}>{n.author ?? 'unknown'} · {fmtDate(n.createdAt)}</span>
           <div>{n.body}</div>
         </div>
@@ -315,8 +315,8 @@ function LeadsAnalyticsStrip() {
   if (loading) return null;
   if (error || !data) return null;
   return (
-    <details style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
-      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#1F2A37', userSelect: 'none' }}>
+    <details style={{ border: '1px solid #E5E0F2', borderRadius: 12, background: '#fff', padding: '10px 16px', marginTop: 12 }}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 800, color: '#241F3D', userSelect: 'none' }}>
         Analytics — <span style={{ color: MUTED, fontWeight: 400 }}>
           {data.total} leads ({data.spam} spam) · {data.sla.open} open · {data.sla.overdue} overdue SLA
           {data.response ? ` · avg first reply ${data.response.avgFirstResponseHours ?? '—'}h · ${data.response.openNotReplied} awaiting reply` : ''}
@@ -339,10 +339,10 @@ function LeadsAnalyticsStrip() {
           {data.byType.slice(0, 6).map((x) => (
             <div key={x.type} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 30px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
               <span style={{ fontSize: 12.5, color: MUTED, whiteSpace: "nowrap", overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.type}</span>
-              <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
-                <span style={{ display: 'block', width: `${(x.n / Math.max(1, data.total - data.spam)) * 100}%`, height: '100%', background: '#1DBF9F', borderRadius: 999 }} />
+              <span style={{ background: '#F5F1FD', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+                <span style={{ display: 'block', width: `${(x.n / Math.max(1, data.total - data.spam)) * 100}%`, height: '100%', background: '#6D28D9', borderRadius: 999 }} />
               </span>
-              <b style={{ fontSize: 12.5, color: '#1F2A37', textAlign: 'right' }}>{x.n}</b>
+              <b style={{ fontSize: 12.5, color: '#241F3D', textAlign: 'right' }}>{x.n}</b>
             </div>
           ))}
         </div>

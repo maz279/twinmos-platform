@@ -66,19 +66,19 @@ export default function SearchPage({ ctx, nav }: ModProps) {
 
       <div style={{ display: 'grid', gap: 12 }}>
         {shown.map((g) => (
-          <div key={g.type} style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: '10px 14px' }}>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.4, textTransform: 'uppercase', color: '#93A0B4', margin: '4px 0 8px' }}>{g.type}</div>
+          <div key={g.type} style={{ border: '1px solid #E5E0F2', borderRadius: 12, background: '#fff', padding: '10px 14px' }}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.4, textTransform: 'uppercase', color: '#9A93B5', margin: '4px 0 8px' }}>{g.type}</div>
             {g.items.map((h) => (
               <button key={`${h.kind}-${h.id}`} onClick={() => nav(h.module, { kind: h.kind, id: String(h.id), label: h.title })}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '8px 8px', border: 0, borderRadius: 8, background: 'transparent', cursor: 'pointer' }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = '#E7F7F2')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                <Icon name={(KIND_ICON[h.kind] ?? 'search') as 'doc'} size={15} style={{ color: '#0E9F7E', flexShrink: 0 }} />
+                <Icon name={(KIND_ICON[h.kind] ?? 'search') as 'doc'} size={15} style={{ color: '#5B21B6', flexShrink: 0 }} />
                 <span style={{ flex: 1, minWidth: 0 }}>
-                  <b style={{ display: 'block', color: '#1F2A37', fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.title}</b>
-                  {h.sub && <span style={{ display: 'block', color: '#93A0B4', fontSize: 11.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.sub}</span>}
+                  <b style={{ display: 'block', color: '#241F3D', fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.title}</b>
+                  {h.sub && <span style={{ display: 'block', color: '#9A93B5', fontSize: 11.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.sub}</span>}
                 </span>
-                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 0.6, color: '#0E9F7E', background: '#E7F7F2', borderRadius: 5, padding: '2px 6px', flexShrink: 0 }}>
+                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 0.6, color: '#5B21B6', background: '#E7F7F2', borderRadius: 5, padding: '2px 6px', flexShrink: 0 }}>
                   {(MODULES.find((m) => m.id === h.module)?.label ?? h.module).toUpperCase()}
                 </span>
               </button>
@@ -86,11 +86,11 @@ export default function SearchPage({ ctx, nav }: ModProps) {
           </div>
         ))}
       </div>
-      {busy && total === 0 && <p style={{ color: '#93A0B4', fontSize: 12.5 }}>Searching…</p>}
+      {busy && total === 0 && <p style={{ color: '#9A93B5', fontSize: 12.5 }}>Searching…</p>}
     </div>
   );
 }
 
 function chip(on: boolean): React.CSSProperties {
-  return { border: on ? '1px solid #1DBF9F' : '1px solid #E6EBF1', background: on ? '#E7F7F2' : '#fff', color: on ? '#0E9F7E' : '#66748A', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: on ? 800 : 500, cursor: 'pointer' };
+  return { border: on ? '1px solid #6D28D9' : '1px solid #E5E0F2', background: on ? '#E7F7F2' : '#fff', color: on ? '#5B21B6' : '#6A6285', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: on ? 800 : 500, cursor: 'pointer' };
 }

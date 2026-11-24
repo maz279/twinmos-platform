@@ -2799,7 +2799,7 @@
         "component": "div.slider.hero-slider",
         "meta": {
           "what": "slides",
-          "items": 5,
+          "items": 9,
           "order": 1
         },
         "heading": "",
@@ -2808,101 +2808,177 @@
         "slides": [
           {
             "image": "/assets/img/bn/home-0.webp",
-            "alt": "TwinMOS VOLTX DDR5 memory modules in a dark studio scene",
-            "kicker": "Legendary memory brand since 1998",
-            "title": "Memory & storage, engineered to last",
-            "lede": "TwinMOS designs and manufactures DRAM, SSDs, portable storage and accessories trusted in 93+ countries — from DDR5 gaming rigs to enterprise fleets, backed by up to a lifetime warranty.",
+            "alt": "TwinMOS H2 Ultra 2.5 SATA III SSD with high speed read write performance",
+            "kicker": "H2 Ultra 2.5\" SATA III 6Gb/s",
+            "title": "Boost up your PC with Next Generation TwinMOS SSD",
+            "lede": "Sequential speeds up to 580 MB/s read and 550 MB/s write. Rugged, shock-resistant and ultra power-efficient storage upgrade for laptops and desktops.",
             "ctas": [
               {
-                "label": "Explore products",
-                "url": "/shop",
+                "label": "Explore H2 Ultra",
+                "url": "/products/h2-ultra-2-5-sata-iii-6gb-s-ssd",
                 "variant": "primary"
               },
               {
-                "label": "Find my upgrade",
-                "url": "/compatibility",
+                "label": "Browse SSDs",
+                "url": "/products/ssd-sata",
                 "variant": "secondary"
               }
             ]
           },
           {
             "image": "/assets/img/bn/home-1.webp",
-            "alt": "TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD",
-            "kicker": "New flagship · PCIe Gen 5.0",
-            "title": "Up to 14,000 MB/s the Gen 5 era is here",
-            "lede": "CoreX Pro M.2 2280 rides PCIe Gen 5.0 x4 with NVMe 2.0, TLC 3D NAND, graphene cooling and up to 1,400 TBW endurance. DirectStorage-ready.",
+            "alt": "TwinMOS VOLTX DDR5 RGB Gaming DRAM memory modules in a dark studio scene",
+            "kicker": "VOLTX Gaming Line · DDR5 RGB",
+            "title": "Level Up Your Gaming with TwinMOS Voltx DDR5 RGB DRAM",
+            "lede": "16GB / 32GB · 6000MHz / 7200MHz · CL36 / CL34 with addressable RGB diffuser, Intel XMP 3.0, AMD EXPO support, and lifetime warranty.",
             "ctas": [
               {
-                "label": "View CoreX Pro",
-                "url": "/product?id=corex-pro-m2-pcie-gen-5-0-nvme-ssd",
+                "label": "View VOLTX DDR5",
+                "url": "/products/twinmos-voltx-rgb-ddr5-u-dimm-for-desktop",
                 "variant": "primary"
               },
               {
-                "label": "Gen 3 vs 4 vs 5",
-                "url": "/learn/nvme-gen3-gen4-gen5-explained",
+                "label": "Gaming Hub",
+                "url": "/gaming",
                 "variant": "secondary"
               }
             ]
           },
           {
             "image": "/assets/img/bn/home-2.webp",
-            "alt": "TwinMOS VOLTX DDR5 RGB memory modules with addressable lighting",
-            "kicker": "VOLTX gaming line",
-            "title": "Light up your rig — VOLTX DDR5 RGB",
-            "lede": "Addressable RGB bars, board-synced lighting and DDR5 frequencies for modern platforms. Lifetime warranty on every module.",
+            "alt": "TwinMOS CoreX Pro M.2 PCIe Gen 5.0 NVMe SSD",
+            "kicker": "Flagship Storage · PCIe Gen 5.0 x4",
+            "title": "Experience the Ultimate Super Speed — Up to 14,000 MB/s",
+            "lede": "CoreX Pro M.2 2280 rides PCIe Gen 5.0 x4 with NVMe 2.0, 3D TLC NAND, graphene cooling heatsink and up to 1,400 TBW endurance. DirectStorage-ready.",
             "ctas": [
               {
-                "label": "Enter the gaming hub",
-                "url": "/gaming",
+                "label": "View CoreX Pro",
+                "url": "/products/corex-pro-m2-pcie-gen-5-0-nvme-ssd",
                 "variant": "primary"
               },
               {
-                "label": "Shop gaming DRAM",
-                "url": "/shop?cat=dram-gaming",
+                "label": "Explore NVMe SSDs",
+                "url": "/products/ssd-nvme",
                 "variant": "secondary"
               }
             ]
           },
           {
             "image": "/assets/img/bn/home-3.webp",
-            "alt": "TwinMOS Portable SSD ELITE Drive Pro USB Type-C",
-            "kicker": "1,100 MB/s in your pocket",
-            "title": "Portable SSD ELITE Drive Pro USB Type-C",
-            "lede": "Blazing sequential speeds of up to 1,100 MB/s read in a shock-resistant, pocket-sized USB Type-C drive for creators and professionals.",
+            "alt": "TwinMOS TornadoX7 DDR4 Gaming RAM heat spreader",
+            "kicker": "TornadoX7 Gaming Series",
+            "title": "Feel the Ultimate Performance and Stability",
+            "lede": "High-frequency 3200MHz / 3600MHz gaming memory with precision aluminum heat spreaders, custom PCB design, and extreme thermal dissipation.",
             "ctas": [
               {
-                "label": "View details",
-                "url": "/product?id=portable-ssd-elite-drive-pro-usb-type-c",
+                "label": "Explore TornadoX7",
+                "url": "/products/tornadox7-ddr4-gaming-u-dimm-ram",
                 "variant": "primary"
               },
               {
-                "label": "Where to buy",
-                "url": "/where-to-buy",
+                "label": "Desktop Memory",
+                "url": "/products/dram-desktop",
                 "variant": "secondary"
               }
             ]
           },
           {
             "image": "/assets/img/bn/home-4.webp",
-            "alt": "TwinMOS AlphaPro NVMe SSD on a deep navy banner",
-            "kicker": "B2B · Distribution & OEM",
-            "title": "Partner with a global memory brand",
-            "lede": "Own-brand and OEM memory and storage since 1998 — from DDR3 to DDR5, SATA to Gen 5 NVMe — with regional support from Taipei, Dubai, Cologne and San Jose, and authorized distribution across 93+ countries.",
+            "alt": "TwinMOS CoreX NVMe M.2 2280 PCIe Gen 4.0 SSD",
+            "kicker": "Next-Gen Storage · PCIe Gen 4.0",
+            "title": "The Ultimate Performance SSD for Demanding Workloads",
+            "lede": "High-bandwidth PCIe 4.0 storage built for 4K video editing, heavy 3D rendering, and fast game level loads with advanced thermal throttling.",
             "ctas": [
               {
-                "label": "Become a partner",
-                "url": "/partners",
+                "label": "Discover CoreX Gen4",
+                "url": "/products/corex-nvme-m-2-2280-pcie-gen-4-0-ssd",
                 "variant": "primary"
               },
               {
-                "label": "Request a quote",
-                "url": "/quote",
+                "label": "Find Upgrade",
+                "url": "/compatibility",
+                "variant": "secondary"
+              }
+            ]
+          },
+          {
+            "image": "/assets/img/bn/home-5.webp",
+            "alt": "TwinMOS Portable HDD ProDrive Ultra external hard drive",
+            "kicker": "Portable Storage · USB 3.0",
+            "title": "The Ultimate Companion For Your Digital Life",
+            "lede": "High capacity portable external storage in a sleek, lightweight shock-resistant ABS enclosure. Plug-and-play across Windows, Mac, Linux, and Android.",
+            "ctas": [
+              {
+                "label": "View ProDrive Ultra",
+                "url": "/products/portable-hdd-prodrive-ultra-usb-3-0",
+                "variant": "primary"
+              },
+              {
+                "label": "Portable Storage",
+                "url": "/products/storage-external",
+                "variant": "secondary"
+              }
+            ]
+          },
+          {
+            "image": "/assets/img/bn/home-6.webp",
+            "alt": "TwinMOS AlphaPro NVMe M.2 2280 PCIe SSD",
+            "kicker": "High-Speed NVMe · PCIe Gen3x4",
+            "title": "Elevate Your PC's Performance with Next Generation TwinMOS NVMe",
+            "lede": "Blazing NVMe PCIe Gen3x4 transfer speeds up to 3,600 MB/s. Instant boot times, rapid app responsiveness, and rock-solid endurance.",
+            "ctas": [
+              {
+                "label": "Explore AlphaPro",
+                "url": "/products/alphapro-nvme-m-2-2280-pcie-ssd",
+                "variant": "primary"
+              },
+              {
+                "label": "Where to Buy",
+                "url": "/where-to-buy",
+                "variant": "secondary"
+              }
+            ]
+          },
+          {
+            "image": "/assets/img/bn/home-7.webp",
+            "alt": "TwinMOS Xtreme Gen4X4 NVMe Pro M.2 SSD PS5 compatible",
+            "kicker": "Pro Gaming · PlayStation 5 Ready",
+            "title": "Experience the Ultimate Gaming Performance — Up to 7,500 MB/s",
+            "lede": "Blistering read speeds up to 7,500 MB/s and 6,800 MB/s write. PS5 compatible with low-profile graphene heatsink options for maximum thermal stability.",
+            "ctas": [
+              {
+                "label": "View Xtreme Gen4",
+                "url": "/products/xtreme-gen4x4-nvme-pro-m2-2280-ssd",
+                "variant": "primary"
+              },
+              {
+                "label": "Gaming Line",
+                "url": "/gaming",
+                "variant": "secondary"
+              }
+            ]
+          },
+          {
+            "image": "/assets/img/bn/home-8.webp",
+            "alt": "TwinMOS ThunderGX DDR4 Gaming RAM with aluminum heat spreader",
+            "kicker": "ThunderGX Gaming Line · DDR4",
+            "title": "Unleash the Power of Your PC with TwinMOS ThunderGX",
+            "lede": "8GB / 16GB / 32GB · 3200MHz · CL16. High-grade aluminum heat spreaders, optimized overclocking profiles, and lifetime warranty for esports enthusiasts.",
+            "ctas": [
+              {
+                "label": "Shop ThunderGX",
+                "url": "/products/thundergx-ddr4-gaming-u-dimm-ram",
+                "variant": "primary"
+              },
+              {
+                "label": "Partner Inquiry",
+                "url": "/partners",
                 "variant": "secondary"
               }
             ]
           }
         ],
-        "intervalMs": 6500
+        "intervalMs": 6000
       },
       {
         "id": "index-block-2",
