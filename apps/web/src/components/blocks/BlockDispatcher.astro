@@ -284,7 +284,7 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                             sizes="100vw"
                             alt={s.alt || 'TwinMOS slide image'}
                             loading={idx === 0 ? 'eager' : 'lazy'}
-                            fetchpriority={idx === 0 ? 'high' : undefined}
+                            fetchpriority={idx === 0 ? 'high' : 'low'}
                             decoding="async"
                           />
                         </div>

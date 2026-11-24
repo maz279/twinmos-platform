@@ -13,6 +13,21 @@ const PDP_HERO_JS = join(ROOT, 'apps', 'web', 'public', 'assets', 'js', 'pdp-her
 async function main() {
   console.log('[build-catalog-data] Generating catalog-data.js...');
 
+  // Postgres JSONB does not preserve key insertion order, so the same content
+  // can serialize differently between databases. Sort recursively before it
+  // reaches the generated bundle, or BUILD-01 sees a spurious dirty tree.
+  function stableValue<T>(value: T): T {
+    if (Array.isArray(value)) return value.map(stableValue) as T;
+    if (value && typeof value === 'object') {
+      const out: Record<string, unknown> = {};
+      for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+        out[key] = stableValue((value as Record<string, unknown>)[key]);
+      }
+      return out as T;
+    }
+    return value;
+  }
+
   // 1. Read prototype data.js as rich baseline
   let proto = { products: [], categories: [], articles: [], compat: {}, glossary: [] };
   if (existsSync(PROTO_DATA_JS)) {
@@ -105,13 +120,13 @@ async function main() {
         img: img,
         gallery: gallery,
         variants: pr.variants || (dbP.specs && dbP.specs.Capacity ? [dbP.specs.Capacity] : ['Standard']),
-        specs: (dbP.specs && Object.keys(dbP.specs).length > 0) ? dbP.specs : (pr.specs || {}),
+        specs: (dbP.specs && Object.keys(dbP.specs).length > 0) ? stableValue(dbP.specs) : (pr.specs || {}),
         description: dbP.description || pr.description || '',
         featured: Boolean(dbP.featured ?? pr.featured),
         isNew: Boolean(pr.isNew),
         priceUsd: dbP.priceUsd != null ? Number(dbP.priceUsd) : null,
         currency: dbP.currency || pr.currency || 'USD',
-        search: `${dbP.name || pr.name} ${pr.catLabel || ''} ${pr.search || ''} ${JSON.stringify(dbP.specs || {})}`.slice(0, 500),
+        search: `${dbP.name || pr.name} ${pr.catLabel || ''} ${pr.search || ''} ${JSON.stringify(stableValue(dbP.specs || {}))}`.slice(0, 500),
         imgC: imgC,
         galleryC: galleryC,
       });
