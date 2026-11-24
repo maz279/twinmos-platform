@@ -19,19 +19,19 @@ export function usePanelScroll<T extends HTMLElement>() {
 }
 
 // ---- design tokens -------------------------------------------------------
-export const NAVY = '#16222F';   // sidebar / brand rail
-export const INK = '#1F2A37';    // headings on white
-export const TEAL = '#1DBF9F';   // primary accent (buttons, active nav, charts)
-export const TEAL_DK = '#0E9F7E';// accent text / pressed states
-export const GOLD = '#E8A33D';   // secondary (RMA / warnings)
+export const NAVY = '#191338';   // sidebar / brand rail (deep indigo)
+export const INK = '#241F3D';    // headings on white
+export const TEAL = '#6D28D9';   // primary accent (buttons, active nav, charts)
+export const TEAL_DK = '#5B21B6';// accent text / pressed states
+export const GOLD = '#B45309';   // secondary (RMA / warnings) — AA on white
 export const RED = '#B91C1C';     // WCAG AA >= 5.8:1 on white
 export const GREEN = '#15803D';   // WCAG AA >= 4.6:1 on white
-export const BLUE = '#3E8DDD';
-export const PURPLE = '#7C5CDB';
+export const BLUE = '#2563EB';
+export const PURPLE = '#7C3AED';
 export const MUTED = '#475569';  // secondary text (WCAG AA >= 5.4:1 on white)
 export const FAINT = '#475569';  // captions / placeholders (WCAG AA >= 5.4:1 on white)
-export const LINE = '#E6EBF1';   // card borders
-export const PAGE = '#F2F4F6';   // canvas behind cards
+export const LINE = '#E5E0F2';   // card borders
+export const PAGE = '#F6F4FB';   // canvas behind cards
 
 export const CARD_SHADOW = '0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.04)';
 
@@ -44,7 +44,7 @@ export const CARD_SHADOW = '0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,4
 export const globalCss = `
   main > :first-child { padding-top: 22px; }
   button, input, select, textarea { font: inherit; }
-  .tm-in:focus { outline: none; border-color: ${TEAL}; box-shadow: 0 0 0 3px rgba(29,191,159,.16); }
+  .tm-in:focus { outline: none; border-color: ${TEAL}; box-shadow: 0 0 0 3px rgba(109,40,217,.16); }
   button:focus-visible, a:focus-visible { outline: 2px solid ${TEAL}; outline-offset: 1px; }
   .tm-scroll::-webkit-scrollbar { width: 8px; }
   .tm-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 8px; }
@@ -55,9 +55,9 @@ export const globalCss = `
   .tm-tabs-scroll { scrollbar-width: none; -ms-overflow-style: none; }
   .tm-tabs-scroll::-webkit-scrollbar { display: none; }
   /* professional row affordance on every data table */
-  main table tbody tr:hover td { background: #F8FAFB; }
+  main table tbody tr:hover td { background: #FAF7FF; }
   .tm-card-hover { transition: box-shadow .14s, border-color .14s, transform .14s; }
-  .tm-card-hover:hover { border-color: ${TEAL}; box-shadow: 0 6px 18px rgba(16,24,40,.10); }
+  .tm-card-hover:hover { border-color: ${TEAL}; box-shadow: 0 6px 18px rgba(109,40,217,.12); }
 `;
 
 // ---- atoms ----------------------------------------------------------------
@@ -67,9 +67,9 @@ export const card: React.CSSProperties = {
 };
 export const btn: React.CSSProperties = {
   padding: '8px 14px', border: 0, borderRadius: 8,
-  background: `linear-gradient(135deg, ${TEAL} 0%, #17A98D 100%)`,
+  background: 'linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)',
   color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 13,
-  boxShadow: '0 1px 2px rgba(14,159,126,.30)',
+  boxShadow: '0 1px 2px rgba(76,29,149,.30)',
 };
 export const btnGhost: React.CSSProperties = {
   padding: '8px 14px', border: `1px solid ${LINE}`, borderRadius: 8,
@@ -105,7 +105,7 @@ const TONES: Record<string, { bg: string; text: string; border: string }> = {
   admin: { bg: '#E0E7FF', text: '#3730A3', border: '#A5B4FC' },
   editor: { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0' },
   author: { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' },
-  viewer: { bg: '#F1F5F9', text: '#1E293B', border: '#CBD5E1' },
+  viewer: { bg: '#F4F0FC', text: '#1E293B', border: '#CBC4DE' },
   member: { bg: '#EFF6FF', text: '#1E40AF', border: '#BFDBFE' },
   new: { bg: '#E6FFFA', text: '#006653', border: '#B2F5EA' },
   submitted: { bg: '#E6FFFA', text: '#006653', border: '#B2F5EA' },
@@ -115,16 +115,16 @@ const TONES: Record<string, { bg: string; text: string; border: string }> = {
   delivered: { bg: '#DCFCE7', text: '#14532D', border: '#86EFAC' },
   assigned: { bg: '#EDE9FE', text: '#5B21B6', border: '#C4B5FD' },
   published: { bg: '#DCFCE7', text: '#14532D', border: '#86EFAC' },
-  draft: { bg: '#F1F5F9', text: '#1E293B', border: '#CBD5E1' },
+  draft: { bg: '#F4F0FC', text: '#1E293B', border: '#CBC4DE' },
   in_review: { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' },
   scheduled: { bg: '#E0F2FE', text: '#075985', border: '#BAE6FD' },
-  archived: { bg: '#F1F5F9', text: '#334155', border: '#CBD5E1' },
-  closed: { bg: '#F1F5F9', text: '#334155', border: '#CBD5E1' },
+  archived: { bg: '#F4F0FC', text: '#334155', border: '#CBC4DE' },
+  closed: { bg: '#F4F0FC', text: '#334155', border: '#CBC4DE' },
   spam: { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' },
   approved: { bg: '#DCFCE7', text: '#14532D', border: '#86EFAC' },
   resolved: { bg: '#DCFCE7', text: '#14532D', border: '#86EFAC' },
 };
-const BADGE_FALLBACK = { bg: '#F1F5F9', text: '#1E293B', border: '#CBD5E1' };
+const BADGE_FALLBACK = { bg: '#F4F0FC', text: '#1E293B', border: '#CBC4DE' };
 
 export function Badge({ value }: { value: string }) {
   const norm = (value || '').toLowerCase().trim();
@@ -157,7 +157,7 @@ export function Table({ head, children }: { head: string[]; children: React.Reac
     </div>
   );
 }
-export const td: React.CSSProperties = { padding: '9px 10px', borderBottom: `1px solid #F0F3F7`, verticalAlign: 'top', color: INK };
+export const td: React.CSSProperties = { padding: '9px 10px', borderBottom: `1px solid #F4F0FC`, verticalAlign: 'top', color: INK };
 
 export function Empty({ text }: { text: string }) {
   return <p style={{ color: MUTED, padding: 18, textAlign: 'center', fontSize: 13 }}>{text}</p>;
@@ -332,7 +332,7 @@ export function PageHeader({ title, subtitle, actions, style }: {
  *  border, 12px radius, `4px 16px 16px` padding on #fff, and a plain h3 with
  *  the 12px top rhythm (inherited color, so it matches today's headings).
  *  `divider` swaps in the dashboard-style heading row (title + FAINT subtitle
- *  over a #F0F3F7 hairline). `collapsible` turns the heading into a chevron
+ *  over a #F4F0FC hairline). `collapsible` turns the heading into a chevron
  *  toggle for progressive disclosure — default open; pass `defaultOpen={false}`
  *  for sections that start collapsed (e.g. the products Record card). */
 export function SectionCard({ title, subtitle, children, collapsible = false, defaultOpen = true, divider = false, style, titleStyle }: {
@@ -344,7 +344,7 @@ export function SectionCard({ title, subtitle, children, collapsible = false, de
   let header: React.ReactNode;
   if (divider) {
     header = (
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginTop: 12, marginBottom: 10, paddingBottom: 9, borderBottom: '1px solid #F0F3F7' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginTop: 12, marginBottom: 10, paddingBottom: 9, borderBottom: '1px solid #F4F0FC' }}>
         <h3 style={{ margin: 0, fontSize: 13.5, fontWeight: 800, color: INK, ...titleStyle }}>{title}</h3>
         {subtitle != null && <span style={{ fontSize: 11.5, color: FAINT }}>{subtitle}</span>}
       </div>

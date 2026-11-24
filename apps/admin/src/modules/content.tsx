@@ -143,7 +143,7 @@ export default function Content({ canPublish, canWrite }: { canPublish: boolean;
       <Toolbar style={{ margin: '12px 0' }}>
         <button style={view === 'library' ? btn : btnGhost} onClick={() => { setView('library'); setEditing(null); }}>Library</button>
         <button style={view === 'review' ? btn : btnGhost} onClick={() => { setView('review'); setEditing(null); }}>
-          Review queue {queueRows.length ? <span style={{ background: '#1DBF9F', color: '#fff', borderRadius: 999, fontSize: 10.5, padding: '1px 7px', marginLeft: 6 }}>{queueRows.length}</span> : null}
+          Review queue {queueRows.length ? <span style={{ background: '#6D28D9', color: '#fff', borderRadius: 999, fontSize: 10.5, padding: '1px 7px', marginLeft: 6 }}>{queueRows.length}</span> : null}
         </button>
         <span style={{ flex: 1 }} />
         {view === 'library' && <>
@@ -476,7 +476,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
   };
 
   return (
-    <div ref={panelRef} style={{ marginTop: 16, border: '1px solid #E6EBF1', borderRadius: 10, padding: 16, background: '#fff' }}>
+    <div ref={panelRef} style={{ marginTop: 16, border: '1px solid #E5E0F2', borderRadius: 10, padding: 16, background: '#fff' }}>
       {/* §6.4 command bar — workflow transitions (Publish / Submit for review)
           stay pinned under the tab strip while the long editor body scrolls */}
       <CommandBar style={{ justifyContent: 'space-between', marginBottom: 10 }}>
@@ -517,14 +517,14 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
       {scheduling(status) && (
         <div style={{ margin: '10px 0' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <span><label style={{ display: 'block', fontSize: 11.5, color: '#66748A', marginBottom: 2 }}>Source (provenance — required to publish)</label>
+            <span><label style={{ display: 'block', fontSize: 11.5, color: '#6A6285', marginBottom: 2 }}>Source (provenance — required to publish)</label>
               <input style={input} placeholder="e.g. Content ownership matrix (PROC-05)" value={source} onChange={(e) => setSource(e.target.value)} /></span>
-            <span><label style={{ display: 'block', fontSize: 11.5, color: '#66748A', marginBottom: 2 }}>Approver (provenance — required to publish)</label>
+            <span><label style={{ display: 'block', fontSize: 11.5, color: '#6A6285', marginBottom: 2 }}>Approver (provenance — required to publish)</label>
               <input style={input} placeholder="e.g. Victoria Sterling" value={approver} onChange={(e) => setApprover(e.target.value)} /></span>
           </div>
           <label style={{ fontSize: 13 }}>Publish at: </label>
           <input type="datetime-local" style={input} value={publishAt} onChange={(e) => setPublishAt(e.target.value)} />
-          <span style={{ color: '#66748A', fontSize: 12 }}> (then → published)</span>
+          <span style={{ color: '#6A6285', fontSize: 12 }}> (then → published)</span>
         </div>
       )}
 
@@ -554,15 +554,15 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
               {entity === 'article' && <input style={input} placeholder="Deck / summary" value={deck} onChange={(e) => setDeck(e.target.value)} />}
               {entity === 'article' && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 8, marginTop: 8 }}>
-                  <span><label style={{ display: 'block', fontSize: 11.5, color: '#66748A', marginBottom: 2 }}>Category (hub)</label>
+                  <span><label style={{ display: 'block', fontSize: 11.5, color: '#6A6285', marginBottom: 2 }}>Category (hub)</label>
                     <input style={input} placeholder="Guides / Explainers / Benchmarks" value={articleCategory} onChange={(e) => setArticleCategory(e.target.value)} /></span>
-                  <span><label style={{ display: 'block', fontSize: 11.5, color: '#66748A', marginBottom: 2 }}>Tags (comma-separated)</label>
+                  <span><label style={{ display: 'block', fontSize: 11.5, color: '#6A6285', marginBottom: 2 }}>Tags (comma-separated)</label>
                     <input style={input} placeholder="ddr5, gaming" value={articleTags} onChange={(e) => setArticleTags(e.target.value)} /></span>
-                  <span><label style={{ display: 'block', fontSize: 11.5, color: '#66748A', marginBottom: 2 }}>Hero media #</label>
+                  <span><label style={{ display: 'block', fontSize: 11.5, color: '#6A6285', marginBottom: 2 }}>Hero media #</label>
                     <input style={input} placeholder="Media Asset #" value={articleHero} onChange={(e) => setArticleHero(e.target.value)} /></span>
-                  <span><label style={{ display: 'block', fontSize: 11.5, color: '#66748A', marginBottom: 2 }}>SEO title ({articleSeoTitle.length}/60)</label>
+                  <span><label style={{ display: 'block', fontSize: 11.5, color: '#6A6285', marginBottom: 2 }}>SEO title ({articleSeoTitle.length}/60)</label>
                     <input style={input} value={articleSeoTitle} onChange={(e) => setArticleSeoTitle(e.target.value)} /></span>
-                  <span style={{ gridColumn: '1 / -1' }}><label style={{ display: 'block', fontSize: 11.5, color: '#66748A', marginBottom: 2 }}>SEO description ({articleSeoDescription.length}/160)</label>
+                  <span style={{ gridColumn: '1 / -1' }}><label style={{ display: 'block', fontSize: 11.5, color: '#6A6285', marginBottom: 2 }}>SEO description ({articleSeoDescription.length}/160)</label>
                     <input style={input} value={articleSeoDescription} onChange={(e) => setArticleSeoDescription(e.target.value)} /></span>
                 </div>
               )}
@@ -584,7 +584,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
                           padding: '3px 10px',
                           borderRadius: 6,
                           border: '1px solid',
-                          borderColor: locale === loc ? '#0A2540' : '#D9E0E8',
+                          borderColor: locale === loc ? '#0A2540' : '#DED6F0',
                           background: locale === loc ? '#0A2540' : '#fff',
                           color: locale === loc ? '#fff' : '#4A5568',
                           fontSize: 12,
@@ -600,7 +600,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
 
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
                     <div style={{ flex: '2 1 200px' }}>
-                      <label style={{ display: 'block', fontSize: 11.5, color: '#66748A', marginBottom: 2 }}>Page Path (e.g. /about or /solutions/gaming)</label>
+                      <label style={{ display: 'block', fontSize: 11.5, color: '#6A6285', marginBottom: 2 }}>Page Path (e.g. /about or /solutions/gaming)</label>
                       <input
                         style={{ ...input, width: '100%' }}
                         placeholder="/custom-path"
@@ -609,7 +609,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
                       />
                     </div>
                     <div style={{ flex: '1 1 180px' }}>
-                      <label style={{ display: 'block', fontSize: 11.5, color: '#66748A', marginBottom: 2 }}>Template</label>
+                      <label style={{ display: 'block', fontSize: 11.5, color: '#6A6285', marginBottom: 2 }}>Template</label>
                       <select
                         style={{ ...input, width: '100%' }}
                         value={template}
@@ -626,12 +626,12 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
                     </div>
                   </div>
 
-                  <div style={{ border: '1px solid #E6EBF1', borderRadius: 8, padding: '10px 14px', background: '#F8FAFB', marginBottom: 12 }}>
+                  <div style={{ border: '1px solid #E5E0F2', borderRadius: 8, padding: '10px 14px', background: '#FAF7FF', marginBottom: 12 }}>
                     <div
                       style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
                       onClick={() => setShowSeoPanel(!showSeoPanel)}
                     >
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#1F2A37' }}>🔍 SEO & Meta Configuration</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#241F3D' }}>🔍 SEO & Meta Configuration</span>
                       <button type="button" style={{ ...btnGhost, fontSize: 11, padding: '2px 8px' }}>
                         {showSeoPanel ? 'Hide ▲' : 'Show ▼'}
                       </button>
@@ -717,7 +717,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
                         </div>
 
                         <div style={{ marginTop: 4 }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#1F2A37', cursor: 'pointer' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#241F3D', cursor: 'pointer' }}>
                             <input
                               type="checkbox"
                               checked={noindex}
@@ -748,7 +748,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
                   <div>
                     <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
                       <button style={{ ...btnGhost, fontSize: 12 }} onClick={() => { setRawBlocksText(JSON.stringify(blocks, null, 2)); setRawBlocks(true); }}>{'{ } JSON'}</button>
-                      <span style={{ color: '#93A0B4', fontSize: 11.5, alignSelf: 'center' }}>escape hatch for power users</span>
+                      <span style={{ color: '#9A93B5', fontSize: 11.5, alignSelf: 'center' }}>escape hatch for power users</span>
                     </div>
                     <PageBuilder blocks={blocks} onChange={setBlocks} />
                   </div>
@@ -790,11 +790,11 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
       )}
 
       {tab === 'preview' && (
-        <div style={{ border: '1px solid #E6EBF1', borderRadius: 8, padding: 14, marginTop: 12, background: '#F8FAFC' }}>
+        <div style={{ border: '1px solid #E5E0F2', borderRadius: 8, padding: 14, marginTop: 12, background: '#FAF7FF' }}>
           {entity === 'page' ? (
             <div style={{ background: '#fff', borderRadius: 8, padding: 16, display: 'grid', gap: 22 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <h2 style={{ marginTop: 0, color: '#1F2A37', flex: 1 }}>{title || '(title)'}</h2>
+                <h2 style={{ marginTop: 0, color: '#241F3D', flex: 1 }}>{title || '(title)'}</h2>
                 <button style={btnGhost} onClick={() => setShowModal(true)} title="Open the responsive preview (desktop 1200 / tablet 768 / mobile 375)">
                   🖥 Responsive preview
                 </button>
@@ -814,7 +814,7 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
         <div style={{ marginTop: 12 }}>
           {revisions.length === 0 && <Empty text="No revisions yet — every publish snapshots the prior version." />}
           {revisions.map((rev) => (
-            <div key={rev.id} style={{ borderBottom: '1px solid #F0F3F7', padding: '8px 2px' }}>
+            <div key={rev.id} style={{ borderBottom: '1px solid #F4F0FC', padding: '8px 2px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 13.5 }}>#{rev.id} · {fmtDate(rev.createdAt)} · by {rev.actorId ?? 'system'}</span>
                 <span style={{ display: 'flex', gap: 6 }}>
@@ -836,8 +836,8 @@ function Editor({ entity, row: initialRow, canPublish, canWrite, onClose, onSave
         <div style={{ marginTop: 12 }}>
           {comments.length === 0 && <Empty text="No review comments yet — coordinate editorial feedback here." />}
           {comments.map((cm) => (
-            <div key={cm.id} style={{ borderTop: '1px solid #F0F3F7', padding: '7px 0' }}>
-              <span style={{ color: '#66748A', fontSize: 12.5 }}>{cm.authorName ?? cm.authorEmail ?? cm.authorId ?? 'staff'} · {fmtDate(cm.createdAt)}</span>
+            <div key={cm.id} style={{ borderTop: '1px solid #F4F0FC', padding: '7px 0' }}>
+              <span style={{ color: '#6A6285', fontSize: 12.5 }}>{cm.authorName ?? cm.authorEmail ?? cm.authorId ?? 'staff'} · {fmtDate(cm.createdAt)}</span>
               <div style={{ fontSize: 13.5 }}>{cm.body}</div>
             </div>
           ))}
@@ -865,7 +865,7 @@ function WordCount({ text }: { text: string }) {
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
   if (!words) return null;
   return (
-    <div style={{ marginTop: 4, fontSize: 11.5, color: '#93A0B4' }}>
+    <div style={{ marginTop: 4, fontSize: 11.5, color: '#9A93B5' }}>
       {words.toLocaleString()} words · ~{Math.max(1, Math.round(words / 220))} min read
     </div>
   );
@@ -913,7 +913,7 @@ function ContentAnalyticsStrip() {
           <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: FAINT, marginBottom: 6 }}>Publish velocity — 12 weeks</div>
           <WeeklyBars weeks={data.weeks} series={[
             { key: 'articles', color: TEAL, values: data.velocity.map((v) => v.article) },
-            { key: 'news', color: '#7C5CDB', values: data.velocity.map((v) => v.news) },
+            { key: 'news', color: '#7C3AED', values: data.velocity.map((v) => v.news) },
           ]} />
         </div>
         <div>

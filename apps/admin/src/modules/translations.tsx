@@ -173,18 +173,18 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
     URL.revokeObjectURL(a.href);
   }
 
-  const card: React.CSSProperties = { border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: 12, minWidth: 0 };
+  const card: React.CSSProperties = { border: '1px solid #E5E0F2', borderRadius: 12, background: '#fff', padding: 12, minWidth: 0 };
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Translation Studio</h1>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#241F3D', letterSpacing: -0.2 }}>Translation Studio</h1>
           <p style={{ margin: '2px 0 0', color: '#374151', fontSize: 13 }}>
             EN source on the left, target on the right · 9-locale plan · XLIFF 1.2 / 2.0 round-trip · Per-field status tracking
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 6, background: '#F1F4F8', padding: 4, borderRadius: 8 }}>
+        <div style={{ display: 'flex', gap: 6, background: '#F5F1FD', padding: 4, borderRadius: 8 }}>
           <button
             onClick={() => setActiveTab('entities')}
             style={{
@@ -224,7 +224,7 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
       {progress.data ? (
         <div style={{ ...card, marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8 }}>
-            <b style={{ fontSize: 13, color: '#1F2A37' }}>Coverage vs EN ({progress.data.enKeys} keys)</b>
+            <b style={{ fontSize: 13, color: '#241F3D' }}>Coverage vs EN ({progress.data.enKeys} keys)</b>
             <span style={{ fontSize: 11.5, color: '#475569' }}>per locale</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 8 }}>
@@ -238,18 +238,18 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
                   title={`${p.strings} strings`}
                   style={{
                     textAlign: 'left',
-                    border: '1px solid ' + (active ? '#0052CC' : '#CBD5E1'),
+                    border: '1px solid ' + (active ? '#0052CC' : '#CBC4DE'),
                     borderRadius: 9,
                     background: active ? '#EFF6FF' : '#fff',
                     padding: '7px 9px',
                     cursor: 'pointer',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 700, color: '#1F2A37' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 700, color: '#241F3D' }}>
                     <span>{l}{localeDir(l) === 'rtl' ? ' ⇄' : ''}</span>
                     <span style={{ color: p.coverage >= 100 ? '#047857' : p.coverage >= 50 ? '#B45309' : '#B91C1C' }}>{p.coverage}%</span>
                   </div>
-                  <div style={{ background: '#F1F4F8', borderRadius: 999, height: 6, marginTop: 5, overflow: 'hidden' }}>
+                  <div style={{ background: '#F5F1FD', borderRadius: 999, height: 6, marginTop: 5, overflow: 'hidden' }}>
                     <div style={{ width: p.coverage + '%', height: '100%', background: p.coverage >= 100 ? '#047857' : p.coverage >= 50 ? '#B45309' : '#B91C1C', borderRadius: 999 }} />
                   </div>
                 </button>
@@ -261,7 +261,7 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
 
       {/* Entities Status Summary Header */}
       {activeTab === 'entities' && entityStatus.data ? (
-        <div style={{ ...card, marginBottom: 12, display: 'flex', gap: 16, alignItems: 'center', background: '#F8FAFC' }}>
+        <div style={{ ...card, marginBottom: 12, display: 'flex', gap: 16, alignItems: 'center', background: '#FAF7FF' }}>
           <b style={{ fontSize: 13, color: '#1E293B' }}>{locale.toUpperCase()} Status:</b>
           <div style={{ display: 'flex', gap: 12, fontSize: 12.5 }}>
             <span style={{ color: '#334155' }}>Total: <b>{entityStatus.data.summary.total}</b></span>
@@ -317,7 +317,7 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
 
       {/* Import drawer — JSON or XLIFF paste */}
       <details style={{ ...card, marginBottom: 12 }}>
-        <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#1F2A37' }}>
+        <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#241F3D' }}>
           Import — paste {activeTab === 'entities' ? 'Entity XLIFF 1.2 / 2.0' : 'JSON or XLIFF 1.2'}
         </summary>
         <textarea
@@ -347,8 +347,8 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
         ) : entityItems.length === 0 ? (
           <Empty text="No entity fields match the filter criteria." />
         ) : (
-          <div style={{ border: '1px solid #CBD5E1', borderRadius: 12, background: '#fff', overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr 1fr', background: '#F1F5F9', borderBottom: '1px solid #CBD5E1', padding: '8px 14px', fontSize: 11, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#1E293B' }}>
+          <div style={{ border: '1px solid #CBC4DE', borderRadius: 12, background: '#fff', overflow: 'hidden' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr 1fr', background: '#F4F0FC', borderBottom: '1px solid #CBC4DE', padding: '8px 14px', fontSize: 11, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#1E293B' }}>
               <span>Entity & Field</span>
               <span>English Source</span>
               <span>{locale.toUpperCase()} Target{rtl ? ' · RTL' : ''}</span>
@@ -423,8 +423,8 @@ export default function Translations({ isSuperAdmin }: { isSuperAdmin: boolean }
         /* UI Strings Split-View Grid */
         en.error ? <Err error={en.error} /> : target.error ? <Err error={target.error} /> : en.loading || target.loading ? <p>Loading…</p> : (
           pairs.length === 0 ? <Empty text={missingOnly ? 'Every key in this scope is translated. 🎉' : 'No EN source strings match — seed EN strings first.'} /> : (
-            <div style={{ border: '1px solid #CBD5E1', borderRadius: 12, background: '#fff', overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 1fr', background: '#F1F5F9', borderBottom: '1px solid #CBD5E1', padding: '8px 14px', fontSize: 11, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#1E293B' }}>
+            <div style={{ border: '1px solid #CBC4DE', borderRadius: 12, background: '#fff', overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 1fr', background: '#F4F0FC', borderBottom: '1px solid #CBC4DE', padding: '8px 14px', fontSize: 11, fontWeight: 800, letterSpacing: 0.9, textTransform: 'uppercase', color: '#1E293B' }}>
                 <span>Key</span><span>English (source)</span><span>{locale} (target){rtl ? ' · RTL' : ''}</span>
               </div>
               {pairs.map((p) => (

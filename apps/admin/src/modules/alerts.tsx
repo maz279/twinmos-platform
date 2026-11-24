@@ -78,7 +78,7 @@ export default function AlertsModule({ canWrite, me }: ModProps) {
       case 'info':
         return { color: '#1E40AF', background: '#DBEAFE', border: '1px solid #BFDBFE' };
       default:
-        return { color: MUTED, background: '#F1F5F9', border: '1px solid #CBD5E1' };
+        return { color: MUTED, background: '#F4F0FC', border: '1px solid #CBC4DE' };
     }
   };
 
@@ -257,7 +257,7 @@ export default function AlertsModule({ canWrite, me }: ModProps) {
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
             <thead>
-              <tr style={{ background: '#F8FAFB', borderBottom: `1px solid ${LINE}`, color: MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <tr style={{ background: '#FAF7FF', borderBottom: `1px solid ${LINE}`, color: MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 <th style={{ padding: '12px 16px' }}>Severity</th>
                 <th style={{ padding: '12px 16px' }}>Rule & Title</th>
                 <th style={{ padding: '12px 16px' }}>Sanitized Message</th>

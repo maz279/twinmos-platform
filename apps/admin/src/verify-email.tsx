@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { API } from './api';
 
-const NAVY = '#16222F';
-const CYAN = '#1DBF9F';
+const NAVY = '#191338';
+const CYAN = '#6D28D9';
 const LOGO = `${import.meta.env.BASE_URL}assets/img/logo.webp`;
 
 const btnMain: React.CSSProperties = {
@@ -58,13 +58,13 @@ export default function VerifyEmail({
 
       {busy ? (
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <p style={{ color: '#66748A', fontSize: 14 }}>Verifying your email token…</p>
+          <p style={{ color: '#6A6285', fontSize: 14 }}>Verifying your email token…</p>
         </div>
       ) : verified ? (
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#E6F8F4', color: CYAN, fontSize: 24, display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>✓</div>
           <p style={{ color: NAVY, fontWeight: 700, margin: '0 0 8px' }}>Email Verified</p>
-          <p style={{ color: '#66748A', fontSize: 13, lineHeight: 1.5, margin: '0 0 24px' }}>
+          <p style={{ color: '#6A6285', fontSize: 13, lineHeight: 1.5, margin: '0 0 24px' }}>
             Your email address has been verified successfully. You can now access the TwinMOS Administration Portal.
           </p>
           <button type="button" onClick={onDone} style={{ ...btnMain, background: NAVY }}>Proceed to Sign In</button>

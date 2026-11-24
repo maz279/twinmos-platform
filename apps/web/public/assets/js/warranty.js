@@ -37,8 +37,34 @@
   if (siteKey && holder) {
     var s = document.createElement('script');
     s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-    s.onload = function () { if (window.turnstile) window.turnstile.render(holder, { sitekey: siteKey }); };
+    s.onload = function () {
+      if (!window.turnstile) return;
+      var options = { sitekey: siteKey };
+      var testKey = /^[123]x0{20,}[A-Z]{2}$/i.test(siteKey);
+      // Test site keys render a "For testing only" badge; hide it in staging.
+      if (testKey) {
+        holder.className += ' cf-turnstile-test';
+        options.size = 'invisible';
+        options.appearance = 'interaction-only';
+      }
+      var widgetId = window.turnstile.render(holder, options);
+      holder.setAttribute('data-ts-widget', widgetId);
+      if (testKey) {
+        // Defer: a cold first render registers the widget asynchronously.
+        setTimeout(function () { try { window.turnstile.execute(widgetId); } catch (_) {} }, 50);
+      }
+    };
     document.head.appendChild(s);
+  }
+
+  function resetWidget() {
+    if (!window.turnstile || !holder) return;
+    var id = holder.getAttribute('data-ts-widget');
+    try { window.turnstile.reset(id || holder); } catch (_) {}
+    if (holder.classList.contains('cf-turnstile-test')) {
+      // Invisible test widgets need a fresh execute() after every reset.
+      setTimeout(function () { try { window.turnstile.execute(id); } catch (_) {} }, 50);
+    }
   }
 
   var reg = document.getElementById('wtyRegisterForm');
@@ -62,9 +88,9 @@
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { r: r, d: d }; }); })
       .then(function (x) {
         btn.disabled = false;
-        if (x.r.status === 202) { out.innerHTML = box(true, 'Almost done — open the confirmation link we sent to ' + esc(body.email) + ' to activate the registration (valid for 48 hours).'); reg.reset(); if (window.turnstile && holder) window.turnstile.reset(holder); return; } // tokens are single-use: the next registration needs a fresh challenge
+        if (x.r.status === 202) { out.innerHTML = box(true, 'Almost done — open the confirmation link we sent to ' + esc(body.email) + ' to activate the registration (valid for 48 hours).'); reg.reset(); resetWidget(); return; } // tokens are single-use: the next registration needs a fresh challenge
         out.innerHTML = box(false, esc(problemText(x.d, x.r.status)));
-        if (window.turnstile && holder) window.turnstile.reset(holder);
+        resetWidget();
       })
       .catch(function () { btn.disabled = false; out.innerHTML = box(false, 'The registration service could not be reached — please retry.'); });
   });

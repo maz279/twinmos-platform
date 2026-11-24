@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { API } from './api';
 
-const NAVY = '#16222F';
-const CYAN = '#1DBF9F';
+const NAVY = '#191338';
+const CYAN = '#6D28D9';
 const LOGO = `${import.meta.env.BASE_URL}assets/img/logo.webp`;
 
 const cardIn: React.CSSProperties = {
-  width: '100%', padding: '12px 14px', border: '1px solid #D9E0E8', borderRadius: 8,
+  width: '100%', padding: '12px 14px', border: '1px solid #DED6F0', borderRadius: 8,
   fontSize: 14.5, marginBottom: 14, background: '#fff', boxSizing: 'border-box',
 };
 const btnMain: React.CSSProperties = {
@@ -53,7 +53,7 @@ export default function ForgotPassword({ onBack }: { onBack: () => void }) {
     }}>
       <img src={LOGO} alt="TwinMOS" style={{ height: 28, width: 'auto', display: 'block', margin: '0 auto 18px' }} />
       <h2 style={{ margin: '0 0 6px', fontSize: 20, color: NAVY, textAlign: 'center' }}>Reset password</h2>
-      <p style={{ margin: '0 0 20px', color: '#66748A', fontSize: 13.5, textAlign: 'center' }}>
+      <p style={{ margin: '0 0 20px', color: '#6A6285', fontSize: 13.5, textAlign: 'center' }}>
         Enter your verified email address to receive secure reset instructions.
       </p>
 
@@ -61,7 +61,7 @@ export default function ForgotPassword({ onBack }: { onBack: () => void }) {
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#E6F8F4', color: CYAN, fontSize: 24, display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>✓</div>
           <p style={{ color: NAVY, fontWeight: 700, margin: '0 0 8px' }}>Instructions Dispatched</p>
-          <p style={{ color: '#66748A', fontSize: 13, lineHeight: 1.5, margin: '0 0 24px' }}>
+          <p style={{ color: '#6A6285', fontSize: 13, lineHeight: 1.5, margin: '0 0 24px' }}>
             If an account is associated with <b>{email}</b>, password reset instructions have been dispatched. The secure link is valid for 1 hour.
           </p>
           <button type="button" onClick={onBack} style={{ ...btnMain, background: NAVY }}>Return to Sign-in</button>
@@ -89,7 +89,7 @@ export default function ForgotPassword({ onBack }: { onBack: () => void }) {
             <button
               type="button"
               onClick={onBack}
-              style={{ background: 'none', border: 0, color: '#66748A', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>
+              style={{ background: 'none', border: 0, color: '#6A6285', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>
               Back to sign-in
             </button>
           </div>

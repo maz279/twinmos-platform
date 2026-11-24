@@ -9,7 +9,7 @@ import React, { useState } from 'react';
 import { API, apiGet } from './api';
 import ForgotPassword from './forgot-password';
 
-const NAVY = '#16222F'; const CYAN = '#1DBF9F'; const GOLD = '#E8A33D';
+const NAVY = '#191338'; const CYAN = '#6D28D9'; const GOLD = '#B45309';
 const LOGO = `${import.meta.env.BASE_URL}assets/img/logo.webp`;
 // Rail top: the ORIGINAL navy TwinMOS wordmark on a frosted-glass chip — true
 // brand colours stay visible against the dark rail regardless of width/zoom
@@ -22,14 +22,14 @@ const glassChip: React.CSSProperties = {
 const navyLogo: React.CSSProperties = { height: 22, width: 'auto', display: 'block' };
 
 const cardIn: React.CSSProperties = {
-  width: '100%', padding: '12px 14px', border: '1px solid #D9E0E8', borderRadius: 8,
+  width: '100%', padding: '12px 14px', border: '1px solid #DED6F0', borderRadius: 8,
   fontSize: 14.5, marginBottom: 14, background: '#fff', boxSizing: 'border-box',
   transition: 'border-color .15s, box-shadow .15s',
 };
-const cardInFocus = 'outline:none;border-color:#1DBF9F;box-shadow:0 0 0 3px rgba(29,191,159,.16)';
+const cardInFocus = 'outline:none;border-color:#6D28D9;box-shadow:0 0 0 3px rgba(109,40,217,.16)';
 const btnMain: React.CSSProperties = {
   width: '100%', padding: '12px 16px', border: 0, borderRadius: 8,
-  background: `linear-gradient(135deg, ${CYAN} 0%, #14A98B 100%)`,
+  background: `linear-gradient(135deg, ${CYAN} 0%, #2563EB 100%)`,
   color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer', letterSpacing: 0.3,
   transition: 'transform .12s, box-shadow .15s, opacity .15s',
 };
@@ -95,22 +95,22 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
     .tm-in:focus { ${cardInFocus} }
     .tm-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(20,169,139,.35); }
     .tm-btn:active { transform: translateY(0); }
-    .tm-link:hover { color: #0E9F7E; }
+    .tm-link:hover { color: #5B21B6; }
     @media (max-width: 880px) { .tm-rail { display: none !important; } }
   `;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0F1720', fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#120E2B', fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif' }}>
       <style>{focusUplift}</style>
 
       {/* ---- brand rail ---- */}
       <aside className="tm-rail" style={{
         flex: '1 1 52%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
         padding: '46px 58px', color: '#E7EDF3', position: 'relative', overflow: 'hidden',
-        background: `linear-gradient(160deg, #182736 0%, #14212F 58%, #101B26 100%)`,
+        background: `linear-gradient(160deg, #1B163F 0%, #14212F 58%, #101B26 100%)`,
       }}>
         {/* subtle radial glow accent */}
-        <div style={{ position: 'absolute', right: '-120px', top: '20%', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(29,191,159,.15) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', right: '-120px', top: '20%', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(109,40,217,.15) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', left: '-90px', bottom: '-60px', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,163,61,.09) 0%, transparent 60%)', pointerEvents: 'none' }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
@@ -145,7 +145,7 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
       </aside>
 
       {/* ---- credential card ---- */}
-      <main style={{ flex: '1 1 48%', display: 'grid', placeItems: 'center', padding: 32, background: '#0F1720' }}>
+      <main style={{ flex: '1 1 48%', display: 'grid', placeItems: 'center', padding: 32, background: '#120E2B' }}>
         <div style={{ width: '100%', maxWidth: 400 }}>
           {step === 'credentials' && (
             <form onSubmit={submitCredentials} style={{
@@ -154,7 +154,7 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
             }}>
               <img src={LOGO} alt="TwinMOS" style={{ ...navyLogo, height: 30, display: 'block', margin: '0 auto 18px' }} />
               <h2 style={{ margin: '0 0 4px', fontSize: 21, color: NAVY, textAlign: 'center' }}>Staff sign-in</h2>
-              <p style={{ margin: '0 0 24px', color: '#66748A', fontSize: 13.5, textAlign: 'center' }}>
+              <p style={{ margin: '0 0 24px', color: '#6A6285', fontSize: 13.5, textAlign: 'center' }}>
                 Authorised TwinMOS personnel only. Activity is logged.
               </p>
               <label htmlFor="login-email" style={{ fontSize: 12.5, fontWeight: 700, color: NAVY, display: 'block', marginBottom: 6 }}>User ID (email)</label>
@@ -171,7 +171,7 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
               </div>
               <button className="tm-btn" disabled={busy} style={{ ...btnMain, opacity: busy ? 0.65 : 1 }}>{busy ? 'Verifying…' : 'Sign in'}</button>
               {err && <p role="alert" style={{ color: '#C2453C', fontSize: 13.5, margin: '14px 0 0', textAlign: 'center' }}>{err}</p>}
-              <p style={{ color: '#66748A', fontSize: 12, margin: '20px 0 0', textAlign: 'center' }}>
+              <p style={{ color: '#6A6285', fontSize: 12, margin: '20px 0 0', textAlign: 'center' }}>
                 Protected by TOTP multi-factor · TwinMOS ISO-aligned controls
               </p>
             </form>
@@ -187,9 +187,9 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
               boxShadow: '0 28px 80px rgba(2,12,28,.55)', textAlign: 'center',
             }}>
               <img src={LOGO} alt="TwinMOS" style={{ ...navyLogo, height: 26, display: 'block', margin: '0 auto 16px' }} />
-              <div style={{ width: 54, height: 54, margin: '0 auto 16px', borderRadius: 14, background: `linear-gradient(135deg, ${CYAN}, #14A98B)`, display: 'grid', placeItems: 'center', fontSize: 26 }}>🔐</div>
+              <div style={{ width: 54, height: 54, margin: '0 auto 16px', borderRadius: 14, background: `linear-gradient(135deg, ${CYAN}, #2563EB)`, display: 'grid', placeItems: 'center', fontSize: 26 }}>🔐</div>
               <h2 style={{ margin: '0 0 6px', fontSize: 20, color: NAVY }}>Two-factor verification</h2>
-              <p style={{ color: '#66748A', fontSize: 13.5, margin: '0 0 22px' }}>
+              <p style={{ color: '#6A6285', fontSize: 13.5, margin: '0 0 22px' }}>
                 Enter the 6-digit code from your authenticator app.<br />
                 <span style={{ fontSize: 12.5 }}>You may also enter a recovery code (format XXXX-XXXX).</span>
               </p>
@@ -198,7 +198,7 @@ export default function Login({ onDone }: { onDone: (me: Me) => void }) {
                 style={{ ...cardIn, textAlign: 'center', fontSize: 22, letterSpacing: 6, fontWeight: 700 }} />
               <button className="tm-btn" disabled={busy} style={{ ...btnMain, opacity: busy ? 0.65 : 1 }}>{busy ? 'Checking…' : 'Verify'}</button>
               {err && <p role="alert" style={{ color: '#C2453C', fontSize: 13.5, margin: '14px 0 0' }}>{err}</p>}
-              <button type="button" onClick={() => { setStep('credentials'); setCode(''); setErr(''); }} className="tm-link" style={{ background: 'none', border: 0, color: '#66748A', fontSize: 13, marginTop: 18, cursor: 'pointer', textDecoration: 'underline' }}>
+              <button type="button" onClick={() => { setStep('credentials'); setCode(''); setErr(''); }} className="tm-link" style={{ background: 'none', border: 0, color: '#6A6285', fontSize: 13, marginTop: 18, cursor: 'pointer', textDecoration: 'underline' }}>
                 Use a different account
               </button>
             </form>

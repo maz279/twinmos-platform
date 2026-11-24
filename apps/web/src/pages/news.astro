@@ -54,19 +54,19 @@ const breadcrumbs = [
 
     <section class="news-hub wrap" style="padding: 48px 16px 80px; max-width: 1200px; margin: 0 auto;">
       <header class="hub-header" style="text-align: center; margin-bottom: 40px;">
-        <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; padding: 6px 14px; border-radius: 9999px; letter-spacing: 0.05em;">
+        <span class="badge" style="background: #F1ECFF; color: #5B21B6; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; padding: 6px 14px; border-radius: 9999px; letter-spacing: 0.05em;">
           Press & Events Hub
         </span>
         {hasHero ? (
-          <h2 class="h2" style="font-size: 2.25rem; margin-top: 14px; margin-bottom: 14px; color: #0f172a; font-weight: 800;">
+          <h2 class="h2" style="font-size: 2.25rem; margin-top: 14px; margin-bottom: 14px; color: #191633; font-weight: 800;">
             TwinMOS Newsroom
           </h2>
         ) : (
-          <h1 class="h1" style="font-size: 2.75rem; margin-top: 14px; margin-bottom: 14px; color: #0f172a; font-weight: 800;">
+          <h1 class="h1" style="font-size: 2.75rem; margin-top: 14px; margin-bottom: 14px; color: #191633; font-weight: 800;">
             TwinMOS Newsroom
           </h1>
         )}
-        <p style="font-size: 1.15rem; color: #475569; max-width: 680px; margin: 0 auto; line-height: 1.6;">
+        <p style="font-size: 1.15rem; color: #5B5475; max-width: 680px; margin: 0 auto; line-height: 1.6;">
           Latest product announcements, corporate press releases, and global trade show showcases including COMPUTEX and GITEX.
         </p>
       </header>
@@ -81,8 +81,8 @@ const breadcrumbs = [
               class={`cat-pill ${isActive ? 'active' : ''}`}
               style={`padding: 8px 20px; border-radius: 9999px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s ease; ${
                 isActive
-                  ? 'background: #0A2540; color: #fff;'
-                  : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'
+                  ? 'background: #14123A; color: #fff;'
+                  : 'background: #F3EFFC; color: #5B5475; border: 1px solid #E5E0F2;'
               }`}
             >
               {c.label}
@@ -98,25 +98,25 @@ const breadcrumbs = [
             const dateStr = n.eventDate || n.createdAt;
             const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
             return (
-              <article class="news-card" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+              <article class="news-card" style="background: #fff; border: 1px solid #E5E0F2; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div style="padding: 24px; display: flex; flex-direction: column; flex-grow: 1;">
                   <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                     <span class="badge" style="background: #2563eb; color: #fff; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; padding: 3px 8px; border-radius: 4px;">
                       {n.tag || 'News'}
                     </span>
                     {displayDate && (
-                      <time datetime={dateStr} style="font-size: 0.85rem; color: #64748b;">
+                      <time datetime={dateStr} style="font-size: 0.85rem; color: #6A6285;">
                         {displayDate}
                       </time>
                     )}
                   </div>
-                  <h2 class="h2 news-card-title" style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; line-height: 1.4;">
+                  <h2 class="h2 news-card-title" style="font-size: 1.25rem; font-weight: 700; color: #191633; margin-bottom: 12px; line-height: 1.4;">
                     <a href={`/news/${n.slug}`} style="text-decoration: none; color: inherit;">
                       {n.title}
                     </a>
                   </h2>
                   {n.deck && (
-                    <p style="font-size: 0.925rem; color: #475569; line-height: 1.55; margin-bottom: 20px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                    <p style="font-size: 0.925rem; color: #5B5475; line-height: 1.55; margin-bottom: 20px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
                       {n.deck}
                     </p>
                   )}
@@ -129,10 +129,10 @@ const breadcrumbs = [
           })}
         </div>
       ) : (
-        <div class="empty-news" style="text-align: center; padding: 60px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-          <h2 class="h2" style="font-size: 1.25rem; margin-bottom: 10px; color: #0f172a;">No articles found in this category</h2>
-          <p style="color: #64748b; margin-bottom: 20px;">Try viewing all updates or checking back later.</p>
-          <a href="/news" class="btn btn-primary" style="display: inline-block; background: #0A2540; color: #fff; padding: 8px 20px; border-radius: 6px; text-decoration: none; font-weight: 600;">
+        <div class="empty-news" style="text-align: center; padding: 60px 16px; background: #F7F5FE; border: 1px solid #E5E0F2; border-radius: 8px;">
+          <h2 class="h2" style="font-size: 1.25rem; margin-bottom: 10px; color: #191633;">No articles found in this category</h2>
+          <p style="color: #6A6285; margin-bottom: 20px;">Try viewing all updates or checking back later.</p>
+          <a href="/news" class="btn btn-primary" style="display: inline-block; background: #14123A; color: #fff; padding: 8px 20px; border-radius: 6px; text-decoration: none; font-weight: 600;">
             View All Updates
           </a>
         </div>

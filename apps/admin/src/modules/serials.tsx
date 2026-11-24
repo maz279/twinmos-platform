@@ -169,7 +169,7 @@ function AnalyticsStrip() {
           {data.topSkus.map((x) => (
             <div key={x.sku} style={{ display: 'grid', gridTemplateColumns: '130px 1fr 34px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
               <span style={{ fontSize: 12, color: MUTED, fontFamily: 'ui-monospace, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.sku}</span>
-              <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+              <span style={{ background: '#F5F1FD', borderRadius: 999, height: 8, overflow: 'hidden' }}>
                 <span style={{ display: 'block', width: `${(x.n / Math.max(1, data.topSkus[0].n)) * 100}%`, height: '100%', background: TEAL, borderRadius: 999 }} />
               </span>
               <b style={{ fontSize: 12.5, color: INK, textAlign: 'right' }}>{x.n}</b>
@@ -182,8 +182,8 @@ function AnalyticsStrip() {
           {data.countries.map((x) => (
             <div key={x.country} style={{ display: 'grid', gridTemplateColumns: '60px 1fr 34px', alignItems: 'center', gap: 8, padding: '3px 0' }}>
               <span style={{ fontSize: 12, color: MUTED }}>{x.country}</span>
-              <span style={{ background: '#F1F4F8', borderRadius: 999, height: 8, overflow: 'hidden' }}>
-                <span style={{ display: 'block', width: `${(x.n / Math.max(1, data.countries[0].n)) * 100}%`, height: '100%', background: '#7C5CDB', borderRadius: 999 }} />
+              <span style={{ background: '#F5F1FD', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+                <span style={{ display: 'block', width: `${(x.n / Math.max(1, data.countries[0].n)) * 100}%`, height: '100%', background: '#7C3AED', borderRadius: 999 }} />
               </span>
               <b style={{ fontSize: 12.5, color: INK, textAlign: 'right' }}>{x.n}</b>
             </div>
@@ -241,10 +241,10 @@ function Registry({ canWrite }: { canWrite: boolean }) {
             {(data?.items ?? []).map((s) => (
               <tr key={s.serial} onClick={() => setDrill(s.serial)} style={{ cursor: 'pointer', background: drill === s.serial ? '#F0F9FF' : undefined }}>
                 <td style={td}><b style={{ color: INK }}>{s.serial}</b></td>
-                <td style={td}>{s.sku ?? <span style={{ color: '#93A0B4' }}>—</span>}</td>
-                <td style={td}>{s.batch ? <Badge value={s.batch} /> : <span style={{ color: '#93A0B4' }}>—</span>}</td>
+                <td style={td}>{s.sku ?? <span style={{ color: '#9A93B5' }}>—</span>}</td>
+                <td style={td}>{s.batch ? <Badge value={s.batch} /> : <span style={{ color: '#9A93B5' }}>—</span>}</td>
                 <td style={{ ...td, color: MUTED }}>{s.manufacturedAt ? fmtDate(s.manufacturedAt) : '—'}</td>
-                <td style={td}>{s.verifiedCount > 0 ? <b>{s.verifiedCount}</b> : <span style={{ color: '#93A0B4' }}>0</span>}</td>
+                <td style={td}>{s.verifiedCount > 0 ? <b>{s.verifiedCount}</b> : <span style={{ color: '#9A93B5' }}>0</span>}</td>
                 <td style={td}>{canWrite && (
                   <button style={{ ...btnGhost, padding: '3px 8px', fontSize: 12 }} title="Delete from registry"
                     onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete ${s.serial} from the registry? Verification history is kept; the serial stops verifying.`)) { void apiSend('DELETE', '/admin/serials/' + encodeURIComponent(s.serial)).then(reload).catch(() => {}); } }}>✕</button>
@@ -422,7 +422,7 @@ function ImportTab({ canWrite }: { canWrite: boolean }) {
             <button style={btn} disabled={busy || !csv.trim()} onClick={() => run(false)} title="Validates first; any row error aborts with no changes">
               {busy ? 'Working…' : 'Import batch'}
             </button>
-          </> : <span style={{ color: '#93A0B4', fontSize: 12.5, alignSelf: 'center' }}>Read-only — editor role required.</span>}
+          </> : <span style={{ color: '#9A93B5', fontSize: 12.5, alignSelf: 'center' }}>Read-only — editor role required.</span>}
         </div>
       </SectionCard>
 

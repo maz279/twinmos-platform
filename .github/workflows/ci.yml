@@ -50,7 +50,7 @@ jobs:
       PREVIEW_SIGNING_KEY: ${{ secrets.CI_PREVIEW_KEY || 'twinmos_ci_preview_signing_key_32_characters_minimum' }}
       REVALIDATE_SECRET: ${{ secrets.CI_REVALIDATE_KEY || 'twinmos_ci_revalidate_key_32_characters_minimum' }}
       TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
-      PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+      PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000BB
       SEED_ADMIN_EMAIL: admin@twinmos.com
       SEED_ADMIN_PASSWORD: ${{ secrets.CI_ADMIN_PASSWORD || 'TwinMOS-Admin-2026!x' }}
       RESEND_API_KEY: re_ci_test_1234567890
@@ -193,7 +193,7 @@ jobs:
       PREVIEW_SIGNING_KEY: ci-preview-signing-key-1234567890abcdef
       REVALIDATE_SECRET: ci-revalidate-secret-1234567890abcdef
       TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
-      PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+      PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000BB
       RESEND_API_KEY: re_ci_test_1234567890
       MAIL_FROM: TwinMOS CI <ci@twinmos.com>
       FORMS_TO: ci@twinmos.com

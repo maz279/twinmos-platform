@@ -27,7 +27,7 @@ const shellCss = `
     color:${SIDE_TEXT}; font-size:13px; padding:6px 10px; border-radius:8px; cursor:pointer; position:relative;
     transition:background .12s, color .12s; }
   .tm-side-item:hover { background:rgba(255,255,255,.06); color:#fff; }
-  .tm-side-item.on { background:linear-gradient(90deg, rgba(29,191,159,.22), rgba(29,191,159,.05)); color:#fff; font-weight:700; }
+  .tm-side-item.on { background:linear-gradient(90deg, rgba(109,40,217,.22), rgba(109,40,217,.05)); color:#fff; font-weight:700; }
   .tm-side-item.on svg { color:${TEAL}; }
   .tm-side-item.on::before { content:''; position:absolute; left:0; top:6px; bottom:6px; width:3px; border-radius:2px; background:${TEAL}; }
   .tm-side-kchev { display:grid; place-items:center; width:24px; flex-shrink:0; border:0; background:none; color:#5E7186;
@@ -37,7 +37,7 @@ const shellCss = `
     text-align:left; color:#7E92A9; font-size:12px; padding:4px 10px; border-radius:7px; cursor:pointer;
     transition:background .12s, color .12s; }
   .tm-side-child:hover { background:rgba(255,255,255,.06); color:#DCE5EE; }
-  .tm-side-child.on { background:rgba(29,191,159,.15); color:#fff; font-weight:600; box-shadow:inset 2px 0 0 ${TEAL}; }
+  .tm-side-child.on { background:rgba(109,40,217,.15); color:#fff; font-weight:600; box-shadow:inset 2px 0 0 ${TEAL}; }
   .tm-tab { display:flex; align-items:center; gap:8px; padding:0 6px 0 12px; height:34px; border:1px solid transparent;
     border-radius:9px; background:transparent; color:${MUTED}; font-size:12.5px; cursor:pointer; white-space:nowrap; }
   .tm-tab:hover { background:#E8EDF2; color:${INK}; }
@@ -65,7 +65,7 @@ function Avatar({ email, size = 28 }: { email?: string; size?: number }) {
   return (
     <span style={{
       display: 'grid', placeItems: 'center', width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: `linear-gradient(135deg, ${TEAL}, #14A98B)`, color: '#fff',
+      background: `linear-gradient(135deg, ${TEAL}, #2563EB)`, color: '#fff',
       fontSize: Math.round(size * 0.38), fontWeight: 800, letterSpacing: 0.5,
       boxShadow: '0 0 0 2px rgba(255,255,255,.85), 0 1px 3px rgba(14,159,126,.4)',
     }}>{initials(email)}</span>
@@ -151,7 +151,7 @@ function Sidebar({ modules, activeModule, activeCtx, badges, collapsed, onToggle
 
   const groups = GROUP_ORDER.filter((g) => modules.some((m) => m.group === g));
   return (
-    <nav className="tm-scroll" style={{ width: collapsed ? 64 : 240, flexShrink: 0, background: 'linear-gradient(180deg,#182736 0%,' + NAVY + ' 55%,#121D29 100%)', color: '#fff', padding: collapsed ? '12px 9px' : '14px 12px 10px', display: 'flex', flexDirection: 'column', transition: 'width .15s', overflowY: 'auto', overflowX: 'hidden' }}>
+    <nav className="tm-scroll" style={{ width: collapsed ? 64 : 240, flexShrink: 0, background: 'linear-gradient(180deg,#1B163F 0%,' + NAVY + ' 55%,#0F0B2A 100%)', color: '#fff', padding: collapsed ? '12px 9px' : '14px 12px 10px', display: 'flex', flexDirection: 'column', transition: 'width .15s', overflowY: 'auto', overflowX: 'hidden' }}>
       <RailLogo collapsed={collapsed} onToggle={onToggleCollapse} />
       <UserCard me={me} collapsed={collapsed} />
       {groups.map((g) => {
@@ -258,7 +258,7 @@ function MegaMenu({ modules, badges, open, onClose }: { modules: ModuleDef[]; ba
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 7, color: INK, fontWeight: 700, fontSize: 13 }}>
                       {m.label}
-                      {!!n && <span style={{ background: TEAL + '1C', color: '#0E9F7E', borderRadius: 999, fontSize: 10.5, fontWeight: 800, padding: '1px 7px' }}>{n}</span>}
+                      {!!n && <span style={{ background: TEAL + '1C', color: '#5B21B6', borderRadius: 999, fontSize: 10.5, fontWeight: 800, padding: '1px 7px' }}>{n}</span>}
                     </span>
                     <span style={{ display: 'block', color: MUTED, fontSize: 12, marginTop: 2, lineHeight: 1.4 }}>{m.desc}</span>
                   </span>

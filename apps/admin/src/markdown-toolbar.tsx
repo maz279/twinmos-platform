@@ -7,7 +7,7 @@ import React, { useRef, useState } from 'react';
 import { MediaPicker } from './media-picker';
 import { API } from './api';
 
-const NAVY = '#1F2A37';
+const NAVY = '#241F3D';
 
 type Ops = { label: string; title: string; wrap?: [string, string]; prefix?: string; block?: string; table?: boolean };
 
@@ -87,7 +87,7 @@ export default function MarkdownToolbar({ value, onChange, textareaRef }: {
   }
 
   return (
-    <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', padding: '5px 6px', border: '1px solid #D9E0E8', borderBottom: 0, borderRadius: '6px 6px 0 0', background: '#F8FAFB' }}>
+    <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', padding: '5px 6px', border: '1px solid #DED6F0', borderBottom: 0, borderRadius: '6px 6px 0 0', background: '#FAF7FF' }}>
       {OPS.map((op) => (
         <button key={op.label} type="button" title={op.title} onClick={() => apply(op)}
           style={{ border: '1px solid transparent', background: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 12.5, fontWeight: op.label.length <= 2 ? 800 : 600, color: NAVY, cursor: 'pointer' }}>
@@ -95,7 +95,7 @@ export default function MarkdownToolbar({ value, onChange, textareaRef }: {
         </button>
       ))}
       <button type="button" title="Insert image from media library" onClick={() => setPick(true)}
-        style={{ border: '1px solid transparent', background: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 12.5, fontWeight: 600, color: '#0E9F7E', cursor: 'pointer', marginLeft: 'auto' }}>
+        style={{ border: '1px solid transparent', background: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 12.5, fontWeight: 600, color: '#5B21B6', cursor: 'pointer', marginLeft: 'auto' }}>
         🖼 Image
       </button>
       {pick && <MediaPicker selected={[]} onConfirm={insertImage} onClose={() => setPick(false)} />}

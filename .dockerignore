@@ -16,11 +16,17 @@ apps/api/data/
 
 # Build artifacts and caches
 dist/
+**/dist/
 build/
+**/build/
 .cache/
+**/.cache/
 .astro/
+**/.astro/
 coverage/
+**/coverage/
 node_modules/
+**/node_modules/
 npm-debug.log*
 
 # Test fixtures and reports

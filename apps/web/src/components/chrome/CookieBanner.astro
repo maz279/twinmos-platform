@@ -26,12 +26,12 @@ const policyUrl = settings.policyUrl || '/legal.html#cookies';
 
 <!-- Second Layer: Accessible Granular Preferences Dialog (T6.3.1 / T6.3.2) -->
 <div class="cookie-modal-backdrop" id="cookieModalBackdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;backdrop-filter:blur(4px);justify-content:center;align-items:center;padding:16px" aria-hidden="true">
-  <div class="cookie-modal" id="cookieModal" role="dialog" aria-modal="true" aria-labelledby="cookieModalTitle" aria-describedby="cookieModalDesc" style="background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:24px;max-width:580px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,0.5);position:relative;max-height:90vh;overflow-y:auto">
+  <div class="cookie-modal" id="cookieModal" role="dialog" aria-modal="true" aria-labelledby="cookieModalTitle" aria-describedby="cookieModalDesc" style="background:#241F3D;color:#F7F5FE;border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:24px;max-width:580px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,0.5);position:relative;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <h2 id="cookieModalTitle" style="font-size:18px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px;color:#ffffff!important">🍪 Privacy &amp; Cookie Preferences</h2>
-      <button id="cookieModalClose" type="button" aria-label="Close cookie preferences dialog" style="background:none;border:none;color:#f1f5f9;font-size:24px;cursor:pointer;padding:6px 12px;line-height:1;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center">&times;</button>
+      <button id="cookieModalClose" type="button" aria-label="Close cookie preferences dialog" style="background:none;border:none;color:#F3EFFC;font-size:24px;cursor:pointer;padding:6px 12px;line-height:1;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center">&times;</button>
     </div>
-    <p id="cookieModalDesc" style="font-size:13.5px;color:#cbd5e1;line-height:1.5;margin-bottom:18px">
+    <p id="cookieModalDesc" style="font-size:13.5px;color:#CBC4DE;line-height:1.5;margin-bottom:18px">
       We value your privacy. Select which cookies and data processing categories you choose to enable. Strictly necessary cookies are required for site security, locale settings, and core platform functionality.
     </p>
 
@@ -43,9 +43,9 @@ const policyUrl = settings.policyUrl || '/legal.html#cookies';
             <input type="checkbox" id="cookieCatEssential" checked disabled style="cursor:not-allowed" />
             Strictly Necessary
           </label>
-          <span style="font-size:11px;background:#334155;color:#f8fafc;padding:2px 8px;border-radius:12px;font-weight:600;border:1px solid #475569">Always Active</span>
+          <span style="font-size:11px;background:#3E3859;color:#F7F5FE;padding:2px 8px;border-radius:12px;font-weight:600;border:1px solid #5B5475">Always Active</span>
         </div>
-        <p style="font-size:12px;color:#cbd5e1;margin:6px 0 0;line-height:1.4">
+        <p style="font-size:12px;color:#CBC4DE;margin:6px 0 0;line-height:1.4">
           Required for site security, authentication sessions, locale storage, and consent preference recording.
         </p>
       </div>
@@ -57,9 +57,9 @@ const policyUrl = settings.policyUrl || '/legal.html#cookies';
             <input type="checkbox" id="cookieCatAnalytics" style="cursor:pointer" />
             Analytics &amp; Usage
           </label>
-          <span style="font-size:11px;background:#1e293b;border:1px solid #475569;color:#cbd5e1;padding:2px 8px;border-radius:12px">Optional</span>
+          <span style="font-size:11px;background:#241F3D;border:1px solid #5B5475;color:#CBC4DE;padding:2px 8px;border-radius:12px">Optional</span>
         </div>
-        <p style="font-size:12px;color:#cbd5e1;margin:6px 0 0;line-height:1.4">
+        <p style="font-size:12px;color:#CBC4DE;margin:6px 0 0;line-height:1.4">
           Helps us understand website usage with privacy-first metrics to optimize page load speeds and feature discovery.
         </p>
       </div>
@@ -71,9 +71,9 @@ const policyUrl = settings.policyUrl || '/legal.html#cookies';
             <input type="checkbox" id="cookieCatMarketing" style="cursor:pointer" />
             Marketing &amp; Campaigns
           </label>
-          <span style="font-size:11px;background:#1e293b;border:1px solid #475569;color:#cbd5e1;padding:2px 8px;border-radius:12px">Optional</span>
+          <span style="font-size:11px;background:#241F3D;border:1px solid #5B5475;color:#CBC4DE;padding:2px 8px;border-radius:12px">Optional</span>
         </div>
-        <p style="font-size:12px;color:#cbd5e1;margin:6px 0 0;line-height:1.4">
+        <p style="font-size:12px;color:#CBC4DE;margin:6px 0 0;line-height:1.4">
           Measures partner referral effectiveness and distributor marketplace links.
         </p>
       </div>
@@ -85,9 +85,9 @@ const policyUrl = settings.policyUrl || '/legal.html#cookies';
             <input type="checkbox" id="cookieCatPreferences" style="cursor:pointer" />
             Preferences
           </label>
-          <span style="font-size:11px;background:#1e293b;border:1px solid #475569;color:#cbd5e1;padding:2px 8px;border-radius:12px">Optional</span>
+          <span style="font-size:11px;background:#241F3D;border:1px solid #5B5475;color:#CBC4DE;padding:2px 8px;border-radius:12px">Optional</span>
         </div>
-        <p style="font-size:12px;color:#cbd5e1;margin:6px 0 0;line-height:1.4">
+        <p style="font-size:12px;color:#CBC4DE;margin:6px 0 0;line-height:1.4">
           Saves client UI state such as product comparison tray and filtered views across visits.
         </p>
       </div>

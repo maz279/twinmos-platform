@@ -5,6 +5,18 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { getProductAssets } from "./productAssets";
+
+function enrichProductWithAssets<T extends Record<string, any>>(prod: T | null): T | null {
+  if (!prod || !prod.slug) return prod;
+  const assets = getProductAssets(prod.slug);
+  if (assets) {
+    if (!prod.img) prod.img = assets.img;
+    if (!prod.gallery || prod.gallery.length === 0) prod.gallery = assets.gallery;
+    if (!prod.datasheets || prod.datasheets.length === 0) prod.datasheets = assets.datasheets;
+  }
+  return prod;
+}
 
 const API_BASE = process.env.DELIVERY_API_URL
   ? process.env.DELIVERY_API_URL.replace(/\/api\/v1\/delivery\/?$/, "")
@@ -192,7 +204,8 @@ export async function getDeliveryProductWithStatus(
       return { product: null, status: res.status, isArchived: false };
     }
     const json = await res.json();
-    return { product: json?.data ?? null, status: 200, isArchived: false };
+    const prod = enrichProductWithAssets(json?.data ?? null);
+    return { product: prod, status: 200, isArchived: false };
   } catch (err) {
     return { product: null, status: 500, isArchived: false };
   }
@@ -216,7 +229,8 @@ export async function getDeliveryProducts(query?: {
   if (query?.sort) params.set("sort", query.sort);
   const qStr = params.toString() ? `?${params.toString()}` : "";
   const res = await fetchDelivery(`/products${qStr}`);
-  return res?.data ?? [];
+  const items = res?.data ?? [];
+  return Array.isArray(items) ? items.map((p: any) => enrichProductWithAssets(p)) : [];
 }
 
 export async function getDeliveryFacets() {

@@ -19,7 +19,7 @@ export default function Settings({ canManage, isSuperAdmin }: { canManage: boole
   const [tab, setTab] = useState<'site' | 'redirects' | 'menus' | 'locales'>('site');
   return (
     <div id="site-settings-module">
-      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#1F2A37', letterSpacing: -0.2 }}>Settings</h1>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#241F3D', letterSpacing: -0.2 }}>Settings</h1>
       <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
         {(['site', 'redirects', 'menus', 'locales'] as const).map((t) => (
           <button key={t} style={tab === t ? btn : btnGhost} onClick={() => setTab(t)}>
@@ -180,7 +180,7 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
       </div>
 
       {/* Group Editor Panel */}
-      <div style={{ border: '1px solid #E6EBF1', borderRadius: 12, background: '#fff', padding: 20 }}>
+      <div style={{ border: '1px solid #E5E0F2', borderRadius: 12, background: '#fff', padding: 20 }}>
         {loadErr ? <Err error={loadErr} /> : null}
         {loading && <p>Loading settings…</p>}
 
@@ -199,8 +199,8 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
         {/* 1. site.figures */}
         {activeGroup === 'site.figures' && (
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#1F2A37' }}>Key Figures & Dynamic Years</h2>
-            <p style={{ fontSize: 12.5, color: '#66748A', margin: '0 0 16px' }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#241F3D' }}>Key Figures & Dynamic Years</h2>
+            <p style={{ fontSize: 12.5, color: '#6A6285', margin: '0 0 16px' }}>
               Centralized corporate statistics. The founding year computes every "N years" claim dynamically across headers, footers and SEO Organization schema.
             </p>
 
@@ -219,7 +219,7 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
                   onChange={(e) => setFigures({ ...figures, foundingYear: Number(e.target.value) })}
                   disabled={!canManage}
                 />
-                <span style={{ fontSize: 11, color: '#66748A' }}>Default 1998</span>
+                <span style={{ fontSize: 11, color: '#6A6285' }}>Default 1998</span>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Countries Presence</label>
@@ -231,7 +231,7 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
                   onChange={(e) => setFigures({ ...figures, countriesCount: e.target.value })}
                   disabled={!canManage}
                 />
-                <span style={{ fontSize: 11, color: '#66748A' }}>e.g. "93+"</span>
+                <span style={{ fontSize: 11, color: '#6A6285' }}>e.g. "93+"</span>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Total Products Count (Fixes "45" vs "39")</label>
@@ -243,7 +243,7 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
                   onChange={(e) => setFigures({ ...figures, productCount: Number(e.target.value) })}
                   disabled={!canManage}
                 />
-                <span style={{ fontSize: 11, color: '#66748A' }}>Catalog truth: {figures.productCount} active products</span>
+                <span style={{ fontSize: 11, color: '#6A6285' }}>Catalog truth: {figures.productCount} active products</span>
               </div>
             </div>
           </div>
@@ -252,8 +252,8 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
         {/* 2. site.brand */}
         {activeGroup === 'site.brand' && (
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#1F2A37' }}>Brand & Identity</h2>
-            <p style={{ fontSize: 12.5, color: '#66748A', margin: '0 0 16px' }}>Corporate branding, logos and standard descriptors.</p>
+            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#241F3D' }}>Brand & Identity</h2>
+            <p style={{ fontSize: 12.5, color: '#6A6285', margin: '0 0 16px' }}>Corporate branding, logos and standard descriptors.</p>
             <div style={{ display: 'grid', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Brand Name</label>
@@ -278,8 +278,8 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
         {/* 3. site.social */}
         {activeGroup === 'site.social' && (
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#1F2A37' }}>Social Media Links</h2>
-            <p style={{ fontSize: 12.5, color: '#66748A', margin: '0 0 16px' }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#241F3D' }}>Social Media Links</h2>
+            <p style={{ fontSize: 12.5, color: '#6A6285', margin: '0 0 16px' }}>
               Single source of truth: feeds both the interactive footer links and the Organization Schema.org sameAs JSON-LD graph.
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -314,8 +314,8 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
         {/* 4. site.whatsapp */}
         {activeGroup === 'site.whatsapp' && (
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#1F2A37' }}>WhatsApp Business Chat</h2>
-            <p style={{ fontSize: 12.5, color: '#66748A', margin: '0 0 16px' }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#241F3D' }}>WhatsApp Business Chat</h2>
+            <p style={{ fontSize: 12.5, color: '#6A6285', margin: '0 0 16px' }}>
               WhatsApp hotline configuration. Strictly enforces the <code>wa.me/&lt;digits&gt;</code> format.
             </p>
             <div style={{ display: 'grid', gap: 12 }}>
@@ -351,8 +351,8 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
         {/* 5. site.contact */}
         {activeGroup === 'site.contact' && (
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#1F2A37' }}>Corporate Contact Information</h2>
-            <p style={{ fontSize: 12.5, color: '#66748A', margin: '0 0 16px' }}>Official telephone, emails and physical corporate addresses.</p>
+            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#241F3D' }}>Corporate Contact Information</h2>
+            <p style={{ fontSize: 12.5, color: '#6A6285', margin: '0 0 16px' }}>Official telephone, emails and physical corporate addresses.</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Primary Email</label>
@@ -385,8 +385,8 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
         {/* 6. site.cookie */}
         {activeGroup === 'site.cookie' && (
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#1F2A37' }}>Cookie Policy & Consent Banner</h2>
-            <p style={{ fontSize: 12.5, color: '#66748A', margin: '0 0 16px' }}>GDPR and ePrivacy consent banner configuration.</p>
+            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#241F3D' }}>Cookie Policy & Consent Banner</h2>
+            <p style={{ fontSize: 12.5, color: '#6A6285', margin: '0 0 16px' }}>GDPR and ePrivacy consent banner configuration.</p>
             <div style={{ display: 'grid', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Banner Title</label>
@@ -413,8 +413,8 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
         {/* 7. seo.defaults */}
         {activeGroup === 'seo.defaults' && (
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#1F2A37' }}>SEO Defaults</h2>
-            <p style={{ fontSize: 12.5, color: '#66748A', margin: '0 0 16px' }}>Global metadata fallback for pages without custom SEO overrides.</p>
+            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#241F3D' }}>SEO Defaults</h2>
+            <p style={{ fontSize: 12.5, color: '#6A6285', margin: '0 0 16px' }}>Global metadata fallback for pages without custom SEO overrides.</p>
             <div style={{ display: 'grid', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Title Template (%s)</label>
@@ -443,8 +443,8 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
         {/* 8. integrations */}
         {activeGroup === 'integrations' && (
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#1F2A37' }}>External Integrations</h2>
-            <p style={{ fontSize: 12.5, color: '#66748A', margin: '0 0 16px' }}>Cloudflare Turnstile bot protection and web analytics switches.</p>
+            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 4px', color: '#241F3D' }}>External Integrations</h2>
+            <p style={{ fontSize: 12.5, color: '#6A6285', margin: '0 0 16px' }}>Cloudflare Turnstile bot protection and web analytics switches.</p>
             <div style={{ display: 'grid', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Cloudflare Turnstile Site Key</label>
@@ -467,7 +467,7 @@ function SiteSettings({ canManage }: { canManage: boolean }) {
         )}
 
         {/* Action Bar */}
-        <div style={{ display: 'flex', gap: 10, marginTop: 20, paddingTop: 14, borderTop: '1px solid #E6EBF1' }}>
+        <div style={{ display: 'flex', gap: 10, marginTop: 20, paddingTop: 14, borderTop: '1px solid #E5E0F2' }}>
           <button style={btn} disabled={busy || !canManage} onClick={() => saveGroup(activeGroup)}>
             {busy ? 'Saving…' : `Save ${GROUPS.find((g) => g.key === activeGroup)?.label}`}
           </button>
@@ -523,7 +523,7 @@ function Redirects({ canManage }: { canManage: boolean }) {
     <div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '0 0 10px', flexWrap: 'wrap' }}>
         <input style={{ ...input, width: 220 }} placeholder="Search from / to…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <span style={{ fontSize: 12.5, color: '#66748A' }}>{data?.items.length ?? 0} redirect{(data?.items.length ?? 0) === 1 ? '' : 's'} configured</span>
+        <span style={{ fontSize: 12.5, color: '#6A6285' }}>{data?.items.length ?? 0} redirect{(data?.items.length ?? 0) === 1 ? '' : 's'} configured</span>
       </div>
       {canManage && (
         <div style={{ display: 'flex', gap: 8, margin: '10px 0', flexWrap: 'wrap' }}>
@@ -539,17 +539,17 @@ function Redirects({ canManage }: { canManage: boolean }) {
       {error ? <Err error={error} /> : null}
       {loadError ? <Err error={loadError} /> : loading ? <p>Loading…</p> : data ? (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
-          <thead><tr>{['From', 'To', 'Code', 'Hits', ''].map((h, i) => <th key={`${h || 'col'}-${i}`} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>)}</tr></thead>
+          <thead><tr>{['From', 'To', 'Code', 'Hits', ''].map((h, i) => <th key={`${h || 'col'}-${i}`} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E5E0F2' }}>{h}</th>)}</tr></thead>
           <tbody>
             {items.map((r) => (
               <tr key={r.id}>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7', fontFamily: 'ui-monospace, monospace', fontSize: 12.5 }}>{r.from}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7', fontFamily: 'ui-monospace, monospace', fontSize: 12.5 }}>{r.to}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}><b>{r.code}</b></td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC', fontFamily: 'ui-monospace, monospace', fontSize: 12.5 }}>{r.from}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC', fontFamily: 'ui-monospace, monospace', fontSize: 12.5 }}>{r.to}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}><b>{r.code}</b></td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}>
                   <a href={WEB + r.from} target="_blank" rel="noopener" style={{ fontSize: 12, color: '#0F766E' }} title="Open the source path and watch it redirect">test ↗</a>
                 </td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}>
                   {canManage && <button style={btnGhost} disabled={busy} onClick={() => remove(r.id)}>Delete</button>}
                 </td>
               </tr>
@@ -586,22 +586,22 @@ function Locales({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     <div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '0 0 10px', flexWrap: 'wrap' }}>
         <input style={{ ...input, width: 200 }} placeholder="Search code or name…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <span style={{ fontSize: 12.5, color: '#66748A' }}>
+        <span style={{ fontSize: 12.5, color: '#6A6285' }}>
           <b>{active}</b> of {data?.items.length ?? 0} active — active locales receive hreflang alternates in the site build
           {(data?.items ?? []).some((l) => l.dir === 'rtl' && l.active) ? ' (includes RTL — verified in the P4 parity audit)' : ''}.
         </span>
       </div>
       {error ? <Err error={error} /> : loading ? <p>Loading…</p> : data ? (
         <table style={{ borderCollapse: 'collapse', fontSize: 13.5 }}>
-          <thead><tr>{['Code', 'Name', 'Direction', 'Active', ''].map((h, i) => <th key={`${h || 'col'}-${i}`} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E6EBF1' }}>{h}</th>)}</tr></thead>
+          <thead><tr>{['Code', 'Name', 'Direction', 'Active', ''].map((h, i) => <th key={`${h || 'col'}-${i}`} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #E5E0F2' }}>{h}</th>)}</tr></thead>
           <tbody>
             {items.map((l) => (
               <tr key={l.code} style={{ background: l.active ? undefined : '#FAFBFC' }}>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}><b>{l.code}</b></td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{l.name}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{l.dir === 'rtl' ? <b style={{ color: '#B45309' }}>rtl</b> : 'ltr'}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>{l.active ? '✓' : '—'}</td>
-                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F0F3F7' }}>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}><b>{l.code}</b></td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}>{l.name}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}>{l.dir === 'rtl' ? <b style={{ color: '#B45309' }}>rtl</b> : 'ltr'}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}>{l.active ? '✓' : '—'}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #F4F0FC' }}>
                   {isSuperAdmin && <button style={btnGhost} disabled={busy} onClick={() => toggle(l.code, !l.active)}>{l.active ? 'Deactivate' : 'Activate'}</button>}
                 </td>
               </tr>

@@ -95,6 +95,30 @@ function compareImages(baselineBuffer, currentBuffer) {
   };
 }
 
+async function gotoWithRetry(page, url) {
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      // `domcontentloaded` rather than `load`: third-party analytics can hold
+      // the load event for tens of seconds. Determinism comes from the font/
+      // image decode waits and the explicit animation settle below.
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+      await page.waitForTimeout(400);
+      // A slow Delivery API can yield a shell with an empty <main>; never
+      // record that as a baseline.
+      const contentReady = await page.evaluate(() => {
+        const main = document.querySelector("main");
+        return !!main && (main.innerText || "").trim().length > 120;
+      });
+      if (contentReady) return;
+      lastError = new Error("empty main content");
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError;
+}
+
 async function run() {
   console.log(
     "================================================================",
@@ -140,6 +164,12 @@ async function run() {
       });
 
       const page = await context.newPage();
+      // The footer newsletter mounts Cloudflare Turnstile. Its challenge keeps
+      // a connection open, so `networkidle` never fires and every route times
+      // out. The widget is off-screen and irrelevant to layout parity.
+      await context.route("https://challenges.cloudflare.com/**", (route) =>
+        route.abort(),
+      );
 
       for (const route of ROUTES) {
         totalChecks++;
@@ -152,9 +182,74 @@ async function run() {
         );
 
         try {
-          await page.goto(url, { waitUntil: "networkidle", timeout: 15000 });
-          // Ensure animations finish settling
-          await page.waitForTimeout(300);
+          // `networkidle` never fires: service workers, analytics and the
+          // Turnstile challenge keep connections open. Navigation settles at
+          // DOM-ready; the font/image waits and animation freeze make it stable.
+          await gotoWithRetry(page, url);
+          // Freeze the hero's 7s Ken-Burns zoom and any ambient animation so
+          // two captures of the same build cannot differ by sub-pixel motion.
+          await page.addStyleTag({
+            content:
+              "*,*::before,*::after{animation:none!important;transition:none!important}.sl-bg img{transform:scale(1.045)!important}#cookieBar,.cookie-bar{display:none!important}",
+          });
+          // Counters animate for 1.2s after intersection; pin them to their
+          // final values so capture timing cannot change the digits.
+          await page.evaluate(() => {
+            document.querySelectorAll("[data-counter]").forEach((el) => {
+              const target = parseInt(el.getAttribute("data-counter"), 10);
+              if (Number.isFinite(target)) {
+                el.textContent =
+                  target.toLocaleString() + (target === 93 ? "+" : "");
+              }
+            });
+          });
+          // Wait past lazy script init, the counter intersection tween and the
+          // hero's 7s zoom so the freeze/pin below lands on a settled page.
+          await page.waitForTimeout(4500);
+          // Pin again after the tween and wait for fonts + image decode, so
+          // two captures cannot differ by a frame of animation or a late bitmap.
+          await page.evaluate(async () => {
+            await Promise.race([
+              document.fonts.ready.catch(() => {}),
+              new Promise((resolve) => setTimeout(resolve, 2000)),
+            ]);
+            await Promise.all(
+              [...document.images].map((img) =>
+                Promise.race([
+                  img.decode().catch(() => {}),
+                  new Promise((resolve) => setTimeout(resolve, 1500)),
+                ]),
+              ),
+            );
+            document.querySelectorAll("[data-counter]").forEach((el) => {
+              const target = parseInt(el.getAttribute("data-counter"), 10);
+              if (Number.isFinite(target)) {
+                el.textContent =
+                  target.toLocaleString() + (target === 93 ? "+" : "");
+              }
+              el.style.transform = "none";
+              el.style.opacity = "1";
+            });
+            // Freeze carousels on slide 1: autoplay can otherwise advance
+            // between the baseline and verification captures.
+            document.querySelectorAll("[data-slider]").forEach((root) => {
+              const dots = root.querySelectorAll("[data-sl-dot]");
+              if (dots[0]) dots[0].click();
+              const pause = root.querySelector(
+                "[data-sl-pause], .slider-pause",
+              );
+              if (pause && pause.getAttribute("aria-pressed") !== "true")
+                pause.click();
+            });
+          });
+          // A reused tab keeps its scroll offset across navigations, and
+          // `scroll-behavior:smooth` can animate the reset past the capture.
+          await page.evaluate(() => {
+            document.documentElement.style.scrollBehavior = "auto";
+            document.body.style.scrollBehavior = "auto";
+            window.scrollTo(0, 0);
+          });
+          await page.waitForTimeout(250);
 
           const currentBuffer = await page.screenshot({
             fullPage: false,

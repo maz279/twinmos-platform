@@ -11,7 +11,7 @@ const desc = page?.seoDescription ?? "TwinMOS Technologies: DRAM, NVMe SSDs, por
 const blocks = page?.blocks ?? [];
 ---
 
-<Layout title={title} desc={desc} hreflangGrid={true}>
+<Layout title={title} desc={desc} hreflangGrid={true} bodyClass="home">
   <main id="main">
     <BlockDispatcher blocks={blocks} />
   </main>

@@ -5,6 +5,10 @@ services:
       - ../../apps/web/dist:/var/www/twinmos/web:ro
       - ../../apps/admin/dist:/var/www/twinmos/admin:ro
 
+  web:
+    ports:
+      - "4321:4321"
+
   api:
     ports:
       - "127.0.0.1:8787:8787" # Exposed to local loopback ONLY during development
