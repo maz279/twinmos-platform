@@ -28,6 +28,9 @@ try {
   // Filter out untracked files or temp test files if any, but track modified tracked files
   const trackedChanges = statusOutput.split('\n').filter((l) => l.trim() && !l.startsWith('??'));
   isDirty = trackedChanges.length > 0;
+  if (isDirty) {
+    console.log(`[write-build-info] tracked changes at build time: ${trackedChanges.slice(0, 20).join(' | ')}`);
+  }
 } catch (e) {
   if (!commitSha) commitSha = 'dev-local';
 }
