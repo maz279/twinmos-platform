@@ -822,9 +822,12 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
             ? raw.files
             : (() => {
                 const skus = Array.isArray(raw.skus) ? raw.skus : [];
+                // Never expand an empty curation into every catalogue datasheet
+                // (that flooded the gaming page with 70+ links); explicit skus
+                // or files are required.
                 const picked = skus.length
                   ? deliveryProducts.filter((p) => skus.includes(p.sku) || skus.includes(p.slug))
-                  : deliveryProducts;
+                  : [];
                 return picked.flatMap((p) =>
                   (Array.isArray(p.datasheets) ? p.datasheets : []).map((ds: any) =>
                     typeof ds === 'string'
@@ -1218,7 +1221,7 @@ const ssrSearchResults: any = rawSearchQuery ? await getDeliverySearchResults(ra
                         <article class="card card-pad" style="border:1px solid #E5E0F2;border-radius:12px;background:#FFFFFF;color:#191633;display:flex;flex-direction:column">
                           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
                             {(art.tag || (Array.isArray(art.tags) && art.tags[0]) || art.category) && (
-                              <span class="chip" style="font-size:12px;font-weight:700;color:var(--accent-deep);background:#F1ECFF">
+                              <span class="chip" style="font-size:12px;font-weight:700;color:#4C1D95;background:#F1ECFF">
                                 {art.tag || (Array.isArray(art.tags) && art.tags[0]) || art.category}
                               </span>
                             )}

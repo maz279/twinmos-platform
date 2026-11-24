@@ -1891,3 +1891,7 @@ body:not(.gaming) .site-footer .footer-top-link{color:#FCD34D!important}
 
 /* Cloudflare Turnstile test keys: keep the "For testing only" widget off-screen */
 .cf-turnstile-test{position:absolute!important;left:-9999px!important;top:0!important;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important}
+
+/* Gaming dark pages: downloads block links must stay readable on #0D0D0D. */
+body.gaming .block-downloads .download-link{color:#00F0FF!important}
+body.gaming .block-downloads .download-link:hover{color:#fff!important}
