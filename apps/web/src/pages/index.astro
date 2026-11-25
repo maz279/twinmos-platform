@@ -9,9 +9,27 @@ const page = await getDeliveryPage('index');
 const title = page?.title ?? "TwinMOS — Memory & Storage Solutions Since 1998";
 const desc = page?.seoDescription ?? "TwinMOS Technologies: DRAM, NVMe SSDs, portable storage and flash — trusted in 93+ countries since 1998.";
 const blocks = page?.blocks ?? [];
+
+// The hero image is the LCP element. Preload it from <head> instead of waiting
+// for the parser to reach the slider markup (which sits after the inlined CSS).
+const heroSlides = (blocks as any[]).find((b) => Array.isArray(b.slides))?.slides as any[] | undefined;
+const heroImage = typeof heroSlides?.[0]?.image === 'string' ? heroSlides[0].image : undefined;
+const heroPreload = heroImage?.startsWith('/') ? heroImage : undefined;
+const heroSrcset =
+  heroPreload?.startsWith('/assets/img/bn/') && heroPreload.endsWith('.webp')
+    ? `${heroPreload.replace('.webp', '-800.webp')} 800w, ${heroPreload} 1920w`
+    : undefined;
 ---
 
-<Layout title={title} desc={desc} hreflangGrid={true} bodyClass="home">
+<Layout
+  title={title}
+  desc={desc}
+  hreflangGrid={true}
+  bodyClass="home"
+  preloadImage={heroPreload}
+  preloadImageSrcset={heroSrcset}
+  preloadImageSizes={heroSrcset ? '100vw' : undefined}
+>
   <main id="main">
     <BlockDispatcher blocks={blocks} />
   </main>

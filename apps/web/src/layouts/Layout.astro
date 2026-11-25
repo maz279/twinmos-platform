@@ -34,6 +34,8 @@ interface Props {
   renderChrome?: boolean;
   ogImage?: string;
   preloadImage?: string;
+  preloadImageSrcset?: string;
+  preloadImageSizes?: string;
   canonical?: string;
   customLd?: (string | null | undefined)[];
 }
@@ -49,6 +51,8 @@ const {
   renderChrome = true,
   ogImage: customOgImage,
   preloadImage,
+  preloadImageSrcset,
+  preloadImageSizes,
   canonical: customCanonical,
   customLd,
 } = Astro.props;
@@ -218,7 +222,16 @@ const OG_TYPE = isHomepage ? 'website' : (path.startsWith('/learn/') ? 'article'
     <meta name="twitter:image" content={OG_IMAGE} />
 
     <link rel="icon" href={brand.faviconUrl || '/favicon.ico'} />
-    {preloadImage && <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />}
+    {preloadImage && (
+      <link
+        rel="preload"
+        as="image"
+        href={preloadImage}
+        imagesrcset={preloadImageSrcset}
+        imagesizes={preloadImageSizes}
+        fetchpriority="high"
+      />
+    )}
     <link rel="manifest" href="/manifest.webmanifest" />
     <style set:html={MAIN_CSS}></style>
     <link rel="stylesheet" href="/assets/css/a11y-overrides.css" />
